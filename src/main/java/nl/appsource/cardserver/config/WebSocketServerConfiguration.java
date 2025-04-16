@@ -23,5 +23,4 @@ public class WebSocketServerConfiguration implements WebSocketConfigurer {
             .setAllowedOriginPatterns("http://localhost:5173/");
     }
 
-
 }

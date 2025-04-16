@@ -1,0 +1,115 @@
+name: CardServer
+
+on:
+  push:
+    branches: [ "development" ]
+  pull_request:
+    branches: [ "development" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup  Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'liberica'
+          cache: maven
+
+      - name: Test with Maven
+        run: mvn -ntp -B clean verify org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
+
+  build:
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: true
+      matrix:
+        platform: [amd64, arm64]
+        include:
+          - platform: amd64
+            runner: ubuntu-latest
+            javaarch: x64
+          - platform: arm64
+            runner: buildjet-4vcpu-ubuntu-2204-arm
+            javaarch: aarch64
+    runs-on: ${{ matrix.runner }}
+
+    needs:
+      - test
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: print arch
+        run: uname -a
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/bhuism/cardserver
+          username: bhuism
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/bhuism/cardserver
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'liberica'
+          architecture: ${{ matrix.javaarch }}
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Buid and publish image via spring build-image
+        run: |
+          mvn -ntp -B -DskipTests clean spring-boot:build-image -Dspring-boot.build-image.imagePlatform=linux/${{ matrix.platform }} -Dspring-boot.build-image.imageName=ghcr.io/bhuism/cardserver:latest-${{ matrix.platform }}
+
+      - name: Push
+        run: |
+          docker push ghcr.io/bhuism/cardserver:latest-${{ matrix.platform }}
+
+  manifest-and-push:
+    runs-on: ubuntu-latest
+    needs: build
+    if: success()
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io/bhuism/cardserver
+          username: bhuism
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: merge containers and push
+        run: |
+          docker manifest create ghcr.io/bhuism/cardserver:latest \
+            ghcr.io/bhuism/cardserver:latest-amd64 ghcr.io/bhuism/cardserver:latest-arm64
+          docker manifest push ghcr.io/bhuism/cardserver:latest
+

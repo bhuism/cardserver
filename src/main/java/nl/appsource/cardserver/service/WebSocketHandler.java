@@ -18,18 +18,18 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
 
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable throwable) throws Exception {
+    public void handleTransportError(final WebSocketSession session, final Throwable throwable) throws Exception {
         log.error("error occured at sender " + session, throwable);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+    public void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) throws Exception {
         log.info(String.format("Session %s closed because of %s", session.getId(), status.getReason()));
         sessions.remove(session);
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(final WebSocketSession session) throws Exception {
         log.info("Connected return null; " + session.getId());
         sessions.add(session);
         TextMessage message = new TextMessage("one-time message from server");
@@ -38,7 +38,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(final WebSocketSession session, final TextMessage message) throws Exception {
         String request = message.getPayload();
         log.info("Server received: {}", request);
 
