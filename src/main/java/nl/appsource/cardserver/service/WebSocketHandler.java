@@ -1,7 +1,9 @@
 package nl.appsource.cardserver.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -17,6 +19,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class WebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void handleTransportError(final WebSocketSession session, final Throwable throwable) {
@@ -42,19 +46,21 @@ public class WebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(final WebSocketSession session, final TextMessage message) throws Exception {
         final String request = message.getPayload();
 
-        final JSONObject requestJSON = new JSONObject(request);
+        log.info("Server session: {},  #session: {}, payload: {}", session.getId(), sessions.size(), request);
 
-        log.info("Server session: {},  #session: {}, received: {}", session, sessions.size(), requestJSON);
+        if ("syn".equals(request)) {
+            session.sendMessage(new TextMessage("ack"));
+        } else {
 
-//        final String response = String.format("response from server to '%s'", HtmlUtils.htmlUnescape(request));
+            final JsonNode jsonNode = objectMapper.readTree(request);
 
-//        log.info("Server sends: {}", response);
+            log.info("json: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
 
-        final JSONObject payload = new JSONObject();
-
-        payload.put("response", UUID.randomUUID().toString());
-
-        session.sendMessage(new TextMessage(payload.toString()));
+            final ObjectNode rootNode = objectMapper.createObjectNode();
+            rootNode.put("key", UUID.randomUUID().toString());
+//            log.info("sending: {}", objectMapper.writeValueAsString(rootNode));
+            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(rootNode)));
+        }
     }
 
 }
