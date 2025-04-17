@@ -37,9 +37,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(final WebSocketSession session) throws Exception {
         log.info("Connected return null; " + session.getId());
         sessions.add(session);
-        TextMessage message = new TextMessage("one-time message from server");
-        log.info("Server sends: {}", message);
-        session.sendMessage(message);
+        session.sendMessage(new TextMessage("syn"));
     }
 
     @Override
@@ -50,6 +48,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         if ("syn".equals(request)) {
             session.sendMessage(new TextMessage("ack"));
+        } else if ("ack".equals(request)) {
+            log.debug("ack");
         } else {
 
             final JsonNode jsonNode = objectMapper.readTree(request);
