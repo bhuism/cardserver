@@ -18,7 +18,7 @@ public class WebSocketServerConfiguration implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(final WebSocketHandlerRegistry registry) {
         registry
-            .addHandler(webSocketHandler, "/api/websocket")
+            .addHandler(webSocketHandler, "/websocket")
             .addInterceptors(new HttpSessionHandshakeInterceptor())
             .setAllowedOriginPatterns("http://localhost:5173/", "https://api.klaversjassen.nl", "https://www.klaversjassen.nl", "https://klaversjassen.nl");
     }
