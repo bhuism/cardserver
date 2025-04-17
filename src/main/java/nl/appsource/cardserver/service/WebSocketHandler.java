@@ -54,7 +54,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
             final JsonNode jsonNode = objectMapper.readTree(request);
 
-            log.info("json: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
+            // log.info("json: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
 
             final ObjectNode rootNode = objectMapper.createObjectNode();
             rootNode.put("key", UUID.randomUUID().toString());
