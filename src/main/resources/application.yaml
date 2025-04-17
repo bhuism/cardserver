@@ -1,4 +1,57 @@
+server:
+  tomcat:
+    accesslog:
+      pattern: '%t %a [%I] "%r" %s (%D ms)'
+  compression:
+    enabled: true
+  servlet:
+    session:
+      timeout: 1440m
+      cookie:
+        http-only: true
+        secure: true
+        name: octopus
+  forward-headers-strategy: framework
+logging:
+  level:
+    ROOT: info
+    nl.appsource: info
 spring:
   application:
     name: Card Server
+  jackson:
+    time-zone: Europe/Amsterdam
+  mvc:
+    servlet:
+      load-on-startup: 1
+  output:
+    ansi:
+      enabled: ALWAYS
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-store: true
+          no-cache: true
+          max-age: 0
+management:
+  endpoint:
+    info:
 
+      access: read_only
+    health:
+      access: read_only
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include:
+          - health
+          - info
+  server:
+    port: 9080
+    ssl:
+      enabled: false
+    add-application-context-header: true

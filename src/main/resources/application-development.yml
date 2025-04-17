@@ -1,0 +1,18 @@
+server:
+  error:
+    whitelabel:
+      enabled: false
+  tomcat:
+    accesslog:
+      enabled: true
+  port: 8080
+logging:
+  level:
+    ROOT: info
+    nl.appsource: debug
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
