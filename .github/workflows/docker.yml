@@ -113,3 +113,15 @@ jobs:
             ghcr.io/bhuism/cardserver:latest-amd64 ghcr.io/bhuism/cardserver:latest-arm64
           docker manifest push ghcr.io/bhuism/cardserver:latest
 
+  rollout-restart:
+    needs: manifest-and-push
+    runs-on: ubuntu-latest
+    name: Rollout Restart
+    steps:
+      - name: Kubernetes context
+        uses: Azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+      - name: Rollout Restart
+        run: kubectl -n cardserver rollout restart deployment cardserver
