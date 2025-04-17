@@ -44,7 +44,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         final JSONObject requestJSON = new JSONObject(request);
 
-        log.info("Server #session: {}, received: {}", sessions.size(), requestJSON);
+        log.info("Server session: {},  #session: {}, received: {}", session, sessions.size(), requestJSON);
 
 //        final String response = String.format("response from server to '%s'", HtmlUtils.htmlUnescape(request));
 
