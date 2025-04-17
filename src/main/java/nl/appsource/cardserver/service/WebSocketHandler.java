@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +51,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             log.debug("ack");
         } else {
 
-            final JsonNode jsonNode = objectMapper.readTree(request);
+            // final JsonNode jsonNode = objectMapper.readTree(request);
 
             // log.info("json: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
 
