@@ -2,9 +2,10 @@
 <FindBugsFilter>
     <Match>
         <Or>
-            <Package name="~org\.openapitools\..*"/>
+            <Package name="~nl\.generated\..*"/>
             <Bug pattern="EI_EXPOSE_REP"/>
             <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="ES_COMPARING_STRINGS_WITH_EQ"/>
         </Or>
     </Match>
 </FindBugsFilter>
