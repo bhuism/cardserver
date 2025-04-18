@@ -1,10 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://api.klaversjassen.nl/schema/game.json",
-  "description" : "An Address following the convention of http://microformats.org/wiki/hcard",
   "type" : "object",
   "properties" : {
-    "post-office-box" : { "type" : "string" },
+    "id" : { "type" : "string",
+      "format": "uuid"
+    },
     "extended-address" : { "type" : "string" },
     "street-address" : { "type":"string" },
     "locality" : { "type" : "string", "required" : true },
