@@ -15,4 +15,18 @@ management:
     web:
       exposure:
         include: '*'
+spring:
+  datasource:
+    hikari:
+      username: root
+      password: killer
+      jdbc-url: jdbc:postgresql:klaversjassen
+      driver-class-name: org.postgresql.Driver
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://accounts.google.com
+          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+
 

@@ -37,7 +37,6 @@ spring:
 management:
   endpoint:
     info:
-
       access: read_only
     health:
       access: read_only

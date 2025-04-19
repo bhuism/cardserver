@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - property:
+      name: uuid_function
+      value: gen_random_uuid()
+      dbms: postgresql
+  - changeSet:
+      id: createGameTable
+      author: bhuism
+      changes:
+        - createTable:
+            tableName: games
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: publicId
+                  type: UUID
+                  valueComputed: "${uuid_function}"
+                  constraints:
+                    unique: true
+                    nullable: false
