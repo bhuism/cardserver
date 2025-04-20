@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.model;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +11,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Document
 @Getter
@@ -17,7 +19,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Game {
+public class User {
 
     @Id
     private String id;
@@ -27,5 +29,22 @@ public class Game {
 
     private Instant updated;
 
+    @NotEmpty
+    private String displayName;
+
+    @NotEmpty
+    private String email;
+
+    private Set<String> invites;
+
+    private Instant lastLogin;
+
+    @NotEmpty
+    private String name;
+
+    private String photoURL;
+
+    @NotEmpty
+    private String providerId;
 
 }
