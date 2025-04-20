@@ -26,6 +26,3 @@ spring:
 #    connection-string: couchbase://localhost/cardserver
 #    username: root
 #    password: killer
-#
-
-
