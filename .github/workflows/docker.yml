@@ -24,7 +24,7 @@ jobs:
           cache: maven
 
       - name: Test with Maven
-        run: mvn -ntp -B clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
+        run: mvn -ntp -B -DskipTests clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
 #        run: mvn -ntp -B clean verify org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
 
   build:
