@@ -10,6 +10,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -46,6 +47,6 @@ public class Game {
 
     private Set<String> players;
 
-    private TreeSet<DeckCard> turns;
+    private LinkedHashSet<DeckCard> turns;
 
 }

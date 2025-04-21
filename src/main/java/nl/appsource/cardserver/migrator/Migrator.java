@@ -16,11 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -124,32 +124,17 @@ public class Migrator {
                             game.setPlayers(players);
                             break;
                         }
-
                         case "turns": {
-
-
-                            final TreeSet<DeckCard> turns = new TreeSet<>();
-
-                            //fieldValue.
-
-
-                            StreamSupport
+                            final LinkedHashSet<DeckCard> turns = StreamSupport
                                 .stream(Spliterators.spliteratorUnknownSize(
                                     fieldValue.iterator(),
                                     Spliterator.ORDERED), false)
-
-                                .peek(jsonNode1 -> {
-                                    log.info("Found " + jsonNode1.textValue());
-                                })
                                 .map(JsonNode::textValue)
                                 .map(Migrator::cardConvert)
-                                .forEachOrdered(turns::add);
-
+                                .collect(Collectors.toCollection(LinkedHashSet::new));
 
                             game.setTurns(turns);
-
-                            log.info("turns: {}", turns);
-
+                            break;
                         }
 
                         case "uid":
