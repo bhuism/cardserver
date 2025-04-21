@@ -36,7 +36,7 @@ public class WebSecurityConfig {
 
         http
             .authorizeHttpRequests((requests) -> requests
-                .requestMatchers(Stream.concat(Set.of("/", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
+                .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                 .permitAll()
                 .anyRequest().authenticated()
             )
