@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Document
 @Getter
@@ -39,12 +38,16 @@ public class Game {
 
     private Integer elder;
 
+    @NotNull
     private Integer trump;
 
+    @NotNull
     private Map<DeckCard, Integer> playerCard;
 
+    @NotNull
     private Boolean ended;
 
+    @NotNull
     private Set<String> players;
 
     private LinkedHashSet<DeckCard> turns;

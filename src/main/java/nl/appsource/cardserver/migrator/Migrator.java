@@ -43,7 +43,9 @@ public class Migrator {
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
         log.info("PostConstruct");
-        //loadUser("users.json");
+        userRepository.deleteAll();
+        loadUser("users.json");
+        gameRepository.deleteAll();
         loadGames("games.json");
     }
 
@@ -105,7 +107,7 @@ public class Migrator {
                             game.setEnded(fieldValue.asBoolean());
                             break;
 
-                        case "playerCard": {
+                        case "playerCard":
                             final Map<DeckCard, Integer> cards = new HashMap<>();
                             fieldValue.forEach(card -> {
                                 final DeckCard playerCard = cardConvert(card.get("card").textValue());
@@ -117,14 +119,13 @@ public class Migrator {
                             }
                             game.setPlayerCard(cards);
                             break;
-                        }
 
-                        case "players": {
+                        case "players":
                             final Set<String> players = StreamSupport.stream(fieldValue.spliterator(), false).map(JsonNode::textValue).collect(Collectors.toSet());
                             game.setPlayers(players);
                             break;
-                        }
-                        case "turns": {
+
+                        case "turns":
                             final LinkedHashSet<DeckCard> turns = StreamSupport
                                 .stream(Spliterators.spliteratorUnknownSize(
                                     fieldValue.iterator(),
@@ -135,7 +136,6 @@ public class Migrator {
 
                             game.setTurns(turns);
                             break;
-                        }
 
                         case "uid":
                         case COLLECTIONS:
@@ -155,11 +155,8 @@ public class Migrator {
         }
     }
 
-    private static DeckCard cardConvert(String stringValue) {
-        stringValue = stringValue.replace('9', 'N');
-        stringValue = stringValue.replace('8', 'E');
-        stringValue = stringValue.replace('7', 'S');
-        return DeckCard.valueOf(stringValue);
+    private static DeckCard cardConvert(final String stringValue) {
+        return DeckCard.valueOf(stringValue.replace('9', 'N').replace('8', 'E').replace('7', 'S'));
     }
 
     private void loadUser(final String fileName) throws IOException {

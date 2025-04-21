@@ -39,8 +39,7 @@ public enum DeckCard {
     Ts(CardNr.Ten, Suit.Spades),
     Ns(CardNr.Nine, Suit.Spades),
     Es(CardNr.Eight, Suit.Spades),
-    Ss(CardNr.Seven, Suit.Spades),
-    ;
+    Ss(CardNr.Seven, Suit.Spades);
 
     private final CardNr cardNr;
 
