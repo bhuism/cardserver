@@ -1,7 +1,9 @@
 package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
+import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,18 +17,18 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class UserController {
+public class GameController {
 
-    private final UserRepository userRepository;
+    private final GameRepository gameRepository;
 
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> users() {
-        return new ResponseEntity<>(userRepository.findAll(), HttpStatus.OK);
+    @GetMapping("/games")
+    public ResponseEntity<List<Game>> users() {
+        return new ResponseEntity<>(gameRepository.findAll(), HttpStatus.OK);
     }
 
-    @GetMapping("/user/{id}")
-    public ResponseEntity<User> getUserById(final @PathVariable("id") String id) {
-        return userRepository.findById(id)
+    @GetMapping("/game/{id}")
+    public ResponseEntity<Game> getGameById(final @PathVariable("id") String id) {
+        return gameRepository.findById(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
