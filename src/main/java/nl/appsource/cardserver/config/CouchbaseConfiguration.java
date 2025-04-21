@@ -1,14 +1,11 @@
 package nl.appsource.cardserver.config;
 
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
-import org.springframework.data.couchbase.repository.config.EnableCouchbaseRepositories;
 
 
 @Configuration
-@EnableCouchbaseRepositories(basePackageClasses = {UserRepository.class})
 @RequiredArgsConstructor
 public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
