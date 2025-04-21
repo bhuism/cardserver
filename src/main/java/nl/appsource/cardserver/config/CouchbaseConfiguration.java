@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.config;
 
+import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
@@ -8,26 +9,29 @@ import org.springframework.data.couchbase.repository.config.EnableCouchbaseRepos
 
 @Configuration
 @EnableCouchbaseRepositories(basePackageClasses = {UserRepository.class})
+@RequiredArgsConstructor
 public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
+
+    private final CardServerCouchbaseProperties cardServerCouchbaseProperties;
 
     @Override
     public String getConnectionString() {
-        return "couchbase://192.168.1.86";
+        return cardServerCouchbaseProperties.getConnectionString();
     }
 
     @Override
     public String getUserName() {
-        return "root";
+        return cardServerCouchbaseProperties.getUsername();
     }
 
     @Override
     public String getPassword() {
-        return "killer";
+        return cardServerCouchbaseProperties.getPassword();
     }
 
     @Override
     public String getBucketName() {
-        return "cardserver";
+        return cardServerCouchbaseProperties.getBucketName();
     }
 
 }

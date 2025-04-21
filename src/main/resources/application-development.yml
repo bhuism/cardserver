@@ -15,17 +15,20 @@ management:
     web:
       exposure:
         include: '*'
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://accounts.google.com
-          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
-#  couchbase:
-#    connection-string: couchbase://localhost/cardserver
-#    username: root
-#    password: killer
-#
+#spring:
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: https://accounts.google.com
+#          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+
+cardserver:
+  couchbase:
+    connection-string: couchbase://192.168.1.86
+    username: root
+    password: killer
+    bucket-name: cardserver
+
 
 

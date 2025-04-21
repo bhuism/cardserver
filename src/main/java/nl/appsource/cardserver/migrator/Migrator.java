@@ -42,10 +42,9 @@ public class Migrator {
     @PostConstruct
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
-        log.info("PostConstruct");
-        userRepository.deleteAll();
+//        userRepository.deleteAll();
         loadUser("users.json");
-        gameRepository.deleteAll();
+//        gameRepository.deleteAll();
         loadGames("games.json");
     }
 
