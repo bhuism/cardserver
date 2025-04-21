@@ -29,14 +29,14 @@ public class WebSecurityConfig {
 
         final Set<String> privateUrls;
         if (environment.acceptsProfiles(Profiles.of("development", "citest"))) {
-            privateUrls = Set.of("/websocket/**", "/manage/**", "/h2-console/**", "/api/v1/**");
+            privateUrls = Set.of("/h2-console/**");
         } else {
             privateUrls = Collections.emptySet();
         }
 
         http
             .authorizeHttpRequests((requests) -> requests
-                .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
+                .requestMatchers(Stream.concat(Set.of("/", "/websocket/**", "/api/v1/**", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                 .permitAll()
                 .anyRequest().authenticated()
             )
