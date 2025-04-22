@@ -11,8 +11,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -35,6 +39,9 @@ public class WebSecurityConfig {
         }
 
         http
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()));
+
+        http
             .authorizeHttpRequests((requests) -> requests
                 .requestMatchers(Stream.concat(Set.of("/", "/websocket/**", "/api/v1/**", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                 .permitAll()
@@ -43,6 +50,17 @@ public class WebSecurityConfig {
             .logout(LogoutConfigurer::permitAll);
 
         return http.build();
+    }
+
+    public CorsConfigurationSource getCorsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://api.klaversjassen.nl"));
+        configuration.setAllowedHeaders(Collections.singletonList("*"));
+        configuration.setAllowedMethods(Collections.singletonList("*"));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
 }
