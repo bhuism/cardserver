@@ -11,6 +11,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.util.stream.StreamSupport;
 @Service
 @Slf4j
 @AllArgsConstructor
+@Profile("production")
 public class Migrator {
 
     public static final String TIME = "__time__";
@@ -44,9 +46,7 @@ public class Migrator {
     @PostConstruct
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
-//        userRepository.deleteAll();
-//        loadUser("users.json");
-        gameRepository.deleteAll();
+        loadUser("users.json");
         loadGames("games.json");
     }
 
@@ -57,6 +57,8 @@ public class Migrator {
         final File gameFile = new File(fileName);
 
         if (gameFile.exists()) {
+
+            gameRepository.deleteAll();
 
             final JsonNode jsonNode = objectMapper.readTree(gameFile);
 
@@ -181,6 +183,8 @@ public class Migrator {
         final File userFile = new File(fileName);
 
         if (userFile.exists()) {
+
+            userRepository.deleteAll();
 
             final JsonNode jsonNode = objectMapper.readTree(userFile);
 
