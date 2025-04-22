@@ -8,10 +8,12 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
+import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Document
@@ -25,31 +27,41 @@ public class Game {
     @Id
     private String id;
 
+    @Field
     @NotNull
     private Instant created;
 
+    @Field
     private Instant updated;
 
     @NotNull
+    @Field
     private String creator;
 
     @NotNull
+    @Field
     private Integer dealer;
 
+    @Field
     private Integer elder;
 
     @NotNull
-    private Integer trump;
+    @Field
+    private Suit trump;
 
+    @Field
     @NotNull
-    private Map<DeckCard, Integer> playerCard;
+    private Map<Card, Integer> playerCard;
 
+    @Field
     @NotNull
     private Boolean ended;
 
+    @Field
     @NotNull
     private Set<String> players;
 
-    private LinkedHashSet<DeckCard> turns;
+    @Field
+    private LinkedHashSet<Card> turns;
 
 }

@@ -1,0 +1,63 @@
+openapi: "3.0.4"
+info:
+  title: Klavers JAssen
+  description: Klavers JAssen
+  version: 1.0.0
+servers:
+  - url: 'https://www.klaversjassen.nl/api/v1'
+    description: Klavers Jassen
+
+paths:
+  /games:
+    get:
+      operationId: getGames
+      responses:
+        "200":
+          $ref: "#/components/responses/GamesResponse"
+      tags:
+        - Game
+  /game/{gameId}:
+    get:
+      operationId: getGame
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      responses:
+        "200":
+          $ref: "#/components/responses/GameResponse"
+      tags:
+        - Game
+components:
+  parameters:
+    gameId:
+      name: gameId
+      in: path
+      schema:
+        type: string
+      required: true
+  securitySchemes:
+    openId:
+      type: openIdConnect
+      scheme: bearer
+      bearerFormat: JWT
+      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+  responses:
+    GameResponse:
+      description: fetch a game
+      content:
+        application/json:
+          schema:
+            $ref: "./game.yaml#/components/schemas/Game"
+    GamesResponse:
+      description: fetch all games
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "./game.yaml#/components/schemas/Game"
+
+security:
+  - bearerAuth:
+      - openid
+      - profile
+      - email

@@ -1,9 +1,11 @@
 package nl.appsource.cardserver.model;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+@Getter
 @RequiredArgsConstructor
-public enum DeckCard {
+public enum Card {
 
     Ac(CardNr.Ace, Suit.Clubs),
     Kc(CardNr.King, Suit.Clubs),

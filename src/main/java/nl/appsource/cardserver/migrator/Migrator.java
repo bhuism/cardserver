@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.DeckCard;
+import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -43,8 +45,8 @@ public class Migrator {
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
 //        userRepository.deleteAll();
-        loadUser("users.json");
-//        gameRepository.deleteAll();
+//        loadUser("users.json");
+        gameRepository.deleteAll();
         loadGames("games.json");
     }
 
@@ -69,6 +71,11 @@ public class Migrator {
                 final Game game = new Game();
 
                 game.setId(id);
+
+                // set optionals
+//                game.setElder(Optional.empty());
+//                game.setUpdated(Optional.empty());
+
                 final JsonNode gameNodeValue = gameNode.getValue();
 
                 gameNodeValue.fieldNames().forEachRemaining(fieldName -> {
@@ -85,7 +92,7 @@ public class Migrator {
                             break;
                         case "updated":
                             final String updated = fieldValue.get(TIME).textValue();
-                            game.setUpdated(Instant.parse(updated));
+                            game.setUpdated(Optional.ofNullable(fieldValue.get(TIME)).map(JsonNode::textValue).map(Instant::parse).orElse(null));
                             break;
                         case "creator":
                             game.setCreator(fieldValue.textValue());
@@ -95,11 +102,11 @@ public class Migrator {
                             game.setDealer(fieldValue.intValue());
                             break;
                         case "trump":
-                            game.setTrump(fieldValue.intValue());
+                            game.setTrump(convertSuit(fieldValue.intValue()));
                             break;
 
                         case "elder":
-                            game.setElder(fieldValue.intValue());
+                            game.setElder(Optional.ofNullable(fieldValue.get("elder")).map(JsonNode::textValue).map(Integer::parseInt).orElse(null));
                             break;
 
                         case "ended":
@@ -107,9 +114,9 @@ public class Migrator {
                             break;
 
                         case "playerCard":
-                            final Map<DeckCard, Integer> cards = new HashMap<>();
+                            final Map<Card, Integer> cards = new HashMap<>();
                             fieldValue.forEach(card -> {
-                                final DeckCard playerCard = cardConvert(card.get("card").textValue());
+                                final Card playerCard = cardConvert(card.get("card").textValue());
                                 final Integer player = card.get("player").intValue();
                                 cards.put(playerCard, player);
                             });
@@ -125,7 +132,7 @@ public class Migrator {
                             break;
 
                         case "turns":
-                            final LinkedHashSet<DeckCard> turns = StreamSupport
+                            final LinkedHashSet<Card> turns = StreamSupport
                                 .stream(Spliterators.spliteratorUnknownSize(
                                     fieldValue.iterator(),
                                     Spliterator.ORDERED), false)
@@ -154,8 +161,17 @@ public class Migrator {
         }
     }
 
-    private static DeckCard cardConvert(final String stringValue) {
-        return DeckCard.valueOf(stringValue.replace('9', 'N').replace('8', 'E').replace('7', 'S'));
+    private final static Suit SUITCONVERTER[] = {
+        Suit.Clubs, Suit.Hearts, Suit.Spades, Suit.Diamonds
+    };
+
+
+    private Suit convertSuit(int i) {
+        return SUITCONVERTER[i];
+    }
+
+    private static Card cardConvert(final String stringValue) {
+        return Card.valueOf(stringValue.replace('9', 'N').replace('8', 'E').replace('7', 'S'));
     }
 
     private void loadUser(final String fileName) throws IOException {
