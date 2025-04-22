@@ -116,7 +116,7 @@ public class WebSecurityConfig {
     public CorsConfigurationSource getCorsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://api.klaversjassen.nl"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://www.klaversjassen.nl"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowedMethods(Collections.singletonList("*"));
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
