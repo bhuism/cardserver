@@ -3,6 +3,7 @@ package nl.appsource.cardserver.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -41,6 +43,8 @@ import static org.springframework.util.StringUtils.hasText;
 public class WebSecurityConfig {
 
     private final Environment environment;
+
+    private final UserRepository userRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
@@ -96,10 +100,10 @@ public class WebSecurityConfig {
                     throw new InvalidBearerTokenException("No email in JWT");
                 }
 
-//                if (!accountService.accountExists(email)) {
-//                    log.error("Failed login for user: {}", email);
-//                    throw new UsernameNotFoundException(email);
-//                }
+                if (userRepository.findByEmail(email).isEmpty()) {
+                    log.error("Failed login for user: {}", email);
+                    throw new UsernameNotFoundException(email);
+                }
 
                 return new JwtAuthenticationToken(jwt, authorities, principalClaimValue);
             }

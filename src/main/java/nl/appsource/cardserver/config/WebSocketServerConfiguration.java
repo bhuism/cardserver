@@ -20,7 +20,7 @@ public class WebSocketServerConfiguration implements WebSocketConfigurer {
         registry
             .addHandler(webSocketHandler, "/websocket")
             .addInterceptors(new HttpSessionHandshakeInterceptor())
-            .setAllowedOriginPatterns("http://localhost:[*]", "https://www.klaversjassen.nl");
+            .setAllowedOriginPatterns("https://www.klaversjassen.nl", "http://localhost:3000");
     }
 
 }
