@@ -161,12 +161,12 @@ public class Migrator {
         }
     }
 
-    private final static Suit SUITCONVERTER[] = {
+    private static final Suit[] SUITCONVERTER = {
         Suit.Clubs, Suit.Hearts, Suit.Spades, Suit.Diamonds
     };
 
 
-    private Suit convertSuit(int i) {
+    private Suit convertSuit(final int i) {
         return SUITCONVERTER[i];
     }
 

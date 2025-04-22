@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface GameService {
 
-    Optional<Game> findById(final String gameId);
+    Optional<Game> findById(String gameId);
 
     List<Game> findAll();
 }
