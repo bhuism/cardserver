@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GameApi;
 import org.openapitools.api.GamesApi;
@@ -15,12 +16,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Slf4j
 public class GameController implements GameApi, GamesApi {
 
     private final GameService gameService;
 
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
+
+        log.info("getGame() gameID={} ", gameId);
+
         return gameService.findById(gameId)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
@@ -28,6 +33,7 @@ public class GameController implements GameApi, GamesApi {
 
     @Override
     public ResponseEntity<List<Game>> getGames() {
+        log.info("getGames()");
         return new ResponseEntity<>(gameService.findAll(), HttpStatus.OK);
     }
 
