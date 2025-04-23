@@ -12,6 +12,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +29,8 @@ public class GameServiceImpl implements GameService {
 
 
     @Override
-    public List<Game> findAll() {
-        return gameRepository.findAll()
-            .stream()
-            .map(GameServiceImpl::convert)
-            .toList();
+    public Set<String> findAll() {
+        return gameRepository.findAll().stream().map(nl.appsource.cardserver.model.Game::getId).collect(Collectors.toSet());
     }
 
 

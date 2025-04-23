@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -36,8 +36,9 @@ public class GameController implements GameApi, GamesApi {
         }
     }
 
+
     @Override
-    public ResponseEntity<List<Game>> getGames() {
+    public ResponseEntity<Set<String>> getGames() {
         final long start = System.currentTimeMillis();
         try {
             return new ResponseEntity<>(gameService.findAll(), HttpStatus.OK);
