@@ -24,17 +24,27 @@ public class GameController implements GameApi, GamesApi {
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
 
-        log.info("getGame() gameID={} ", gameId);
+        final long start = System.currentTimeMillis();
+        try {
 
-        return gameService.findById(gameId)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+            return gameService.findById(gameId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+
+        } finally {
+            log.info("getGame() gameID={} took {} ms", gameId, System.currentTimeMillis() - start);
+        }
     }
 
     @Override
     public ResponseEntity<List<Game>> getGames() {
-        log.info("getGames()");
-        return new ResponseEntity<>(gameService.findAll(), HttpStatus.OK);
+        final long start = System.currentTimeMillis();
+        try {
+            return new ResponseEntity<>(gameService.findAll(), HttpStatus.OK);
+        } finally {
+            log.info("getGames() took {} ms", System.currentTimeMillis() - start);
+        }
+
     }
 
 
