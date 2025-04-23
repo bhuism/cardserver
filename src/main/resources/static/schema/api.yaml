@@ -20,18 +20,20 @@ paths:
     get:
       operationId: getGame
       parameters:
-        - in: path
-          name: gameId
-          schema:
-            type: string
-          required: true
-          description: The Id of the Game
+        - $ref: "#/components/parameters/gameId"
       responses:
         "200":
           $ref: "#/components/responses/GameResponse"
       tags:
         - Game
 components:
+  parameters:
+    gameId:
+      name: gameId
+      in: path
+      schema:
+        type: string
+      required: true
   securitySchemes:
     openId:
       type: openIdConnect
