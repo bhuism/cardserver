@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.CardNr;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import org.openapitools.model.Game;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashSet;
@@ -30,7 +31,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Set<String> findAll() {
-        return gameRepository.findAll().stream().map(nl.appsource.cardserver.model.Game::getId).collect(Collectors.toSet());
+        return gameRepository.findAll(Pageable.ofSize(10)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(Collectors.toSet());
     }
 
 
