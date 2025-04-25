@@ -12,6 +12,7 @@ server:
         secure: true
         name: octopus
   forward-headers-strategy: framework
+  shutdown: graceful
 logging:
   level:
     ROOT: info
