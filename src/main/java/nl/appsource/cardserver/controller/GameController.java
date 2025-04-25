@@ -34,6 +34,11 @@ public class GameController implements GameApi, GamesApi {
                 .orElse(ResponseEntity.notFound().build());
 
         } finally {
+
+            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
+                log.info("{}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaders(headerName))
+            );
+
             log.info("{} getGame() gameID={} took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), gameId, System.currentTimeMillis() - start);
         }
     }
