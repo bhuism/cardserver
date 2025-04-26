@@ -139,7 +139,7 @@ public class WebSecurityConfig {
 
                     });
 
-                log.info("Successful request from: {}", luser);
+                // log.info("Successful request from: {}", luser);
 
                 return new JwtAuthenticationToken(jwt, authorities, principalClaimValue);
             }
