@@ -51,7 +51,7 @@ public class GameController implements GameApi, GamesApi {
         try {
             return new ResponseEntity<>(gameService.findAll(), HttpStatus.OK);
         } finally {
-            log.info("{} {} getGames() took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), SecurityContextHolder.getContext().getAuthentication().getName(), System.currentTimeMillis() - start);
+            log.info("{} {} getGames() took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), SecurityContextHolder.getContext().getAuthentication().getPrincipal(), System.currentTimeMillis() - start);
         }
 
     }
