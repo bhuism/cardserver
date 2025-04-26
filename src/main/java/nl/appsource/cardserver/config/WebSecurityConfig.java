@@ -16,7 +16,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -103,41 +102,44 @@ public class WebSecurityConfig {
                     throw new InvalidBearerTokenException("No email in JWT");
                 }
 
-                if (userRepository.findByEmail(email).isEmpty()) {
-                    log.error("Failed login for user: {}", email);
-                    throw new UsernameNotFoundException(email);
-                } else {
+                final User luser = userRepository
+                    .findByEmail(email)
+                    .orElseGet(() -> {
 
-                    if (jwt.getIssuer().getHost().endsWith("google.com")) {
+                        if (jwt.getIssuer().getHost().endsWith("google.com")) {
 
-                        final User user = new User();
+                            User user = new User();
 
-                        final String id = RAND.ints(28, 0, 62)
-                            .mapToObj(i -> "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".charAt(i) + "")
-                            .collect(joining());
+                            final String id = RAND.ints(28, 0, 62)
+                                .mapToObj(i -> "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".charAt(i) + "")
+                                .collect(joining());
 
-                        user.setId(id);
+                            user.setId(id);
 
-                        final Instant now = Instant.now();
+                            final Instant now = Instant.now();
 
-                        user.setCreated(now);
-                        user.setLastLogin(now);
-                        user.setUpdated(now);
-                        user.setProviderId("google.com");
-                        user.setEmail(jwt.getClaimAsString("email"));
-                        user.setPhotoURL(jwt.getClaimAsString("picture"));
-                        user.setName(jwt.getClaimAsString("name"));
-                        user.setDisplayName(jwt.getClaimAsString("name"));
+                            user.setCreated(now);
+                            user.setLastLogin(now);
+                            user.setUpdated(now);
+                            user.setProviderId("google.com");
+                            user.setEmail(jwt.getClaimAsString("email"));
+                            user.setPhotoURL(jwt.getClaimAsString("picture"));
+                            user.setName(jwt.getClaimAsString("name"));
+                            user.setDisplayName(jwt.getClaimAsString("name"));
 
+                            user = userRepository.save(user);
 
-                        userRepository.save(user);
+                            log.info("Created a new user: {}", user);
 
-                        log.info("Created a new user: {}", user);
+                            return user;
 
-                    } else {
-                        throw new IllegalArgumentException("Unsupported issuer " + jwt.getIssuer());
-                    }
-                }
+                        } else {
+                            throw new IllegalArgumentException("Unsupported issuer " + jwt.getIssuer());
+                        }
+
+                    });
+
+                log.info("Successful request from: {}", luser);
 
                 return new JwtAuthenticationToken(jwt, authorities, principalClaimValue);
             }
