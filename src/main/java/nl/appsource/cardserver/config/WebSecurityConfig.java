@@ -3,6 +3,7 @@ package nl.appsource.cardserver.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -103,6 +105,29 @@ public class WebSecurityConfig {
                 if (userRepository.findByEmail(email).isEmpty()) {
                     log.error("Failed login for user: {}", email);
                     throw new UsernameNotFoundException(email);
+                } else {
+
+                    if (jwt.getIssuer().getHost().endsWith("google.com")) {
+
+                        final User user = new User();
+                        final Instant now = Instant.now();
+
+                        user.setCreated(now);
+                        user.setLastLogin(now);
+                        user.setUpdated(now);
+                        user.setProviderId("google.com");
+                        user.setEmail(jwt.getClaimAsString("email"));
+                        user.setPhotoURL(jwt.getClaimAsString("picture"));
+                        user.setName(jwt.getClaimAsString("name"));
+                        user.setDisplayName(jwt.getClaimAsString("name"));
+
+                        userRepository.save(user);
+
+                        log.info("Created a new user: {}", user);
+
+                    } else {
+                        throw new IllegalArgumentException("Unsupported issuer " + jwt.getIssuer());
+                    }
                 }
 
                 return new JwtAuthenticationToken(jwt, authorities, principalClaimValue);
