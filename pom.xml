@@ -195,29 +195,8 @@
                             <artifactId>lombok</artifactId>
                         </path>
                     </annotationProcessorPaths>
-
-                    <!-- Recommended: Some IDE's might require this configuration to include generated sources for IDE usage -->
-                    <!--                    <generatedTestSourcesDirectory>target/generated-test-sources</generatedTestSourcesDirectory>-->
-                    <!--                    <generatedSourcesDirectory>target/generated-sources</generatedSourcesDirectory>-->
-
                 </configuration>
             </plugin>
-            <!--            <plugin>-->
-            <!--                <groupId>org.jsonschema2pojo</groupId>-->
-            <!--                <artifactId>jsonschema2pojo-maven-plugin</artifactId>-->
-            <!--                <version>1.2.2</version>-->
-            <!--                <configuration>-->
-            <!--                    <sourceDirectory>${basedir}/src/main/resources/static/schema</sourceDirectory>-->
-            <!--                    <targetPackage>nl.appsource.cardserver.generated.types</targetPackage>-->
-            <!--                </configuration>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <goals>-->
-            <!--                            <goal>generate</goal>-->
-            <!--                        </goals>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>

@@ -102,7 +102,7 @@ public class WebSecurityConfig {
                     throw new InvalidBearerTokenException("No email in JWT");
                 }
 
-                final User luser = userRepository
+                userRepository
                     .findByEmail(email)
                     .orElseGet(() -> {
 
@@ -138,8 +138,6 @@ public class WebSecurityConfig {
                         }
 
                     });
-
-                // log.info("Successful request from: {}", luser);
 
                 return new JwtAuthenticationToken(jwt, authorities, principalClaimValue);
             }
