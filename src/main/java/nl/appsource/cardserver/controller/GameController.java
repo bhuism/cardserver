@@ -9,6 +9,7 @@ import org.openapitools.model.Game;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -40,7 +41,11 @@ public class GameController implements GameApi, GamesApi {
 //                log.info("{}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
 //            );
 
-            log.info("{} {} getGame() gameID={} took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), SecurityContextHolder.getContext().getAuthentication().getName(), SecurityContextHolder.getContext().getAuthentication().getPrincipal(), System.currentTimeMillis() - start);
+            final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+            final Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            final String email = jwt.getClaimAsString("email");
+
+            log.info("{} {} getGame({}) took {} ms", remoteAddr, email, gameId, System.currentTimeMillis() - start);
         }
     }
 
@@ -51,7 +56,12 @@ public class GameController implements GameApi, GamesApi {
         try {
             return new ResponseEntity<>(gameService.findAll(), HttpStatus.OK);
         } finally {
-            log.info("{} {} getGames() took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), SecurityContextHolder.getContext().getAuthentication().getPrincipal(), System.currentTimeMillis() - start);
+
+            final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+            final Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            final String email = jwt.getClaimAsString("email");
+
+            log.info("{} {} getGames() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
         }
 
     }
