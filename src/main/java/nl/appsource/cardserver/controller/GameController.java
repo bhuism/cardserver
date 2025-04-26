@@ -40,7 +40,7 @@ public class GameController implements GameApi, GamesApi {
 //                log.info("{}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
 //            );
 
-            log.info("{} {} getGame() gameID={} took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), SecurityContextHolder.getContext().getAuthentication().getName(), System.currentTimeMillis() - start);
+            log.info("{} {} getGame() gameID={} took {} ms", ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr(), SecurityContextHolder.getContext().getAuthentication().getName(), SecurityContextHolder.getContext().getAuthentication().getPrincipal(), System.currentTimeMillis() - start);
         }
     }
 
