@@ -29,13 +29,16 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.joining;
 import static org.springframework.util.StringUtils.hasText;
 
 @Configuration
@@ -43,6 +46,8 @@ import static org.springframework.util.StringUtils.hasText;
 @RequiredArgsConstructor
 @Slf4j
 public class WebSecurityConfig {
+
+    private static final Random RAND = new SecureRandom();
 
     private final Environment environment;
 
@@ -69,11 +74,7 @@ public class WebSecurityConfig {
             ).logout(LogoutConfigurer::permitAll);
 
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
-            http.oauth2ResourceServer(oauth2 -> {
-                oauth2.jwt(jwt -> {
-                    jwt.jwtAuthenticationConverter(jwtAuthenticationConverter());
-                });
-            });
+            http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
         }
 
 
@@ -110,6 +111,13 @@ public class WebSecurityConfig {
                     if (jwt.getIssuer().getHost().endsWith("google.com")) {
 
                         final User user = new User();
+
+                        final String id = RAND.ints(28, 0, 62)
+                            .mapToObj(i -> "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".charAt(i) + "")
+                            .collect(joining());
+
+                        user.setId(id);
+
                         final Instant now = Instant.now();
 
                         user.setCreated(now);
@@ -120,6 +128,7 @@ public class WebSecurityConfig {
                         user.setPhotoURL(jwt.getClaimAsString("picture"));
                         user.setName(jwt.getClaimAsString("name"));
                         user.setDisplayName(jwt.getClaimAsString("name"));
+
 
                         userRepository.save(user);
 
