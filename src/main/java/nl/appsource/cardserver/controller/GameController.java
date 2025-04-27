@@ -31,14 +31,12 @@ public class GameController implements GameApi, GamesApi {
         final long start = System.currentTimeMillis();
         try {
 
-            return gameService.findById(gameId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+            return gameService.findById(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
         } finally {
 
 //            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-//                log.info("{}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
+//                log.info("headers {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
 //            );
 
             final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
@@ -60,6 +58,10 @@ public class GameController implements GameApi, GamesApi {
             final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
             final Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             final String email = jwt.getClaimAsString("email");
+
+            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
+                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
+            );
 
             log.info("{} {} getGames() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
         }
