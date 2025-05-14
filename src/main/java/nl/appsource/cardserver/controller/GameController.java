@@ -59,9 +59,9 @@ public class GameController implements GameApi, GamesApi {
             final Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             final String email = jwt.getClaimAsString("email");
 
-            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
-            );
+//            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
+//                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
+//            );
 
             log.info("{} {} getGames() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
         }
