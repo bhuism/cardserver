@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.config;
 
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -11,16 +10,13 @@ import org.springframework.core.env.Profiles;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import static nl.appsource.cardserver.config.WebSecurityConfig.Authorities.ROLE_USER;
 
 @Configuration
 @EnableWebSecurity
@@ -30,14 +26,7 @@ public class WebSecurityConfig {
 
     private final Environment environment;
 
-    private final CardServerProperties cardServerProperties;
-
-    @RequiredArgsConstructor
-    @Getter
-    public enum Authorities implements GrantedAuthority {
-        ROLE_USER("ROLE_USER");
-        private final String authority;
-    }
+    private final ApiKeyAuthFilter apiKeyAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
@@ -51,7 +40,9 @@ public class WebSecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable);
 
-//        http
+        http.sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        //        http
 //            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()));
 
         http
@@ -59,36 +50,13 @@ public class WebSecurityConfig {
                 .requestMatchers(Stream.concat(Set.of("/", "/websocket/**", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                 .permitAll()
                 .anyRequest().authenticated()
-            ).addFilterBefore(apiKeyAuthFilter(), UsernamePasswordAuthenticationFilter.class);
-
-//        if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
-//            http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
-//        }
-
+            ).addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    @Bean
-    public ApiKeyAuthFilter apiKeyAuthFilter() {
-        final ApiKeyAuthFilter filter = new ApiKeyAuthFilter(new AntPathRequestMatcher("/api/**"));
-        filter.setAuthenticationManager(authentication -> {
-            final String apiKey = (String) authentication.getPrincipal();
-            final String apiSecret = (String) authentication.getCredentials();
 
-            if (cardServerProperties.getApiKey().equals(apiKey) && cardServerProperties.getApiSecret().equals(apiSecret)) {
-                return new ApiKeyAuthenticationToken(apiKey, apiSecret, Collections.singletonList(ROLE_USER));
-            } else {
-                authentication.setAuthenticated(false);
-            }
-
-            return authentication;
-        });
-        return filter;
-    }
-
-
-//    public CorsConfigurationSource getCorsConfigurationSource() {
+    //    public CorsConfigurationSource getCorsConfigurationSource() {
 //        final CorsConfiguration configuration = new CorsConfiguration();
 //        configuration.setAllowCredentials(true);
 //        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://www.klaversjassen.nl"));

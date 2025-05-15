@@ -17,16 +17,10 @@ import org.springframework.util.StringUtils;
 @Accessors(chain = true)
 public final class CardServerProperties {
 
-    private String apiKey;
-
     private String apiSecret;
 
     @PostConstruct
     public void validate() {
-
-        if (!StringUtils.hasText(apiKey)) {
-            throw new RuntimeException("Please set a apiKey");
-        }
         if (!StringUtils.hasText(apiSecret)) {
             throw new RuntimeException("Please set a apiSecret");
         }

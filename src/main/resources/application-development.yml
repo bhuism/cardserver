@@ -9,6 +9,7 @@ server:
 logging:
   level:
     ROOT: info
+    org.springframework.security: info
     nl.appsource: debug
 management:
   endpoints:
@@ -30,7 +31,6 @@ cardserver:
     password: killer
     bucket-name: cardserver
   auth:
-    api-key: test456
-    api-secret: test123
+    api-secret: killer
 
 

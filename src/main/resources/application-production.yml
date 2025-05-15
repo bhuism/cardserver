@@ -13,7 +13,6 @@ logging:
 
 cardserver:
   auth:
-    api-key: changeme
     api-secret: changeme
   couchbase:
     connection-string: couchbase://couchbase.couchbase
