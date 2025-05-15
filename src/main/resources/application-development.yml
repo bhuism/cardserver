@@ -29,6 +29,8 @@ cardserver:
     username: root
     password: killer
     bucket-name: cardserver
-
+  auth:
+    api-key: test456
+    api-secret: test123
 
 

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
     <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
         <Or>
             <Package name="~\.generated\..*"/>
             <Bug pattern="EI_EXPOSE_REP"/>
             <Bug pattern="EI_EXPOSE_REP2"/>
             <Bug pattern="ES_COMPARING_STRINGS_WITH_EQ"/>
-            <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
-            <Bug pattern="SE_BAD_FIELD" />
+            <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+            <Bug pattern="SE_BAD_FIELD"/>
         </Or>
     </Match>
     <Match>
@@ -16,8 +19,8 @@
             <Bug pattern="EI_EXPOSE_REP"/>
             <Bug pattern="EI_EXPOSE_REP2"/>
             <Bug pattern="ES_COMPARING_STRINGS_WITH_EQ"/>
-            <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
-            <Bug pattern="SE_BAD_FIELD" />
+            <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+            <Bug pattern="SE_BAD_FIELD"/>
         </Or>
     </Match>
 </FindBugsFilter>

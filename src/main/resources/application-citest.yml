@@ -25,4 +25,7 @@ spring:
 #  couchbase:
 #    connection-string: couchbase://localhost/cardserver
 #    username: root
-#    password: killer
+cardserver:
+  auth:
+    api-key: test456
+    api-secret: test123

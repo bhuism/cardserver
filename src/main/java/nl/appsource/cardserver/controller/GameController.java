@@ -8,8 +8,6 @@ import org.openapitools.api.GamesApi;
 import org.openapitools.model.Game;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -40,8 +38,7 @@ public class GameController implements GameApi, GamesApi {
 //            );
 
             final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-            final Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            final String email = jwt.getClaimAsString("email");
+            final String email = "empty";
 
             log.info("{} {} getGame({}) took {} ms", remoteAddr, email, gameId, System.currentTimeMillis() - start);
         }
@@ -56,8 +53,7 @@ public class GameController implements GameApi, GamesApi {
         } finally {
 
             final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-            final Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            final String email = jwt.getClaimAsString("email");
+            final String email = "empty";
 
 //            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
 //                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
