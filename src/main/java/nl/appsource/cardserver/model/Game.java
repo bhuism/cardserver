@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
+import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
@@ -21,6 +23,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@CompositeQueryIndex(fields = {"id", "creator"})
 public class Game {
 
     @Id
@@ -35,6 +38,7 @@ public class Game {
 
     @NotNull
     @Field
+    @QueryIndexed
     private String creator;
 
     @NotNull
