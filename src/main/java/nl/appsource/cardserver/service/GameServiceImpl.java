@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toSet;
 
 @Service
 @RequiredArgsConstructor
@@ -31,9 +32,14 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Set<String> findAll() {
-        return gameRepository.findAll(Pageable.ofSize(10)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(Collectors.toSet());
+        return gameRepository.findAll(Pageable.ofSize(10)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 
+    @Override
+    public Set<String> findByCreator(final String creator) {
+        //return gameRepository.findIdByCreator(creator).stream().map(IdOnly::getId).collect(toSet());
+        return gameRepository.findAll().stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
+    }
 
     public static Game convert(final nl.appsource.cardserver.model.Game source) {
 

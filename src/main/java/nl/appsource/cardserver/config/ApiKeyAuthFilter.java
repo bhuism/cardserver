@@ -36,10 +36,10 @@ public class ApiKeyAuthFilter extends GenericFilterBean {
             final String apiKey = ((HttpServletRequest) request).getHeader(API_KEY_HEADER);
             final String apiSecret = ((HttpServletRequest) request).getHeader(API_SECRET_HEADER);
 
-//        request.getHeaderNames().asIterator().forEachRemaining(headerName -> {
-//            final String value = request.getHeader(headerName);
-//            log.info("header: {}={}", headerName, value);
-//        });
+//            ((HttpServletRequest) request).getHeaderNames().asIterator().forEachRemaining(headerName -> {
+//                final String value = ((HttpServletRequest) request).getHeader(headerName);
+//                log.info("header: {}={}", headerName, value);
+//            });
 
             if (hasText(apiKey) && hasText(apiSecret)) {
                 if (cardServerProperties.getApiSecret().equals(apiSecret)) {

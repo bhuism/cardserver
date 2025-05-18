@@ -10,4 +10,6 @@ public interface GameService {
     Optional<Game> findById(String gameId);
 
     Set<String> findAll();
+
+    Set<String> findByCreator(String creator);
 }

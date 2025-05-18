@@ -51,21 +51,27 @@ public class GameController implements GameApi, GamesApi {
     public ResponseEntity<Set<String>> getGames() {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+        final String principal = "" + authentication.getPrincipal();
+
+        log.info("split1: " + principal.split("\\|")[0]);
+        log.info("split2: " + principal.split("\\|")[1]);
+
+        final String creator = principal.split("\\|")[1];
+
 
         final long start = System.currentTimeMillis();
         try {
-            final Set<String> games = gameService.findAll();
+            final Set<String> games = gameService.findByCreator(creator);
             return new ResponseEntity<>(games, HttpStatus.OK);
         } finally {
 
-            final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-            final String email = "" + authentication.getPrincipal();
 
 //            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
 //                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
 //            );
 
-            log.info("{} {} getGames() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
+            log.info("{} {} getGames() took {} ms", remoteAddr, principal, System.currentTimeMillis() - start);
         }
 
     }
