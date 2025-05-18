@@ -15,12 +15,12 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     private final String apiKey;
     private final String apiSecret;
 
-    public ApiKeyAuthenticationToken(final String apiKeyArg, final String apiSecretArg) {
-        super(null);
-        this.apiKey = apiKeyArg;
-        this.apiSecret = apiSecretArg;
-        setAuthenticated(false);
-    }
+//    public ApiKeyAuthenticationToken(final String apiKeyArg, final String apiSecretArg) {
+//        super(null);
+//        this.apiKey = apiKeyArg;
+//        this.apiSecret = apiSecretArg;
+//        setAuthenticated(false);
+//    }
 
     public ApiKeyAuthenticationToken(final String apiKeyArg, final String apiSecretArg, final Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
