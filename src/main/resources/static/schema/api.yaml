@@ -47,9 +47,18 @@ components:
           format: email
         providerId:
           type: string
+        name:
+          type: string
+        displayName:
+          type: string
+        photoURL:
+          type: string
       required:
         - email
         - providerId
+        - name
+        - displayName
+        - photoURL
     loginResponse:
       type: object
       properties:

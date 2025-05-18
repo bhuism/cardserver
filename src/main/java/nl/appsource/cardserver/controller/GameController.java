@@ -56,15 +56,9 @@ public class GameController implements GameApi, GamesApi {
         final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
         final String principal = "" + authentication.getPrincipal();
 
-        log.info("split1: " + principal.split("\\|")[0]);
-        log.info("split2: " + principal.split("\\|")[1]);
-
-        final String creator = principal.split("\\|")[1];
-
-
         final long start = System.currentTimeMillis();
         try {
-            final Set<String> games = gameService.findByCreator(creator);
+            final Set<String> games = gameService.findByCreator(principal);
             return new ResponseEntity<>(games, HttpStatus.OK);
         } finally {
 

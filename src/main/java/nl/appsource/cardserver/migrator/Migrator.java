@@ -47,7 +47,7 @@ public class Migrator {
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
         loadUser("users.json");
-        loadGames("games.json");
+//        loadGames("games.json");
     }
 
     private void loadGames(final String fileName) throws IOException {
@@ -167,7 +167,6 @@ public class Migrator {
         Suit.Clubs, Suit.Hearts, Suit.Spades, Suit.Diamonds
     };
 
-
     private Suit convertSuit(final int i) {
         return SUITCONVERTER[i];
     }
@@ -194,7 +193,7 @@ public class Migrator {
 
                 final String id = userNode.getKey();
 
-                log.info("User {} {}found", id, userRepository.existsById(id) ? "" : " not");
+//                log.info("User {} {}found", id, userRepository.existsById(id) ? "" : " not");
 
                 final User user = new User();
 

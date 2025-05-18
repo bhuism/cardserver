@@ -9,6 +9,6 @@ import java.util.Set;
 @Repository
 public interface GameRepository extends CouchbaseRepository<Game, String> {
 
-    Set<IdOnly> findIdByCreator(final String creator);
+    Set<IdOnly> findIdByCreator(String creator);
 
 }
