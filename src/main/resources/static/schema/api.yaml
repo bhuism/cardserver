@@ -8,6 +8,17 @@ servers:
     description: Klavers Jassen
 
 paths:
+  /login:
+    post:
+      operationId: login
+      requestBody:
+        $ref: '#/components/requestBodies/LoginRequest'
+      responses:
+        "200":
+          $ref: "#/components/responses/LoginResponse"
+      tags:
+        - Login
+
   /games:
     get:
       operationId: getGames
@@ -27,6 +38,25 @@ paths:
       tags:
         - Game
 components:
+  schemas:
+    loginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        providerId:
+          type: string
+      required:
+        - email
+        - providerId
+    loginResponse:
+      type: object
+      properties:
+        uid:
+          type: string
+      required:
+        - uid
   parameters:
     gameId:
       name: gameId
@@ -40,6 +70,13 @@ components:
       scheme: bearer
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+  requestBodies:
+    LoginRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/loginRequest'
   responses:
     GameResponse:
       description: fetch a game
@@ -56,6 +93,12 @@ components:
             items:
               type: string
             uniqueItems: true
+    LoginResponse:
+      description: login response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/loginResponse"
 security:
   - bearerAuth:
       - openid
