@@ -31,7 +31,9 @@ public class GameController implements GameApi, GamesApi {
         final long start = System.currentTimeMillis();
         try {
 
-            return gameService.findById(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+            return gameService.findById(gameId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
 
         } finally {
 

@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.CardNr;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.IdOnly;
 import org.openapitools.model.Game;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,6 @@ import static java.util.stream.Collectors.toSet;
 @Service
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
-
     private final GameRepository gameRepository;
 
     @Override
@@ -37,8 +37,8 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Set<String> findByCreator(final String creator) {
-        //return gameRepository.findIdByCreator(creator).stream().map(IdOnly::getId).collect(toSet());
-        return gameRepository.findAll().stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
+        return gameRepository.findIdByCreator(creator).stream().map(IdOnly::getId).collect(toSet());
+//        return gameRepository.findAll().stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 
     public static Game convert(final nl.appsource.cardserver.model.Game source) {
