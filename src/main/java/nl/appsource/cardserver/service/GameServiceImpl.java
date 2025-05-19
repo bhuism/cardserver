@@ -3,6 +3,7 @@ package nl.appsource.cardserver.service;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.CardNr;
+import nl.appsource.cardserver.model.QGame;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import org.openapitools.model.Game;
@@ -24,10 +25,8 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Optional<Game> findById(final String gameId) {
-        return gameRepository.findById(gameId)
-            .map(GameServiceImpl::convert);
+        return gameRepository.findOne(QGame.game.id.eq(gameId)).map(GameServiceImpl::convert);
     }
-
 
     @Override
     public Set<String> findAll() {
