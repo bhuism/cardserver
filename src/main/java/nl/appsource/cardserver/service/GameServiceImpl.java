@@ -36,7 +36,8 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Set<String> findByCreator(final String creator) {
-        return gameRepository.findIdByCreator(creator);
+
+        return gameRepository.findIdByEmail(creator);
 //        return gameRepository.findAll(QGame.game.creator.eq(creator)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 

@@ -12,7 +12,10 @@ import java.util.Set;
 @Repository
 public interface GameRepository extends CouchbaseRepository<Game, String>, ListQuerydslPredicateExecutor<Game> {
 
-    @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND creator = $1")
-    Set<String> findIdByCreator(@Param("creator") String creator);
+//    @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND creator = $creator")
+//    Set<String> findIdByCreator(@Param("creator") String creator);
+
+    @Query("SELECT META(g).id FROM #{#n1ql.bucket} u JOIN #{#n1ql.bucket} g ON g.creator = META(u).id WHERE g._class = 'nl.appsource.cardserver.model.Game' AND u._class = 'nl.appsource.cardserver.model.User' AND u.email= $email")
+    Set<String> findIdByEmail(@Param("email") String email);
 
 }
