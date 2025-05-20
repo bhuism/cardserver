@@ -43,21 +43,25 @@ public class WebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(final WebSocketSession session, final TextMessage message) throws Exception {
         final String request = message.getPayload();
 
-        log.info("Server session: {},  #session: {}, payload: {}", session.getId(), sessions.size(), request);
+//        log.info("Server session: {},  #session: {}, payload: {}", session.getId(), sessions.size(), request);
 
         if ("syn".equals(request)) {
             session.sendMessage(new TextMessage("ack"));
         } else if ("ack".equals(request)) {
-            log.debug("ack");
+            log.trace("ack");
         } else {
 
+
+            log.info("ws: received  {}", request);
             // final JsonNode jsonNode = objectMapper.readTree(request);
 
             // log.info("json: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode));
 
             final ObjectNode rootNode = objectMapper.createObjectNode();
             rootNode.put("key", UUID.randomUUID().toString());
-//            log.info("sending: {}", objectMapper.writeValueAsString(rootNode));
+
+            log.info("ws: sending: {}", objectMapper.writeValueAsString(rootNode));
+
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(rootNode)));
         }
     }
