@@ -174,9 +174,9 @@
                                 <skipDefaultInterface>true</skipDefaultInterface>
                                 <useBeanValidation>false</useBeanValidation>
                             </configOptions>
-<!--                            <typeMappings>-->
-<!--                                DateTime=Instant-->
-<!--                            </typeMappings>-->
+                            <typeMappings>
+                                DateTime=Instant
+                            </typeMappings>
                             <importMappings>
                                 <importMapping>Instant=java.time.Instant</importMapping>
                             </importMappings>
