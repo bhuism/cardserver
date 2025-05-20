@@ -9,24 +9,24 @@ server:
 logging:
   level:
     ROOT: info
-    org.springframework.security: info
+#    org.springframework.security: info
     nl.appsource: debug
 management:
   endpoints:
     web:
       exposure:
         include: '*'
-#spring:
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          issuer-uri: https://accounts.google.com
-#          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://accounts.google.com
+          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
 
 cardserver:
   couchbase:
-    connection-string: couchbase://192.168.1.86
+    connection-string: couchbase://127.0.0.1
     username: root
     password: killer
     bucket-name: cardserver

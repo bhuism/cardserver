@@ -3,11 +3,9 @@ package nl.appsource.cardserver.service;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.CardNr;
-import nl.appsource.cardserver.model.QGame;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import org.openapitools.model.Game;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashSet;
@@ -16,8 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static java.util.stream.Collectors.toSet;
-
 @Service
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
@@ -25,13 +21,14 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Optional<Game> findById(final String gameId) {
-        return gameRepository.findOne(QGame.game.id.eq(gameId)).map(GameServiceImpl::convert);
+//        return gameRepository.findOne(QGame.game.id.eq(gameId)).map(GameServiceImpl::convert);
+        return gameRepository.findById(gameId).map(GameServiceImpl::convert);
     }
 
-    @Override
-    public Set<String> findAll() {
-        return gameRepository.findAll(Pageable.ofSize(10)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
-    }
+//    @Override
+//    public Set<String> findAll() {
+//        return gameRepository.findAll(Pageable.ofSize(10)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
+//    }
 
     @Override
     public Set<String> findByCreator(final String creator) {
@@ -81,18 +78,18 @@ public class GameServiceImpl implements GameService {
         CardNr.Seven, org.openapitools.model.CardNr.SEVEN
     );
 
-    public static final org.openapitools.model.CardNr convert(final CardNr source) {
+    public static org.openapitools.model.CardNr convert(final CardNr source) {
         return Optional.ofNullable(source).map(CARDCONVERTER::get).orElse(null);
     }
 
-    public static final Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
+    public static Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
         Suit.Clubs, org.openapitools.model.Suit.CLUBS,
         Suit.Hearts, org.openapitools.model.Suit.HEARTS,
         Suit.Spades, org.openapitools.model.Suit.SPADES,
         Suit.Diamonds, org.openapitools.model.Suit.DIAMONDS);
 
 
-    public static final org.openapitools.model.Suit convert(final Suit trump) {
+    public static org.openapitools.model.Suit convert(final Suit trump) {
         return Optional.ofNullable(trump).map(SUITCONVERTER::get).orElse(null);
     }
 

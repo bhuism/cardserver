@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -28,6 +29,12 @@ public class GameController implements GameApi, GamesApi {
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
 
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+
+        final Jwt principal = (Jwt) authentication.getPrincipal();
+        final String email = principal.getClaims().get("email").toString();
+
         final long start = System.currentTimeMillis();
         try {
 
@@ -41,9 +48,6 @@ public class GameController implements GameApi, GamesApi {
 //                log.info("headers {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
 //            );
 
-            final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-            final String email = "empty";
-
             log.info("{} {} getGame({}) took {} ms", remoteAddr, email, gameId, System.currentTimeMillis() - start);
         }
     }
@@ -54,11 +58,13 @@ public class GameController implements GameApi, GamesApi {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-        final String principal = "" + authentication.getPrincipal();
+
+        final Jwt principal = (Jwt) authentication.getPrincipal();
+        final String email = principal.getClaims().get("email").toString();
 
         final long start = System.currentTimeMillis();
         try {
-            final Set<String> games = gameService.findByCreator(principal);
+            final Set<String> games = gameService.findByCreator(email);
             return new ResponseEntity<>(games, HttpStatus.OK);
         } finally {
 
@@ -67,7 +73,7 @@ public class GameController implements GameApi, GamesApi {
 //                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
 //            );
 
-            log.info("{} {} getGames() took {} ms", remoteAddr, principal, System.currentTimeMillis() - start);
+            log.info("{} {} getGames() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
         }
 
     }
