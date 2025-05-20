@@ -67,7 +67,7 @@ public class GameServiceImpl implements GameService {
         return result;
     }
 
-    public static final Map<CardNr, org.openapitools.model.CardNr> CARDCONVERTER = Map.of(
+    private static final Map<CardNr, org.openapitools.model.CardNr> CARDCONVERTER = Map.of(
         CardNr.Ace, org.openapitools.model.CardNr.ACE,
         CardNr.King, org.openapitools.model.CardNr.KING,
         CardNr.Queen, org.openapitools.model.CardNr.QUEEN,
@@ -82,7 +82,7 @@ public class GameServiceImpl implements GameService {
         return Optional.ofNullable(source).map(CARDCONVERTER::get).orElse(null);
     }
 
-    public static Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
+    private static final Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
         Suit.Clubs, org.openapitools.model.Suit.CLUBS,
         Suit.Hearts, org.openapitools.model.Suit.HEARTS,
         Suit.Spades, org.openapitools.model.Suit.SPADES,
