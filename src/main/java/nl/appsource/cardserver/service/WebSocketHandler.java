@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -23,7 +24,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleTransportError(final WebSocketSession session, final Throwable throwable) {
-        log.error("error occured at sender " + session, throwable);
+        log.error("Error occured at sender " + session);
     }
 
     @Override
@@ -37,6 +38,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
         log.info("Connected return null; " + session.getId());
         sessions.add(session);
         session.sendMessage(new TextMessage("syn"));
+    }
+
+    @Override
+    protected void handlePongMessage(final WebSocketSession session, final PongMessage message) throws Exception {
+        super.handlePongMessage(session, message);
+        log.info("Got Pong message " + message.getPayload());
     }
 
     @Override
