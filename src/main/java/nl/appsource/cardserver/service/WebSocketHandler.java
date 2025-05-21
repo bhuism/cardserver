@@ -29,13 +29,13 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(final WebSocketSession session, final CloseStatus status) {
-        log.info(String.format("Session %s closed because of %s", session.getId(), status.getReason()));
+        log.info("Session {} closed because of {}", session.getId(), status.getReason());
         sessions.remove(session);
     }
 
     @Override
     public void afterConnectionEstablished(final WebSocketSession session) throws Exception {
-        log.info("Connected return null; " + session.getId());
+        log.info("New session, " + session.getId());
         sessions.add(session);
         session.sendMessage(new TextMessage("syn"));
     }
@@ -43,7 +43,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handlePongMessage(final WebSocketSession session, final PongMessage message) throws Exception {
         super.handlePongMessage(session, message);
-        log.info("Got Pong message " + message.getPayload());
+        log.info("Got Pong message {}", message.getPayload());
     }
 
     @Override
@@ -53,11 +53,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
 //        log.info("Server session: {},  #session: {}, payload: {}", session.getId(), sessions.size(), request);
 
         if ("syn".equals(request)) {
+            log.info("Got SYN, ACKing, {}", session.getId());
             session.sendMessage(new TextMessage("ack"));
         } else if ("ack".equals(request)) {
-            log.trace("ack");
+            log.info("Got ACK, {}", session.getId());
         } else {
-
 
             log.info("ws: received  {}", request);
             // final JsonNode jsonNode = objectMapper.readTree(request);
