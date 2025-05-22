@@ -63,6 +63,7 @@ components:
         - updated
         - creator
         - dealer
+        - playerCard
         - ended
         - players
         - turns
