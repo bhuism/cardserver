@@ -6,13 +6,16 @@ import nl.appsource.cardserver.model.CardNr;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import org.openapitools.model.Game;
+import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +49,16 @@ public class GameServiceImpl implements GameService {
         target.setId(source.getId());
         target.setCreator(source.getCreator());
         target.setDealer(source.getDealer());
+        target.setPlayerCard(source.getPlayerCard().entrySet().stream().map(cardIntegerEntry -> {
+
+            final GamePlayerCardInner gamePlayerCardInner = new GamePlayerCardInner();
+
+            gamePlayerCardInner.setCard(convert(cardIntegerEntry.getKey()));
+            gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
+
+            return gamePlayerCardInner;
+
+        }).collect(Collectors.toCollection(ArrayList::new)));
         target.setElder(Optional.ofNullable(source.getElder()));
         target.setEnded(source.getEnded());
         target.setPlayers(source.getPlayers());

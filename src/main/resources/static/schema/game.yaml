@@ -18,6 +18,22 @@ components:
           type: integer
           minimum: 0
           maximum: 3
+        playerCard:
+          type: array
+          items:
+            type: object
+            properties:
+              card:
+                $ref: '#/components/schemas/Card'
+              player:
+                type: integer
+                minimum: 0
+                maximum: 3
+            required:
+              - card
+              - player
+            minItems: 0
+            maxItems: 32
         elder:
           type: integer
           minimum: 0
