@@ -3,7 +3,6 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.GameService;
-import org.openapitools.api.GameApi;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.Game;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,7 @@ import java.util.Set;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Slf4j
-public class GameController implements GameApi, GamesApi {
+public class GameController implements GamesApi {
 
     private final GameService gameService;
 
@@ -38,9 +37,7 @@ public class GameController implements GameApi, GamesApi {
         final long start = System.currentTimeMillis();
         try {
 
-            return gameService.findById(gameId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+            return gameService.findById(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
         } finally {
 

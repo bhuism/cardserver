@@ -1,0 +1,42 @@
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the test
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+        invites:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        lastLogin:
+          type: string
+          format: date-time
+        name:
+          type: string
+        photoURL:
+          type: string
+        providerId:
+          type: string
+      required:
+        - id
+        - created
+        - updated
+        - displayName
+        - email
+        - name
+        - providerId
+        - photoURL

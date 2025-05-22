@@ -218,7 +218,7 @@ public class Migrator {
                             break;
                         case "lastLogin":
                             final String lastLogin = fieldValue.get(TIME).textValue();
-                            user.setLastLogin(Instant.parse(lastLogin));
+                            user.setLastLogin(Optional.ofNullable(lastLogin).map(Instant::parse));
                             break;
                         case "displayName":
                             user.setDisplayName(fieldValue.textValue());

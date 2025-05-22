@@ -8,17 +8,16 @@ servers:
     description: Klavers Jassen
 
 paths:
-  /login:
-    post:
-      operationId: login
-      requestBody:
-        $ref: '#/components/requestBodies/LoginRequest'
-      responses:
-        "200":
-          $ref: "#/components/responses/LoginResponse"
-      tags:
-        - Login
-
+#  /login:
+#    post:
+#      operationId: login
+#      requestBody:
+#        $ref: '#/components/requestBodies/LoginRequest'
+#      responses:
+#        "200":
+#          $ref: "#/components/responses/LoginResponse"
+#      tags:
+#        - Login
   /games:
     get:
       operationId: getGames
@@ -27,7 +26,7 @@ paths:
           $ref: "#/components/responses/GamesResponse"
       tags:
         - Game
-  /game/{gameId}:
+  /games/{gameId}:
     get:
       operationId: getGame
       parameters:
@@ -37,38 +36,54 @@ paths:
           $ref: "#/components/responses/GameResponse"
       tags:
         - Game
+  /users/{userId}:
+    get:
+      operationId: getUser
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
+      tags:
+        - Game
 components:
-  schemas:
-    loginRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        providerId:
-          type: string
-        name:
-          type: string
-        displayName:
-          type: string
-        photoURL:
-          type: string
-      required:
-        - email
-        - providerId
-        - name
-        - displayName
-        - photoURL
-    loginResponse:
-      type: object
-      properties:
-        uid:
-          type: string
-      required:
-        - uid
+#  schemas:
+#    loginRequest:
+#      type: object
+#      properties:
+#        email:
+#          type: string
+#          format: email
+#        providerId:
+#          type: string
+#        name:
+#          type: string
+#        displayName:
+#          type: string
+#        photoURL:
+#          type: string
+#      required:
+#        - email
+#        - providerId
+#        - name
+#        - displayName
+#        - photoURL
+#    loginResponse:
+#      type: object
+#      properties:
+#        uid:
+#          type: string
+#      required:
+#        - uid
   parameters:
     gameId:
       name: gameId
+      in: path
+      schema:
+        type: string
+      required: true
+    userId:
+      name: userId
       in: path
       schema:
         type: string
@@ -79,13 +94,13 @@ components:
       scheme: bearer
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
-  requestBodies:
-    LoginRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/loginRequest'
+#  requestBodies:
+#    LoginRequest:
+#      required: true
+#      content:
+#        application/json:
+#          schema:
+#            $ref: '#/components/schemas/loginRequest'
   responses:
     GameResponse:
       description: fetch a game
@@ -93,6 +108,12 @@ components:
         application/json:
           schema:
             $ref: "./game.yaml#/components/schemas/Game"
+    UserResponse:
+      description: fetch a game
+      content:
+        application/json:
+          schema:
+            $ref: "./user.yaml#/components/schemas/User"
     GamesResponse:
       description: fetch all games
       content:
@@ -102,12 +123,12 @@ components:
             items:
               type: string
             uniqueItems: true
-    LoginResponse:
-      description: login response
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/loginResponse"
+#    LoginResponse:
+#      description: login response
+#      content:
+#        application/json:
+#          schema:
+#            $ref: "#/components/schemas/loginResponse"
 security:
   - bearerAuth:
       - openid
