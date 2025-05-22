@@ -42,7 +42,7 @@ public class GameServiceImpl implements GameService {
         final Game target = new Game();
 
         target.setCreated(source.getCreated());
-        target.setUpdated(Optional.ofNullable(source.getUpdated()));
+        target.setUpdated(source.getUpdated());
         target.setId(source.getId());
         target.setCreator(source.getCreator());
         target.setDealer(source.getDealer());
