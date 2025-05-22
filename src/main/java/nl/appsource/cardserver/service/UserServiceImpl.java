@@ -14,10 +14,10 @@ import java.util.Optional;
 @Slf4j
 public class UserServiceImpl implements UserService {
 
-    final UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public Optional<org.openapitools.model.User> findById(String userId) {
+    public Optional<org.openapitools.model.User> findById(final String userId) {
         return userRepository.findById(userId).map(UserServiceImpl::convert);
     }
 
