@@ -47,7 +47,7 @@ public class Migrator {
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
         loadUser("users.json");
-//        loadGames("games.json");
+        loadGames("games.json");
     }
 
     private void loadGames(final String fileName) throws IOException {
@@ -93,7 +93,6 @@ public class Migrator {
                             game.setCreated(Instant.parse(created));
                             break;
                         case "updated":
-                            final String updated = fieldValue.get(TIME).textValue();
                             game.setUpdated(Optional.ofNullable(fieldValue.get(TIME)).map(JsonNode::textValue).map(Instant::parse).orElse(null));
                             break;
                         case "creator":
@@ -108,7 +107,7 @@ public class Migrator {
                             break;
 
                         case "elder":
-                            game.setElder(Optional.ofNullable(fieldValue.get("elder")).map(JsonNode::textValue).map(Integer::parseInt).orElse(null));
+                            game.setElder(fieldValue.intValue());
                             break;
 
                         case "ended":
