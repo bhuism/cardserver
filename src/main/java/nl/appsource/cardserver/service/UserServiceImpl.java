@@ -21,6 +21,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId).map(UserServiceImpl::convert);
     }
 
+    @Override
+    public Optional<org.openapitools.model.User> findByEmail(final String email) {
+        return userRepository.findByEmail(email).map(UserServiceImpl::convert);
+    }
+
     private static org.openapitools.model.User convert(final User user) {
 
         final org.openapitools.model.User result = new org.openapitools.model.User();

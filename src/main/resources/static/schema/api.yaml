@@ -8,16 +8,14 @@ servers:
     description: Klavers Jassen
 
 paths:
-#  /login:
-#    post:
-#      operationId: login
-#      requestBody:
-#        $ref: '#/components/requestBodies/LoginRequest'
-#      responses:
-#        "200":
-#          $ref: "#/components/responses/LoginResponse"
-#      tags:
-#        - Login
+  /whoami:
+    get:
+      operationId: whoami
+      responses:
+        "200":
+          $ref: "#/components/responses/LoginResponse"
+      tags:
+        - Login
   /games:
     get:
       operationId: getGames
@@ -47,34 +45,9 @@ paths:
       tags:
         - Game
 components:
-#  schemas:
-#    loginRequest:
-#      type: object
-#      properties:
-#        email:
-#          type: string
-#          format: email
-#        providerId:
-#          type: string
-#        name:
-#          type: string
-#        displayName:
-#          type: string
-#        photoURL:
-#          type: string
-#      required:
-#        - email
-#        - providerId
-#        - name
-#        - displayName
-#        - photoURL
-#    loginResponse:
-#      type: object
-#      properties:
-#        uid:
-#          type: string
-#      required:
-#        - uid
+  schemas:
+    loginResponse:
+      $ref: "./user.yaml#/components/schemas/User"
   parameters:
     gameId:
       name: gameId
@@ -94,13 +67,6 @@ components:
       scheme: bearer
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
-#  requestBodies:
-#    LoginRequest:
-#      required: true
-#      content:
-#        application/json:
-#          schema:
-#            $ref: '#/components/schemas/loginRequest'
   responses:
     GameResponse:
       description: fetch a game
@@ -123,12 +89,12 @@ components:
             items:
               type: string
             uniqueItems: true
-#    LoginResponse:
-#      description: login response
-#      content:
-#        application/json:
-#          schema:
-#            $ref: "#/components/schemas/loginResponse"
+    LoginResponse:
+      description: login response
+      content:
+        application/json:
+          schema:
+            $ref: "./user.yaml#/components/schemas/User"
 security:
   - bearerAuth:
       - openid

@@ -8,4 +8,6 @@ public interface UserService {
 
     Optional<User> findById(String userId);
 
+    Optional<User> findByEmail(String email);
+
 }

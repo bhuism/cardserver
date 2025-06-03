@@ -5,7 +5,6 @@ components:
       properties:
         id:
           type: string
-          description: The unique identifier of the test
         created:
           type: string
           format: date-time
@@ -37,6 +36,7 @@ components:
         - updated
         - displayName
         - email
+        - invites
         - name
         - providerId
         - photoURL
