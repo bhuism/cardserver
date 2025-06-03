@@ -1,7 +1,7 @@
 openapi: "3.0.4"
 info:
-  title: Klavers JAssen
-  description: Klavers JAssen
+  title: Klavers Jassen
+  description: Klavers Jassen
   version: 1.0.0
 servers:
   - url: 'https://www.klaversjassen.nl/api/v1'
