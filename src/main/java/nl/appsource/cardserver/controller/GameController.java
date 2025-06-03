@@ -78,6 +78,18 @@ public class GameController implements GamesApi {
 
     @Override
     public ResponseEntity<Game> createGame(final Game game) {
-        return ResponseEntity.ok(gameService.createGame(game));
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+
+        final Jwt principal = (Jwt) authentication.getPrincipal();
+        final String email = principal.getClaims().get("email").toString();
+
+        final long start = System.currentTimeMillis();
+        try {
+            return ResponseEntity.ok(gameService.createGame(game));
+        } finally {
+            log.info("{} {} createGame() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
+        }
     }
 }

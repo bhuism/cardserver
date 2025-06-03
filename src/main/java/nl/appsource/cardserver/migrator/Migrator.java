@@ -105,7 +105,7 @@ public class Migrator {
                             game.setTrump(convertSuit(fieldValue.intValue()));
                             break;
                         case "elder":
-                            game.setElder(fieldValue.isInt() ? Optional.of(fieldValue.intValue()) : Optional.empty());
+                            game.setElder(fieldValue.isInt() ? fieldValue.intValue() : null);
                             break;
                         case "ended":
                             game.setEnded(fieldValue.asBoolean());

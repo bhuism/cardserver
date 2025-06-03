@@ -9,9 +9,11 @@ import org.openapitools.model.Game;
 import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,7 +42,14 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Game createGame(final Game game) {
-        return convert(gameRepository.save(convert(game)));
+
+        final nl.appsource.cardserver.model.Game convertedGame = convert(game);
+
+        convertedGame.setId(idGen());
+
+        final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(convertedGame);
+
+        return convert(savedGame);
     }
 
     public static Game convert(final nl.appsource.cardserver.model.Game source) {
@@ -53,16 +62,12 @@ public class GameServiceImpl implements GameService {
         target.setCreator(source.getCreator());
         target.setDealer(source.getDealer());
         target.setPlayerCard(source.getPlayerCard().entrySet().stream().map(cardIntegerEntry -> {
-
             final GamePlayerCardInner gamePlayerCardInner = new GamePlayerCardInner();
-
             gamePlayerCardInner.setCard(convert(cardIntegerEntry.getKey()));
             gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
-
             return gamePlayerCardInner;
-
         }).collect(Collectors.toSet()));
-        target.setElder(source.getElder());
+        target.setElder(Optional.ofNullable(source.getElder()));
         target.setEnded(source.getEnded());
         target.setPlayers(source.getPlayers());
         target.setTrump(convert(source.getTrump()));
@@ -81,14 +86,13 @@ public class GameServiceImpl implements GameService {
         target.setCreator(source.getCreator());
         target.setDealer(source.getDealer());
 
-
         target.setPlayerCard(source.getPlayerCard().stream()
             .collect(Collectors
                 .toMap(pc -> convert(pc.getCard()), GamePlayerCardInner::getPlayer)
             )
         );
 
-        target.setElder(source.getElder());
+        target.setElder(source.getElder().orElse(null));
         target.setEnded(source.getEnded());
         target.setPlayers(source.getPlayers());
         target.setTrump(convert(source.getTrump()));
@@ -200,6 +204,21 @@ public class GameServiceImpl implements GameService {
 
     public static Suit convert(final org.openapitools.model.Suit trump) {
         return Optional.ofNullable(trump).map(SUITCONVERTER_REVERSE::get).orElse(null);
+    }
+
+    private static final Random RANDOM = new SecureRandom();
+
+    public static String idGen() {
+        final int length = 20;
+        final String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        final StringBuilder result = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            int index = RANDOM.nextInt(characters.length());
+            result.append(characters.charAt(index));
+        }
+
+        return result.toString();
     }
 
 }
