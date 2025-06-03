@@ -16,7 +16,7 @@ paths:
           $ref: "#/components/responses/LoginResponse"
   /whoami/incomingFriends:
     get:
-      operationId: incomingFriends
+      operationId: getIncomingFriends
       responses:
         "200":
           $ref: "#/components/responses/IncomingFriendsResponse"

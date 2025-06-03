@@ -52,7 +52,7 @@ public class WhoAmIController implements WhoamiApi {
     }
 
     @Override
-    public ResponseEntity<Set<User>> incomingFriends() {
+    public ResponseEntity<Set<User>> getIncomingFriends() {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
