@@ -14,16 +14,18 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
-      tags:
-        - Login
+  /whoami/incomingFriends:
+    get:
+      operationId: incomingFriends
+      responses:
+        "200":
+          $ref: "#/components/responses/IncomingFriendsResponse"
   /games:
     get:
       operationId: getGames
       responses:
         "200":
           $ref: "#/components/responses/GamesResponse"
-      tags:
-        - Game
   /games/{gameId}:
     get:
       operationId: getGame
@@ -32,8 +34,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GameResponse"
-      tags:
-        - Game
   /users/{userId}:
     get:
       operationId: getUser
@@ -42,8 +42,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UserResponse"
-      tags:
-        - Game
 components:
   schemas:
     loginResponse:
@@ -95,6 +93,15 @@ components:
         application/json:
           schema:
             $ref: "./user.yaml#/components/schemas/User"
+    IncomingFriendsResponse:
+      description: incoming friends response
+      content:
+        application/json:
+          schema:
+            type: array
+            uniqueItems: true
+            items:
+              $ref: "./user.yaml#/components/schemas/User"
 security:
   - bearerAuth:
       - openid

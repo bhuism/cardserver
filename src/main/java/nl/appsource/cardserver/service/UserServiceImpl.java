@@ -8,6 +8,8 @@ import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +25,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<org.openapitools.model.User> findByEmail(final String email) {
-        return userRepository.findByEmail(email).map(UserServiceImpl::convert);
+        return userRepository.findOptionalByEmail(email).map(UserServiceImpl::convert);
     }
+
+
+    @Override
+    public Set<org.openapitools.model.User> findAllIncomingInvites(final org.openapitools.model.User user) {
+        return userRepository.findAllIncomingInvites(user.getId()).stream().map(UserServiceImpl::convert).collect(Collectors.toSet());
+    }
+
 
     private static org.openapitools.model.User convert(final User user) {
 
