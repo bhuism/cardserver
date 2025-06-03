@@ -98,22 +98,18 @@ public class Migrator {
                         case "creator":
                             game.setCreator(fieldValue.textValue());
                             break;
-
                         case "dealer":
                             game.setDealer(fieldValue.intValue());
                             break;
                         case "trump":
                             game.setTrump(convertSuit(fieldValue.intValue()));
                             break;
-
                         case "elder":
-                            game.setElder(fieldValue.intValue());
+                            game.setElder(fieldValue.isInt() ? Optional.of(fieldValue.intValue()) : Optional.empty());
                             break;
-
                         case "ended":
                             game.setEnded(fieldValue.asBoolean());
                             break;
-
                         case "playerCard":
                             final Map<Card, Integer> cards = new HashMap<>();
                             fieldValue.forEach(card -> {
@@ -126,12 +122,10 @@ public class Migrator {
                             }
                             game.setPlayerCard(cards);
                             break;
-
                         case "players":
                             final Set<String> players = StreamSupport.stream(fieldValue.spliterator(), false).map(JsonNode::textValue).collect(Collectors.toSet());
                             game.setPlayers(players);
                             break;
-
                         case "turns":
                             final LinkedHashSet<Card> turns = StreamSupport
                                 .stream(Spliterators.spliteratorUnknownSize(
@@ -143,14 +137,12 @@ public class Migrator {
 
                             game.setTurns(turns);
                             break;
-
                         case "uid":
                         case COLLECTIONS:
                         case "choices":
                             break;
                         default:
                             throw new RuntimeException("Unknown field: " + fieldName);
-
                     }
                 });
 

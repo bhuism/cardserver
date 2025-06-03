@@ -20,6 +20,7 @@ components:
           maximum: 3
         playerCard:
           type: array
+          uniqueItems: true
           items:
             type: object
             properties:
@@ -50,6 +51,7 @@ components:
           maxItems: 4
         turns:
           type: array
+          uniqueItems: true
           items:
             $ref: "#/components/schemas/Card"
           minItems: 0

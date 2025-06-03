@@ -26,6 +26,20 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GamesResponse"
+    post:
+      operationId: createGame
+      requestBody:
+        description: A new game
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./game.yaml#/components/schemas/Game"
+      responses:
+        "200":
+          $ref: "#/components/responses/GameResponse"
+        "404":
+          description: not found
   /games/{gameId}:
     get:
       operationId: getGame
@@ -34,6 +48,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/GameResponse"
+        "404":
+          description: not found
   /users/{userId}:
     get:
       operationId: getUser
@@ -42,6 +58,8 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UserResponse"
+        "404":
+          description: not found
 components:
   schemas:
     loginResponse:

@@ -9,9 +9,7 @@ import org.openapitools.model.Game;
 import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -40,13 +38,18 @@ public class GameServiceImpl implements GameService {
 //        return gameRepository.findAll(QGame.game.creator.eq(creator)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 
+    @Override
+    public Game createGame(final Game game) {
+        return convert(gameRepository.save(convert(game)));
+    }
+
     public static Game convert(final nl.appsource.cardserver.model.Game source) {
 
         final Game target = new Game();
 
+        target.setId(source.getId());
         target.setCreated(source.getCreated());
         target.setUpdated(source.getUpdated());
-        target.setId(source.getId());
         target.setCreator(source.getCreator());
         target.setDealer(source.getDealer());
         target.setPlayerCard(source.getPlayerCard().entrySet().stream().map(cardIntegerEntry -> {
@@ -58,19 +61,45 @@ public class GameServiceImpl implements GameService {
 
             return gamePlayerCardInner;
 
-        }).collect(Collectors.toCollection(ArrayList::new)));
-        target.setElder(Optional.ofNullable(source.getElder()));
+        }).collect(Collectors.toSet()));
+        target.setElder(source.getElder());
         target.setEnded(source.getEnded());
         target.setPlayers(source.getPlayers());
         target.setTrump(convert(source.getTrump()));
-        target.setTurns(convert(source.getTurns()));
+        target.setTurns(convertToOpenApi(source.getTurns()));
+
+        return target;
+    }
+
+    public static nl.appsource.cardserver.model.Game convert(final Game source) {
+
+        nl.appsource.cardserver.model.Game target = new nl.appsource.cardserver.model.Game();
+
+        target.setId(source.getId());
+        target.setCreated(source.getCreated());
+        target.setUpdated(source.getUpdated());
+        target.setCreator(source.getCreator());
+        target.setDealer(source.getDealer());
+
+
+        target.setPlayerCard(source.getPlayerCard().stream()
+            .collect(Collectors
+                .toMap(pc -> convert(pc.getCard()), GamePlayerCardInner::getPlayer)
+            )
+        );
+
+        target.setElder(source.getElder());
+        target.setEnded(source.getEnded());
+        target.setPlayers(source.getPlayers());
+        target.setTrump(convert(source.getTrump()));
+        target.setTurns(convertToModel(source.getTurns()));
 
         return target;
     }
 
 
-    public static List<org.openapitools.model.Card> convert(final LinkedHashSet<Card> source) {
-        return source.stream().map(GameServiceImpl::convert).toList();
+    public static Set<org.openapitools.model.Card> convertToOpenApi(final LinkedHashSet<Card> source) {
+        return source.stream().map(GameServiceImpl::convert).collect(Collectors.toSet());
     }
 
     public static org.openapitools.model.Card convert(final Card source) {
@@ -78,6 +107,64 @@ public class GameServiceImpl implements GameService {
         result.setColor(convert(source.getSuit()));
         result.setCard(convert(source.getCardNr()));
         return result;
+    }
+
+    public static LinkedHashSet<Card> convertToModel(final Set<org.openapitools.model.Card> source) {
+        return source.stream().map(GameServiceImpl::convert).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    public static Card convert(final org.openapitools.model.Card source) {
+
+        return switch (source.getColor()) {
+            case HEARTS -> {
+                yield switch (source.getCard()) {
+                    case ACE -> Card.Ah;
+                    case KING -> Card.Kh;
+                    case QUEEN -> Card.Qh;
+                    case JACK -> Card.Jh;
+                    case TEN -> Card.Th;
+                    case NINE -> Card.Nh;
+                    case EIGHT -> Card.Eh;
+                    case SEVEN -> Card.Sh;
+                };
+            }
+            case CLUBS -> {
+                yield switch (source.getCard()) {
+                    case ACE -> Card.Ac;
+                    case KING -> Card.Kc;
+                    case QUEEN -> Card.Qc;
+                    case JACK -> Card.Jc;
+                    case TEN -> Card.Tc;
+                    case NINE -> Card.Nc;
+                    case EIGHT -> Card.Ec;
+                    case SEVEN -> Card.Sc;
+                };
+            }
+            case SPADES -> {
+                yield switch (source.getCard()) {
+                    case ACE -> Card.As;
+                    case KING -> Card.Ks;
+                    case QUEEN -> Card.Qs;
+                    case JACK -> Card.Js;
+                    case TEN -> Card.Ts;
+                    case NINE -> Card.Ns;
+                    case EIGHT -> Card.Es;
+                    case SEVEN -> Card.Ss;
+                };
+            }
+            case DIAMONDS -> {
+                yield switch (source.getCard()) {
+                    case ACE -> Card.Ad;
+                    case KING -> Card.Kd;
+                    case QUEEN -> Card.Qd;
+                    case JACK -> Card.Jd;
+                    case TEN -> Card.Td;
+                    case NINE -> Card.Nd;
+                    case EIGHT -> Card.Ed;
+                    case SEVEN -> Card.Sd;
+                };
+            }
+        };
     }
 
     private static final Map<CardNr, org.openapitools.model.CardNr> CARDCONVERTER = Map.of(
@@ -101,9 +188,18 @@ public class GameServiceImpl implements GameService {
         Suit.Spades, org.openapitools.model.Suit.SPADES,
         Suit.Diamonds, org.openapitools.model.Suit.DIAMONDS);
 
-
     public static org.openapitools.model.Suit convert(final Suit trump) {
         return Optional.ofNullable(trump).map(SUITCONVERTER::get).orElse(null);
+    }
+
+    private static final Map<org.openapitools.model.Suit, Suit> SUITCONVERTER_REVERSE = Map.of(
+        org.openapitools.model.Suit.CLUBS, Suit.Clubs,
+        org.openapitools.model.Suit.HEARTS, Suit.Hearts,
+        org.openapitools.model.Suit.SPADES, Suit.Spades,
+        org.openapitools.model.Suit.DIAMONDS, Suit.Diamonds);
+
+    public static Suit convert(final org.openapitools.model.Suit trump) {
+        return Optional.ofNullable(trump).map(SUITCONVERTER_REVERSE::get).orElse(null);
     }
 
 }
