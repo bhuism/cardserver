@@ -2,8 +2,11 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GamesApi;
+import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import java.util.Set;
 public class GameController implements GamesApi {
 
     private final GameService gameService;
+    private final UserRepository userRepository;
 
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
@@ -75,9 +79,8 @@ public class GameController implements GamesApi {
 
     }
 
-
     @Override
-    public ResponseEntity<Game> createGame(final Game game) {
+    public ResponseEntity<Game> createGame(final CreateGame createGame) {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
@@ -85,9 +88,13 @@ public class GameController implements GamesApi {
         final Jwt principal = (Jwt) authentication.getPrincipal();
         final String email = principal.getClaims().get("email").toString();
 
+
+        final User user = userRepository.findOptionalByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+
         final long start = System.currentTimeMillis();
         try {
-            return ResponseEntity.ok(gameService.createGame(game));
+            return ResponseEntity.ok(gameService.createGame(user.getId(), createGame.getPlayers()));
         } finally {
             log.info("{} {} createGame() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
         }

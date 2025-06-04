@@ -11,5 +11,5 @@ public interface GameService {
 
     Set<String> findByCreator(String creator);
 
-    Game createGame(Game game);
+    Game createGame(String creator, Set<String> players);
 }

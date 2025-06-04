@@ -10,7 +10,12 @@ import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -20,7 +25,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
+
     private final GameRepository gameRepository;
+
+    private final static Random RAND = new SecureRandom();
 
     @Override
     public Optional<Game> findById(final String gameId) {
@@ -40,16 +48,34 @@ public class GameServiceImpl implements GameService {
 //        return gameRepository.findAll(QGame.game.creator.eq(creator)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 
+
     @Override
-    public Game createGame(final Game game) {
+    public Game createGame(final String creator, final Set<String> players) {
 
-        final nl.appsource.cardserver.model.Game convertedGame = convert(game);
+        final nl.appsource.cardserver.model.Game game = new nl.appsource.cardserver.model.Game();
 
-        convertedGame.setId(idGen());
+        game.setId(idGen());
+        game.setCreator(creator);
+        game.setCreated(Instant.now());
+        game.setUpdated(Instant.now());
+        game.setPlayers(players);
+        game.setEnded(false);
+        game.setDealer(0);
+        game.setTurns(new LinkedHashSet<>());
+        game.setPlayerCard(randomCards());
+        game.setTrump(Suit.Clubs);
 
-        final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(convertedGame);
+        final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(game);
 
         return convert(savedGame);
+    }
+
+    public static Map<Card, Integer> randomCards() {
+        final Map<Card, Integer> cards = new HashMap<>();
+        final List<Card> deck = Arrays.asList(Card.values());
+        Collections.shuffle(deck, RAND);
+        deck.forEach(card -> cards.put(card, RAND.nextInt() % 4));
+        return cards;
     }
 
     public static Game convert(final nl.appsource.cardserver.model.Game source) {

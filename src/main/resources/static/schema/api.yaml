@@ -34,7 +34,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "./game.yaml#/components/schemas/Game"
+              $ref: "#/components/schemas/createGame"
       responses:
         "200":
           $ref: "#/components/responses/GameResponse"
@@ -64,6 +64,16 @@ components:
   schemas:
     loginResponse:
       $ref: "./user.yaml#/components/schemas/User"
+    createGame:
+      type: object
+      properties:
+        players:
+          type: array
+          uniqueItems: true
+          minItems: 3
+          maxItems: 3
+          items:
+            type: string
   parameters:
     gameId:
       name: gameId
