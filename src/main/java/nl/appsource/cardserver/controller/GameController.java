@@ -99,4 +99,21 @@ public class GameController implements GamesApi {
             log.info("{} {} createGame() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
         }
     }
+
+    @Override
+    public ResponseEntity<Void> deleteGame(final String gameId) {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+
+        final Jwt principal = (Jwt) authentication.getPrincipal();
+        final String email = principal.getClaims().get("email").toString();
+
+        final long start = System.currentTimeMillis();
+        try {
+            gameService.deleteGame(gameId);
+            return ResponseEntity.ok().build();
+        } finally {
+            log.info("{} {} createGame() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
+        }
+    }
 }

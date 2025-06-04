@@ -13,4 +13,6 @@ public interface GameService {
     List<Game> findByCreator(String creator);
 
     Game createGame(String creator, Set<String> players);
+
+    void deleteGame(String gameId);
 }

@@ -82,6 +82,11 @@ public class GameServiceImpl implements GameService {
         return convert(savedGame);
     }
 
+    @Override
+    public void deleteGame(final String gameId) {
+        gameRepository.deleteById(gameId);
+    }
+
     public static Map<Card, Integer> randomCards() {
         final Map<Card, Integer> cards = new HashMap<>();
         final List<Card> deck = Arrays.asList(Card.values());
