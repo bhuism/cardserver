@@ -74,6 +74,8 @@ components:
           maxItems: 3
           items:
             type: string
+      required:
+        - players
   parameters:
     gameId:
       name: gameId
