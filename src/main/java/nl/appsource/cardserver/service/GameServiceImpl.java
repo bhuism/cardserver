@@ -28,7 +28,7 @@ public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
 
-    private final static Random RAND = new SecureRandom();
+    private static final Random RAND = new SecureRandom();
 
     @Override
     public Optional<Game> findById(final String gameId) {
