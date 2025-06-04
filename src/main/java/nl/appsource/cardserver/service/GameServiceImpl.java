@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 
@@ -47,9 +48,8 @@ public class GameServiceImpl implements GameService {
 //    }
 
     @Override
-    public Set<String> findByCreator(final String creator) {
-
-        return gameRepository.findIdByEmail(creator);
+    public List<Game> findByCreator(final String creator) {
+        return gameRepository.findByEmail(creator).stream().map(GameServiceImpl::convert).toList();
 //        return gameRepository.findAll(QGame.game.creator.eq(creator)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Set;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -55,7 +55,7 @@ public class GameController implements GamesApi {
 
 
     @Override
-    public ResponseEntity<Set<String>> getGames() {
+    public ResponseEntity<List<Game>> getGames() {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
@@ -65,7 +65,7 @@ public class GameController implements GamesApi {
 
         final long start = System.currentTimeMillis();
         try {
-            final Set<String> games = gameService.findByCreator(email);
+            final List<Game> games = gameService.findByCreator(email);
             return new ResponseEntity<>(games, HttpStatus.OK);
         } finally {
 

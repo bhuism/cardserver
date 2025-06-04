@@ -115,8 +115,7 @@ components:
           schema:
             type: array
             items:
-              type: string
-            uniqueItems: true
+              $ref: "./game.yaml#/components/schemas/Game"
     LoginResponse:
       description: login response
       content:

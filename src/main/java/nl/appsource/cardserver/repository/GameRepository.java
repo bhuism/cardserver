@@ -7,6 +7,7 @@ import org.springframework.data.querydsl.ListQuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -17,5 +18,8 @@ public interface GameRepository extends CouchbaseRepository<Game, String>, ListQ
 
     @Query("SELECT META(g).id FROM #{#n1ql.bucket} u JOIN #{#n1ql.bucket} g ON g.creator = META(u).id WHERE g._class = 'nl.appsource.cardserver.model.Game' AND u._class = 'nl.appsource.cardserver.model.User' AND u.email= $email ORDER BY g.updated DESC")
     Set<String> findIdByEmail(@Param("email") String email);
+
+    @Query("SELECT META(g) FROM #{#n1ql.bucket} u JOIN #{#n1ql.bucket} g ON g.creator = META(u).id WHERE g._class = 'nl.appsource.cardserver.model.Game' AND u._class = 'nl.appsource.cardserver.model.User' AND u.email= $email ORDER BY g.updated DESC")
+    List<Game> findByEmail(@Param("email") String email);
 
 }
