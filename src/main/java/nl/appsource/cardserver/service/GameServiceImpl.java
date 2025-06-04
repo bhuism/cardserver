@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.CardNr;
@@ -21,6 +22,10 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 
 @Service
 @RequiredArgsConstructor
@@ -52,13 +57,21 @@ public class GameServiceImpl implements GameService {
     @Override
     public Game createGame(final String creator, final Set<String> players) {
 
+        if (players.size() != 3) {
+            throw new IllegalArgumentException("players count must be 3");
+        }
+
+        if (StringUtils.isBlank(creator)) {
+            throw new IllegalArgumentException("creator cannot be empty");
+        }
+
         final nl.appsource.cardserver.model.Game game = new nl.appsource.cardserver.model.Game();
 
         game.setId(idGen());
         game.setCreator(creator);
         game.setCreated(Instant.now());
         game.setUpdated(Instant.now());
-        game.setPlayers(players);
+        game.setPlayers(concat(players.stream(), of(creator)).collect(toSet()));
         game.setEnded(false);
         game.setDealer(0);
         game.setTurns(new LinkedHashSet<>());
@@ -92,7 +105,7 @@ public class GameServiceImpl implements GameService {
             gamePlayerCardInner.setCard(convert(cardIntegerEntry.getKey()));
             gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
             return gamePlayerCardInner;
-        }).collect(Collectors.toSet()));
+        }).collect(toSet()));
         target.setElder(Optional.ofNullable(source.getElder()));
         target.setEnded(source.getEnded());
         target.setPlayers(source.getPlayers());
@@ -129,7 +142,7 @@ public class GameServiceImpl implements GameService {
 
 
     public static Set<org.openapitools.model.Card> convertToOpenApi(final LinkedHashSet<Card> source) {
-        return source.stream().map(GameServiceImpl::convert).collect(Collectors.toSet());
+        return source.stream().map(GameServiceImpl::convert).collect(toSet());
     }
 
     public static org.openapitools.model.Card convert(final Card source) {
