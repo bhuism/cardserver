@@ -20,8 +20,9 @@ public interface GameRepository extends CouchbaseRepository<Game, String>, ListQ
 //
 //    @Query("SELECT g.*,META(g).id AS __id FROM #{#n1ql.bucket} u JOIN #{#n1ql.bucket} g ON g.creator = META(u).id WHERE g._class = 'nl.appsource.cardserver.model.Game' AND u._class = 'nl.appsource.cardserver.model.User' AND u.email= $email ORDER BY g.updated DESC")
 //    List<Game> findByEmail(@Param("email") String email);
+    //@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND creator=$userId ORDER BY g.updated DESC")
+    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
     List<Game> findByUserId(@Param("userId") String userId);
 
 }
