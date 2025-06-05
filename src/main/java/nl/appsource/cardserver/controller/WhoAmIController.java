@@ -30,7 +30,7 @@ public class WhoAmIController implements WhoamiApi {
         final Jwt principal = (Jwt) authentication.getPrincipal();
         final String email = principal.getClaims().get("email").toString();
 
-        LoggingFilter.requestLogMessage(("whoampi()"));
+        LoggingFilter.requestLogMessage(("whoampi(), email=" + email));
 
         return userService.findByEmail(email)
             .map(ResponseEntity::ok)
