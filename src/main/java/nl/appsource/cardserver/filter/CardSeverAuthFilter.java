@@ -37,7 +37,7 @@ public class CardSeverAuthFilter extends OncePerRequestFilter {
 
             userService.findById(userId).ifPresent(user -> {
                 final UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    user.getId(), null, Collections.singletonList(ROLE_USER));
+                    user.getEmail(), null, Collections.singletonList(ROLE_USER));
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
