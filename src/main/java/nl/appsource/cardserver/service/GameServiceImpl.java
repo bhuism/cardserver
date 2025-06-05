@@ -37,19 +37,12 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Optional<Game> getGame(final String gameId) {
-//        return gameRepository.findOne(QGame.game.id.eq(gameId)).map(GameServiceImpl::convert);
         return gameRepository.findById(gameId).map(GameServiceImpl::convert);
     }
-
-//    @Override
-//    public Set<String> findAll() {
-//        return gameRepository.findAll(Pageable.ofSize(10)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
-//    }
 
     @Override
     public List<Game> getGames(final String userId) {
         return gameRepository.findByUserId(userId).stream().map(GameServiceImpl::convert).toList();
-//        return gameRepository.findAll(QGame.game.creator.eq(creator)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 
 
@@ -73,6 +66,7 @@ public class GameServiceImpl implements GameService {
         game.setPlayers(concat(players.stream(), of(creator)).collect(toSet()));
         game.setEnded(false);
         game.setDealer(0);
+        game.setElder(RAND.nextInt() % 4);
         game.setTurns(new LinkedHashSet<>());
         game.setPlayerCard(randomCards());
         game.setTrump(Suit.Clubs);
