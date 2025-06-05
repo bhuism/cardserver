@@ -42,7 +42,6 @@ public class CardSeverAuthFilter extends OncePerRequestFilter {
             });
         }
 
-
         filterChain.doFilter(request, response);
     }
 }

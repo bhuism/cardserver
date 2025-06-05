@@ -38,7 +38,7 @@ public class LoggingFilter extends OncePerRequestFilter {
         final String remoteAddr = servletRequest.getRemoteAddr();
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = "" + authentication.getPrincipal();
+        final String principal = "" + authentication.getPrincipal();
 //        final String email = "" + principal.getClaims().get("email");
 
 
@@ -56,7 +56,8 @@ public class LoggingFilter extends OncePerRequestFilter {
         } finally {
             log.info(
                 "{} {}, {}, {} msec, {}",
-                remoteAddr, servletRequest.getRequestURI(), email, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+                remoteAddr, servletRequest.getRequestURI(), principal, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+            STRING_THREAD_LOCAL.remove();
         }
     }
 
