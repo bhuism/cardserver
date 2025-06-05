@@ -13,11 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.List;
 
@@ -42,46 +39,23 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("getGames()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
+        final String email = "" + authentication.getPrincipal();
 
-        final Jwt principal = (Jwt) authentication.getPrincipal();
-        final String email = principal.getClaims().get("email").toString();
-
-        final long start = System.currentTimeMillis();
-        try {
-            final List<Game> games = gameService.findByCreator(email);
-            return new ResponseEntity<>(games, HttpStatus.OK);
-        } finally {
-
-
-//            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-//                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
-//            );
-
-            log.info("{} {} getGames() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
-        }
+        final List<Game> games = gameService.findByCreator(email);
+        return new ResponseEntity<>(games, HttpStatus.OK);
 
     }
 
     @Override
     public ResponseEntity<Game> createGame(final CreateGame createGame) {
 
+        LoggingFilter.requestLogMessage("createGame()");
+
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-
-        final Jwt principal = (Jwt) authentication.getPrincipal();
-        final String email = principal.getClaims().get("email").toString();
-
+        final String email = "" + authentication.getPrincipal();
 
         final User user = userRepository.findOptionalByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-
-
-        final long start = System.currentTimeMillis();
-        try {
-            return ResponseEntity.ok(gameService.createGame(user.getId(), createGame.getPlayers()));
-        } finally {
-            log.info("{} {} createGame() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
-        }
+        return ResponseEntity.ok(gameService.createGame(user.getId(), createGame.getPlayers()));
     }
 
     @Override
