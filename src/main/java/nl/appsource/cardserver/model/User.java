@@ -11,8 +11,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Document
 @Getter
@@ -36,7 +36,7 @@ public class User {
     @NotEmpty
     private String email;
 
-    private Set<String> invites;
+    private List<String> invites;
 
     private Optional<Instant> lastLogin;
 

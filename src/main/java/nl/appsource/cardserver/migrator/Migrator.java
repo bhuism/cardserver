@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -218,7 +219,7 @@ public class Migrator {
                             user.setEmail(fieldValue.textValue());
                             break;
                         case "invites":
-                            final Set<String> invites = StreamSupport.stream(Spliterators.spliteratorUnknownSize(fieldValue.iterator(), Spliterator.ORDERED), false).map(JsonNode::textValue).collect(Collectors.toSet());
+                            final List<String> invites = StreamSupport.stream(Spliterators.spliteratorUnknownSize(fieldValue.iterator(), Spliterator.ORDERED), false).map(JsonNode::textValue).collect(Collectors.toList());
                             user.setInvites(invites);
                             break;
                         case "name":
