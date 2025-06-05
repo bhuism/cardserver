@@ -34,7 +34,6 @@ public class CardSeverAuthFilter extends OncePerRequestFilter {
         final String userId = request.getHeader(CARDSERVER_AUTH_HEADER_KEY);
 
         if (StringUtils.hasText(userId) && userId.length() == 28) {
-
             userService.findById(userId).ifPresent(user -> {
                 final UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                     user.getEmail(), null, Collections.singletonList(ROLE_USER));
