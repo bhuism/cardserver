@@ -2,6 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameService;
@@ -31,31 +32,14 @@ public class GameController implements GamesApi {
 
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
-
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-
-        final Jwt principal = (Jwt) authentication.getPrincipal();
-        final String email = principal.getClaims().get("email").toString();
-
-        final long start = System.currentTimeMillis();
-        try {
-
-            return gameService.findById(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-
-        } finally {
-
-//            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-//                log.info("headers {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
-//            );
-
-            log.info("{} {} getGame({}) took {} ms", remoteAddr, email, gameId, System.currentTimeMillis() - start);
-        }
+        LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
+        return gameService.findById(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
-
 
     @Override
     public ResponseEntity<List<Game>> getGames() {
+
+        LoggingFilter.requestLogMessage("getGames()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
@@ -102,18 +86,8 @@ public class GameController implements GamesApi {
 
     @Override
     public ResponseEntity<Void> deleteGame(final String gameId) {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-
-        final Jwt principal = (Jwt) authentication.getPrincipal();
-        final String email = principal.getClaims().get("email").toString();
-
-        final long start = System.currentTimeMillis();
-        try {
-            gameService.deleteGame(gameId);
-            return ResponseEntity.ok().build();
-        } finally {
-            log.info("{} {} createGame() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
-        }
+        LoggingFilter.requestLogMessage("deleteGame(" + gameId + ")");
+        gameService.deleteGame(gameId);
+        return ResponseEntity.ok().build();
     }
 }

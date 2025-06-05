@@ -14,12 +14,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
-  /whoami/incomingFriends:
-    get:
-      operationId: getIncomingFriends
-      responses:
-        "200":
-          $ref: "#/components/responses/IncomingFriendsResponse"
   /games:
     get:
       operationId: getGames
@@ -67,6 +61,12 @@ paths:
           $ref: "#/components/responses/UserResponse"
         "404":
           description: not found
+  /users/incomingFriends:
+    get:
+      operationId: getIncomingFriends
+      responses:
+        "200":
+          $ref: "#/components/responses/IncomingFriendsResponse"
 components:
   schemas:
     loginResponse:

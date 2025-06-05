@@ -3,6 +3,8 @@ package nl.appsource.cardserver.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.filter.CardSeverAuthFilter;
+import nl.appsource.cardserver.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -12,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,6 +33,8 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 public class WebSecurityConfig {
 
     private final Environment environment;
+
+    private final UserService userService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
@@ -53,14 +58,8 @@ public class WebSecurityConfig {
                 .requestMatchers(Stream.concat(Set.of("/", "/websocket/**", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                 .permitAll()
                 .anyRequest().authenticated()
-            );
-
-
-//        http.oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> {
-//            httpSecurityOAuth2ResourceServerConfigurer.jwt(httpSecurityJwtConfigurer -> {
-//
-//            })
-//        });
+            )
+            .addFilterBefore(new CardSeverAuthFilter(userService), UsernamePasswordAuthenticationFilter.class);
 
         if (!environment.acceptsProfiles(Profiles.of("citest"))) {
             http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));

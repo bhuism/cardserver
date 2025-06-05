@@ -2,6 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.WhoamiApi;
 import org.openapitools.model.User;
@@ -29,51 +30,17 @@ public class WhoAmIController implements WhoamiApi {
     public ResponseEntity<User> whoami() {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
 
         final Jwt principal = (Jwt) authentication.getPrincipal();
         final String email = principal.getClaims().get("email").toString();
 
-        final long start = System.currentTimeMillis();
-        try {
-            return userService.findByEmail(email)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        } finally {
+        LoggingFilter.requestLogMessage(("whoampi()"));
 
-
-//            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-//                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
-//            );
-
-            log.info("{} {} whoami() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
-        }
+        return userService.findByEmail(email)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 
     }
 
-    @Override
-    public ResponseEntity<Set<User>> getIncomingFriends() {
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String remoteAddr = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getRemoteAddr();
-
-        final Jwt principal = (Jwt) authentication.getPrincipal();
-        final String email = principal.getClaims().get("email").toString();
-
-        final long start = System.currentTimeMillis();
-        try {
-            return userService.findByEmail(email)
-                .map(userService::findAllIncomingInvites)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-        } finally {
-
-
-//            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-//                log.info("header: {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
-//            );
-
-            log.info("{} {} whoami() took {} ms", remoteAddr, email, System.currentTimeMillis() - start);
-        }
-    }
 }
