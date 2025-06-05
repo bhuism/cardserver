@@ -137,7 +137,6 @@ components:
         application/json:
           schema:
             type: array
-            uniqueItems: true
             items:
               $ref: "./user.yaml#/components/schemas/User"
 security:

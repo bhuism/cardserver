@@ -7,8 +7,8 @@ import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,10 +30,9 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Set<org.openapitools.model.User> findAllIncomingInvites(final org.openapitools.model.User user) {
-        return userRepository.findAllIncomingInvites(user.getId()).stream().map(UserServiceImpl::convert).collect(Collectors.toSet());
+    public List<org.openapitools.model.User> findAllIncomingInvites(final String userId) {
+        return userRepository.findAllIncomingInvites(userId).stream().map(UserServiceImpl::convert).collect(Collectors.toList());
     }
-
 
     private static org.openapitools.model.User convert(final User user) {
 

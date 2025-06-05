@@ -36,7 +36,7 @@ public class GameServiceImpl implements GameService {
     private static final Random RAND = new SecureRandom();
 
     @Override
-    public Optional<Game> findById(final String gameId) {
+    public Optional<Game> getGame(final String gameId) {
 //        return gameRepository.findOne(QGame.game.id.eq(gameId)).map(GameServiceImpl::convert);
         return gameRepository.findById(gameId).map(GameServiceImpl::convert);
     }
@@ -47,8 +47,8 @@ public class GameServiceImpl implements GameService {
 //    }
 
     @Override
-    public List<Game> findByCreator(final String creator) {
-        return gameRepository.findByEmail(creator).stream().map(GameServiceImpl::convert).toList();
+    public List<Game> getGames(final String userId) {
+        return gameRepository.findByUserId(userId).stream().map(GameServiceImpl::convert).toList();
 //        return gameRepository.findAll(QGame.game.creator.eq(creator)).stream().map(nl.appsource.cardserver.model.Game::getId).collect(toSet());
     }
 

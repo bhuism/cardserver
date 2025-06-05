@@ -2,8 +2,8 @@ package nl.appsource.cardserver.service;
 
 import org.openapitools.model.User;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface UserService {
 
@@ -11,6 +11,6 @@ public interface UserService {
 
     Optional<User> findByEmail(String email);
 
-    Set<User> findAllIncomingInvites(User user);
+    List<User> findAllIncomingInvites(String userId);
 
 }

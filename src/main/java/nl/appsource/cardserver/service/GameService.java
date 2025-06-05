@@ -8,9 +8,9 @@ import java.util.Set;
 
 public interface GameService {
 
-    Optional<Game> findById(String gameId);
+    Optional<Game> getGame(String gameId);
 
-    List<Game> findByCreator(String creator);
+    List<Game> getGames(String userId);
 
     Game createGame(String creator, Set<String> players);
 

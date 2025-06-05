@@ -3,7 +3,6 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.filter.LoggingFilter;
-import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GamesApi;
@@ -30,7 +29,7 @@ public class GameController implements GamesApi {
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
         LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
-        return gameService.findById(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return gameService.getGame(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @Override
@@ -39,9 +38,9 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("getGames()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = "" + authentication.getPrincipal();
+        final String userId = "" + authentication.getPrincipal();
 
-        final List<Game> games = gameService.findByCreator(email);
+        final List<Game> games = gameService.getGames(userId);
         return new ResponseEntity<>(games, HttpStatus.OK);
 
     }
@@ -52,10 +51,9 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("createGame()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = "" + authentication.getPrincipal();
+        final String userId = "" + authentication.getPrincipal();
 
-        final User user = userRepository.findOptionalByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(gameService.createGame(user.getId(), createGame.getPlayers()));
+        return ResponseEntity.ok(gameService.createGame(userId, createGame.getPlayers()));
     }
 
     @Override

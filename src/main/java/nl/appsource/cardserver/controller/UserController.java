@@ -6,14 +6,13 @@ import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.User;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Set;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -34,17 +33,16 @@ public class UserController implements UsersApi {
     }
 
     @Override
-    public ResponseEntity<Set<User>> getIncomingFriends() {
+    public ResponseEntity<List<User>> getIncomingFriends() {
 
         LoggingFilter.requestLogMessage("getIncomingFriends()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String email = "" + authentication.getPrincipal();
+        final String userId = "" + authentication.getPrincipal();
 
-        return userService.findByEmail(email)
-            .map(userService::findAllIncomingInvites)
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        final List<User> users = userService.findAllIncomingInvites(userId);
+
+        return ResponseEntity.ok(users);
     }
 
 }
