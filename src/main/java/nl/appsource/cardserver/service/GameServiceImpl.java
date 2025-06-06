@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.Math.abs;
 import static java.util.stream.Collectors.toSet;
@@ -86,7 +87,7 @@ public class GameServiceImpl implements GameService {
         final Map<Card, Integer> cards = new HashMap<>();
         final List<Card> deck = Arrays.asList(Card.values());
         Collections.shuffle(deck, RAND);
-        deck.forEach(card -> cards.put(card, abs(RAND.nextInt()) % 4));
+        IntStream.range(0, deck.size()).forEach(index -> cards.put(deck.get(index), index % 4));
         return cards;
     }
 
