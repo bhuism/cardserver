@@ -245,15 +245,13 @@ public class GameServiceImpl implements GameService {
         return Optional.ofNullable(trump).map(SUITCONVERTER_REVERSE::get).orElse(null);
     }
 
-    private static final Random RANDOM = new SecureRandom();
-
     public static String idGen() {
         final int length = 20;
         final String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         final StringBuilder result = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
-            int index = RANDOM.nextInt(characters.length());
+            int index = RAND.nextInt(characters.length());
             result.append(characters.charAt(index));
         }
 
