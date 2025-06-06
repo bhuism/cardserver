@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.lang.Math.abs;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
@@ -66,7 +67,7 @@ public class GameServiceImpl implements GameService {
         game.setPlayers(concat(players.stream(), of(creator)).collect(toSet()));
         game.setEnded(false);
         game.setDealer(0);
-        game.setElder(RAND.nextInt() % 4);
+        game.setElder(abs(RAND.nextInt()) % 4);
         game.setTurns(new LinkedHashSet<>());
         game.setPlayerCard(randomCards());
         game.setTrump(Suit.Clubs);
@@ -85,7 +86,7 @@ public class GameServiceImpl implements GameService {
         final Map<Card, Integer> cards = new HashMap<>();
         final List<Card> deck = Arrays.asList(Card.values());
         Collections.shuffle(deck, RAND);
-        deck.forEach(card -> cards.put(card, RAND.nextInt() % 4));
+        deck.forEach(card -> cards.put(card, abs(RAND.nextInt()) % 4));
         return cards;
     }
 
