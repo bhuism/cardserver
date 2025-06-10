@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -18,6 +19,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Slf4j
 public class WebSocketHandler extends TextWebSocketHandler {
 
+    @Getter
     private final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
 
     private final ObjectMapper objectMapper = new ObjectMapper();
