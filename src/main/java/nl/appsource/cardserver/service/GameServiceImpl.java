@@ -81,7 +81,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Game playCard(final String userId, final Game game, final Card card) {
-        return new GameEngineImpl(userId, game).playCard(card);
+        return gameRepository.save(new GameEngineImpl(userId, game).playCard(card));
     }
 
     public static Map<Card, Integer> randomCards() {
