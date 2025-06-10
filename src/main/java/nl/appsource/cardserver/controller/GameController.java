@@ -2,8 +2,8 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
-import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.Card;
@@ -27,7 +27,7 @@ import static nl.appsource.cardserver.controller.GameConverter.convert;
 public class GameController implements GamesApi {
 
     private final GameService gameService;
-    private final UserRepository userRepository;
+    private final GameToOpenApiConverter gameToOpenApiConverter;
 
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
@@ -36,7 +36,10 @@ public class GameController implements GamesApi {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
-        return gameService.getGame(userId, gameId).map(GameConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return gameService.getGame(userId, gameId)
+            .map(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
 
@@ -49,7 +52,8 @@ public class GameController implements GamesApi {
 
         return gameService.getGame(userId, gameId)
             .map(g -> gameService.playCard(userId, g, convert(card)))
-            .map(GameConverter::convert).map(ResponseEntity::ok)
+            .map(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }
 
@@ -65,7 +69,7 @@ public class GameController implements GamesApi {
             ResponseEntity.ok(
                 gameService.getGames(userId)
                     .stream()
-                    .map(GameConverter::convert)
+                    .map(gameToOpenApiConverter::convert)
                     .collect(Collectors.toList()));
 
     }
@@ -78,7 +82,7 @@ public class GameController implements GamesApi {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
-        return ResponseEntity.ok(convert(gameService.createGame(userId, createGame.getPlayers())));
+        return ResponseEntity.ok(gameToOpenApiConverter.convert(gameService.createGame(userId, createGame.getPlayers())));
     }
 
     @Override
