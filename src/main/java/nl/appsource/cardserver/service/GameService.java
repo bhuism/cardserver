@@ -1,8 +1,7 @@
 package nl.appsource.cardserver.service;
 
-import org.openapitools.model.Game;
-import org.openapitools.model.PlayCard;
-import org.springframework.http.ResponseEntity;
+import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.Game;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,5 +17,5 @@ public interface GameService {
 
     void deleteGame(String gameId);
 
-    ResponseEntity<Game> playCard(String userId, String gameId, PlayCard playCard);
+    Game playCard(String userId, Game game, Card card);
 }

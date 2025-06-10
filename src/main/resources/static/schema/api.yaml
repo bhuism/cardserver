@@ -27,7 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/playCard"
+              $ref: "./game.yaml#/components/schemas/Card"
       responses:
         "200":
           $ref: "#/components/responses/GameResponse"
@@ -102,13 +102,13 @@ components:
             type: string
       required:
         - players
-    playCard:
-      type: object
-      properties:
-        card:
-          $ref: "./game.yaml#/components/schemas/Card"
-      required:
-        - card
+  #    playCard:
+  #      type: object
+  #      properties:
+  #        card:
+  #          $ref: "./game.yaml#/components/schemas/Card"
+  #      required:
+  #        - card
   parameters:
     gameId:
       name: gameId

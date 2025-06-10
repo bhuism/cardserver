@@ -6,10 +6,9 @@ import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GamesApi;
+import org.openapitools.model.Card;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
-import org.openapitools.model.PlayCard;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static nl.appsource.cardserver.controller.GameConverter.convert;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -34,18 +36,21 @@ public class GameController implements GamesApi {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
-        return gameService.getGame(userId, gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return gameService.getGame(userId, gameId).map(GameConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
 
     @Override
-    public ResponseEntity<Game> playCard(final String gameId, final PlayCard playCard) {
+    public ResponseEntity<Game> playCard(final String gameId, final Card card) {
         LoggingFilter.requestLogMessage("playCard(" + gameId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
-        return gameService.playCard(userId, gameId, playCard);
+        return gameService.getGame(userId, gameId)
+            .map(g -> gameService.playCard(userId, g, convert(card)))
+            .map(GameConverter::convert).map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @Override
@@ -56,8 +61,12 @@ public class GameController implements GamesApi {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
-        final List<Game> games = gameService.getGames(userId);
-        return new ResponseEntity<>(games, HttpStatus.OK);
+        return
+            ResponseEntity.ok(
+                gameService.getGames(userId)
+                    .stream()
+                    .map(GameConverter::convert)
+                    .collect(Collectors.toList()));
 
     }
 
@@ -69,7 +78,7 @@ public class GameController implements GamesApi {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
-        return ResponseEntity.ok(gameService.createGame(userId, createGame.getPlayers()));
+        return ResponseEntity.ok(convert(gameService.createGame(userId, createGame.getPlayers())));
     }
 
     @Override
@@ -78,4 +87,6 @@ public class GameController implements GamesApi {
         gameService.deleteGame(gameId);
         return ResponseEntity.ok().build();
     }
+
+
 }
