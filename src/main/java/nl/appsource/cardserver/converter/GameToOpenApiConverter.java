@@ -24,7 +24,7 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    public org.openapitools.model.Game convert(Game source) {
+    public org.openapitools.model.Game convert(final Game source) {
 
         final org.openapitools.model.Game target = new org.openapitools.model.Game();
 

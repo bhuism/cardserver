@@ -3,16 +3,12 @@ package nl.appsource.cardserver.controller;
 import nl.appsource.cardserver.model.CardNr;
 import nl.appsource.cardserver.model.Suit;
 import org.openapitools.model.Card;
-import org.openapitools.model.Game;
-import org.openapitools.model.GamePlayerCardInner;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toSet;
 
 public class GameConverter {
 
