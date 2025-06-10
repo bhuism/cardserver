@@ -16,6 +16,23 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
+  /games/{gameId}/playCard:
+    post:
+      operationId: playCard
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      requestBody:
+        description: Play a card
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/playCard"
+      responses:
+        "200":
+          $ref: "#/components/responses/GameResponse"
+        "404":
+          description: not found
   /games:
     get:
       operationId: getGames
@@ -85,6 +102,13 @@ components:
             type: string
       required:
         - players
+    playCard:
+      type: object
+      properties:
+        card:
+          $ref: "./game.yaml#/components/schemas/Card"
+      required:
+        - card
   parameters:
     gameId:
       name: gameId
@@ -106,19 +130,19 @@ components:
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
   responses:
     GameResponse:
-      description: fetch a game
+      description: a game
       content:
         application/json:
           schema:
             $ref: "./game.yaml#/components/schemas/Game"
     UserResponse:
-      description: fetch a game
+      description: a user
       content:
         application/json:
           schema:
             $ref: "./user.yaml#/components/schemas/User"
     GamesResponse:
-      description: fetch all games
+      description: all games
       content:
         application/json:
           schema:

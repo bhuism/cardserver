@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GameRepository extends CouchbaseRepository<Game, String>, ListQuerydslPredicateExecutor<Game> {
@@ -24,5 +25,9 @@ public interface GameRepository extends CouchbaseRepository<Game, String>, ListQ
 
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
     List<Game> findByUserId(@Param("userId") String userId);
+
+    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
+    Optional<Game> findByUserIdAndGameId(@Param("userId") String userId, @Param("gameId") String gameId);
+
 
 }

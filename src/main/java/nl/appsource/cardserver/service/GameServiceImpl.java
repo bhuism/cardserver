@@ -8,6 +8,8 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import org.openapitools.model.Game;
 import org.openapitools.model.GamePlayerCardInner;
+import org.openapitools.model.PlayCard;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -38,15 +40,14 @@ public class GameServiceImpl implements GameService {
     private static final Random RAND = new SecureRandom();
 
     @Override
-    public Optional<Game> getGame(final String gameId) {
-        return gameRepository.findById(gameId).map(GameServiceImpl::convert);
+    public Optional<Game> getGame(final String userId, final String gameId) {
+        return gameRepository.findByUserIdAndGameId(userId, gameId).map(GameServiceImpl::convert);
     }
 
     @Override
     public List<Game> getGames(final String userId) {
         return gameRepository.findByUserId(userId).stream().map(GameServiceImpl::convert).toList();
     }
-
 
     @Override
     public Game createGame(final String creator, final Set<String> players) {
@@ -81,6 +82,11 @@ public class GameServiceImpl implements GameService {
     @Override
     public void deleteGame(final String gameId) {
         gameRepository.deleteById(gameId);
+    }
+
+    @Override
+    public ResponseEntity<Game> playCard(final String userId, final String gameId, final PlayCard playCard) {
+        return getGame(userId, gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     public static Map<Card, Integer> randomCards() {

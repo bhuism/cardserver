@@ -8,6 +8,7 @@ import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
+import org.openapitools.model.PlayCard;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,7 +30,22 @@ public class GameController implements GamesApi {
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
         LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
-        return gameService.getGame(gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = "" + authentication.getPrincipal();
+
+        return gameService.getGame(userId, gameId).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+
+    @Override
+    public ResponseEntity<Game> playCard(final String gameId, final PlayCard playCard) {
+        LoggingFilter.requestLogMessage("playCard(" + gameId + ")");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = "" + authentication.getPrincipal();
+
+        return gameService.playCard(userId, gameId, playCard);
     }
 
     @Override
