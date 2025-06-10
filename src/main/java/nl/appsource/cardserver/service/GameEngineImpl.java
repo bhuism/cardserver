@@ -22,6 +22,8 @@ public class GameEngineImpl implements GameEngine {
             return game;
         }
 
+        // FIXME: heeft speler kaart nog wel?
+
         // FIXME: add check: is speler aan slag?
 
         game.setUpdated(Instant.now());

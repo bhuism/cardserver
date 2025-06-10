@@ -42,7 +42,7 @@ public class GameController implements GamesApi {
 
     @Override
     public ResponseEntity<Game> playCard(final String gameId, final Card card) {
-        LoggingFilter.requestLogMessage("playCard(" + gameId + ")");
+        LoggingFilter.requestLogMessage("playCard(" + card + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
