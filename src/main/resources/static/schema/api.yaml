@@ -102,13 +102,6 @@ components:
             type: string
       required:
         - players
-  #    playCard:
-  #      type: object
-  #      properties:
-  #        card:
-  #          $ref: "./game.yaml#/components/schemas/Card"
-  #      required:
-  #        - card
   parameters:
     gameId:
       name: gameId
