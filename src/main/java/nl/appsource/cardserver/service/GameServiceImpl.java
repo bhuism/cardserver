@@ -10,19 +10,19 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.Math.abs;
-import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 
@@ -61,11 +61,11 @@ public class GameServiceImpl implements GameService {
         game.setCreator(creator);
         game.setCreated(Instant.now());
         game.setUpdated(Instant.now());
-        game.setPlayers(concat(players.stream(), of(creator)).collect(toSet()));
+        game.setPlayers(concat(players.stream(), of(creator)).collect(Collectors.toCollection(ArrayList::new)));
         game.setEnded(false);
         game.setDealer(0);
         game.setElder(abs(RAND.nextInt()) % 4);
-        game.setTurns(new LinkedHashSet<>());
+        game.setTurns(new ArrayList<>());
         game.setPlayerCard(randomCards());
         game.setTrump(Suit.Clubs);
 

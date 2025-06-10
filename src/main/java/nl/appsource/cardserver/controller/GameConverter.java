@@ -6,10 +6,10 @@ import org.openapitools.model.Card;
 import org.openapitools.model.Game;
 import org.openapitools.model.GamePlayerCardInner;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
@@ -66,8 +66,8 @@ public class GameConverter {
     }
 
 
-    public static Set<Card> convertToOpenApi(final LinkedHashSet<nl.appsource.cardserver.model.Card> source) {
-        return source.stream().map(GameConverter::convert).collect(toSet());
+    public static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.model.Card> source) {
+        return source.stream().map(GameConverter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static org.openapitools.model.Card convert(final nl.appsource.cardserver.model.Card source) {
@@ -77,8 +77,8 @@ public class GameConverter {
         return result;
     }
 
-    public static LinkedHashSet<nl.appsource.cardserver.model.Card> convertToModel(final Set<org.openapitools.model.Card> source) {
-        return source.stream().map(GameConverter::convert).collect(Collectors.toCollection(LinkedHashSet::new));
+    public static List<nl.appsource.cardserver.model.Card> convertToModel(final List<org.openapitools.model.Card> source) {
+        return source.stream().map(GameConverter::convert).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static nl.appsource.cardserver.model.Card convert(final org.openapitools.model.Card source) {

@@ -88,6 +88,20 @@ paths:
           $ref: "#/components/responses/IncomingFriendsResponse"
 components:
   schemas:
+    Cat:
+      type: object
+      properties:
+        test:
+          type: string
+    Dog:
+      type: object
+      properties:
+        dogpropertie:
+          type: string
+    messageType:
+      oneOf:
+        - $ref: "#/components/schemas/Cat"
+        - $ref: "#/components/schemas/Dog"
     loginResponse:
       $ref: "./user.yaml#/components/schemas/User"
     createGame:

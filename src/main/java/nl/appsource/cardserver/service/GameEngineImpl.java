@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -17,23 +18,37 @@ public class GameEngineImpl implements GameEngine {
 
     @Override
     public Game playCard(final Card card) {
+
         if (isCompleted()) {
             log.warn("playCard() Game {} is already completed", game.getId());
             return game;
         }
 
-        // FIXME: heeft speler kaart nog wel?
+        if (game.getTurns().stream().anyMatch((c) -> c == card)) {
+            log.warn("Card already played: {}", card);
+            return game;
+        }
+
+
+        final Integer playerNum = Arrays.asList(game.getPlayers()).indexOf(userId);
+
+        if (game.getPlayerCard().get(card) != playerNum) {
+            log.warn("Player {} does not have card {}", userId, card);
+            return game;
+        }
+
 
         // FIXME: add check: is speler aan slag?
 
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
+        game.setEnded(isCompleted());
 
         return game;
 
     }
 
     private boolean isCompleted() {
-        return game.getTurns().size() >= 8;
+        return game.getTurns().size() >= 32;
     }
 }

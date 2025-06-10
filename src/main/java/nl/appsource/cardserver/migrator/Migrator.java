@@ -17,12 +17,11 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
@@ -124,17 +123,20 @@ public class Migrator {
                             game.setPlayerCard(cards);
                             break;
                         case "players":
-                            final Set<String> players = StreamSupport.stream(fieldValue.spliterator(), false).map(JsonNode::textValue).collect(Collectors.toSet());
+                            final List<String> players = StreamSupport
+                                .stream(fieldValue.spliterator(), false)
+                                .map(JsonNode::textValue)
+                                .collect(Collectors.toCollection(ArrayList::new));
                             game.setPlayers(players);
                             break;
                         case "turns":
-                            final LinkedHashSet<Card> turns = StreamSupport
+                            final List<Card> turns = StreamSupport
                                 .stream(Spliterators.spliteratorUnknownSize(
                                     fieldValue.iterator(),
                                     Spliterator.ORDERED), false)
                                 .map(JsonNode::textValue)
                                 .map(Migrator::cardConvert)
-                                .collect(Collectors.toCollection(LinkedHashSet::new));
+                                .collect(Collectors.toCollection(ArrayList::new));
 
                             game.setTurns(turns);
                             break;

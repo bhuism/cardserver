@@ -13,9 +13,9 @@ import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Document
 @Getter
@@ -62,9 +62,9 @@ public class Game {
 
     @Field
     @NotNull
-    private Set<String> players;
+    private List<String> players;
 
     @Field
-    private LinkedHashSet<Card> turns;
+    private List<Card> turns;
 
 }
