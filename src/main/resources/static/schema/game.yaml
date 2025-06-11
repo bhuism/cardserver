@@ -20,7 +20,6 @@ components:
           maximum: 3
         playerCard:
           type: array
-#          uniqueItems: true
           items:
             type: object
             properties:
@@ -33,8 +32,6 @@ components:
             required:
               - card
               - player
-            minItems: 0
-            maxItems: 32
         elder:
           type: integer
           minimum: 0
