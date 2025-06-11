@@ -44,14 +44,12 @@ components:
           default: "false"
         players:
           type: array
-          items:
-            type: string
-#          uniqueItems: true
-          minItems: 1
+          minItems: 0
           maxItems: 4
+          items:
+            $ref: './user.yaml/#/components/schemas/User'
         turns:
           type: array
-#          uniqueItems: true
           items:
             $ref: "#/components/schemas/Card"
           minItems: 0
