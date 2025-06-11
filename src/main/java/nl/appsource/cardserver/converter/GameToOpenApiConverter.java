@@ -159,9 +159,9 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
 //        return null;
 //    }
 
-    private static Suit convertSuit(final org.openapitools.model.Suit trump) {
-        return Optional.ofNullable(trump).map(SUITCONVERTER_REVERSE::get).orElse(null);
-    }
+//    private static Suit convertSuit(final org.openapitools.model.Suit trump) {
+//        return Optional.ofNullable(trump).map(SUITCONVERTER_REVERSE::get).orElse(null);
+//    }
 
 
 }
