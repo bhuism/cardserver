@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.Math.abs;
-import static java.util.stream.Stream.concat;
-import static java.util.stream.Stream.of;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +45,8 @@ public class GameServiceImpl implements GameService {
     @Override
     public Game createGame(final String creator, final Set<String> players) {
 
-        if (players.size() != 3) {
-            throw new IllegalArgumentException("players count must be 3");
+        if (players.size() != 4) {
+            throw new IllegalArgumentException("players count must be 4");
         }
 
         if (StringUtils.isBlank(creator)) {
@@ -61,7 +59,7 @@ public class GameServiceImpl implements GameService {
         game.setCreator(creator);
         game.setCreated(Instant.now());
         game.setUpdated(Instant.now());
-        game.setPlayers(concat(players.stream(), of(creator)).collect(Collectors.toCollection(ArrayList::new)));
+        game.setPlayers(players.stream().collect(Collectors.toCollection(ArrayList::new)));
         game.setEnded(false);
         game.setDealer(0);
         game.setElder(abs(RAND.nextInt()) % 4);

@@ -20,7 +20,7 @@ components:
           maximum: 3
         playerCard:
           type: array
-          uniqueItems: true
+#          uniqueItems: true
           items:
             type: object
             properties:

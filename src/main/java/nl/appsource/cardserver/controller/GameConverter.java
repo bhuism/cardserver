@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toSet;
-
 public class GameConverter {
 
     public static Game convert(final nl.appsource.cardserver.model.Game source) {
@@ -30,7 +28,7 @@ public class GameConverter {
             gamePlayerCardInner.setCard(convert(cardIntegerEntry.getKey()));
             gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
             return gamePlayerCardInner;
-        }).collect(toSet()));
+        }).collect(Collectors.toCollection(ArrayList::new)));
         target.setElder(Optional.ofNullable(source.getElder()));
         target.setEnded(source.getEnded());
         target.setPlayers(source.getPlayers());
