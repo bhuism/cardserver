@@ -18,9 +18,9 @@ public class SSEController {
 
     @GetMapping("/websocket")
     public SseEmitter streamSseEvents() throws IOException {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        final SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitters.add(emitter);
-        emitter.send("SSE MVC - " + System.currentTimeMillis());
+//        emitter.send("SSE MVC - " + System.currentTimeMillis());
         emitter.onCompletion(() -> {
             log.info("onCompletion() Removing an emitier");
             emitters.remove(emitter);
