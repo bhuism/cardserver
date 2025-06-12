@@ -3,12 +3,12 @@ package nl.appsource.cardserver.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.filter.CardSeverAuthFilter;
-import nl.appsource.cardserver.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -34,10 +34,51 @@ public class WebSecurityConfig {
 
     private final Environment environment;
 
-    private final UserService userService;
+    private final CardSeverAuthFilter cardSeverAuthFilter;
+
+//    @Bean
+//    public AuthenticationManager authManager(final HttpSecurity http) throws Exception {
+//        AuthenticationManagerBuilder authenticationManagerBuilder =
+//            http.getSharedObject(AuthenticationManagerBuilder.class);
+//        authenticationManagerBuilder.authenticationProvider(cardServerAuthenticationProvider);
+//        return authenticationManagerBuilder.build();
+//    }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain securityFilterChainOauth(final HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
+            .securityMatcher("/whoami")
+            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry ->
+                authorizationManagerRequestMatcherRegistry.requestMatchers(HttpMethod.POST, "/whoami")
+                    .authenticated()
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain securityFilterChainApi(final HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
+            .securityMatcher("/api/v1/**", "/websocket/**")
+            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry ->
+                authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/websocket/**")
+                    .authenticated()
+            )).addFilterBefore(cardSeverAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+
+    @Bean
+    @Order(3)
+    public SecurityFilterChain securityFilterChainRest(final HttpSecurity http) throws Exception {
 
         final Set<String> privateUrls;
         if (environment.acceptsProfiles(Profiles.of("development", "citest"))) {
@@ -46,24 +87,17 @@ public class WebSecurityConfig {
             privateUrls = Collections.emptySet();
         }
 
-        http.csrf(AbstractHttpConfigurer::disable);
-
-        http.sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS));
-
         http
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()));
-
-        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
+            .securityMatcher("/**")
             .authorizeHttpRequests((requests) -> requests
-                .requestMatchers(Stream.concat(Set.of("/", "/websocket/**", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
+                .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                 .permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(new CardSeverAuthFilter(userService), UsernamePasswordAuthenticationFilter.class);
-
-        if (!environment.acceptsProfiles(Profiles.of("citest"))) {
-            http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));
-        }
+                .anyRequest()
+                .denyAll()
+            );
 
         return http.build();
     }
