@@ -53,6 +53,18 @@ paths:
           $ref: "#/components/responses/GameResponse"
         "404":
           description: not found
+  /message:
+    post:
+      operationId: send a mesage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postMessage"
+      responses:
+        "200":
+          description: ok
   /games/{gameId}:
     get:
       operationId: getGame
@@ -90,6 +102,13 @@ components:
   schemas:
     loginResponse:
       $ref: "./user.yaml#/components/schemas/User"
+    postMessage:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
     createGame:
       type: object
       properties:
