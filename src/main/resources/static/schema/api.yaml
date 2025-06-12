@@ -9,7 +9,7 @@ servers:
 
 paths:
   /whoami:
-    get:
+    post:
       tags:
         - whoami
       operationId: whoami
