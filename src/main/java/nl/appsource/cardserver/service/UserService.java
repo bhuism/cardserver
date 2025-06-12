@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.service;
 
-import org.openapitools.model.User;
+import nl.appsource.cardserver.model.User;
 
 import java.util.List;
 import java.util.Optional;
