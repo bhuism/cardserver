@@ -11,7 +11,7 @@ import java.util.Collections;
 
 import static java.util.Collections.singleton;
 
-public class CardServerAuthenticationToken extends AbstractAuthenticationToken {
+public final class CardServerAuthenticationToken extends AbstractAuthenticationToken {
 
     private static final GrantedAuthority ROLE_USER = new SimpleGrantedAuthority("ROLE_USER");
 
