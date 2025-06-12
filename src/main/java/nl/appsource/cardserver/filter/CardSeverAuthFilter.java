@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.UserService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
+@Slf4j
 @RequiredArgsConstructor
 public class CardSeverAuthFilter extends OncePerRequestFilter {
 
@@ -33,15 +35,27 @@ public class CardSeverAuthFilter extends OncePerRequestFilter {
 
         final String userId = request.getHeader(CARDSERVER_AUTH_HEADER_KEY);
 
-        if (StringUtils.hasText(userId) && userId.length() == 28) {
-            userService.findById(userId).ifPresent(user -> {
-                final UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    user.getId(), null, Collections.singletonList(ROLE_USER));
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            });
-        }
+        try {
 
-        filterChain.doFilter(request, response);
+            log.info("Start: userId={}", userId);
+
+            if (StringUtils.hasText(userId) && userId.length() == 28) {
+                userService.findById(userId).ifPresentOrElse(user -> {
+                    final UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        user.getId(), null, Collections.singletonList(ROLE_USER));
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }, () -> {
+                    log.warn("User {} not found", userId);
+                });
+            } else {
+                log.warn("Invalid userId");
+            }
+
+            filterChain.doFilter(request, response);
+
+        } finally {
+            log.info("End: userId={}", userId);
+        }
     }
 }
