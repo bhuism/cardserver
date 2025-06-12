@@ -28,16 +28,12 @@ public class CardSeverAuthFilter extends OncePerRequestFilter {
 
         Optional.ofNullable(request)
             .map(r -> r.getHeader("cardserverauth"))
-            .filter(a -> a instanceof String)
-            .map(a -> (String) a)
-            .filter(s -> StringUtils.hasText(s))
-            .filter(s -> ((String) s).length() == 28)
+            .filter(StringUtils::hasText)
+            .filter(s -> s.length() == 28)
             .flatMap(userService::findById)
-            .map(user -> CardServerAuthenticationToken.authenticated(user))
-            .ifPresentOrElse(cardServerAuthenticationToken -> {
-                log.info("Succesfull CardSever API authentication");
-                SecurityContextHolder.setContext(new SecurityContextImpl(cardServerAuthenticationToken));
-            }, () -> log.info("Unsuccessfull CardServer API authentication"));
+            .map(CardServerAuthenticationToken::authenticated)
+            .map(SecurityContextImpl::new)
+            .ifPresent(SecurityContextHolder::setContext);
 
         filterChain.doFilter(request, response);
     }
