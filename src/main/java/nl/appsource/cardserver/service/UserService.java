@@ -13,4 +13,6 @@ public interface UserService {
 
     List<User> findAllIncomingInvites(String userId);
 
+    User save(User user);
+
 }

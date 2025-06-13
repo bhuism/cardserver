@@ -37,5 +37,8 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAllIncomingInvites(userId).stream().collect(Collectors.toList());
     }
 
-
+    @Override
+    public User save(final User user) {
+        return userRepository.save(user);
+    }
 }

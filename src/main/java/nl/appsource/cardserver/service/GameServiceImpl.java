@@ -55,7 +55,7 @@ public class GameServiceImpl implements GameService {
 
         final nl.appsource.cardserver.model.Game game = new nl.appsource.cardserver.model.Game();
 
-        game.setId(idGen());
+        game.setId(idGen(20));
         game.setCreator(creator);
         game.setCreated(Instant.now());
         game.setUpdated(Instant.now());
@@ -90,8 +90,7 @@ public class GameServiceImpl implements GameService {
         return cards;
     }
 
-    public static String idGen() {
-        final int length = 20;
+    public static String idGen(int length) {
         final String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         final StringBuilder result = new StringBuilder(length);
 
