@@ -26,7 +26,6 @@ public class MessageEngine {
         }
     }
 
-
     public SseEmitter subscribe(final String userId) {
 
         try {
