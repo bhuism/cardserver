@@ -7,18 +7,18 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
+import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
-public class SSEController {
+public class SubscribeController {
 
     private final MessageEngine messageEngine;
 
-    @GetMapping("/websocket")
-    public SseEmitter streamSseEvents() throws IOException {
+    @GetMapping(value = "/subscribe", produces = TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamSseEvents() {
         return messageEngine.subscribe();
     }
 }

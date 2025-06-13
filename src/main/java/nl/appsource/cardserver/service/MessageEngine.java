@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,6 @@ import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -26,13 +26,22 @@ public class MessageEngine {
 
     public void message(final String userId, final String message) {
 
+
         final String name = userRepository.findById(userId).map(User::getDisplayName).orElse("unknown");
 
         emitters.forEach(sseEmitter -> {
             try {
-                sseEmitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).name(name + ": " + "message").data(message).build());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                final String totalMessage = name + ":" + message;
+                log.info("sending {} to: {}", totalMessage, sseEmitter);
+                sseEmitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(1000).name("cardservermessage").data(totalMessage).comment("test123").build());
+            } catch (final Throwable e) {
+                log.error("Something went wrong while sending message " + e.getClass().getName() + ":" + e.getMessage());
+                emitters.remove(sseEmitter);
+                try {
+                    sseEmitter.completeWithError(e);
+                } catch (final Throwable e1) {
+                    log.error("", e1);
+                }
             }
         });
     }
@@ -40,7 +49,10 @@ public class MessageEngine {
     public SseEmitter subscribe() {
 
         final SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+
         emitters.add(emitter);
+
+        log.info("onSubscribe() Adding an emitter, size={}", emitters.size());
 
         emitter.onCompletion(() -> {
             log.info("onCompletion() Removing an emitier");
@@ -48,9 +60,23 @@ public class MessageEngine {
         });
         emitter.onTimeout(() -> {
             log.info("onTimeout() Removing an emitier");
+            emitter.complete();
             emitters.remove(emitter);
         });
+
         return emitter;
 
     }
+
+    @PreDestroy
+    public void preDestroy() {
+        while (!emitters.isEmpty()) {
+            try {
+                emitters.removeFirst().complete();
+            } catch (final Throwable e) {
+                log.error("", e);
+            }
+        }
+    }
+
 }

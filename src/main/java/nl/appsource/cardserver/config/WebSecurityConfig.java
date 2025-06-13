@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.config;
 
 
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -49,12 +50,18 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChainOauth(final HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
+//            .sessionManagement(AbstractHttpConfigurer::disable)
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/whoami")
-            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry ->
+//            .authorizeHttpRequests((authorize) -> authorize
+//                .shouldFilterAllDispatcherTypes(true) // You can remove it because it is default configuration in Spring Security 6
+//                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
+                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                 authorizationManagerRequestMatcherRegistry.requestMatchers(HttpMethod.POST, "/whoami")
-                    .authenticated()
+                    .authenticated();
+            }
             )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));
 
         return http.build();
@@ -63,14 +70,24 @@ public class WebSecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChainApi(final HttpSecurity http) throws Exception {
+
+//        http.securityContext().securityContextRepository(new RequestAttributeSecurityContextRepository());
+
+//        http.securityContext(httpSecuritySecurityContextConfigurer -> {
+//            httpSecuritySecurityContextConfigurer.securityContextRepository(new RequestAttributeSecurityContextRepository());
+//        });
+
         http
             .csrf(AbstractHttpConfigurer::disable)
+//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.disable())
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
-            .securityMatcher("/api/v1/**", "/websocket/**")
-            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry ->
-                authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/websocket/**")
-                    .authenticated()
+            .securityMatcher("/api/v1/**", "/subscribe")
+            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
+                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
+                authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
+                    .authenticated();
+            }
             )).addFilterBefore(cardSeverAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -89,14 +106,18 @@ public class WebSecurityConfig {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
+//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.disable())
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/**")
-            .authorizeHttpRequests((requests) -> requests
-                .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
-                .permitAll()
-                .anyRequest()
-                .denyAll()
+            .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry) -> {
+                    authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
+                    authorizationManagerRequestMatcherRegistry
+                        .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
+                        .permitAll()
+                        .anyRequest()
+                        .denyAll();
+                }
             );
 
         return http.build();
