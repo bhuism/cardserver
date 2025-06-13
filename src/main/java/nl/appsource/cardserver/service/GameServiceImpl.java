@@ -90,7 +90,7 @@ public class GameServiceImpl implements GameService {
         return cards;
     }
 
-    public static String idGen(int length) {
+    public static String idGen(final int length) {
         final String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         final StringBuilder result = new StringBuilder(length);
 
