@@ -58,9 +58,7 @@ public class WhoAmIController implements WhoamiApi {
                     user.setPhotoURL(principal.getClaims().get("picture").toString());
                     user.setProviderId("google");
 
-                    userService.save(user);
-
-                    return userService.findById(user.getId()).orElseThrow(IllegalArgumentException::new);
+                    return userService.save(user);
 
                 }))
             .map(userToOpenApiConverter::convert)
