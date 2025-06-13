@@ -10,9 +10,8 @@ import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -22,23 +21,31 @@ public class MessageEngine {
     private final UserRepository userRepository;
 
     @Getter
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+    private final ConcurrentHashMap<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    public void message(final String userId, final String message) {
+    public void message(final String source, final String message) {
 
 
-        final String name = userRepository.findById(userId).map(User::getDisplayName).orElse("unknown");
+        final String sourceName = userRepository.findById(source).map(User::getDisplayName).orElse("unknown");
 
-        emitters.forEach(sseEmitter -> {
+
+        emitters.entrySet().forEach(entry -> {
+
+            final String sink = entry.getKey();
+
+            final String sinkName = userRepository.findById(sink).map(User::getDisplayName).orElse("unknown");
+
+
+            final SseEmitter sseEmitter = entry.getValue();
+
             try {
-                final String totalMessage = name + ":" + message;
-                log.info("sending {} to: {}", totalMessage, sseEmitter);
-                sseEmitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(1000).name("cardservermessage").data(totalMessage).comment("test123").build());
+                log.info("sending {} from: {} to: {}", message, sourceName, sinkName);
+                sseEmitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(1000).name("cardservermessage").data(sourceName + ":" + message).build());
             } catch (final Throwable e) {
-                log.error("Something went wrong while sending message " + e.getClass().getName() + ":" + e.getMessage());
+                log.error("{}: from {} to {} message {}", e.getClass().getName() + ":" + e.getMessage(), sourceName, sink, message);
                 emitters.remove(sseEmitter);
                 try {
-                    sseEmitter.completeWithError(e);
+                    sseEmitter.complete();
                 } catch (final Throwable e1) {
                     log.error("", e1);
                 }
@@ -46,11 +53,11 @@ public class MessageEngine {
         });
     }
 
-    public SseEmitter subscribe() {
+    public SseEmitter subscribe(final String userId) {
 
         final SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
 
-        emitters.add(emitter);
+        emitters.put(userId, emitter);
 
         log.info("onSubscribe() Adding an emitter, size={}", emitters.size());
 
@@ -72,7 +79,7 @@ public class MessageEngine {
     public void preDestroy() {
         while (!emitters.isEmpty()) {
             try {
-                emitters.removeFirst().complete();
+                emitters.clear();
             } catch (final Throwable e) {
                 log.error("", e);
             }
