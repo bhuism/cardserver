@@ -40,6 +40,9 @@ public class WhoAmIController implements WhoamiApi {
 
         return Optional.of(userService.findByEmail(email)
                 .orElseGet(() -> {
+
+                    log.info("Creating a new user {}", email);
+
                     final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
 
                     final Instant now = Instant.now();
