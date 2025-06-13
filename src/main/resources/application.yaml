@@ -4,13 +4,6 @@ server:
       pattern: '%t %a [%I] "%r" %s (%D ms)'
   compression:
     enabled: true
-  servlet:
-    session:
-      timeout: 1440m
-      cookie:
-        http-only: true
-        secure: true
-        name: octopus
   forward-headers-strategy: framework
   shutdown: graceful
 logging:

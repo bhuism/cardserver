@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.config;
 
-
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,22 +36,6 @@ public class WebSecurityConfig {
 
     private final CardSeverAuthFilter cardSeverAuthFilter;
 
-//    @Autowired
-//    void configureObjectMapper(final ObjectMapper mapper) {
-//        log.info("Registering JSR310 for jackson serialisation");
-//        mapper.registerModule(new ParameterNamesModule())
-//            .registerModule(new JavaTimeModule());
-//    }
-
-
-//    @Bean
-//    public AuthenticationManager authManager(final HttpSecurity http) throws Exception {
-//        AuthenticationManagerBuilder authenticationManagerBuilder =
-//            http.getSharedObject(AuthenticationManagerBuilder.class);
-//        authenticationManagerBuilder.authenticationProvider(cardServerAuthenticationProvider);
-//        return authenticationManagerBuilder.build();
-//    }
-
     @Bean
     @Order(1)
     public SecurityFilterChain securityFilterChainOauth(final HttpSecurity http) throws Exception {
@@ -78,12 +61,6 @@ public class WebSecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChainApi(final HttpSecurity http) throws Exception {
-
-//        http.securityContext().securityContextRepository(new RequestAttributeSecurityContextRepository());
-
-//        http.securityContext(httpSecuritySecurityContextConfigurer -> {
-//            httpSecuritySecurityContextConfigurer.securityContextRepository(new RequestAttributeSecurityContextRepository());
-//        });
 
         http
             .csrf(AbstractHttpConfigurer::disable)
@@ -114,7 +91,7 @@ public class WebSecurityConfig {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
-//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.disable())
+            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.disable())
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/**")

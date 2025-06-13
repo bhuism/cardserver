@@ -54,7 +54,7 @@ public class WhoAmIController implements WhoamiApi {
                     user.setName(principal.getClaims().get("name").toString());
                     user.setDisplayName(principal.getClaims().get("name").toString());
                     user.setInvites(emptyList());
-                    user.setLastLogin(Optional.of(now));
+                    user.setLastLogin(null);
                     user.setPhotoURL(principal.getClaims().get("picture").toString());
                     user.setProviderId("google");
 
