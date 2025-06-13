@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
+import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,14 +26,19 @@ public class User {
     @Id
     private String id;
 
+    @Field
     @NotNull
     private Instant created;
 
+    @Field
+    @NotNull
     private Instant updated;
 
+    @Field
     @NotEmpty
     private String displayName;
 
+    @Field
     @NotEmpty
     private String email;
 
@@ -40,12 +46,15 @@ public class User {
 
     private Optional<Instant> lastLogin;
 
+    @Field
     @NotEmpty
     private String name;
 
+    @Field
     private String photoURL;
 
     @NotEmpty
+    @Field
     private String providerId;
 
 }

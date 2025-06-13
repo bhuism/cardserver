@@ -59,7 +59,9 @@ public class WhoAmIController implements WhoamiApi {
                     user.setProviderId("google");
 
                     userService.save(user);
-                    return user;
+
+                    return userService.findById(user.getId()).orElseThrow(IllegalArgumentException::new);
+
                 }))
             .map(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
