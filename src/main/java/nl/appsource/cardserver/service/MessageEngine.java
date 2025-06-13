@@ -20,7 +20,7 @@ public class MessageEngine {
     public void message(final String source, final String message) {
         try {
             final User from = userRepository.findById(source).orElseThrow(IllegalArgumentException::new);
-            sseEmitterRepository.send(from, message, userRepository);
+            sseEmitterRepository.send(from, message);
         } finally {
             log.info("message() size={}", sseEmitterRepository.size());
         }
