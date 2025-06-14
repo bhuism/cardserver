@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static nl.appsource.cardserver.controller.GameConverter.convert;
+import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -52,7 +52,7 @@ public class GameController implements GamesApi {
         final String userId = "" + authentication.getPrincipal();
 
         return gameService.getGame(userId, gameId)
-            .map(g -> gameService.playCard(userId, g, convert(playCard.getCard())))
+            .map(g -> gameService.playCard(userId, g, convertCard(playCard.getCard())))
             .map(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
