@@ -22,12 +22,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/gameId"
       requestBody:
-        description: Play a card
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "./game.yaml#/components/schemas/Card"
+        $ref: "#/components/requestBodies/playCard"
       responses:
         "200":
           $ref: "#/components/responses/GameResponse"
@@ -99,7 +94,21 @@ paths:
         "200":
           $ref: "#/components/responses/IncomingFriendsResponse"
 components:
+  requestBodies:
+    playCard:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/playCard"
   schemas:
+    playCard:
+      type: object
+      properties:
+        card:
+          $ref: "./game.yaml#/components/schemas/Card"
+      required:
+        - card
     loginResponse:
       $ref: "./user.yaml#/components/schemas/User"
     postMessage:

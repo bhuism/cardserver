@@ -71,24 +71,48 @@ components:
         - Diamonds
         - Hearts
         - Spades
-    CardNr:
+    Card:
       type: string
       enum:
-        - Ace
-        - King
-        - Queen
-        - Jack
-        - Ten
-        - Nine
-        - Eight
-        - Seven
-    Card:
-      type: object
-      properties:
-        card:
-          $ref: '#/components/schemas/CardNr'
-        color:
-          $ref: '#/components/schemas/Suit'
-      required:
-        - color
-        - card
+        - Ah
+        - Kh
+        - Qh
+        - Jh
+        - Th
+        - Nh
+        - Eh
+        - Sh
+        - Ac
+        - Kc
+        - Qc
+        - Jc
+        - Tc
+        - Nc
+        - Ec
+        - Sc
+        - Ad
+        - Kd
+        - Qd
+        - Jd
+        - Td
+        - Nd
+        - Ed
+        - Sd
+        - As
+        - Ks
+        - Qs
+        - Js
+        - Ts
+        - Ns
+        - Es
+        - Ss
+#    Card:
+#      type: object
+#      properties:
+#        card:
+#          $ref: '#/components/schemas/CardNr'
+#        color:
+#          $ref: '#/components/schemas/Suit'
+#      required:
+#        - color
+#        - card

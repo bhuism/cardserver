@@ -6,9 +6,9 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.GameService;
 import org.openapitools.api.GamesApi;
-import org.openapitools.model.Card;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
+import org.openapitools.model.PlayCard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
+import static nl.appsource.cardserver.controller.GameConverter.convert;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -44,14 +44,15 @@ public class GameController implements GamesApi {
 
 
     @Override
-    public ResponseEntity<Game> playCard(final String gameId, final Card card) {
-        LoggingFilter.requestLogMessage("playCard(" + card + ")");
+    public ResponseEntity<Game> playCard(final String gameId, final PlayCard playCard) {
+
+        LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = "" + authentication.getPrincipal();
 
         return gameService.getGame(userId, gameId)
-            .map(g -> gameService.playCard(userId, g, convertCard(card)))
+            .map(g -> gameService.playCard(userId, g, convert(playCard.getCard())))
             .map(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
