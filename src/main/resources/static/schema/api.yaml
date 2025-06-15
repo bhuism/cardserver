@@ -175,7 +175,8 @@ components:
       content:
         application/json:
           schema:
-            $ref: "./user.yaml#/components/schemas/User"
+            type: string
+#            $ref: "./user.yaml#/components/schemas/User"
     IncomingFriendsResponse:
       description: incoming friends response
       content:

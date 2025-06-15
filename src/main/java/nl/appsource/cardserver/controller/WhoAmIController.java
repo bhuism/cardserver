@@ -1,12 +1,13 @@
 package nl.appsource.cardserver.controller;
 
+import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
+import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.WhoamiApi;
-import org.openapitools.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,10 +28,10 @@ public class WhoAmIController implements WhoamiApi {
 
     private final UserService userService;
 
-    private final UserToOpenApiConverter userToOpenApiConverter;
+    private final CardServerJwtModem cardServerJwtModem;
 
     @Override
-    public ResponseEntity<User> whoami() {
+    public ResponseEntity<String> whoami() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         final Jwt principal = (Jwt) authentication.getPrincipal();
@@ -61,7 +62,10 @@ public class WhoAmIController implements WhoamiApi {
                     return userService.save(user);
 
                 }))
-            .map(userToOpenApiConverter::convert)
+            .map(User::getId)
+//            .map(userToOpenApiConverter::convert)
+            .map(cardServerJwtModem::encode)
+            .map(SignedJWT::serialize)
             .map(ResponseEntity::ok)
             .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 

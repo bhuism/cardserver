@@ -72,7 +72,7 @@ public class WebSecurityConfig {
                 authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
                     .authenticated();
             }
-            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(cardServerJwtModem).jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(token -> cardServerJwtModem.decode(token)).jwtAuthenticationConverter(new JwtAuthenticationConverter())));
         return http.build();
     }
 

@@ -17,7 +17,6 @@ import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.stereotype.Service;
@@ -25,13 +24,14 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.text.ParseException;
+import java.time.Duration;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class CardServerJwtModem implements JwtDecoder {
+public class CardServerJwtModem {
 
     private final CardServerProperties cardServerProperties;
 
@@ -57,7 +57,7 @@ public class CardServerJwtModem implements JwtDecoder {
 
     }
 
-    private Jwt createJwt(String token, JWT parsedJwt) throws ParseException {
+    private Jwt createJwt(final String token, final JWT parsedJwt) throws ParseException {
 
         Map<String, Object> headers = new LinkedHashMap<>(parsedJwt.getHeader().toJSONObject());
         //JWTClaimsSet jwtClaimsSet = this.jwtProcessor.process(parsedJwt, null);
@@ -71,7 +71,7 @@ public class CardServerJwtModem implements JwtDecoder {
     }
 
     @SneakyThrows
-    public Jwt encode(final String userId) {
+    public SignedJWT encode(final String userId) {
 
         final ImmutableSecret<SecurityContext> immutableSecret = new ImmutableSecret<>(getHash());
 
@@ -93,14 +93,15 @@ public class CardServerJwtModem implements JwtDecoder {
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
             .subject("userId")
             .issuer("https://api.cardserver.nl")
-            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .issueTime(new Date(new Date().getTime() - Duration.ofHours(1).toSeconds()))
+            .expirationTime(new Date(new Date().getTime() + Duration.ofDays(356 * 10).toSeconds()))
             .build();
 
         final SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
 
         signedJWT.sign(signer);
 
-        return encode;
+        return signedJWT;
 
     }
 
