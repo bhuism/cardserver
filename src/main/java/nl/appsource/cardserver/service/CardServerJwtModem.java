@@ -3,7 +3,9 @@ package nl.appsource.cardserver.service;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -13,6 +15,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.stereotype.Service;
 
@@ -37,33 +40,24 @@ public class CardServerJwtModem {
     @SneakyThrows
     public Jwt decode(final String token) {
 
+        final SignedJWT signedJWT = SignedJWT.parse(token);
+
+        final JWSVerifier verifier = new MACVerifier(getHash());
+
+        if (!signedJWT.verify(verifier)) {
+            throw new JwtException("JWT verification failed");
+        }
 
 //        log.info("decoding  token {} ", token);
 
         return createJwt(token, JWTParser.parse(token));
 
-//        final Jwt decode = new NimbusJwtDecoder(new DefaultJWTProcessor<>()).decode(token);
-
-
-//        decode.
-//        final SignedJWT signedJWT = SignedJWT.parse(token);
-//        final JWSVerifier verifier = new MACVerifier(getHash());
-////
-//        if (!signedJWT.verify(verifier)) {
-//            throw new IllegalArgumentException("JWT verification failed");
-//        }
-//
-//
-//        return jwsObject.getPayload().toString();
-
-
     }
 
     private Jwt createJwt(final String token, final JWT parsedJwt) throws ParseException {
 
-        Map<String, Object> headers = new LinkedHashMap<>(parsedJwt.getHeader().toJSONObject());
-        //JWTClaimsSet jwtClaimsSet = this.jwtProcessor.process(parsedJwt, null);
-        Map<String, Object> claims = parsedJwt.getJWTClaimsSet().getClaims();
+        final Map<String, Object> headers = new LinkedHashMap<>(parsedJwt.getHeader().toJSONObject());
+        final Map<String, Object> claims = parsedJwt.getJWTClaimsSet().getClaims();
 
         // @formatter:off
         return Jwt.withTokenValue(token)
@@ -75,22 +69,7 @@ public class CardServerJwtModem {
     @SneakyThrows
     public SignedJWT encode(final String userId) {
 
-//        final ImmutableSecret<SecurityContext> immutableSecret = new ImmutableSecret<>(getHash());
-
-       // final NimbusJwtEncoder nimbusJwtEncoder = new NimbusJwtEncoder(immutableSecret);
-
-        //final JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(MacAlgorithm.HS256);
-
-      //  final JwtClaimsSet claims = JwtClaimsSet.builder().subject(userId).build();
-
-    //    final JwtClaimsSet.Builder claimSetBuilder = JwtClaimsSet.from(claims);
-
-  //      final JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(jwsHeaderBuilder.build(), claimSetBuilder.build());
-
-//        final Jwt encode = nimbusJwtEncoder.encode(jwtEncoderParameters);
-
         final JWSSigner signer = new MACSigner(getHash());
-        //final JWSObject jwsObject = new JWSObject(new JWSHeader(JWSAlgorithm.HS256), new Payload(Map.of("sub", userId, "alg", "HS256")));
 
         final long now = new Date().getTime();
 
