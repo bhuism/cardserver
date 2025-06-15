@@ -34,7 +34,7 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         return gameService.getGame(userId, gameId)
             .map(gameToOpenApiConverter::convert)
@@ -49,7 +49,7 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         return gameService.getGame(userId, gameId)
             .map(g -> gameService.playCard(userId, g, convertCard(playCard.getCard())))
@@ -64,7 +64,7 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("getGames()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         return
             ResponseEntity.ok(
@@ -81,7 +81,7 @@ public class GameController implements GamesApi {
         LoggingFilter.requestLogMessage("createGame()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         return ResponseEntity.ok(gameToOpenApiConverter.convert(gameService.createGame(userId, createGame.getPlayers())));
     }

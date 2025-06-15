@@ -34,8 +34,6 @@ public class WebSecurityConfig {
 
     private final Environment environment;
 
-    private final CardSeverAuthFilter cardSeverAuthFilter;
-
     private final CardServerJwtModem cardServerJwtModem;
 
     @Bean
@@ -72,7 +70,7 @@ public class WebSecurityConfig {
                 authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
                     .authenticated();
             }
-            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(token -> cardServerJwtModem.decode(token)).jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(cardServerJwtModem::decode).jwtAuthenticationConverter(new JwtAuthenticationConverter())));
         return http.build();
     }
 

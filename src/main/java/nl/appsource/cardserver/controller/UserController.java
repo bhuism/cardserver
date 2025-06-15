@@ -44,7 +44,7 @@ public class UserController implements UsersApi {
         LoggingFilter.requestLogMessage("getIncomingFriends()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         final List<User> users = userService.findAllIncomingInvites(userId).stream().map(userToOpenApiConverter::convert).collect(Collectors.toCollection(ArrayList::new));
 

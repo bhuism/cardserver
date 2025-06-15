@@ -10,6 +10,7 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 import static java.util.Collections.emptyMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CardServerJwtModem {
@@ -34,6 +36,9 @@ public class CardServerJwtModem {
 
     @SneakyThrows
     public Jwt decode(final String token) {
+
+
+//        log.info("decoding  token {} ", token);
 
         return createJwt(token, JWTParser.parse(token));
 
@@ -97,6 +102,8 @@ public class CardServerJwtModem {
             .issuer("https://api.cardserver.nl")
             .issueTime(new Date(now))
             .expirationTime(new Date(now + Duration.ofDays(356 * 69).toSeconds()))
+            .claim("scope", "USER")
+            .claim("scp", "USER")
             .build();
 
         final SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);

@@ -27,7 +27,7 @@ public class MessageController implements MessageApi {
         LoggingFilter.requestLogMessage("sendAMessage()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         messageEngine.message(userId, postMessage.getMessage());
 

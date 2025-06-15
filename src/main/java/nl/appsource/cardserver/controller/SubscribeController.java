@@ -26,7 +26,7 @@ public class SubscribeController {
         LoggingFilter.requestLogMessage("sendAMessage()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = "" + authentication.getPrincipal();
+        final String userId = authentication.getName();
 
         return messageEngine.subscribe(userId);
     }

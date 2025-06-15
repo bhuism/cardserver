@@ -38,14 +38,7 @@ public class LoggingFilter extends OncePerRequestFilter {
         final String remoteAddr = servletRequest.getRemoteAddr();
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String principal = "" + authentication.getPrincipal();
-//        final String email = "" + principal.getClaims().get("email");
-
-
-        //            ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeaderNames().asIterator().forEachRemaining(headerName ->
-//                log.info("headers {}={}", headerName, ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest().getHeader(headerName))
-//            );
-
+        final String name = "" + authentication.getName();
 
         log.trace(
             "Starting a transaction for req : {}",
@@ -56,7 +49,7 @@ public class LoggingFilter extends OncePerRequestFilter {
         } finally {
             log.info(
                 "{} {}, {}, {} msec, {}",
-                remoteAddr, servletRequest.getRequestURI(), principal, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+                remoteAddr, servletRequest.getRequestURI(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
             STRING_THREAD_LOCAL.remove();
         }
     }
