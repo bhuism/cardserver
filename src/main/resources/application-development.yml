@@ -32,5 +32,6 @@ cardserver:
     bucket-name: cardserver
   auth:
     api-secret: killer
+    jwt-secret: NGfSZOnfZNETMKCaUd9dNhLzTiur4nwxYALP39JGRm4s3hcQIHQI65wQvqdwn8C8
 
 

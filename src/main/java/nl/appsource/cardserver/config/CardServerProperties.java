@@ -19,6 +19,8 @@ public final class CardServerProperties {
 
     private String apiSecret;
 
+    private String jwtSecret;
+
     @PostConstruct
     public void validate() {
         if (!StringUtils.hasText(apiSecret)) {
