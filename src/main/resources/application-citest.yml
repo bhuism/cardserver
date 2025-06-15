@@ -22,9 +22,6 @@ spring:
         jwt:
           issuer-uri: https://accounts.google.com
           jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
-#  couchbase:
-#    connection-string: couchbase://localhost/cardserver
-#    username: root
 cardserver:
   auth:
-    jwt-secret: killer
+    jwt-secret: iuewchnyaesngfksgefkuyuacaygwr64unryufksgnfcduygbfgfbzjdfszgsffsd
