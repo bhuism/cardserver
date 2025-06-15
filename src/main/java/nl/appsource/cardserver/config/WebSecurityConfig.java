@@ -12,9 +12,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,7 +43,6 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChainOauth(final HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-//            .sessionManagement(AbstractHttpConfigurer::disable)
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/whoami")
@@ -53,7 +54,8 @@ public class WebSecurityConfig {
                 authorizationManagerRequestMatcherRegistry.requestMatchers(HttpMethod.POST, "/whoami")
                     .authenticated();
             }
-            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())))
+        ;
 
         return http.build();
     }
@@ -64,7 +66,6 @@ public class WebSecurityConfig {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
-//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.disable())
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/api/v1/**", "/subscribe")
@@ -73,8 +74,25 @@ public class WebSecurityConfig {
                 authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
                     .authenticated();
             }
-            )).addFilterBefore(cardSeverAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(myDecodier()).jwtAuthenticationConverter(new JwtAuthenticationConverter())))
+            .addFilter(cardSeverAuthFilter);
         return http.build();
+    }
+
+    @Bean
+    public JwtDecoder myDecodier() {
+
+        final JwtDecoder jwtDecoder = new JwtDecoder() {
+
+            @Override
+            public Jwt decode(final String token) throws JwtException {
+                log.info("decofing: {}", token);
+                return null;
+            }
+        };
+
+        return jwtDecoder;
+
     }
 
 
@@ -91,7 +109,6 @@ public class WebSecurityConfig {
 
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.disable())
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/**")
