@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,13 +18,19 @@ public class JwtTest {
     public void testJwtEncodeDecode() {
 
 
-        final String jwt = cardServerJwtModem.encode("dit is een test");
+        final Jwt jwt = cardServerJwtModem.encode("dit is een test");
 
-        log.info("encrypted: {}", jwt);
+        final String tokenValue = jwt.getTokenValue();
 
-        final String actual = cardServerJwtModem.decode(jwt);
+        log.info("decoded: {}", jwt.getTokenValue());
 
-        assertThat(actual).isEqualTo("dit is een test");
+        final Jwt actual = cardServerJwtModem.decode(tokenValue);
+
+        log.info("header: {}", actual.getHeaders());
+        log.info("claims: {}", actual.getClaims());
+
+
+        assertThat(actual.getSubject()).isEqualTo("dit is een test");
 
 
     }

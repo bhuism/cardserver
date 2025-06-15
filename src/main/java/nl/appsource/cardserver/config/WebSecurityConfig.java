@@ -1,8 +1,10 @@
 package nl.appsource.cardserver.config;
 
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.service.CardServerJwtModem;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -15,6 +17,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -37,6 +40,8 @@ public class WebSecurityConfig {
     private final Environment environment;
 
     private final CardSeverAuthFilter cardSeverAuthFilter;
+
+    private final CardServerJwtModem cardServerJwtModem;
 
     @Bean
     @Order(1)
@@ -74,27 +79,10 @@ public class WebSecurityConfig {
                 authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
                     .authenticated();
             }
-            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(myDecodier()).jwtAuthenticationConverter(new JwtAuthenticationConverter())))
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(cardServerJwtModem).jwtAuthenticationConverter(new JwtAuthenticationConverter())))
             .addFilter(cardSeverAuthFilter);
         return http.build();
     }
-
-    @Bean
-    public JwtDecoder myDecodier() {
-
-        final JwtDecoder jwtDecoder = new JwtDecoder() {
-
-            @Override
-            public Jwt decode(final String token) throws JwtException {
-                log.info("decofing: {}", token);
-                return null;
-            }
-        };
-
-        return jwtDecoder;
-
-    }
-
 
     @Bean
     @Order(3)
