@@ -27,4 +27,4 @@ spring:
 #    username: root
 cardserver:
   auth:
-    api-secret: test123
+    jwt-secret: killer

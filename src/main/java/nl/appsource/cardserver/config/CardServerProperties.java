@@ -17,14 +17,12 @@ import org.springframework.util.StringUtils;
 @Accessors(chain = true)
 public final class CardServerProperties {
 
-    private String apiSecret;
-
     private String jwtSecret;
 
     @PostConstruct
     public void validate() {
-        if (!StringUtils.hasText(apiSecret)) {
-            throw new RuntimeException("Please set a apiSecret");
+        if (!StringUtils.hasText(jwtSecret)) {
+            throw new RuntimeException("Please set a jwtSecret");
         }
     }
 }

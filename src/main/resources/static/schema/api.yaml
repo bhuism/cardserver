@@ -109,8 +109,6 @@ components:
           $ref: "./game.yaml#/components/schemas/Card"
       required:
         - card
-    loginResponse:
-      $ref: "./user.yaml#/components/schemas/User"
     postMessage:
       type: object
       properties:

@@ -13,8 +13,6 @@ spring:
           jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
 
 cardserver:
-  auth:
-    api-secret: changeme
   couchbase:
     connection-string: couchbase://couchbase.couchbase
     username: root
