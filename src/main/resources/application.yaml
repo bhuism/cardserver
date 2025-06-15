@@ -15,9 +15,6 @@ spring:
     name: Card Server
   jackson:
     time-zone: Europe/Amsterdam
-    mapper:
-      require-handlers-for-java8-optionals: false
-      require-handlers-for-java8-times: false
   mvc:
     servlet:
       load-on-startup: 1
