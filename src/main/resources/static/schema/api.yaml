@@ -2,7 +2,7 @@ openapi: "3.0.4"
 info:
   title: Klavers Jassen
   description: Klavers Jassen
-  version: 1.0.0
+  version: "@git.commit.id.abbrev@"
 servers:
   - url: 'https://www.klaversjassen.nl/api/v1'
     description: Klavers Jassen

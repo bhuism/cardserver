@@ -129,6 +129,7 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>banner.txt</include>
+                    <include>static/schema/api.yaml</include>
                 </includes>
             </resource>
             <resource>
