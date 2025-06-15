@@ -10,6 +10,7 @@ import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.Date;
@@ -37,18 +37,25 @@ public class CardServerJwtModem {
 
     private final CardServerProperties cardServerProperties;
 
+    private JWSVerifier verifier;
+
+    private JWSSigner signer;
+
+    @SneakyThrows
+    @PostConstruct
+    public void init() {
+        verifier = new MACVerifier(getHash());
+        signer = new MACSigner(getHash());
+    }
+
     @SneakyThrows
     public Jwt decode(final String token) {
 
         final SignedJWT signedJWT = SignedJWT.parse(token);
 
-        final JWSVerifier verifier = new MACVerifier(getHash());
-
         if (!signedJWT.verify(verifier)) {
             throw new JwtException("JWT verification failed");
         }
-
-//        log.info("decoding  token {} ", token);
 
         return createJwt(token, JWTParser.parse(token));
 
@@ -69,11 +76,9 @@ public class CardServerJwtModem {
     @SneakyThrows
     public SignedJWT encode(final String userId) {
 
-        final JWSSigner signer = new MACSigner(getHash());
-
         final long now = new Date().getTime();
 
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+        final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
             .subject(userId)
             .jwtID(UUID.randomUUID().toString())
             .audience("https://www.klaversjassen.nl")
@@ -94,8 +99,6 @@ public class CardServerJwtModem {
 
     @SneakyThrows
     private byte[] getHash() {
-        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        final byte[] encodedhash = digest.digest(cardServerProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8));
-        return encodedhash;
+        return cardServerProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8);
     }
 }

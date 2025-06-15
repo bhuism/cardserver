@@ -13,11 +13,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class JwtTest {
 
-    private CardServerJwtModem cardServerJwtModem = new CardServerJwtModem(new CardServerProperties().setJwtSecret("test123"));
 
     @Test
     public void testJwtEncodeDecode() {
 
+        final CardServerJwtModem cardServerJwtModem = new CardServerJwtModem(new CardServerProperties().setJwtSecret("test123test123test123test123test123test123test123test123"));
+
+        cardServerJwtModem.init();
 
         final SignedJWT jwt = cardServerJwtModem.encode("dit is een test");
 
@@ -30,9 +32,7 @@ public class JwtTest {
         log.info("header: {}", actual.getHeaders());
         log.info("claims: {}", actual.getClaims());
 
-
         assertThat(actual.getSubject()).isEqualTo("dit is een test");
-
 
     }
 

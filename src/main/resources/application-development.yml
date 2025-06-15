@@ -28,7 +28,7 @@ cardserver:
   couchbase:
     connection-string: couchbase://192.168.1.86
     username: root
-    password: killer
+    password: killer123killer123killer123killer123killer123killer123killer123killer123
     bucket-name: cardserver
   auth:
     jwt-secret: NGfSZOnfZNETMKCaUd9dNhLzTiur4nwxYALP39JGRm4s3hcQIHQI65wQvqdwn8C8
