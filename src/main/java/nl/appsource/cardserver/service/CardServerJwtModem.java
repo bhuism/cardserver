@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -89,7 +90,7 @@ public class CardServerJwtModem {
             .claim("scp", "USER")
             .build();
 
-        final SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+        final SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.HS256).type(JOSEObjectType.JWT).build(), claimsSet);
 
         signedJWT.sign(signer);
 
