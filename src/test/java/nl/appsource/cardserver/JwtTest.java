@@ -1,6 +1,7 @@
 package nl.appsource.cardserver;
 
 
+import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
 import nl.appsource.cardserver.service.CardServerJwtModem;
@@ -18,11 +19,11 @@ public class JwtTest {
     public void testJwtEncodeDecode() {
 
 
-        final Jwt jwt = cardServerJwtModem.encode("dit is een test");
+        final SignedJWT jwt = cardServerJwtModem.encode("dit is een test");
 
-        final String tokenValue = jwt.getTokenValue();
+        final String tokenValue = jwt.serialize();
 
-        log.info("decoded: {}", jwt.getTokenValue());
+        log.info("token: {}", tokenValue);
 
         final Jwt actual = cardServerJwtModem.decode(tokenValue);
 

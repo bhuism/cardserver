@@ -4,8 +4,6 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -13,12 +11,8 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import nl.appsource.cardserver.config.CardServerProperties;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -28,6 +22,9 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
+
+import static java.util.Collections.emptyMap;
 
 @Service
 @RequiredArgsConstructor
@@ -66,35 +63,40 @@ public class CardServerJwtModem {
         // @formatter:off
         return Jwt.withTokenValue(token)
             .headers((h) -> h.putAll(headers))
-            .claims((c) -> c.putAll(claims))
+            .claims((c) -> c.putAll(MappedJwtClaimSetConverter.withDefaults(emptyMap()).convert(claims)))
             .build();
     }
 
     @SneakyThrows
     public SignedJWT encode(final String userId) {
 
-        final ImmutableSecret<SecurityContext> immutableSecret = new ImmutableSecret<>(getHash());
+//        final ImmutableSecret<SecurityContext> immutableSecret = new ImmutableSecret<>(getHash());
 
-        final NimbusJwtEncoder nimbusJwtEncoder = new NimbusJwtEncoder(immutableSecret);
+       // final NimbusJwtEncoder nimbusJwtEncoder = new NimbusJwtEncoder(immutableSecret);
 
-        final JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(MacAlgorithm.HS256);
+        //final JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(MacAlgorithm.HS256);
 
-        final JwtClaimsSet claims = JwtClaimsSet.builder().subject(userId).build();
+      //  final JwtClaimsSet claims = JwtClaimsSet.builder().subject(userId).build();
 
-        final JwtClaimsSet.Builder claimSetBuilder = JwtClaimsSet.from(claims);
+    //    final JwtClaimsSet.Builder claimSetBuilder = JwtClaimsSet.from(claims);
 
-        final JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(jwsHeaderBuilder.build(), claimSetBuilder.build());
+  //      final JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(jwsHeaderBuilder.build(), claimSetBuilder.build());
 
-        final Jwt encode = nimbusJwtEncoder.encode(jwtEncoderParameters);
+//        final Jwt encode = nimbusJwtEncoder.encode(jwtEncoderParameters);
 
         final JWSSigner signer = new MACSigner(getHash());
         //final JWSObject jwsObject = new JWSObject(new JWSHeader(JWSAlgorithm.HS256), new Payload(Map.of("sub", userId, "alg", "HS256")));
 
+        final long now = new Date().getTime();
+
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-            .subject("userId")
+            .subject(userId)
+            .jwtID(UUID.randomUUID().toString())
+            .audience("https://www.klaversjassen.nl")
+            .notBeforeTime(new Date(now - Duration.ofMinutes(5).toSeconds()))
             .issuer("https://api.cardserver.nl")
-            .issueTime(new Date(new Date().getTime() - Duration.ofHours(1).toSeconds()))
-            .expirationTime(new Date(new Date().getTime() + Duration.ofDays(356 * 10).toSeconds()))
+            .issueTime(new Date(now))
+            .expirationTime(new Date(now + Duration.ofDays(356 * 69).toSeconds()))
             .build();
 
         final SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
