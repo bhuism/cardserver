@@ -176,7 +176,6 @@ components:
         application/json:
           schema:
             type: string
-#            $ref: "./user.yaml#/components/schemas/User"
     IncomingFriendsResponse:
       description: incoming friends response
       content:
