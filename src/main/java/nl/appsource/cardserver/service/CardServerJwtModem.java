@@ -102,7 +102,6 @@ public class CardServerJwtModem {
             .issuer("https://api.cardserver.nl")
             .issueTime(new Date(now))
             .expirationTime(new Date(now + Duration.ofDays(356 * 69).toSeconds()))
-            .claim("scope", "USER")
             .claim("scp", "USER")
             .build();
 
