@@ -13,10 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Slf4j
-public class MessageController implements MessageApi {
+public class MessageController implements MessageApi, V1Api {
 
     private final MessageEngine messageEngine;
 

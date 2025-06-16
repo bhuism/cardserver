@@ -9,10 +9,10 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -44,15 +44,11 @@ public class WebSecurityConfig {
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/whoami")
-//            .authorizeHttpRequests((authorize) -> authorize
-//                .shouldFilterAllDispatcherTypes(true) // You can remove it because it is default configuration in Spring Security 6
-//                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
-//                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                 authorizationManagerRequestMatcherRegistry.requestMatchers(HttpMethod.POST, "/whoami")
                     .authenticated();
             }
-            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+            )).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(Customizer.withDefaults()));
         return http.build();
     }
 
@@ -64,13 +60,12 @@ public class WebSecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
-            .securityMatcher("/api/v1/**", "/subscribe")
+            .securityMatcher("/api/v1/**")
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
-//                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
-                authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
+                authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**")
                     .authenticated();
             }
-            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(cardServerJwtModem::decode).jwtAuthenticationConverter(new JwtAuthenticationConverter())));
+            )).oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(cardServerJwtModem::decode)));
         return http.build();
     }
 
@@ -91,7 +86,6 @@ public class WebSecurityConfig {
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/**")
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry) -> {
-//                    authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                     authorizationManagerRequestMatcherRegistry
                         .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                         .permitAll()

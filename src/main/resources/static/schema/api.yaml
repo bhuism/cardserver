@@ -8,6 +8,14 @@ servers:
     description: Klavers Jassen
 
 paths:
+  /pong:
+    post:
+      tags:
+        - pong
+      operationId: pong
+      responses:
+        "200":
+          description: pong
   /whoami:
     post:
       tags:

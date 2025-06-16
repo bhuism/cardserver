@@ -12,7 +12,6 @@ import org.openapitools.model.PlayCard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,10 +20,9 @@ import java.util.stream.Collectors;
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 
 @RestController
-@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Slf4j
-public class GameController implements GamesApi {
+public class GameController implements GamesApi, V1Api {
 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
