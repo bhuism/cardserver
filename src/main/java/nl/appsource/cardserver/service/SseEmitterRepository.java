@@ -2,7 +2,6 @@ package nl.appsource.cardserver.service;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -16,12 +15,12 @@ public class SseEmitterRepository {
 
     private final CopyOnWriteArrayList<MySseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    public void send(final User fromUser, final String message) {
+    public void send(final String fromString, final String message) {
 
         final Set<MySseEmitter> removers = new HashSet<>();
 
         emitters.forEach(mySseEmitter -> {
-            if (mySseEmitter.send(fromUser, message)) {
+            if (mySseEmitter.send(fromString, message)) {
                 removers.add(mySseEmitter);
             }
         });
@@ -49,6 +48,9 @@ public class SseEmitterRepository {
     public SseEmitter subscribe(final String userId) {
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
         emitters.add(mySseEmitter);
+
+        mySseEmitter.send("System", "Welcome!");
+
         return mySseEmitter.getEmitter();
     }
 

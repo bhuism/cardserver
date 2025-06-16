@@ -2,7 +2,6 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.User;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.UUID;
@@ -47,13 +46,13 @@ public final class MySseEmitter {
         }
     }
 
-    public boolean send(final User fromUser, final String message) {
+    public boolean send(final String fromString, final String message) {
         try {
-            log.info("sending {} from: {} to: {}", message, fromUser.getDisplayName(), userId);
-            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(1000).name("cardservermessage").data(fromUser.getDisplayName() + ":" + message).build());
+            log.info("sending {} from: {} to: {}", message, fromString, userId);
+            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(1000).name("cardservermessage").data(fromString + ": " + message).build());
             return false;
         } catch (final Throwable e) {
-            log.error("{}: from {} to {} message {}", e.getClass().getName() + ":" + e.getMessage(), fromUser.getDisplayName(), userId, message);
+            log.error("{}: from {} to {} message {}", e.getClass().getName() + ":" + e.getMessage(), fromString, userId, message);
             complete();
             return true;
         }

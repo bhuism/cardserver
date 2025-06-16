@@ -19,8 +19,8 @@ public class MessageEngine {
     private final UserRepository userRepository;
 
     public void message(final String source, final String message) {
-        final User from = userRepository.findById(source).orElseThrow(IllegalArgumentException::new);
-        sseEmitterRepository.send(from, message);
+        final String fromString = userRepository.findById(source).map(User::getDisplayName).orElseThrow(IllegalArgumentException::new);
+        sseEmitterRepository.send(fromString, message);
     }
 
     public SseEmitter subscribe(final String userId) {

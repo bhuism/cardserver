@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.config;
 
-import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.CardServerJwtModem;
@@ -39,6 +38,7 @@ public class WebSecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain securityFilterChainOauth(final HttpSecurity http) throws Exception {
+
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
@@ -48,7 +48,7 @@ public class WebSecurityConfig {
 //                .shouldFilterAllDispatcherTypes(true) // You can remove it because it is default configuration in Spring Security 6
 //                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
-                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
+//                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                 authorizationManagerRequestMatcherRegistry.requestMatchers(HttpMethod.POST, "/whoami")
                     .authenticated();
             }
@@ -66,7 +66,7 @@ public class WebSecurityConfig {
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/api/v1/**", "/subscribe")
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry -> {
-                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
+//                authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                 authorizationManagerRequestMatcherRegistry.requestMatchers("/api/v1/**", "/subscribe")
                     .authenticated();
             }
@@ -91,7 +91,7 @@ public class WebSecurityConfig {
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
             .securityMatcher("/**")
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry) -> {
-                    authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
+//                    authorizationManagerRequestMatcherRegistry.dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll();
                     authorizationManagerRequestMatcherRegistry
                         .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                         .permitAll()

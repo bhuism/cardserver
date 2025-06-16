@@ -5,7 +5,7 @@ server:
   compression:
     enabled: true
   forward-headers-strategy: framework
-  shutdown: graceful
+  shutdown: immediate
 logging:
   level:
     ROOT: info
