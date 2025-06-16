@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -15,12 +16,29 @@ public class SseEmitterRepository {
 
     private final CopyOnWriteArrayList<MySseEmitter> emitters = new CopyOnWriteArrayList<>();
 
+    @Scheduled(fixedRate = 1000 * 60 * 5, initialDelay = 1000 * 30)
+    public void pingAll() {
+
+        log.info("Ping all, size={}", emitters.size());
+
+        final Set<MySseEmitter> removers = new HashSet<>();
+
+        emitters.forEach(mySseEmitter -> {
+            if (!mySseEmitter.sendPing()) {
+                removers.add(mySseEmitter);
+            }
+        });
+
+        emitters.removeAll(removers);
+
+    }
+
     public void send(final String fromString, final String message) {
 
         final Set<MySseEmitter> removers = new HashSet<>();
 
         emitters.forEach(mySseEmitter -> {
-            if (mySseEmitter.send(fromString, message)) {
+            if (!mySseEmitter.sendCardServerMessage(fromString, message)) {
                 removers.add(mySseEmitter);
             }
         });
@@ -47,10 +65,13 @@ public class SseEmitterRepository {
 
     public SseEmitter subscribe(final String userId) {
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
+
+        // ping new connection
+        if (!mySseEmitter.sendPing()) {
+            throw new RuntimeException("ping error");
+        }
+
         emitters.add(mySseEmitter);
-
-        mySseEmitter.send("System", "Welcome!");
-
         return mySseEmitter.getEmitter();
     }
 

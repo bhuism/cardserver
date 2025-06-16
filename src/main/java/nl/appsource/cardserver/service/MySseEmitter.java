@@ -46,17 +46,34 @@ public final class MySseEmitter {
         }
     }
 
-    public boolean send(final String fromString, final String message) {
-        try {
-            log.info("sending {} from: {} to: {}", message, fromString, userId);
-            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(1000).name("cardservermessage").data(fromString + ": " + message).build());
-            return false;
-        } catch (final Throwable e) {
-            log.error("{}: from {} to {} message {}", e.getClass().getName() + ":" + e.getMessage(), fromString, userId, message);
-            complete();
-            return true;
-        }
+    public boolean sendCardServerMessage(final String fromString, final String message) {
+        return internalSend("cardservermessage", fromString + ": " + message);
+    }
 
+    public boolean sendPing() {
+        return internalSend("ping", System.currentTimeMillis());
+    }
+
+    /**
+     *
+     * @param event
+     * @param data
+     * @return if error
+     */
+    private boolean internalSend(final String event, final Object data) {
+        try {
+            log.info("sending {} data: {} ", event, data);
+            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event).data(data).build());
+            return true;
+        } catch (final Throwable e) {
+            log.error("{}: event {} to {} data {}", e.getClass().getName() + ":" + e.getMessage(), event, userId, data, e);
+            try {
+                complete();
+            } catch (final Throwable t) {
+
+            }
+            return false;
+        }
     }
 }
 
