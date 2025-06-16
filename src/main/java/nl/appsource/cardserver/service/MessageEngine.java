@@ -28,7 +28,7 @@ public class MessageEngine {
         try {
             return sseEmitterRepository.subscribe(userId);
         } finally {
-            LoggingFilter.requestLogMessage("size=" + sseEmitterRepository.size());
+            LoggingFilter.requestLogMessage(", sseEmitterRepository.size()=" + sseEmitterRepository.size());
         }
 
     }
