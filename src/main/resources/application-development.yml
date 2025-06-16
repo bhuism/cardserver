@@ -31,6 +31,6 @@ cardserver:
     password: killer
     bucket-name: cardserver
   auth:
-    jwt-secret: NGfSZOnfZNETMKCaUd9dNhLzTiur4nwxYALP39JGRm4s3hcQIHQI65wQvqdwn8C8
+    jwt-secret: 1111111111222222222233333333334444444444
 
 
