@@ -20,15 +20,10 @@ import static java.lang.System.currentTimeMillis;
 @Slf4j
 public class LoggingFilter extends OncePerRequestFilter {
 
-    private static final ThreadLocal<String> STRING_THREAD_LOCAL = new ThreadLocal<>() {
-        @Override
-        protected String initialValue() {
-            return "";
-        }
-    };
+    private static final ThreadLocal<StringBuffer> STRING_THREAD_LOCAL = ThreadLocal.withInitial(StringBuffer::new);
 
     public static final void requestLogMessage(final String message) {
-        STRING_THREAD_LOCAL.set(STRING_THREAD_LOCAL.get() + message);
+        STRING_THREAD_LOCAL.get().append(message);
     }
 
     @Override
