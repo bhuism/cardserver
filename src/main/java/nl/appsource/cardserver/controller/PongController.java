@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
-public class PongController implements PongApi {
+public class PongController implements PongApi, V1Api {
     @Override
     public ResponseEntity<Void> pong() {
         LoggingFilter.requestLogMessage("pong");
