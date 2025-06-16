@@ -50,7 +50,7 @@ paths:
           description: not found
   /message:
     post:
-      operationId: send a mesage
+      operationId: send a message
       requestBody:
         required: true
         content:

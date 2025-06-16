@@ -21,7 +21,7 @@ public class MessageController implements MessageApi {
     private final MessageEngine messageEngine;
 
     @Override
-    public ResponseEntity<Void> sendAMesage(final PostMessage postMessage) {
+    public ResponseEntity<Void> sendAMessage(final PostMessage postMessage) {
 
 
         LoggingFilter.requestLogMessage("sendAMessage()");
