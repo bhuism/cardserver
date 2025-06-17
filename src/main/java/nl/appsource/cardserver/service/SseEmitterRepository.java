@@ -16,10 +16,8 @@ public class SseEmitterRepository {
 
     private final CopyOnWriteArrayList<MySseEmitter> emitters = new CopyOnWriteArrayList<>();
 
-    @Scheduled(fixedRate = 1000 * 60 * 5, initialDelay = 1000 * 30)
+    @Scheduled(fixedRate = 1000 * 15, initialDelay = 1000 * 60)
     public void pingAll() {
-
-        log.info("Ping all, size={}", emitters.size());
 
         final Set<MySseEmitter> removers = new HashSet<>();
 
