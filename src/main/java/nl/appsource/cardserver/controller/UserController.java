@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
+import nl.appsource.cardserver.service.MessageEngine;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
+import org.openapitools.model.PostMessage;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 public class UserController implements UsersApi, V1Api {
 
     private final UserService userService;
+
+    private final MessageEngine messageEngine;
 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
@@ -49,4 +53,28 @@ public class UserController implements UsersApi, V1Api {
         return ResponseEntity.ok(users);
     }
 
+    @Override
+    public ResponseEntity<Void> sendMessage(final PostMessage postMessage) {
+
+        LoggingFilter.requestLogMessage("sendAMessage()");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        messageEngine.message(userId, postMessage.getMessage());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> pong() {
+        LoggingFilter.requestLogMessage("pong");
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> ping() {
+        LoggingFilter.requestLogMessage("ping");
+        return ResponseEntity.ok().build();
+    }
 }
