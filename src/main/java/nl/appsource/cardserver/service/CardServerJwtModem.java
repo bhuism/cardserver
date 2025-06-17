@@ -100,7 +100,6 @@ public class CardServerJwtModem {
 
     @SneakyThrows
     private byte[] getHash() {
-        log.info("jwtSecret: {}", cardServerProperties.getJwtSecret());
         return cardServerProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8);
     }
 }
