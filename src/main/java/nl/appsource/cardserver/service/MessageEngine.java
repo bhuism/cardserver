@@ -4,7 +4,6 @@ package nl.appsource.cardserver.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.filter.LoggingFilter;
-import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
