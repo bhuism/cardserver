@@ -33,4 +33,7 @@ public class MessageEngine {
 
     }
 
+    public void ping(final String userId) {
+        sseEmitterRepository.pong(userId);
+    }
 }

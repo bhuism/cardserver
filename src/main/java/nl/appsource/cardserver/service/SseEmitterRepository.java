@@ -7,22 +7,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class SseEmitterRepository {
 
-    private final CopyOnWriteArrayList<MySseEmitter> emitters = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArraySet<MySseEmitter> emitters = new CopyOnWriteArraySet<>();
 
-    @Scheduled(fixedRate = 1000 * 15, initialDelay = 1000 * 60)
-    public void pingAll() {
+    private void doSelected(final Set<MySseEmitter> receivers, final Function<MySseEmitter, Boolean> consumer) {
 
         final Set<MySseEmitter> removers = new HashSet<>();
 
-        emitters.forEach(mySseEmitter -> {
-            if (!mySseEmitter.sendPing()) {
+        receivers.forEach(mySseEmitter -> {
+            if (!consumer.apply(mySseEmitter)) {
                 removers.add(mySseEmitter);
             }
         });
@@ -31,17 +33,19 @@ public class SseEmitterRepository {
 
     }
 
+
+    private void doAll(final Function<MySseEmitter, Boolean> consumer) {
+        doSelected(emitters, consumer);
+    }
+
+
+    @Scheduled(fixedRate = 1000 * 15, initialDelay = 1000 * 60)
+    public void pingAll() {
+        doAll(MySseEmitter::ping);
+    }
+
     public void send(final String fromString, final String message) {
-
-        final Set<MySseEmitter> removers = new HashSet<>();
-
-        emitters.forEach(mySseEmitter -> {
-            if (!mySseEmitter.sendCardServerMessage(fromString, message)) {
-                removers.add(mySseEmitter);
-            }
-        });
-
-        emitters.removeAll(removers);
+        doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message));
     }
 
     @PreDestroy
@@ -65,7 +69,7 @@ public class SseEmitterRepository {
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
         // ping new connection
-        if (!mySseEmitter.sendPing()) {
+        if (!mySseEmitter.ping()) {
             throw new RuntimeException("ping error");
         }
 
@@ -73,4 +77,7 @@ public class SseEmitterRepository {
         return mySseEmitter.getEmitter();
     }
 
+    public void pong(final String userId) {
+        doSelected(emitters.stream().filter(mySseEmitter -> Objects.equals(mySseEmitter.getUserId(), userId)).collect(Collectors.toSet()), MySseEmitter::pong);
+    }
 }

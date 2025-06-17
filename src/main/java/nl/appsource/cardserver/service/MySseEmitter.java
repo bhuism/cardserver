@@ -50,8 +50,12 @@ public final class MySseEmitter {
         return internalSend("cardservermessage", fromString + ": " + message);
     }
 
-    public boolean sendPing() {
+    public boolean ping() {
         return internalSend("ping", System.currentTimeMillis());
+    }
+
+    public boolean pong() {
+        return internalSend("pong", System.currentTimeMillis());
     }
 
     /**

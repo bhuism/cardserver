@@ -75,6 +75,12 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public ResponseEntity<Void> ping() {
         LoggingFilter.requestLogMessage("ping");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        messageEngine.ping(userId);
+
         return ResponseEntity.ok().build();
     }
 }
