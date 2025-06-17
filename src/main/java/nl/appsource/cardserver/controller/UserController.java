@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -66,21 +67,29 @@ public class UserController implements UsersApi, V1Api {
         return ResponseEntity.ok().build();
     }
 
-    @Override
-    public ResponseEntity<Void> pong() {
-        LoggingFilter.requestLogMessage("pong");
-        return ResponseEntity.ok().build();
-    }
 
     @Override
-    public ResponseEntity<Void> ping() {
+    public ResponseEntity<UUID> ping(final UUID uuid) {
         LoggingFilter.requestLogMessage("ping");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        messageEngine.ping(userId);
+        messageEngine.ping(userId, uuid);
 
         return ResponseEntity.ok().build();
     }
+
+    @Override
+    public ResponseEntity<UUID> pong(final UUID uuid) {
+        LoggingFilter.requestLogMessage("pong");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        messageEngine.pong(userId, uuid);
+
+        return ResponseEntity.ok().build();
+    }
+
 }

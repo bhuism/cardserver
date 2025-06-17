@@ -65,18 +65,22 @@ paths:
       responses:
         "200":
           description: ok
-  /users/pong:
-    post:
-      operationId: pong
-      responses:
-        "200":
-          description: pong
   /users/ping:
     post:
       operationId: ping
+      requestBody:
+        $ref: "#/components/requestBodies/uuid"
       responses:
         "200":
-          description: ping
+          $ref: "#/components/responses/uuid"
+  /users/pong:
+    post:
+      operationId: pong
+      requestBody:
+        $ref: "#/components/requestBodies/uuid"
+      responses:
+        "200":
+          $ref: "#/components/responses/uuid"
   /users/message:
     post:
       operationId: sendMessage
@@ -113,6 +117,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
+    uuid:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: string
+            format: uuid
   schemas:
     playCard:
       type: object
@@ -160,6 +171,13 @@ components:
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
   responses:
+    uuid:
+      description: a game
+      content:
+        application/json:
+          schema:
+            type: string
+            format: uuid
     GameResponse:
       description: a game
       content:

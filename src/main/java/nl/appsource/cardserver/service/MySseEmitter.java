@@ -4,16 +4,22 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
+@Getter
 public final class MySseEmitter {
 
-    @Getter
     private final String userId;
 
-    @Getter
     private final SseEmitter emitter;
+
+    private final UUID uuid = UUID.randomUUID();
+
+    private Instant pinged;
+
+    private Instant ponged;
 
     public MySseEmitter(final String userIdArg) {
 
@@ -50,16 +56,25 @@ public final class MySseEmitter {
         return internalSend("cardservermessage", fromString + ": " + message);
     }
 
+    public boolean sendPing() {
+        return internalSend("ping", uuid);
+    }
+
+    private boolean sendPong() {
+        return internalSend("pong", uuid);
+    }
+
     public boolean ping() {
-        return internalSend("ping", System.currentTimeMillis());
+        pinged = Instant.now();
+        return sendPong();
     }
 
     public boolean pong() {
-        return internalSend("pong", System.currentTimeMillis());
+        ponged = Instant.now();
+        return true;
     }
 
     /**
-     *
      * @param event
      * @param data
      * @return if error

@@ -9,6 +9,8 @@ import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,9 +20,8 @@ public class MessageEngine {
 
     private final UserRepository userRepository;
 
-    public void message(final String source, final String message) {
-        final String fromString = userRepository.findById(source).map(User::getDisplayName).orElseThrow(IllegalArgumentException::new);
-        sseEmitterRepository.send(fromString, message);
+    public void message(final String userId, final String message) {
+        sseEmitterRepository.sendMessage(userId, message);
     }
 
     public SseEmitter subscribe(final String userId) {
@@ -33,7 +34,12 @@ public class MessageEngine {
 
     }
 
-    public void ping(final String userId) {
-        sseEmitterRepository.pong(userId);
+    public void ping(final String userId, final UUID uuid) {
+        sseEmitterRepository.ping(uuid);
     }
+
+    public void pong(final String userId, final UUID uuid) {
+        sseEmitterRepository.pong(uuid);
+    }
+
 }
