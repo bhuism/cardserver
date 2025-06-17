@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.filter.LoggingFilter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
@@ -42,6 +43,7 @@ public final class MySseEmitter {
             throw new RuntimeException();
         });
 
+        LoggingFilter.requestLogMessage(", new Emitter userId=" + userId + ", uuid=" + uuid);
     }
 
     public void complete() {
@@ -57,19 +59,23 @@ public final class MySseEmitter {
     }
 
     public boolean sendPing() {
+        LoggingFilter.requestLogMessage("sendPing " + uuid);
         return internalSend("ping", uuid.toString());
     }
 
     private boolean sendPong() {
+        LoggingFilter.requestLogMessage("sendPong " + uuid);
         return internalSend("pong", uuid.toString());
     }
 
     public boolean ping() {
+        LoggingFilter.requestLogMessage(", got ping " + uuid);
         pinged = Instant.now();
         return sendPong();
     }
 
     public boolean pong() {
+        LoggingFilter.requestLogMessage(", got pong " + uuid);
         ponged = Instant.now();
         return true;
     }
