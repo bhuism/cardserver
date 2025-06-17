@@ -57,11 +57,11 @@ public final class MySseEmitter {
     }
 
     public boolean sendPing() {
-        return internalSend("ping", uuid);
+        return internalSend("ping", uuid.toString());
     }
 
     private boolean sendPong() {
-        return internalSend("pong", uuid);
+        return internalSend("pong", uuid.toString());
     }
 
     public boolean ping() {
@@ -81,7 +81,7 @@ public final class MySseEmitter {
      */
     private boolean internalSend(final String event, final Object data) {
         try {
-            log.info("sending {} data: {} ", event, data);
+            log.info("internalSend() sending event '{}' data: '{}' ", event, data);
             emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event).data(data).build());
             return true;
         } catch (final Throwable e) {
