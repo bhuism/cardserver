@@ -30,15 +30,14 @@ public class GameEngineImpl implements GameEngine {
             return game;
         }
 
-
-        final Integer playerNum = game.getPlayers().indexOf(userId);
-
-        final Integer howHasCard = game.getPlayerCard().get(card);
-
-        if (howHasCard != playerNum) {
-            log.warn("Player {} does not have card {}, player {} does", userId, card, howHasCard);
-            return game;
-        }
+//        final Integer playerNum = game.getPlayers().indexOf(userId);
+//
+//        final Integer howHasCard = game.getPlayerCard().get(card);
+//
+//        if (howHasCard != playerNum) {
+//            log.warn("Player {} does not have card {}, player {} does", userId, card, howHasCard);
+//            return game;
+//        }
 
 
         // FIXME: add check: is speler aan slag?
