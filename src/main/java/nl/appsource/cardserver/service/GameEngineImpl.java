@@ -7,7 +7,6 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 
 import java.time.Instant;
-import java.util.Arrays;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -32,10 +31,12 @@ public class GameEngineImpl implements GameEngine {
         }
 
 
-        final Integer playerNum = Arrays.asList(game.getPlayers()).indexOf(userId);
+        final Integer playerNum = game.getPlayers().indexOf(userId);
 
-        if (game.getPlayerCard().get(card) != playerNum) {
-            log.warn("Player {} does not have card {}", userId, card);
+        final Integer howHasCard = game.getPlayerCard().get(card);
+
+        if (howHasCard != playerNum) {
+            log.warn("Player {} does not have card {}, player {} does", userId, card, howHasCard);
             return game;
         }
 
