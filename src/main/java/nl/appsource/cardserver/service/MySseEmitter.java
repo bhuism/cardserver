@@ -2,18 +2,25 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.filter.LoggingFilter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
+@Getter
 public final class MySseEmitter {
 
-    @Getter
     private final String userId;
 
-    @Getter
     private final SseEmitter emitter;
+
+    private final UUID uuid = UUID.randomUUID();
+
+    private Instant pinged;
+
+    private Instant ponged;
 
     public MySseEmitter(final String userIdArg) {
 
@@ -36,6 +43,7 @@ public final class MySseEmitter {
             throw new RuntimeException();
         });
 
+        LoggingFilter.requestLogMessage(", new Emitter userId=" + userId + ", uuid=" + uuid);
     }
 
     public void complete() {
@@ -51,18 +59,35 @@ public final class MySseEmitter {
     }
 
     public boolean sendPing() {
-        return internalSend("ping", System.currentTimeMillis());
+        LoggingFilter.requestLogMessage("sendPing " + uuid);
+        return internalSend("ping", uuid.toString());
+    }
+
+    private boolean sendPong() {
+        LoggingFilter.requestLogMessage("sendPong " + uuid);
+        return internalSend("pong", uuid.toString());
+    }
+
+    public boolean ping() {
+        LoggingFilter.requestLogMessage(", got ping " + uuid);
+        pinged = Instant.now();
+        return sendPong();
+    }
+
+    public boolean pong() {
+        LoggingFilter.requestLogMessage(", got pong " + uuid);
+        ponged = Instant.now();
+        return true;
     }
 
     /**
-     *
      * @param event
      * @param data
      * @return if error
      */
     private boolean internalSend(final String event, final Object data) {
         try {
-            log.info("sending {} data: {} ", event, data);
+            log.info("internalSend() sending event '{}' data: '{}' ", event, data);
             emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event).data(data).build());
             return true;
         } catch (final Throwable e) {

@@ -8,14 +8,6 @@ servers:
     description: Klavers Jassen
 
 paths:
-  /pong:
-    post:
-      tags:
-        - pong
-      operationId: pong
-      responses:
-        "200":
-          description: pong
   /whoami:
     post:
       tags:
@@ -56,18 +48,6 @@ paths:
           $ref: "#/components/responses/GameResponse"
         "404":
           description: not found
-  /message:
-    post:
-      operationId: send a message
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/postMessage"
-      responses:
-        "200":
-          description: ok
   /games/{gameId}:
     get:
       operationId: getGame
@@ -85,6 +65,40 @@ paths:
       responses:
         "200":
           description: ok
+  /users/ping:
+    post:
+      operationId: ping
+      requestBody:
+        $ref: "#/components/requestBodies/uuid"
+      responses:
+        "200":
+          $ref: "#/components/responses/uuid"
+  /users/pong:
+    post:
+      operationId: pong
+      requestBody:
+        $ref: "#/components/requestBodies/uuid"
+      responses:
+        "200":
+          $ref: "#/components/responses/uuid"
+  /users/message:
+    post:
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postMessage"
+      responses:
+        "200":
+          description: ok
+  /users/incomingFriends:
+    get:
+      operationId: getIncomingFriends
+      responses:
+        "200":
+          $ref: "#/components/responses/IncomingFriendsResponse"
   /users/{userId}:
     get:
       operationId: getUser
@@ -95,12 +109,6 @@ paths:
           $ref: "#/components/responses/UserResponse"
         "404":
           description: not found
-  /users/incomingFriends:
-    get:
-      operationId: getIncomingFriends
-      responses:
-        "200":
-          $ref: "#/components/responses/IncomingFriendsResponse"
 components:
   requestBodies:
     playCard:
@@ -109,6 +117,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
+    uuid:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: string
+            format: uuid
   schemas:
     playCard:
       type: object
@@ -156,6 +171,13 @@ components:
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
   responses:
+    uuid:
+      description: a game
+      content:
+        application/json:
+          schema:
+            type: string
+            format: uuid
     GameResponse:
       description: a game
       content:

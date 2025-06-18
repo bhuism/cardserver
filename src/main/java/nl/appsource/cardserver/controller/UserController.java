@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
+import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
+import org.openapitools.model.PostMessage;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -22,6 +25,8 @@ import java.util.stream.Collectors;
 public class UserController implements UsersApi, V1Api {
 
     private final UserService userService;
+
+    private final SseEmitterRepository sseEmitterRepository;
 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
@@ -47,6 +52,32 @@ public class UserController implements UsersApi, V1Api {
         final List<User> users = userService.findAllIncomingInvites(userId).stream().map(userToOpenApiConverter::convert).collect(Collectors.toCollection(ArrayList::new));
 
         return ResponseEntity.ok(users);
+    }
+
+    @Override
+    public ResponseEntity<Void> sendMessage(final PostMessage postMessage) {
+
+        LoggingFilter.requestLogMessage("sendAMessage()");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        sseEmitterRepository.sendMessage(userId, postMessage.getMessage());
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    @Override
+    public ResponseEntity<UUID> ping(final UUID uuid) {
+        sseEmitterRepository.ping(uuid);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<UUID> pong(final UUID uuid) {
+        sseEmitterRepository.pong(uuid);
+        return ResponseEntity.ok().build();
     }
 
 }

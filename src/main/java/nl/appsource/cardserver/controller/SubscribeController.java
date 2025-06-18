@@ -2,8 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.filter.LoggingFilter;
-import nl.appsource.cardserver.service.MessageEngine;
+import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -18,17 +17,13 @@ import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 @RequiredArgsConstructor
 public class SubscribeController implements V1Api {
 
-    private final MessageEngine messageEngine;
+    private final SseEmitterRepository sseEmitterRepository;
 
     @GetMapping(value = "/subscribe", produces = TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe() {
-
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
-
-        LoggingFilter.requestLogMessage("userId=" + userId);
-
-        return messageEngine.subscribe(userId);
+        return sseEmitterRepository.subscribe(userId);
     }
 }
 

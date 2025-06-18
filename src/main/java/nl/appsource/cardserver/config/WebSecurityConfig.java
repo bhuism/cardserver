@@ -87,7 +87,7 @@ public class WebSecurityConfig {
             .securityMatcher("/**")
             .authorizeHttpRequests((authorizationManagerRequestMatcherRegistry) -> {
                     authorizationManagerRequestMatcherRegistry
-                        .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/star.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
+                        .requestMatchers(Stream.concat(Set.of("/", "/manage/**", "/index.html", "/logo192.png", "/logo512.png", "/schema/**", "/error/**").stream(), privateUrls.stream()).toArray(String[]::new))
                         .permitAll()
                         .anyRequest()
                         .denyAll();

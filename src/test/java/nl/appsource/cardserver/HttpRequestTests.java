@@ -34,7 +34,7 @@ public class HttpRequestTests {
 
     @Test
     void greetingShouldReturnDefaultMessage() {
-        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/", String.class)).contains("star.png");
+        assertThat(this.restTemplate.getForObject("http://localhost:" + port + "/", String.class)).contains("logo192.png");
     }
 
     @Test
