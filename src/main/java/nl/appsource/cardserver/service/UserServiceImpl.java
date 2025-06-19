@@ -34,8 +34,8 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public List<User> findAllIncomingInvites(final String userId) {
-        return userRepository.findAllIncomingInvites(userId);
+    public List<User> findIncomingInvites(final String userId) {
+        return userRepository.findIncomingInvites(userId);
     }
 
     @Override

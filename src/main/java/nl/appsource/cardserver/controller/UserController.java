@@ -46,7 +46,7 @@ public class UserController implements UsersApi, V1Api {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        final List<User> users = userService.findAllIncomingInvites(userId).stream().map(userToOpenApiConverter::convert).collect(Collectors.toCollection(ArrayList::new));
+        final List<User> users = userService.findIncomingInvites(userId).stream().map(userToOpenApiConverter::convert).collect(Collectors.toCollection(ArrayList::new));
 
         return ResponseEntity.ok(users);
     }

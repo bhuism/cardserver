@@ -15,6 +15,6 @@ public interface UserRepository extends CouchbaseRepository<User, String> {
     Optional<User> findOptionalByEmail(String email);
 
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
-    List<User> findAllIncomingInvites(@Param("id") String id);
+    List<User> findIncomingInvites(@Param("id") String id);
 
 }
