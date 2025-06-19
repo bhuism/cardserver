@@ -4,7 +4,7 @@ package nl.appsource.cardserver;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
-import nl.appsource.cardserver.service.CardServerJwtModem;
+import nl.appsource.cardserver.service.CardServerJwtModemImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -17,7 +17,7 @@ public class JwtTest {
     @Test
     public void testJwtEncodeDecode() {
 
-        final CardServerJwtModem cardServerJwtModem = new CardServerJwtModem(new CardServerProperties().setJwtSecret("test123test123test123test123test123test123test123test123"));
+        final CardServerJwtModemImpl cardServerJwtModem = new CardServerJwtModemImpl(new CardServerProperties().setJwtSecret("test123test123test123test123test123test123test123test123"));
 
         cardServerJwtModem.init();
 
