@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
@@ -16,7 +15,7 @@ public class GameEngineImpl implements GameEngine {
 
     private final Game game;
 
-    @SuppressFBWarnings("RC_REF_COMPARISON")
+    //    @SuppressFBWarnings("RC_REF_COMPARISON")
     @Override
     public Game playCard(final Card card) {
 
