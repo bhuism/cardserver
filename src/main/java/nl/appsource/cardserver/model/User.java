@@ -44,7 +44,7 @@ public class User {
 
     private List<String> invites;
 
-    private Optional<Instant> lastLogin;
+    private Instant lastLogin;
 
     @Field
     @NotEmpty

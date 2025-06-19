@@ -5,6 +5,8 @@ import nl.appsource.cardserver.model.User;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 @Component
 public class UserToOpenApiConverter implements Converter<User, org.openapitools.model.User> {
@@ -20,7 +22,7 @@ public class UserToOpenApiConverter implements Converter<User, org.openapitools.
         target.setUpdated(source.getUpdated());
         target.setInvites(source.getInvites());
         target.setDisplayName(source.getDisplayName());
-        target.setLastLogin(source.getLastLogin());
+        target.setLastLogin(Optional.ofNullable(source.getLastLogin()));
         target.setName(source.getName());
         target.setPhotoURL(source.getPhotoURL());
         target.setProviderId(source.getProviderId());

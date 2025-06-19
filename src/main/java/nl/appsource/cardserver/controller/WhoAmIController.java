@@ -43,6 +43,12 @@ public class WhoAmIController implements WhoamiApi {
         LoggingFilter.requestLogMessage(("whoampi(), email=" + email));
 
         return Optional.of(userService.findByEmail(email)
+                .map((user) -> {
+                    final Instant now = Instant.now();
+                    user.setLastLogin(now);
+                    user.setUpdated(now);
+                    return user;
+                })
                 .orElseGet(() -> {
 
                     log.info("Creating a new user {}", email);
@@ -58,13 +64,15 @@ public class WhoAmIController implements WhoamiApi {
                     user.setName(principal.getClaims().get("name").toString());
                     user.setDisplayName(principal.getClaims().get("name").toString());
                     user.setInvites(emptyList());
-                    user.setLastLogin(null);
+                    user.setLastLogin(now);
                     user.setPhotoURL(principal.getClaims().get("picture").toString());
                     user.setProviderId("google");
 
-                    return userService.save(user);
+                    return user;
+
 
                 }))
+            .map(userService::save)
             .map(userToOpenApiConverter::convert)
             .map((user) -> new Whoami200Response().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()))
             .map(ResponseEntity::ok)
