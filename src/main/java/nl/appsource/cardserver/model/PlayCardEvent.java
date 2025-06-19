@@ -1,13 +1,23 @@
 package nl.appsource.cardserver.model;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@RequiredArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class PlayCardEvent {
 
-    private final String userId;
+    @JsonProperty
+    private String userId;
 
-    private final String gameId;
+    @JsonProperty
+    private String gameId;
 
-    private final org.openapitools.model.Card card;
+    @JsonProperty
+    private org.openapitools.model.Card card;
 }

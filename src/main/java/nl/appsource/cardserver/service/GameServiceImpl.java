@@ -30,6 +30,8 @@ public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
 
+    private final SseEmitterRepository sseEmitterRepository;
+
     private static final Random RAND = new SecureRandom();
 
     @Override
@@ -81,8 +83,8 @@ public class GameServiceImpl implements GameService {
     public Game playCard(final String userId, final Game game, final Card card) {
         final Game newGame = gameRepository.save(new GameEngineImpl(userId, game).playCard(card));
 
-
-
+        // distribute event
+        sseEmitterRepository.playCard(userId, game.getId(), card);
         return newGame;
     }
 

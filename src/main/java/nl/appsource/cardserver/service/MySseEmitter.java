@@ -6,6 +6,7 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.PlayCardEvent;
+import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
@@ -83,15 +84,14 @@ public final class MySseEmitter {
         return true;
     }
 
-    /**
-     * @param event
-     * @param data
-     * @return if error
-     */
     private boolean internalSend(final String event, final Object data) {
+        return internalSend(event, data, null);
+    }
+
+    private boolean internalSend(final String event, final Object data, final MediaType mediaType) {
         try {
             log.info("internalSend() sending event '{}' data: '{}' ", event, data);
-            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event).data(data).build());
+            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event).data(data, mediaType).build());
             return true;
         } catch (final Throwable e) {
             log.error("{}: event {} to {} data {}", e.getClass().getName() + ":" + e.getMessage(), event, userId, data, e);
@@ -106,7 +106,7 @@ public final class MySseEmitter {
 
     public void playCard(final String userIdPlayer, final String gameId, final Card card) {
         final PlayCardEvent playCardEvent = new PlayCardEvent(userIdPlayer, gameId, GameToOpenApiConverter.convertCard(card));
-        internalSend("playCard", playCardEvent);
+        internalSend("playCard", playCardEvent, MediaType.APPLICATION_JSON);
     }
 }
 

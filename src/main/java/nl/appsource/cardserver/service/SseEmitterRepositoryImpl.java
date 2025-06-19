@@ -111,7 +111,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void playCard(final String userId, final String gameId, final Card card) {
         gameRepository.findById(gameId).ifPresent(game -> {
-            emitters.stream().filter(e -> game.getPlayers().contains(e.getUserId())).forEach((emitter) -> emitter.playCard(userId, gameId, card));
+            emitters.stream()
+                .filter(e -> game.getPlayers().contains(e.getUserId()))
+                .forEach((emitter) -> emitter.playCard(userId, gameId, card));
         });
     }
 
