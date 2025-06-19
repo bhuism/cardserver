@@ -61,13 +61,18 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         return source.stream().map(GameToOpenApiConverter::convertCard).collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private static org.openapitools.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
+    public static org.openapitools.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
         return org.openapitools.model.Card.fromValue(source.name());
     }
 
     public static nl.appsource.cardserver.model.Card convertCard(final org.openapitools.model.Card source) {
         return nl.appsource.cardserver.model.Card.valueOf(source.getValue());
     }
+
+//    public static org.openapitools.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
+//        return org.openapitools.model.Card.valueOf(source.name());
+//    }
+
 
     private static final Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
         Suit.Clubs, org.openapitools.model.Suit.CLUBS,

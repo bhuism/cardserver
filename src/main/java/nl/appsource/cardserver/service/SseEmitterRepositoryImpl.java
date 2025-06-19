@@ -4,7 +4,9 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.filter.LoggingFilter;
+import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final UserRepository userRepository;
+
+    private final GameRepository gameRepository;
 
     private final CopyOnWriteArraySet<MySseEmitter> emitters = new CopyOnWriteArraySet<>();
 
@@ -102,6 +106,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void pong(final UUID uuid) {
         LoggingFilter.requestLogMessage(", size=" + size());
         doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), MySseEmitter::pong);
+    }
+
+    @Override
+    public void playCard(final String userId, final String gameId, final Card card) {
+        gameRepository.findById(gameId).ifPresent(game -> {
+            emitters.stream().filter(e -> game.getPlayers().contains(e.getUserId())).forEach((emitter) -> emitter.playCard(userId, gameId, card));
+        });
     }
 
 }

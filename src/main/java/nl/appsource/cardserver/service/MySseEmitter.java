@@ -2,7 +2,10 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
+import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.PlayCardEvent;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
@@ -99,6 +102,11 @@ public final class MySseEmitter {
             }
             return false;
         }
+    }
+
+    public void playCard(final String userIdPlayer, final String gameId, final Card card) {
+        final PlayCardEvent playCardEvent = new PlayCardEvent(userIdPlayer, gameId, GameToOpenApiConverter.convertCard(card));
+        internalSend("playCard", playCardEvent);
     }
 }
 
