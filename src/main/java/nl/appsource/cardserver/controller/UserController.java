@@ -35,14 +35,11 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("getUser(" + userId + ")");
 
-        return userService.findById(userId)
-            .map(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+        return userService.findById(userId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @Override
-    public ResponseEntity<List<User>> getIncomingFriends() {
+    public ResponseEntity<List<User>> getIncomingInvites() {
 
         LoggingFilter.requestLogMessage("getIncomingFriends()");
 
@@ -88,11 +85,17 @@ public class UserController implements UsersApi, V1Api {
 //        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //        final String userId = authentication.getName();
 
-        return
-            ResponseEntity.ok(
-                userService.getUsers(userIds)
-                    .stream()
-                    .map(userToOpenApiConverter::convert)
-                    .collect(Collectors.toList()));
+        return ResponseEntity.ok(userService.getUsers(userIds).stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+    }
+
+    @Override
+    public ResponseEntity<User> removeInvite(final String friendId) {
+        LoggingFilter.requestLogMessage("removeInvite(" + friendId + ")");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        return userService.removeFriend(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+
     }
 }

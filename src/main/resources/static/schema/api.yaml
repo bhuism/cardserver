@@ -101,15 +101,25 @@ paths:
       responses:
         "200":
           description: ok
-  /users/incomingFriends:
+  /users/incomingInvites:
     get:
-      operationId: getIncomingFriends
+      operationId: getIncomingInvites
       responses:
         "200":
-          $ref: "#/components/responses/IncomingFriendsResponse"
+          $ref: "#/components/responses/IncomingInvitesResponse"
   /users/single/{userId}:
     get:
       operationId: getUser
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
+        "404":
+          description: not found
+  /users/invites/{userId}:
+    delete:
+      operationId: removeInvite
       parameters:
         - $ref: "#/components/parameters/userId"
       responses:
@@ -237,8 +247,8 @@ components:
             required:
               - jwt
               - user
-    IncomingFriendsResponse:
-      description: incoming friends response
+    IncomingInvitesResponse:
+      description: incoming invites response
       content:
         application/json:
           schema:

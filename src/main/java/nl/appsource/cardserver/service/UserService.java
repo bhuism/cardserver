@@ -16,4 +16,6 @@ public interface UserService {
     User save(User user);
 
     List<User> getUsers(List<String> userIds);
+
+    Optional<User> removeFriend(String userId, String friendId);
 }
