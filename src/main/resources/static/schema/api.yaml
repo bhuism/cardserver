@@ -65,7 +65,7 @@ paths:
       responses:
         "200":
           description: ok
-  /users/{userIds}:
+  /users/multiple/{userIds}:
     get:
       operationId: getUsers
       parameters:
@@ -107,7 +107,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/IncomingFriendsResponse"
-  /users/{userId}:
+  /users/single/{userId}:
     get:
       operationId: getUser
       parameters:
