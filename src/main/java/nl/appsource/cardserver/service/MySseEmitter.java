@@ -68,7 +68,7 @@ public final class MySseEmitter {
     }
 
     private boolean sendPong() {
-        LoggingFilter.requestLogMessage("sendPong " + uuid);
+        LoggingFilter.requestLogMessage(", sending pong " + uuid);
         return internalSend("pong", uuid.toString());
     }
 
