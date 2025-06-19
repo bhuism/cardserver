@@ -85,8 +85,8 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("getUsers()");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
+//        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        final String userId = authentication.getName();
 
         return
             ResponseEntity.ok(
