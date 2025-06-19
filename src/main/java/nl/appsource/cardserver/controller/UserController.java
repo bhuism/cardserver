@@ -80,4 +80,19 @@ public class UserController implements UsersApi, V1Api {
         return ResponseEntity.ok().build();
     }
 
+    @Override
+    public ResponseEntity<List<User>> getUsers(final List<String> userIds) {
+
+        LoggingFilter.requestLogMessage("getUsers()");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        return
+            ResponseEntity.ok(
+                userService.getUsers(userIds)
+                    .stream()
+                    .map(userToOpenApiConverter::convert)
+                    .collect(Collectors.toList()));
+    }
 }

@@ -65,6 +65,14 @@ paths:
       responses:
         "200":
           description: ok
+  /users:
+    get:
+      operationId: getUsers
+      parameters:
+        - $ref: "#/components/parameters/multipleUserId"
+      responses:
+        "200":
+          $ref: "#/components/responses/UsersResponse"
   /users/ping:
     post:
       operationId: ping
@@ -164,6 +172,14 @@ components:
       schema:
         type: string
       required: true
+    multipleUserId:
+      name: userIds
+      in: path
+      schema:
+        type: array
+        items:
+          type: string
+      required: true
   securitySchemes:
     openId:
       type: openIdConnect
@@ -198,6 +214,14 @@ components:
             type: array
             items:
               $ref: "./game.yaml#/components/schemas/Game"
+    UsersResponse:
+      description: users
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "./user.yaml#/components/schemas/User"
     LoginResponse:
       description: login response
       content:
