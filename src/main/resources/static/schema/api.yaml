@@ -65,7 +65,7 @@ paths:
       responses:
         "200":
           description: ok
-  /users:
+  /users/{userIds}:
     get:
       operationId: getUsers
       parameters:
