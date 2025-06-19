@@ -1,95 +1,17 @@
 package nl.appsource.cardserver.service;
 
-import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.UserRepository;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-@Service
-@Slf4j
-@RequiredArgsConstructor
-public class SseEmitterRepository {
+public interface SseEmitterRepository {
+    void sendMessage(String userId, String message);
 
-    private final UserRepository userRepository;
+    Integer size();
 
-    private final CopyOnWriteArraySet<MySseEmitter> emitters = new CopyOnWriteArraySet<>();
+    SseEmitter subscribe(String userId);
 
-    private void doSelected(final Set<MySseEmitter> receivers, final Function<MySseEmitter, Boolean> consumer) {
+    void ping(UUID uuid);
 
-        final Set<MySseEmitter> removers = new HashSet<>();
-
-        receivers.forEach(mySseEmitter -> {
-            if (!consumer.apply(mySseEmitter)) {
-                removers.add(mySseEmitter);
-            }
-        });
-
-        emitters.removeAll(removers);
-
-    }
-
-
-    private void doAll(final Function<MySseEmitter, Boolean> consumer) {
-        doSelected(emitters, consumer);
-    }
-
-
-    @Scheduled(fixedRate = 1000 * 15, initialDelay = 1000 * 60)
-    public void pingAll() {
-        doAll(MySseEmitter::sendPing);
-    }
-
-    public void sendMessage(final String userId, final String message) {
-        final String fromString = userRepository.findById(userId).map(User::getDisplayName).orElse(userId);
-        doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message));
-    }
-
-    @PreDestroy
-    public void destroy() {
-
-        emitters.forEach(MySseEmitter::complete);
-
-        try {
-            emitters.clear();
-        } catch (final Throwable e) {
-            log.error("", e);
-        }
-
-    }
-
-    public Integer size() {
-        return emitters.size();
-    }
-
-    public SseEmitter subscribe(final String userId) {
-        final MySseEmitter mySseEmitter = new MySseEmitter(userId);
-
-        // ping new connection
-        if (!mySseEmitter.sendPing()) {
-            throw new RuntimeException("ping error");
-        }
-
-        emitters.add(mySseEmitter);
-        return mySseEmitter.getEmitter();
-    }
-
-    public void ping(final UUID uuid) {
-        doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), MySseEmitter::ping);
-    }
-
-    public void pong(final UUID uuid) {
-        doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), MySseEmitter::pong);
-    }
-
+    void pong(UUID uuid);
 }
