@@ -42,9 +42,13 @@ public class WhoAmIController implements WhoamiApi {
 
         LoggingFilter.requestLogMessage(("whoampi(), email=" + email));
 
+        final Instant now = Instant.now();
+
         return Optional.of(userService.findByEmail(email)
                 .map((user) -> {
-                    final Instant now = Instant.now();
+
+                    log.info("User login {}", user.getDisplayName());
+
                     user.setLastLogin(now);
                     user.setUpdated(now);
                     return user;
@@ -54,8 +58,6 @@ public class WhoAmIController implements WhoamiApi {
                     log.info("Creating a new user {}", email);
 
                     final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
-
-                    final Instant now = Instant.now();
 
                     user.setId(idGen(28));
                     user.setEmail(email);
@@ -69,8 +71,6 @@ public class WhoAmIController implements WhoamiApi {
                     user.setProviderId("google");
 
                     return user;
-
-
                 }))
             .map(userService::save)
             .map(userToOpenApiConverter::convert)
