@@ -95,7 +95,16 @@ public class UserController implements UsersApi, V1Api {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.removeFriend(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return userService.removeInvite(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
 
+    @Override
+    public ResponseEntity<User> addInvite(final String friendId) {
+        LoggingFilter.requestLogMessage("addInvite(" + friendId + ")");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        return userService.addInvite(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 }

@@ -44,11 +44,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> removeFriend(final String userId, final String friendId) {
+    public Optional<User> removeInvite(final String userId, final String friendId) {
         return userRepository.findById(userId)
             .map(user -> {
                 user.getInvites().remove(friendId);
                 return user;
             }).map(userRepository::save);
     }
+
+    @Override
+    public Optional<User> addInvite(final String userId, final String friendId) {
+        return userRepository.findById(userId)
+            .map(user -> {
+                user.getInvites().add(friendId);
+                return user;
+            }).map(userRepository::save);
+    }
+
 }

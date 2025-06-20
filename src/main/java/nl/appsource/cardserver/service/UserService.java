@@ -17,5 +17,7 @@ public interface UserService {
 
     List<User> getUsers(List<String> userIds);
 
-    Optional<User> removeFriend(String userId, String friendId);
+    Optional<User> removeInvite(String userId, String friendId);
+
+    Optional<User> addInvite(String userId, String friendId);
 }
