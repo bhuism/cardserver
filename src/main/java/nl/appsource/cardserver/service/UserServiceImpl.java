@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> addInvite(final String userId, final String friendId) {
+    public Optional<User> acceptInvite(final String userId, final String friendId) {
         return userRepository.findById(userId)
             .map(user -> {
                 user.getInvites().add(friendId);
@@ -61,4 +61,18 @@ public class UserServiceImpl implements UserService {
             }).map(userRepository::save);
     }
 
+    @Override
+    public Optional<User> createInvite(final String userId, final String searchString) {
+        return userRepository.findById(userId)
+            .flatMap(user -> userRepository.findOptionalBySearchString(searchString)
+                .map(friend -> {
+                    if (!user.getInvites().contains(friend.getId())) {
+                        user.getInvites().add(friend.getId());
+                        userRepository.save(user);
+                        return friend;
+                    } else {
+                        return null;
+                    }
+                }));
+    }
 }

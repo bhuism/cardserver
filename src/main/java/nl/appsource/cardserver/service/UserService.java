@@ -19,5 +19,7 @@ public interface UserService {
 
     Optional<User> removeInvite(String userId, String friendId);
 
-    Optional<User> addInvite(String userId, String friendId);
+    Optional<User> acceptInvite(String userId, String friendId);
+
+    Optional<User> createInvite(String userId, String searchString);
 }

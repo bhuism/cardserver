@@ -117,6 +117,20 @@ paths:
           $ref: "#/components/responses/UserResponse"
         "404":
           description: not found
+  /users/invites:
+    post:
+      operationId: createInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/createInvite"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
+        "404":
+          description: not found
   /users/invites/{userId}:
     delete:
       operationId: removeInvite
@@ -159,6 +173,13 @@ components:
           $ref: "./game.yaml#/components/schemas/Card"
       required:
         - card
+    createInvite:
+      type: object
+      properties:
+        searchString:
+          type: string
+      required:
+        - searchString
     postMessage:
       type: object
       properties:

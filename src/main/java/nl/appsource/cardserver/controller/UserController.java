@@ -7,6 +7,7 @@ import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
+import org.openapitools.model.CreateInvite;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
@@ -105,6 +106,18 @@ public class UserController implements UsersApi, V1Api {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.addInvite(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return userService.acceptInvite(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+
+    @Override
+    public ResponseEntity<User> createInvite(final CreateInvite createInvite) {
+        LoggingFilter.requestLogMessage("addInvite(" + createInvite.getSearchString() + ")");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        return userService.createInvite(userId, createInvite.getSearchString()).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+
     }
 }
