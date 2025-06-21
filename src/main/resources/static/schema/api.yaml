@@ -117,8 +117,6 @@ paths:
           $ref: "#/components/responses/UserResponse"
         "404":
           description: not found
-
-
   /users/invites/{userId}:
     delete:
       operationId: removeInvite
@@ -130,7 +128,7 @@ paths:
         "404":
           description: not found
     post:
-      operationId: addInvite
+      operationId: acceptInvite
       parameters:
         - $ref: "#/components/parameters/userId"
       responses:

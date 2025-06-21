@@ -99,7 +99,7 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public ResponseEntity<User> addInvite(final String friendId) {
+    public ResponseEntity<User> acceptInvite(final String friendId) {
         LoggingFilter.requestLogMessage("addInvite(" + friendId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
