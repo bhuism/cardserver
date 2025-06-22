@@ -7,6 +7,7 @@ import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,8 +35,34 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public List<User> findIncomingInvites(final String userId) {
-        return userRepository.findIncomingInvites(userId);
+    public Optional<InvitesResponse> getInvites(final String userId) {
+
+        final Optional<User> userOptional = userRepository.findById(userId);
+
+        if (userOptional.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final User user = userOptional.get();
+
+
+        final List<User> incomingInvites = userRepository.findIncomingInvites(userId).stream().filter(u -> !user.getInvites().contains(u.getId())).toList();
+        final List<String> incomingIdInvites = incomingInvites.stream().map(User::getId).toList();
+        final List<User> outgoingInvites = new ArrayList<>();
+        final List<User> friends = new ArrayList<>();
+
+
+        userRepository.findAllById(user.getInvites())
+            .forEach(inv -> {
+                if (incomingIdInvites.contains(inv.getId())) {
+                    friends.add(inv);
+                } else {
+                    outgoingInvites.add(inv);
+                }
+            });
+
+        return Optional.of(new InvitesResponse(incomingInvites, outgoingInvites, friends));
+
     }
 
     @Override

@@ -8,6 +8,7 @@ import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
+import org.openapitools.model.GetInvites200Response;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,16 +40,24 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public ResponseEntity<List<User>> getIncomingInvites() {
+    public ResponseEntity<GetInvites200Response> getInvites() {
 
         LoggingFilter.requestLogMessage("getIncomingFriends()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        final List<User> users = userService.findIncomingInvites(userId).stream().map(userToOpenApiConverter::convert).collect(Collectors.toCollection(ArrayList::new));
+        return userService.getInvites(userId).map(invites -> {
 
-        return ResponseEntity.ok(users);
+            final GetInvites200Response getInvites200Response = new GetInvites200Response();
+
+            getInvites200Response.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+            getInvites200Response.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+            getInvites200Response.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+
+            return getInvites200Response;
+        }).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+
     }
 
     @Override
@@ -96,7 +104,10 @@ public class UserController implements UsersApi, V1Api {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.removeInvite(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return userService.removeInvite(userId, friendId)
+            .map(userToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @Override

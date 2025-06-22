@@ -101,12 +101,6 @@ paths:
       responses:
         "200":
           description: ok
-  /users/incomingInvites:
-    get:
-      operationId: getIncomingInvites
-      responses:
-        "200":
-          $ref: "#/components/responses/IncomingInvitesResponse"
   /users/single/{userId}:
     get:
       operationId: getUser
@@ -118,6 +112,11 @@ paths:
         "404":
           description: not found
   /users/invites:
+    get:
+      operationId: getInvites
+      responses:
+        "200":
+          $ref: "#/components/responses/InvitesResponse"
     post:
       operationId: createInvite
       requestBody:
@@ -277,14 +276,29 @@ components:
             required:
               - jwt
               - user
-    IncomingInvitesResponse:
+    InvitesResponse:
       description: incoming invites response
       content:
         application/json:
           schema:
-            type: array
-            items:
-              $ref: "./user.yaml#/components/schemas/User"
+            type: object
+            properties:
+              incoming:
+                description: unaccepted
+                type: array
+                items:
+                  $ref: "./user.yaml#/components/schemas/User"
+              outgoing:
+                description: unaccepted
+                type: array
+                items:
+                  $ref: "./user.yaml#/components/schemas/User"
+              friends:
+                description: accepted
+                type: array
+                items:
+                  $ref: "./user.yaml#/components/schemas/User"
+
 security:
   - bearerAuth:
       - openid

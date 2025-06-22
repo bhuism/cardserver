@@ -11,7 +11,7 @@ public interface UserService {
 
     Optional<User> findByEmail(String email);
 
-    List<User> findIncomingInvites(String userId);
+    Optional<InvitesResponse> getInvites(String userId);
 
     User save(User user);
 
@@ -23,3 +23,4 @@ public interface UserService {
 
     Optional<User> createInvite(String userId, String searchString);
 }
+
