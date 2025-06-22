@@ -45,16 +45,16 @@ public class UserServiceImpl implements UserService {
 
         final User user = userOptional.get();
 
+        final List<User> allIncoming = userRepository.findIncomingInvites(userId);
+        final List<String> allIdIncoming = allIncoming.stream().map(User::getId).toList();
+        final List<User> incomingInvites = allIncoming.stream().filter(u -> !user.getInvites().contains(u.getId())).toList();
 
-        final List<User> incomingInvites = userRepository.findIncomingInvites(userId).stream().filter(u -> !user.getInvites().contains(u.getId())).toList();
-        final List<String> incomingIdInvites = incomingInvites.stream().map(User::getId).toList();
         final List<User> outgoingInvites = new ArrayList<>();
         final List<User> friends = new ArrayList<>();
 
-
         userRepository.findAllById(user.getInvites())
             .forEach(inv -> {
-                if (incomingIdInvites.contains(inv.getId())) {
+                if (allIdIncoming.contains(inv.getId())) {
                     friends.add(inv);
                 } else {
                     outgoingInvites.add(inv);

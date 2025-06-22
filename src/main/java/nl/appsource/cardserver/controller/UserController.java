@@ -55,7 +55,10 @@ public class UserController implements UsersApi, V1Api {
             getInvites200Response.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
             getInvites200Response.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
 
+            LoggingFilter.requestLogMessage(("incoming: " + invites.getIncoming().size() + ", outgoing: " + invites.getOutgoing().size() + ", friends: " + invites.getFriends().size()));
+
             return getInvites200Response;
+
         }).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
     }
