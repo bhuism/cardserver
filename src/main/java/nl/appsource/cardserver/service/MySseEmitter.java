@@ -32,17 +32,17 @@ public final class MySseEmitter {
         this.emitter = new SseEmitter(Long.MAX_VALUE);
 
         emitter.onCompletion(() -> {
-            log.info("onCompletion() Removing an emitier");
+//            log.info("onCompletion() Removing an emitier");
             throw new RuntimeException();
         });
         emitter.onTimeout(() -> {
-            log.info("onTimeout() Removing an emitier");
+//            log.info("onTimeout() Removing an emitier");
             complete();
             throw new RuntimeException();
         });
 
         emitter.onError(throwable -> {
-            log.error("onError() Removing an emitter: {}:{}", throwable.getClass().getName(), throwable.getMessage());
+//            log.error("onError() Removing an emitter: {}:{}", throwable.getClass().getName(), throwable.getMessage());
             complete();
             throw new RuntimeException();
         });
