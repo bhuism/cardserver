@@ -22,9 +22,9 @@ public final class MySseEmitter {
 
     private final UUID uuid = UUID.randomUUID();
 
-    private Instant pinged;
+    private Instant ping;
 
-    private Instant ponged;
+    private Instant pong;
 
     public MySseEmitter(final String userIdArg) {
 
@@ -74,13 +74,13 @@ public final class MySseEmitter {
 
     public boolean ping() {
         LoggingFilter.requestLogMessage(", got ping " + uuid);
-        pinged = Instant.now();
+        ping = Instant.now();
         return sendPong();
     }
 
     public boolean pong() {
         LoggingFilter.requestLogMessage(", got pong " + uuid);
-        ponged = Instant.now();
+        pong = Instant.now();
         return true;
     }
 
