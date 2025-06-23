@@ -134,17 +134,15 @@ public class UserController implements UsersApi, V1Api {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        final List<User> invitees = userService
+        return userService
             .createInvite(userId, createInvite.getSearchString())
-            .stream()
-            .map(userToOpenApiConverter::convert)
-            .collect(Collectors.toList());
-
-
-        final CreateInvite200Response createInvite200Response = new CreateInvite200Response();
-        createInvite200Response.setInvitees(invitees);
-
-        return ResponseEntity.ok(createInvite200Response);
+            .map(invitees -> invitees.stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()))
+            .map(invitees -> {
+                final CreateInvite200Response createInvite200Response = new CreateInvite200Response();
+                createInvite200Response.setInvitees(invitees);
+                return createInvite200Response;
+            })
+            .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
     }
 }

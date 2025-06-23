@@ -89,19 +89,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> createInvite(final String userId, final String searchString) {
+    public Optional<List<User>> createInvite(final String userId, final String searchString) {
         return userRepository.findById(userId)
-            .flatMap(user -> userRepository.findOptionalBySearchString(searchString)
-                .map(friend -> {
-                    if (!user.getInvites().contains(friend.getId())) {
-                        user.getInvites().add(friend.getId());
-                        userRepository.save(user);
-                        return friend;
-                    } else {
-                        return null;
-                    }
-                }))
-            .stream()
-            .toList();
+            .flatMap(user -> Optional.of(userRepository.findInvitees(searchString)
+                    .stream()
+                    .filter(invitee -> !user.getInvites().contains(invitee.getId()))
+                    .toList())
+                .map(invitees -> {
+                    user.getInvites().addAll(invitees.stream().map(User::getId).toList());
+                    userRepository.save(user);
+                    return invitees;
+                }));
     }
 }

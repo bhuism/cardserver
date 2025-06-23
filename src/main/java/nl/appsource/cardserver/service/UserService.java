@@ -21,6 +21,6 @@ public interface UserService {
 
     void acceptInvite(String userId, String friendId);
 
-    List<User> createInvite(String userId, String searchString);
+    Optional<List<User>> createInvite(String userId, String searchString);
 }
 
