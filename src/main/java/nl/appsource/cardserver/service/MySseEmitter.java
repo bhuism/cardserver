@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -104,9 +105,14 @@ public final class MySseEmitter {
         }
     }
 
-    public void playCard(final String userIdPlayer, final String gameId, final Card card) {
+    public boolean playCard(final String userIdPlayer, final String gameId, final Card card) {
         final PlayCardEvent playCardEvent = new PlayCardEvent(userIdPlayer, gameId, GameToOpenApiConverter.convertCard(card));
-        internalSend("playCard", playCardEvent, MediaType.APPLICATION_JSON);
+        return internalSend("playCard", playCardEvent, MediaType.APPLICATION_JSON);
     }
+
+    public boolean sendOnline(final List<String> friends) {
+        return internalSend("online", friends, MediaType.APPLICATION_JSON);
+    }
+
 }
 

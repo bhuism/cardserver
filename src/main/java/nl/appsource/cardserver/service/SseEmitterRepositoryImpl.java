@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -53,6 +54,26 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Scheduled(fixedRate = 1000 * 15, initialDelay = 1000 * 60)
     public void pingAll() {
         doAll(MySseEmitter::sendPing);
+    }
+
+    @Scheduled(fixedRate = 1000 * 5, initialDelay = 1000 * 60)
+    public void pingUpdateStatus() {
+
+
+        doAll(mySseEmitter -> {
+
+            final List<String> incomingInvites = userRepository.findIncomingInvites(mySseEmitter.getUserId()).stream().map(User::getId).toList();
+
+            return userRepository.findById(mySseEmitter.getUserId())
+                .map(User::getInvites)
+                .map(friends -> {
+                    friends.retainAll(incomingInvites);
+                    friends.retainAll(emitters.stream().map(MySseEmitter::getUserId).collect(Collectors.toList()));
+                    log.info("Online friends for : {} are {}", mySseEmitter.getUserId(), friends);
+                    return mySseEmitter.sendOnline(friends);
+                }).orElse(false);
+        });
+
     }
 
     @Override
