@@ -5,33 +5,15 @@ components:
       properties:
         id:
           type: string
-        created:
-          type: string
-          format: date-time
         updated:
           type: string
           format: date-time
         displayName:
           type: string
-        email:
-          type: string
-          format: email
-        lastLogin:
-          type: string
-          format: date-time
-        name:
-          type: string
         photoURL:
-          type: string
-        providerId:
           type: string
       required:
         - id
-        - created
         - updated
         - displayName
-        - email
-        - invites
-        - name
-        - providerId
         - photoURL
