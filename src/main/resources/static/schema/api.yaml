@@ -177,6 +177,8 @@ components:
       properties:
         searchString:
           type: string
+          minLength: 5
+          maxLength: 255
       required:
         - searchString
     postMessage:
