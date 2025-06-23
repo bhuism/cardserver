@@ -57,24 +57,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
-    public void pingUpdateStatus() {
-
-
-        doAll(mySseEmitter -> {
-
-            final List<String> incomingInvites = userRepository.findIncomingInvites(mySseEmitter.getUserId()).stream().map(User::getId).toList();
-
-            return userRepository.findById(mySseEmitter.getUserId())
-                .map(User::getInvites)
-                .map(friends -> {
-                    friends.retainAll(incomingInvites);
-                    friends.retainAll(emitters.stream().map(MySseEmitter::getUserId).collect(Collectors.toList()));
-                    log.info("Online friends for : {} are {}", mySseEmitter.getUserId(), friends);
-                    return mySseEmitter.sendOnline(friends);
-                }).orElse(false);
-        });
-
+    public void pingUpdateStatusAll() {
+        doAll(this::pingUpdateStatus);
     }
+
+    public boolean pingUpdateStatus(final MySseEmitter mySseEmitter) {
+        final List<String> incomingInvites = userRepository.findIncomingInvites(mySseEmitter.getUserId()).stream().map(User::getId).toList();
+        return userRepository.findById(mySseEmitter.getUserId())
+            .map(User::getInvites)
+            .map(friends -> {
+                friends.retainAll(incomingInvites);
+                friends.retainAll(emitters.stream().map(MySseEmitter::getUserId).collect(Collectors.toList()));
+                return mySseEmitter.sendOnline(friends);
+            }).orElse(false);
+    }
+
 
     @Override
     public void sendMessage(final String userId, final String message) {
@@ -111,6 +108,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
 
         emitters.add(mySseEmitter);
+
+        pingUpdateStatus(mySseEmitter);
 
         LoggingFilter.requestLogMessage(", size=" + size());
 
