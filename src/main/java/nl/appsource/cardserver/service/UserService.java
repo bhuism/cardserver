@@ -17,10 +17,10 @@ public interface UserService {
 
     List<User> getUsers(List<String> userIds);
 
-    Optional<User> removeInvite(String userId, String friendId);
+    void removeInvite(String userId, String friendId);
 
-    Optional<User> acceptInvite(String userId, String friendId);
+    void acceptInvite(String userId, String friendId);
 
-    Optional<User> createInvite(String userId, String searchString);
+    void createInvite(String userId, String searchString);
 }
 

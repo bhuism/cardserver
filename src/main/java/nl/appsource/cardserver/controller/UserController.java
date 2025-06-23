@@ -101,37 +101,41 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public ResponseEntity<User> removeInvite(final String friendId) {
+    public ResponseEntity<Void> removeInvite(final String friendId) {
         LoggingFilter.requestLogMessage("removeInvite(" + friendId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.removeInvite(userId, friendId)
-            .map(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+        userService.removeInvite(userId, friendId);
+
+        return ResponseEntity.ok().build();
     }
 
     @Override
-    public ResponseEntity<User> acceptInvite(final String friendId) {
+    public ResponseEntity<Void> acceptInvite(final String friendId) {
         LoggingFilter.requestLogMessage("addInvite(" + friendId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.acceptInvite(userId, friendId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        userService.acceptInvite(userId, friendId);
+
+        return ResponseEntity.ok().build();
+
     }
 
 
     @Override
-    public ResponseEntity<User> createInvite(final CreateInvite createInvite) {
+    public ResponseEntity<Void> createInvite(final CreateInvite createInvite) {
         LoggingFilter.requestLogMessage("addInvite(" + createInvite.getSearchString() + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.createInvite(userId, createInvite.getSearchString()).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        userService.createInvite(userId, createInvite.getSearchString());
+
+        return ResponseEntity.ok().build();
 
     }
 }

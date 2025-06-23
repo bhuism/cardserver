@@ -71,8 +71,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> removeInvite(final String userId, final String friendId) {
-        return userRepository.findById(userId)
+    public void removeInvite(final String userId, final String friendId) {
+        userRepository.findById(userId)
             .map(user -> {
                 user.getInvites().remove(friendId);
                 return user;
@@ -80,8 +80,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> acceptInvite(final String userId, final String friendId) {
-        return userRepository.findById(userId)
+    public void acceptInvite(final String userId, final String friendId) {
+        userRepository.findById(userId)
             .map(user -> {
                 user.getInvites().add(friendId);
                 return user;
@@ -89,8 +89,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> createInvite(final String userId, final String searchString) {
-        return userRepository.findById(userId)
+    public void createInvite(final String userId, final String searchString) {
+        userRepository.findById(userId)
             .flatMap(user -> userRepository.findOptionalBySearchString(searchString)
                 .map(friend -> {
                     if (!user.getInvites().contains(friend.getId())) {
