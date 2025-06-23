@@ -89,8 +89,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void createInvite(final String userId, final String searchString) {
-        userRepository.findById(userId)
+    public List<User> createInvite(final String userId, final String searchString) {
+        return userRepository.findById(userId)
             .flatMap(user -> userRepository.findOptionalBySearchString(searchString)
                 .map(friend -> {
                     if (!user.getInvites().contains(friend.getId())) {
@@ -100,6 +100,8 @@ public class UserServiceImpl implements UserService {
                     } else {
                         return null;
                     }
-                }));
+                }))
+            .stream()
+            .toList();
     }
 }

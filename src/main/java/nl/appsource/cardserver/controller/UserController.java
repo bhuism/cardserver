@@ -127,15 +127,17 @@ public class UserController implements UsersApi, V1Api {
 
 
     @Override
-    public ResponseEntity<Void> createInvite(final CreateInvite createInvite) {
+    public ResponseEntity<List<User>> createInvite(final CreateInvite createInvite) {
         LoggingFilter.requestLogMessage("addInvite(" + createInvite.getSearchString() + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        userService.createInvite(userId, createInvite.getSearchString());
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(userService
+            .createInvite(userId, createInvite.getSearchString())
+            .stream()
+            .map(userToOpenApiConverter::convert)
+            .collect(Collectors.toList()));
 
     }
 }

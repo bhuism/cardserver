@@ -127,7 +127,7 @@ paths:
               $ref: "#/components/schemas/createInvite"
       responses:
         "200":
-          description: ok
+          $ref: "#/components/responses/CreateInvitesResponse"
         "404":
           description: not found
   /users/invites/{userId}:
@@ -276,6 +276,14 @@ components:
             required:
               - jwt
               - user
+    CreateInvitesResponse:
+      description: response for create invites
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "./user.yaml#/components/schemas/User"
     InvitesResponse:
       description: incoming invites response
       content:
