@@ -20,7 +20,6 @@ public class UserToOpenApiConverter implements Converter<User, org.openapitools.
         target.setCreated(source.getCreated());
         target.setEmail(source.getEmail());
         target.setUpdated(source.getUpdated());
-        target.setInvites(source.getInvites());
         target.setDisplayName(source.getDisplayName());
         target.setLastLogin(Optional.ofNullable(source.getLastLogin()));
         target.setName(source.getName());

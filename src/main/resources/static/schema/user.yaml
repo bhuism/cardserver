@@ -16,10 +16,6 @@ components:
         email:
           type: string
           format: email
-        invites:
-          type: array
-          items:
-            type: string
         lastLogin:
           type: string
           format: date-time
