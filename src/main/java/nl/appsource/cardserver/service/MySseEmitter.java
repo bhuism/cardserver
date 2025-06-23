@@ -5,13 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.PlayCardEvent;
+import nl.appsource.cardserver.model.event.OnlineListEvent;
+import nl.appsource.cardserver.model.event.PlayCardEvent;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Slf4j
 @Getter
@@ -107,11 +110,13 @@ public final class MySseEmitter {
 
     public boolean playCard(final String userIdPlayer, final String gameId, final Card card) {
         final PlayCardEvent playCardEvent = new PlayCardEvent(userIdPlayer, gameId, GameToOpenApiConverter.convertCard(card));
-        return internalSend("playCard", playCardEvent, MediaType.APPLICATION_JSON);
+        return internalSend("playCard", playCardEvent, APPLICATION_JSON);
     }
 
-    public boolean sendOnline(final List<String> friends) {
-        return internalSend("online", friends, MediaType.APPLICATION_JSON);
+    public boolean sendOnline(final List<String> onlineList) {
+        final OnlineListEvent onlineListEvent = new OnlineListEvent();
+        onlineListEvent.setOnlineList(onlineList);
+        return internalSend("online", onlineListEvent, APPLICATION_JSON);
     }
 
 }

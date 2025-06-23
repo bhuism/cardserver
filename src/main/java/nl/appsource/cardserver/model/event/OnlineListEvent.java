@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.model;
+package nl.appsource.cardserver.model.event;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -6,18 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PlayCardEvent {
+public class OnlineListEvent {
 
     @JsonProperty
-    private String userId;
+    private List<String> onlineList;
 
-    @JsonProperty
-    private String gameId;
-
-    @JsonProperty
-    private org.openapitools.model.Card card;
 }
