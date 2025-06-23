@@ -93,14 +93,18 @@ paths:
     post:
       operationId: sendMessage
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/postMessage"
+        $ref: "#/components/requestBodies/postMessage"
       responses:
         "200":
           description: ok
+  /users/updatePreferences:
+    post:
+      operationId: updatePreferences
+      requestBody:
+        $ref: "#/components/requestBodies/updatePreferences"
+      responses:
+        "200":
+          $ref: "#/components/responses/UserResponse"
   /users/single/{userId}:
     get:
       operationId: getUser
@@ -164,6 +168,18 @@ components:
           schema:
             type: string
             format: uuid
+    updatePreferences:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/updatePreferences"
+    postMessage:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/postMessage"
   schemas:
     playCard:
       type: object
@@ -188,6 +204,13 @@ components:
           type: string
       required:
         - message
+    updatePreferences:
+      type: object
+      properties:
+        displayName:
+          type: string
+      required:
+        - displayName
     createGame:
       type: object
       properties:

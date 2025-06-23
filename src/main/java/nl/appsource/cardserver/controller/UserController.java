@@ -11,6 +11,7 @@ import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInvite200Response;
 import org.openapitools.model.GetInvites200Response;
 import org.openapitools.model.PostMessage;
+import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,7 +38,9 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("getUser(" + userId + ")");
 
-        return userService.findById(userId).map(userToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return userService.findById(userId).map(userToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @Override
@@ -143,6 +146,21 @@ public class UserController implements UsersApi, V1Api {
                 return createInvite200Response;
             })
             .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+
+    }
+
+    @Override
+    public ResponseEntity<User> updatePreferences(final UpdatePreferences updatePreferences) {
+
+        LoggingFilter.requestLogMessage("updatePreferences()");
+
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String userId = authentication.getName();
+
+        return userService.updateName(userId, updatePreferences.getDisplayName())
+            .map(userToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
 
     }
 }

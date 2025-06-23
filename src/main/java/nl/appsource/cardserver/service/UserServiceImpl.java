@@ -101,4 +101,19 @@ public class UserServiceImpl implements UserService {
                     return invitees;
                 }));
     }
+
+    @Override
+    public Optional<User> updateName(final String userId, final String displayName) {
+
+        if (userRepository.findByDisplayName(displayName).isPresent()) {
+            return Optional.empty();
+        }
+
+        return userRepository.findById(userId)
+            .map(user -> {
+                user.setDisplayName(displayName);
+                userRepository.save(user);
+                return user;
+            });
+    }
 }

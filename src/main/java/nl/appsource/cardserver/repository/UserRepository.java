@@ -20,5 +20,5 @@ public interface UserRepository extends CouchbaseRepository<User, String> {
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND (email=$searchString OR LOWER(name)=LOWER($searchString) OR displayNAme=$searchString)")
     List<User> findInvitees(@Param("searchString") String searchString);
 
-
+    Optional<User> findByDisplayName(String displayName);
 }
