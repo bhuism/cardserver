@@ -8,6 +8,7 @@ import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
+import org.openapitools.model.CreateInvite200Response;
 import org.openapitools.model.GetInvites200Response;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.User;
@@ -127,17 +128,23 @@ public class UserController implements UsersApi, V1Api {
 
 
     @Override
-    public ResponseEntity<List<User>> createInvite(final CreateInvite createInvite) {
-        LoggingFilter.requestLogMessage("addInvite(" + createInvite.getSearchString() + ")");
+    public ResponseEntity<CreateInvite200Response> createInvite(final CreateInvite createInvite) {
+        LoggingFilter.requestLogMessage("addInvite('" + createInvite.getSearchString() + "')");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return ResponseEntity.ok(userService
+        final List<User> invitees = userService
             .createInvite(userId, createInvite.getSearchString())
             .stream()
             .map(userToOpenApiConverter::convert)
-            .collect(Collectors.toList()));
+            .collect(Collectors.toList());
+
+
+        final CreateInvite200Response createInvite200Response = new CreateInvite200Response();
+        createInvite200Response.setInvitees(invitees);
+
+        return ResponseEntity.ok(createInvite200Response);
 
     }
 }
