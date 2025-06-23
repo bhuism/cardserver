@@ -51,12 +51,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
 
-    @Scheduled(fixedRate = 1000 * 15, initialDelay = 1000 * 60)
+    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
     public void pingAll() {
         doAll(MySseEmitter::sendPing);
     }
 
-    @Scheduled(fixedRate = 1000 * 5, initialDelay = 1000 * 60)
+    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
     public void pingUpdateStatus() {
 
 
