@@ -50,7 +50,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doSelected(emitters, consumer);
     }
 
-
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
     public void pingAll() {
         doAll(MySseEmitter::sendPing);
@@ -119,7 +118,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void ping(final UUID uuid) {
         LoggingFilter.requestLogMessage(", size=" + size());
-        doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), MySseEmitter::ping);
+        doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), mySseEmitter -> {
+            pingUpdateStatus(mySseEmitter);
+            return mySseEmitter.ping();
+        });
     }
 
     @Override
