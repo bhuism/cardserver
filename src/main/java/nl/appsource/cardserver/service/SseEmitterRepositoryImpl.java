@@ -64,25 +64,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final List<String> incomingInvites = userRepository.findIncomingInvites(mySseEmitter.getUserId()).stream().map(User::getId).toList();
         return userRepository.findById(mySseEmitter.getUserId())
             .map(User::getInvites)
-            .map((invivtes) -> {
-                log.info("friends-1: {}", invivtes);
-                return invivtes;
-            })
             .map(friends -> {
-                log.info("friends0: {}", friends);
                 friends.retainAll(incomingInvites);
-
-                log.info("friends1: {}", friends);
-
                 friends.retainAll(emitters.stream().map(MySseEmitter::getUserId).collect(Collectors.toList()));
-
-                log.info("friends2: {}", friends);
-
-                log.info("Sending {} online list:  {}", mySseEmitter.getUserId(), friends);
+//                log.info("Sending {} online list:  {}", mySseEmitter.getUserId(), friends);
                 return mySseEmitter.sendOnline(friends);
             }).orElse(false);
     }
-
 
     @Override
     public void sendMessage(final String userId, final String message) {
@@ -101,7 +89,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         } catch (final Throwable e) {
             log.error("", e);
         }
-
     }
 
     @Override
