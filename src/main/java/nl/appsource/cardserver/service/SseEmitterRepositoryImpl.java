@@ -67,6 +67,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(friends -> {
                 friends.retainAll(incomingInvites);
                 friends.retainAll(emitters.stream().map(MySseEmitter::getUserId).collect(Collectors.toList()));
+                log.info("Sendind {} online list:  {}", mySseEmitter.getUserId(), friends)
                 return mySseEmitter.sendOnline(friends);
             }).orElse(false);
     }
