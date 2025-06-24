@@ -122,7 +122,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         LoggingFilter.requestLogMessage(", size=" + size());
 
-        pingUpdateStatus(mySseEmitter);
+        pingUpdateStatusAll();
 
         return mySseEmitter.getEmitter();
     }
