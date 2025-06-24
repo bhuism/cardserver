@@ -40,7 +40,6 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             return gamePlayerCardInner;
         }).collect(Collectors.toCollection(ArrayList::new)));
         target.setElder(Optional.ofNullable(source.getElder()));
-        target.setEnded(source.getEnded());
         target.setPlayers(
             source.getPlayers()
                 .stream()

@@ -36,9 +36,6 @@ components:
           type: integer
           minimum: 0
           maximum: 3
-        ended:
-          type: boolean
-          default: "false"
         players:
           type: array
           minItems: 0

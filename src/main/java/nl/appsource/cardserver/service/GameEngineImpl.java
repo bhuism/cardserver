@@ -43,7 +43,6 @@ public class GameEngineImpl implements GameEngine {
 
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
-        game.setEnded(isCompleted());
 
         return game;
 

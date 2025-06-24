@@ -46,8 +46,8 @@ public class Migrator {
     @PostConstruct
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() throws IOException {
-        loadUser("users.json");
-        loadGames("games.json");
+        //loadUser("users.json");
+        //loadGames("games.json");
     }
 
     private void loadGames(final String fileName) throws IOException {
@@ -58,8 +58,6 @@ public class Migrator {
 
         if (gameFile.exists()) {
 
-            gameRepository.deleteAll();
-
             final JsonNode jsonNode = objectMapper.readTree(gameFile);
 
             final JsonNode data = jsonNode.get("data");
@@ -68,7 +66,7 @@ public class Migrator {
 
                 final String id = gameNode.getKey();
 
-                log.info("Game {} {}found", id, gameRepository.existsById(id) ? "" : " not");
+                log.info("Game {} {} found", id, gameRepository.existsById(id) ? "" : " not");
 
                 final Game game = new Game();
 
@@ -108,7 +106,6 @@ public class Migrator {
                             game.setElder(fieldValue.isInt() ? fieldValue.intValue() : null);
                             break;
                         case "ended":
-                            game.setEnded(fieldValue.asBoolean());
                             break;
                         case "playerCard":
                             final Map<Card, Integer> cards = new HashMap<>();
@@ -123,21 +120,17 @@ public class Migrator {
                             game.setPlayerCard(cards);
                             break;
                         case "players":
-                            final List<String> players = StreamSupport
-                                .stream(fieldValue.spliterator(), false)
-                                .map(JsonNode::textValue)
-                                .collect(Collectors.toCollection(ArrayList::new));
+                            final List<String> players = new ArrayList<>();
+                            fieldValue.forEach(field -> {
+                                players.add(field.textValue());
+                            });
                             game.setPlayers(players);
                             break;
                         case "turns":
-                            final List<Card> turns = StreamSupport
-                                .stream(Spliterators.spliteratorUnknownSize(
-                                    fieldValue.iterator(),
-                                    Spliterator.ORDERED), false)
-                                .map(JsonNode::textValue)
-                                .map(Migrator::cardConvert)
-                                .collect(Collectors.toCollection(ArrayList::new));
-
+                            final List<Card> turns = new ArrayList<>();
+                            fieldValue.forEach(field -> {
+                                turns.add(cardConvert(field.textValue()));
+                            });
                             game.setTurns(turns);
                             break;
                         case "uid":
@@ -149,8 +142,11 @@ public class Migrator {
                     }
                 });
 
-                log.info("Persisting game: {}", game);
+                log.info("Persisting game: {}", game.getId());
 
+                if (gameRepository.existsById(game.getId())) {
+                    gameRepository.deleteById(game.getId());
+                }
                 gameRepository.save(game);
 
             });
@@ -177,7 +173,7 @@ public class Migrator {
 
         if (userFile.exists()) {
 
-            userRepository.deleteAll();
+            // userRepository.deleteAll();
 
             final JsonNode jsonNode = objectMapper.readTree(userFile);
 

@@ -57,10 +57,6 @@ public class Game {
 
     @Field
     @NotNull
-    private Boolean ended;
-
-    @Field
-    @NotNull
     private List<String> players;
 
     @Field
