@@ -51,7 +51,7 @@ public final class MySseEmitter {
             throw new RuntimeException();
         });
 
-        LoggingFilter.requestLogMessage(", new Emitter userId=" + userId + ", uuid=" + uuid);
+        LoggingFilter.requestLogMessage(", new MySseEmitter(), uuid=" + uuid);
     }
 
     public void complete() {
