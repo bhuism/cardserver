@@ -43,8 +43,8 @@ public class LoggingFilter extends OncePerRequestFilter {
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
             log.info(
-                "{} {}, {}, {} msec {}",
-                remoteAddr, servletRequest.getRequestURI(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+                "{} {} {}, {}, {} msec {}",
+                remoteAddr, servletRequest.getMethod(), servletRequest.getRequestURI(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
             STRING_THREAD_LOCAL.remove();
         }
     }
