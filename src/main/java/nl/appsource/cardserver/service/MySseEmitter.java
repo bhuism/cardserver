@@ -103,6 +103,8 @@ public final class MySseEmitter {
 
             if (data != null) {
                 builder.data(data);
+            } else {
+                builder.data("{}");
             }
             emitter.send(builder.build());
             return true;
