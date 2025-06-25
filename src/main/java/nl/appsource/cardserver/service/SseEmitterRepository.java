@@ -19,5 +19,7 @@ public interface SseEmitterRepository {
 
     void playCard(String userId, String gameId, Card card);
 
-    void friendsChanged(Collection<String> userId);
+    void friendsChanged(Collection<String> userIds);
+
+    void gamesChanged(Collection<String> userIds);
 }

@@ -138,7 +138,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void friendsChanged(final Collection<String> userId) {
-        doSelected(emitters.stream().filter(emitter -> userId.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateFriends);
+    public void friendsChanged(final Collection<String> userIds) {
+        doSelected(emitters.stream().filter(emitter -> userIds.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateFriends);
     }
+
+    @Override
+    public void gamesChanged(final Collection<String> userIds) {
+        doSelected(emitters.stream().filter(emitter -> userIds.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateGames);
+    }
+
 }

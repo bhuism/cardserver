@@ -134,5 +134,9 @@ public final class MySseEmitter {
         return internalSend("updateFriends");
     }
 
+    public boolean sendUpdateGames() {
+        return internalSend("updateGames");
+    }
+
 }
 

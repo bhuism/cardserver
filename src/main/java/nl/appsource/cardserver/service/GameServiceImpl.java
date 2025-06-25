@@ -16,9 +16,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.Math.abs;
@@ -68,6 +70,8 @@ public class GameServiceImpl implements GameService {
         game.setTrump(Suit.Clubs);
 
         final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(game);
+
+        sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
 
         return savedGame;
     }
