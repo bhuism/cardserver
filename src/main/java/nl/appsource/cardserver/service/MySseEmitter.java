@@ -102,10 +102,11 @@ public final class MySseEmitter {
             final SseEmitter.SseEventBuilder builder = SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event);
 
             if (data != null) {
-                builder.data(data);
+                builder.data(data, mediaType);
             } else {
-                builder.data("{}");
+                builder.data("{}", APPLICATION_JSON);
             }
+
             emitter.send(builder.build());
             return true;
         } catch (final Throwable e) {
