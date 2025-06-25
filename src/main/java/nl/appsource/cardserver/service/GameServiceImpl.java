@@ -78,7 +78,11 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void deleteGame(final String gameId) {
-        gameRepository.deleteById(gameId);
+        gameRepository.findById(gameId).ifPresent(game -> {
+            final Set<String> players = game.getPlayers().stream().filter((p) -> !Objects.equals(p, game.getCreator())).collect(Collectors.toSet());
+            gameRepository.deleteById(game.getId());
+            sseEmitterRepository.gamesChanged(players);
+        });
     }
 
     @Override

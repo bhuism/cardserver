@@ -15,7 +15,6 @@ public class GameEngineImpl implements GameEngine {
 
     private final Game game;
 
-    //    @SuppressFBWarnings("RC_REF_COMPARISON")
     @Override
     public Game playCard(final Card card) {
 
