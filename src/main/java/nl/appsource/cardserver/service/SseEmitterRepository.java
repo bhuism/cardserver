@@ -3,7 +3,7 @@ package nl.appsource.cardserver.service;
 import nl.appsource.cardserver.model.Card;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.UUID;
 
 public interface SseEmitterRepository {
@@ -19,5 +19,5 @@ public interface SseEmitterRepository {
 
     void playCard(String userId, String gameId, Card card);
 
-    void friendsChanged(List<String> userId);
+    void friendsChanged(Collection<String> userId);
 }

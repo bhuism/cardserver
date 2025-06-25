@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -137,7 +138,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void friendsChanged(final List<String> userId) {
+    public void friendsChanged(final Collection<String> userId) {
         doSelected(emitters.stream().filter(emitter -> userId.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateFriends);
     }
 }

@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 
+import com.couchbase.client.core.deps.com.google.common.collect.Streams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
@@ -10,6 +11,10 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.Collections.singleton;
 
 @Service
 @RequiredArgsConstructor
@@ -76,17 +81,11 @@ public class UserServiceImpl implements UserService {
     public void removeInvite(final String userId, final String friendId) {
         userRepository.findById(userId)
             .map(user -> {
-                final boolean changed = user.getInvites().remove(friendId);
-                if (changed) {
-                    userRepository.save(user);
-                }
-                return changed;
-            }).ifPresent(changed -> {
-                if (changed) {
-                    sseEmitterRepository.friendsChanged(List.of(userId, friendId));
-                }
-            });
-
+                user.getInvites().remove(friendId);
+                return user;
+            })
+            .map((user) -> userRepository.save(user))
+            .ifPresent((changed) -> sseEmitterRepository.friendsChanged(singleton(friendId)));
     }
 
     @Override
@@ -95,7 +94,10 @@ public class UserServiceImpl implements UserService {
             .map(user -> {
                 user.getInvites().add(friendId);
                 return user;
-            }).map(userRepository::save);
+            }).map(userRepository::save)
+            .ifPresent(user -> {
+                sseEmitterRepository.friendsChanged(singleton(friendId));
+            });
     }
 
     @Override
@@ -106,8 +108,10 @@ public class UserServiceImpl implements UserService {
                     .filter(invitee -> !user.getInvites().contains(invitee.getId()))
                     .toList())
                 .map(invitees -> {
-                    user.getInvites().addAll(invitees.stream().map(User::getId).toList());
+                    final List<String> inviteeIds = invitees.stream().map(User::getId).toList();
+                    user.getInvites().addAll(inviteeIds);
                     userRepository.save(user);
+                    sseEmitterRepository.friendsChanged(inviteeIds);
                     return invitees;
                 }));
     }
