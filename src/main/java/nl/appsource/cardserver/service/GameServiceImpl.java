@@ -63,7 +63,7 @@ public class GameServiceImpl implements GameService {
         game.setCreated(Instant.now());
         game.setUpdated(Instant.now());
         game.setPlayers(new ArrayList<>(players));
-        game.setDealer(0);
+        game.setDealer(RAND.nextInt() % 4);
         game.setElder(abs(RAND.nextInt()) % 4);
         game.setTurns(new ArrayList<>());
         game.setPlayerCard(randomCards());
