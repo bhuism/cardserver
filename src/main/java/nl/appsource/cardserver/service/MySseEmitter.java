@@ -99,7 +99,12 @@ public final class MySseEmitter {
     private boolean internalSend(final String event, final Object data, final MediaType mediaType) {
         try {
 //            log.info("internalSend() sending event '{}' data: '{}' ", event, data);
-            emitter.send(SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event).data(data, mediaType).build());
+            final SseEmitter.SseEventBuilder builder = SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event);
+
+            if (data != null) {
+                builder.data(data);
+            }
+            emitter.send(builder.build());
             return true;
         } catch (final Throwable e) {
             log.error("{}: event {} to {} data {}", e.getClass().getName() + ":" + e.getMessage(), event, userId, data, e);
