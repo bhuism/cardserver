@@ -18,6 +18,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    private final SseEmitterRepository sseEmitterRepository;
+
     @Override
     public Optional<User> findById(final String userId) {
         return userRepository.findById(userId);
@@ -74,9 +76,17 @@ public class UserServiceImpl implements UserService {
     public void removeInvite(final String userId, final String friendId) {
         userRepository.findById(userId)
             .map(user -> {
-                user.getInvites().remove(friendId);
-                return user;
-            }).map(userRepository::save);
+                final boolean changed = user.getInvites().remove(friendId);
+                if (changed) {
+                    userRepository.save(user);
+                }
+                return changed;
+            }).ifPresent(changed -> {
+                if (changed) {
+                    sseEmitterRepository.friendsChanged(List.of(userId, friendId));
+                }
+            });
+
     }
 
     @Override

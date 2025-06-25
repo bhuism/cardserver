@@ -136,4 +136,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .forEach((emitter) -> emitter.playCard(userId, gameId, card)));
     }
 
+    @Override
+    public void friendsChanged(final List<String> userId) {
+        doSelected(emitters.stream().filter(emitter -> userId.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateFriends);
+    }
 }

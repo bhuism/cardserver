@@ -88,6 +88,10 @@ public final class MySseEmitter {
         return true;
     }
 
+    private boolean internalSend(final String event) {
+        return internalSend(event, null, null);
+    }
+
     private boolean internalSend(final String event, final Object data) {
         return internalSend(event, data, null);
     }
@@ -117,6 +121,10 @@ public final class MySseEmitter {
         final OnlineListEvent onlineListEvent = new OnlineListEvent();
         onlineListEvent.setOnlineList(onlineList);
         return internalSend("online", onlineListEvent, APPLICATION_JSON);
+    }
+
+    public boolean sendUpdateFriends() {
+        return internalSend("updateFriends");
     }
 
 }
