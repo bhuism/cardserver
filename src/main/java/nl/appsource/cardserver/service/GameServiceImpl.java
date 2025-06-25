@@ -67,7 +67,7 @@ public class GameServiceImpl implements GameService {
         game.setElder(abs(RAND.nextInt()) % 4);
         game.setTurns(new ArrayList<>());
         game.setPlayerCard(randomCards());
-        game.setTrump(Suit.Clubs);
+        game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
 
         final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(game);
 
