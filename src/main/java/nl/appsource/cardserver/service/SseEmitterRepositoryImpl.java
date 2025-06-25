@@ -3,7 +3,6 @@ package nl.appsource.cardserver.service;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
@@ -75,7 +74,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void sendMessage(final String userId, final String message) {
-        LoggingFilter.requestLogMessage(", size=" + size());
         final String fromString = userRepository.findById(userId).map(User::getDisplayName).orElse(userId);
         doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message));
     }
@@ -108,8 +106,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.add(mySseEmitter);
 
-        LoggingFilter.requestLogMessage(", size=" + size());
-
         pingUpdateStatusAll();
 
         return mySseEmitter.getEmitter();
@@ -117,7 +113,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void ping(final UUID uuid) {
-        LoggingFilter.requestLogMessage(", size=" + size());
         doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), mySseEmitter -> {
             pingUpdateStatus(mySseEmitter);
             return mySseEmitter.ping();
@@ -126,7 +121,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void pong(final UUID uuid) {
-        LoggingFilter.requestLogMessage(", size=" + size());
         doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), MySseEmitter::pong);
     }
 

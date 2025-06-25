@@ -15,7 +15,7 @@ paths:
       operationId: whoami
       responses:
         "200":
-          $ref: "#/components/responses/LoginResponse"
+          $ref: "#/components/responses/WhoAmIResponse"
   /games/{gameId}/playCard:
     post:
       operationId: playCard
@@ -181,6 +181,44 @@ components:
           schema:
             $ref: "#/components/schemas/postMessage"
   schemas:
+    whoAmIResponse:
+      type: object
+      properties:
+        jwt:
+          type: string
+          format: password
+        user:
+          $ref: './user.yaml/#/components/schemas/User'
+      required:
+        - jwt
+        - user
+    createInviteResponse:
+      type: object
+      properties:
+        invitees:
+          type: array
+          items:
+            $ref: "./user.yaml#/components/schemas/User"
+      required:
+        - invitees
+    invitesResponse:
+      type: object
+      properties:
+        incoming:
+          description: unaccepted
+          type: array
+          items:
+            $ref: "./user.yaml#/components/schemas/User"
+        outgoing:
+          description: unaccepted
+          type: array
+          items:
+            $ref: "./user.yaml#/components/schemas/User"
+        friends:
+          description: accepted
+          type: array
+          items:
+            $ref: "./user.yaml#/components/schemas/User"
     playCard:
       type: object
       properties:
@@ -286,57 +324,24 @@ components:
             type: array
             items:
               $ref: "./user.yaml#/components/schemas/User"
-    LoginResponse:
+    WhoAmIResponse:
       description: login response
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              jwt:
-                type: string
-                format: password
-              user:
-                $ref: './user.yaml/#/components/schemas/User'
-            required:
-              - jwt
-              - user
+            $ref: '#/components/schemas/whoAmIResponse'
     CreateInvitesResponse:
       description: response for create invites
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              invitees:
-                type: array
-                items:
-                  $ref: "./user.yaml#/components/schemas/User"
-            required:
-              - invitees
+            $ref: '#/components/schemas/createInviteResponse'
     InvitesResponse:
       description: incoming invites response
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              incoming:
-                description: unaccepted
-                type: array
-                items:
-                  $ref: "./user.yaml#/components/schemas/User"
-              outgoing:
-                description: unaccepted
-                type: array
-                items:
-                  $ref: "./user.yaml#/components/schemas/User"
-              friends:
-                description: accepted
-                type: array
-                items:
-                  $ref: "./user.yaml#/components/schemas/User"
-
+            $ref: '#/components/schemas/invitesResponse'
 security:
   - bearerAuth:
       - openid

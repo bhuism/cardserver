@@ -7,7 +7,7 @@ import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.WhoamiApi;
-import org.openapitools.model.Whoami200Response;
+import org.openapitools.model.WhoAmIResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,7 +33,7 @@ public class WhoAmIController implements WhoamiApi {
 
 
     @Override
-    public ResponseEntity<Whoami200Response> whoami() {
+    public ResponseEntity<WhoAmIResponse> whoami() {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -74,7 +74,7 @@ public class WhoAmIController implements WhoamiApi {
                 }))
             .map(userService::save)
             .map(userToOpenApiConverter::convert)
-            .map((user) -> new Whoami200Response().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()))
+            .map((user) -> new WhoAmIResponse().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()))
             .map(ResponseEntity::ok)
             .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 

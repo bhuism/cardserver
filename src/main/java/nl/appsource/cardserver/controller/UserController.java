@@ -8,8 +8,8 @@ import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
-import org.openapitools.model.CreateInvite200Response;
-import org.openapitools.model.GetInvites200Response;
+import org.openapitools.model.CreateInviteResponse;
+import org.openapitools.model.InvitesResponse;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
@@ -43,8 +43,9 @@ public class UserController implements UsersApi, V1Api {
             .orElse(ResponseEntity.notFound().build());
     }
 
+
     @Override
-    public ResponseEntity<GetInvites200Response> getInvites() {
+    public ResponseEntity<InvitesResponse> getInvites() {
 
         LoggingFilter.requestLogMessage("getIncomingFriends()");
 
@@ -53,15 +54,15 @@ public class UserController implements UsersApi, V1Api {
 
         return userService.getInvites(userId).map(invites -> {
 
-            final GetInvites200Response getInvites200Response = new GetInvites200Response();
+            final InvitesResponse invitesResponse = new InvitesResponse();
 
-            getInvites200Response.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
-            getInvites200Response.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
-            getInvites200Response.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+            invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+            invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+            invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
 
             LoggingFilter.requestLogMessage(("incoming: " + invites.getIncoming().size() + ", outgoing: " + invites.getOutgoing().size() + ", friends: " + invites.getFriends().size()));
 
-            return getInvites200Response;
+            return invitesResponse;
 
         }).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
@@ -131,7 +132,7 @@ public class UserController implements UsersApi, V1Api {
 
 
     @Override
-    public ResponseEntity<CreateInvite200Response> createInvite(final CreateInvite createInvite) {
+    public ResponseEntity<CreateInviteResponse> createInvite(final CreateInvite createInvite) {
         LoggingFilter.requestLogMessage("addInvite('" + createInvite.getSearchString() + "')");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -140,11 +141,7 @@ public class UserController implements UsersApi, V1Api {
         return userService
             .createInvite(userId, createInvite.getSearchString())
             .map(invitees -> invitees.stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()))
-            .map(invitees -> {
-                final CreateInvite200Response createInvite200Response = new CreateInvite200Response();
-                createInvite200Response.setInvitees(invitees);
-                return createInvite200Response;
-            })
+            .map(invitees -> new CreateInviteResponse().invitees(invitees))
             .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 
     }
