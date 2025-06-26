@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.service.GameEngineImpl.GameEngineException;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -86,12 +87,10 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Game playCard(final String userId, final Game game, final Card card) {
-        final Game newGame = gameRepository.save(new GameEngineImpl(userId, game).playCard(card));
-
+    public void playCard(final String userId, final Game game, final Card card) {
+        gameRepository.save(new GameEngineImpl(userId, game).playCard(card));
         // distribute event
         sseEmitterRepository.playCard(userId, game.getId(), card);
-        return newGame;
     }
 
     public static Map<Card, Integer> randomCards() {

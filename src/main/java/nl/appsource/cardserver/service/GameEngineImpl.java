@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
@@ -11,21 +12,41 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class GameEngineImpl implements GameEngine {
 
+    public static class GameEngineException extends RuntimeException {
+        private GameEngineException() {
+        }
+
+        private GameEngineException(final String message) {
+            super(message);
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static final class GameCompletedException extends GameEngineException {
+        private final String gameId;
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static final class CardAlreadyPlayerException extends GameEngineException {
+        private final String gameId;
+        private final Card card;
+    }
+
     private final String userId;
 
     private final Game game;
 
     @Override
-    public Game playCard(final Card card) {
+    public Game playCard(final Card card)  {
 
         if (isCompleted()) {
-            log.warn("playCard() Game {} is already completed", game.getId());
-            return game;
+            throw new GameCompletedException(game.getId());
         }
 
         if (game.getTurns().stream().anyMatch((c) -> c == card)) {
-            log.warn("Card already played: {}", card);
-            return game;
+            throw new CardAlreadyPlayerException(game.getId(), card);
         }
 
 //        final Integer playerNum = game.getPlayers().indexOf(userId);
