@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.service;
+package nl.appsource.cardserver.service.exception;
 
 public class GameEngineException extends RuntimeException {
     public GameEngineException() {

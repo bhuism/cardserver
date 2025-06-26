@@ -2,7 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.service.GameEngineException;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

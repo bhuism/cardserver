@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
+import nl.appsource.cardserver.service.exception.GameCompletedException;
+import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 
 import java.time.Instant;
 
@@ -16,7 +19,7 @@ public class GameEngineImpl implements GameEngine {
     private final Game game;
 
     @Override
-    public Game playCard(final Card card)  {
+    public Game playCard(final Card card) {
 
         if (isCompleted()) {
             throw new GameCompletedException(game.getId());
@@ -24,6 +27,13 @@ public class GameEngineImpl implements GameEngine {
 
         if (game.getTurns().stream().anyMatch((c) -> c == card)) {
             throw new CardAlreadyPlayerException(game.getId(), card);
+        }
+
+        final int laatsteKaart = game.getTurns().size() % 4;
+        if (laatsteKaart % 4 != 0) {
+            if (game.getPlayers().indexOf(userId) != ((laatsteKaart + 1) % 4)) {
+                throw new NotPlayersTurnException();
+            }
         }
 
 //        final Integer playerNum = game.getPlayers().indexOf(userId);

@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.service;
+package nl.appsource.cardserver.service.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
