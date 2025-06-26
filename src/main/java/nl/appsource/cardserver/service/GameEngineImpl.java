@@ -31,7 +31,10 @@ public class GameEngineImpl implements GameEngine {
 
         final int laatsteKaart = game.getTurns().size() % 4;
         if (laatsteKaart % 4 != 0) {
-            if (game.getPlayers().indexOf(userId) != ((laatsteKaart + 1) % 4)) {
+            final int cardPlayer = game.getPlayers().indexOf(userId);
+            final int gotTurn = ((laatsteKaart + 1) % 4);
+            if (cardPlayer != gotTurn) {
+                log.warn("It's player {} turn, not {}", gotTurn, cardPlayer);
                 throw new NotPlayersTurnException();
             }
         }
