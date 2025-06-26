@@ -19,7 +19,7 @@ public class GlobalDefaultExceptionHandler {
 
     @ExceptionHandler(value = GameEngineException.class)
     public ResponseEntity gameEngineExceptionErrorHandler(final HttpServletRequest req, final GameEngineException e) throws Exception {
-        log.error("{}  error handling request: {}", GameEngineException.class.getName(), req.getRequestURI(), e);
+        log.error("{}  error handling request: {}", GameEngineException.class.getName(), req.getRequestURI());
         return ResponseEntity.unprocessableEntity().body(e.getClass().getSimpleName() + ":" + e.getMessage());
     }
 
