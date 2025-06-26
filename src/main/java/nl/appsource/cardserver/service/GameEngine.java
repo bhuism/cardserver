@@ -4,5 +4,5 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 
 public interface GameEngine {
-    Game playCard(Card card) throws GameEngineImpl.GameCompletedException, GameEngineImpl.CardAlreadyPlayerException;
+    Game playCard(Card card) throws GameCompletedException, CardAlreadyPlayerException;
 }

@@ -6,7 +6,6 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.service.GameEngineImpl.GameEngineException;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;

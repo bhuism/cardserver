@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
@@ -11,28 +10,6 @@ import java.time.Instant;
 @Slf4j
 @RequiredArgsConstructor
 public class GameEngineImpl implements GameEngine {
-
-    public static class GameEngineException extends RuntimeException {
-        private GameEngineException() {
-        }
-
-        private GameEngineException(final String message) {
-            super(message);
-        }
-    }
-
-    @Getter
-    @RequiredArgsConstructor
-    public static final class GameCompletedException extends GameEngineException {
-        private final String gameId;
-    }
-
-    @Getter
-    @RequiredArgsConstructor
-    public static final class CardAlreadyPlayerException extends GameEngineException {
-        private final String gameId;
-        private final Card card;
-    }
 
     private final String userId;
 
