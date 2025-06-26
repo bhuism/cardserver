@@ -22,10 +22,12 @@ public class GameEngineImpl implements GameEngine {
     public Game playCard(final Card card) {
 
         if (isCompleted()) {
+            log.warn("Game {} allready completed", game.getId());
             throw new GameCompletedException(game.getId());
         }
 
         if (game.getTurns().stream().anyMatch((c) -> c == card)) {
+            log.warn("Card {} allready played", card);
             throw new CardAlreadyPlayerException(game.getId(), card);
         }
 
