@@ -2,11 +2,10 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
-import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.event.GameStateEvent;
 import nl.appsource.cardserver.model.event.OnlineListEvent;
-import nl.appsource.cardserver.model.event.PlayCardEvent;
+import org.openapitools.model.Game;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -120,9 +119,9 @@ public final class MySseEmitter {
         }
     }
 
-    public boolean playCard(final String userIdPlayer, final String gameId, final Card card) {
-        final PlayCardEvent playCardEvent = new PlayCardEvent(userIdPlayer, gameId, GameToOpenApiConverter.convertCard(card));
-        return internalSend("playCard", playCardEvent, APPLICATION_JSON);
+    public boolean gameChanged(final Game game) {
+        final GameStateEvent playCardEvent = new GameStateEvent(game);
+        return internalSend("gameStateUpdate", playCardEvent, APPLICATION_JSON);
     }
 
     public boolean sendOnline(final List<String> onlineList) {

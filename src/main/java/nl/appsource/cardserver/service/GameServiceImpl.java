@@ -88,11 +88,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public Optional<Game> playCard(final String userId, final String gameId, final Card card) {
         return gameRepository.findById(gameId)
-            .map((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)))
-            .map((game) -> {
-                sseEmitterRepository.playCard(userId, game.getId(), card);
-                return game;
-            });
+            .map((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)));
     }
 
     public static Map<Card, Integer> randomCards() {

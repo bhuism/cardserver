@@ -5,19 +5,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.openapitools.model.Game;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class PlayCardEvent {
+public class GameStateEvent {
+
+//    @JsonProperty
+//    private String userId;
 
     @JsonProperty
-    private String userId;
-
-    @JsonProperty
-    private String gameId;
-
-    @JsonProperty
-    private org.openapitools.model.Card card;
+    private Game gameState;
 }

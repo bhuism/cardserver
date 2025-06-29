@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.GameService;
+import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
@@ -26,6 +27,7 @@ public class GameController implements GamesApi, V1Api {
 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
+    private final SseEmitterRepository sseEmitterRepository;
 
     @Override
     public ResponseEntity<Game> getGame(final String gameId) {
@@ -48,6 +50,10 @@ public class GameController implements GamesApi, V1Api {
 
         return gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
             .map(gameToOpenApiConverter::convert)
+            .map((game) -> {
+                sseEmitterRepository.gameChanged(game);
+                return game;
+            })
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
     }

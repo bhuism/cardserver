@@ -3,10 +3,10 @@ package nl.appsource.cardserver.service;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.Game;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -125,10 +125,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void playCard(final String userId, final String gameId, final Card card) {
-        gameRepository.findById(gameId).ifPresent(game -> emitters.stream()
-            .filter(e -> game.getPlayers().contains(e.getUserId()))
-            .forEach((emitter) -> emitter.playCard(userId, gameId, card)));
+    public void gameChanged(final Game gameState) {
+        emitters
+            .stream()
+            .filter(e -> gameState.getPlayers().stream().map(org.openapitools.model.User::getId).toList().contains(e.getUserId()))
+            .forEach((emitter) -> emitter.gameChanged(gameState));
     }
 
     @Override

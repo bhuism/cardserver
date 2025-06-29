@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.service;
 
-import nl.appsource.cardserver.model.Card;
+import org.openapitools.model.Game;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.Collection;
@@ -17,7 +17,7 @@ public interface SseEmitterRepository {
 
     void pong(UUID uuid);
 
-    void playCard(String userId, String gameId, Card card);
+    void gameChanged(Game gameState);
 
     void friendsChanged(Collection<String> userIds);
 
