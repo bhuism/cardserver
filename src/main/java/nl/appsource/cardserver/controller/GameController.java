@@ -39,18 +39,17 @@ public class GameController implements GamesApi, V1Api {
 
 
     @Override
-    public ResponseEntity<Void> playCard(final String gameId, final PlayCard playCard) {
+    public ResponseEntity<Game> playCard(final String gameId, final PlayCard playCard) {
 
         LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return gameService.getGame(userId, gameId).map(g -> {
-            gameService.playCard(userId, g, convertCard(playCard.getCard()));
-            return ResponseEntity.ok();
-        }).orElse(ResponseEntity.unprocessableEntity()).build();
-
+        return gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
+            .map(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
     }
 
     @Override

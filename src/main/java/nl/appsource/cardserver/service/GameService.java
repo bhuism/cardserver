@@ -17,5 +17,5 @@ public interface GameService {
 
     void deleteGame(String gameId);
 
-    void playCard(String userId, Game game, Card card);
+    Optional<Game> playCard(String userId, String gameId, Card card);
 }

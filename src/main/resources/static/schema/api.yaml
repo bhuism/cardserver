@@ -25,9 +25,9 @@ paths:
         $ref: "#/components/requestBodies/playCard"
       responses:
         "200":
-          description: ok
-        "422":
           $ref: "#/components/responses/GameResponse"
+        "422":
+          description: some application error
         "404":
           description: not found
   /games:

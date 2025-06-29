@@ -86,10 +86,13 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void playCard(final String userId, final Game game, final Card card) {
-        gameRepository.save(new GameEngineImpl(userId, game).playCard(card));
-        // distribute event
-        sseEmitterRepository.playCard(userId, game.getId(), card);
+    public Optional<Game> playCard(final String userId, final String gameId, final Card card) {
+        return gameRepository.findById(gameId)
+            .map((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)))
+            .map((game) -> {
+                sseEmitterRepository.playCard(userId, game.getId(), card);
+                return game;
+            });
     }
 
     public static Map<Card, Integer> randomCards() {
