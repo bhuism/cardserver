@@ -126,10 +126,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void gameChanged(final Game gameState) {
-        emitters
+        final Set<MySseEmitter> players = emitters
             .stream()
             .filter(e -> gameState.getPlayers().stream().map(org.openapitools.model.User::getId).toList().contains(e.getUserId()))
-            .forEach((emitter) -> emitter.gameChanged(gameState));
+            .collect(Collectors.toSet());
+
+        doSelected(players, (emitter) -> emitter.gameChanged(gameState));
     }
 
     @Override
