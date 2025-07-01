@@ -22,4 +22,6 @@ public interface SseEmitterRepository {
     void friendsChanged(Collection<String> userIds);
 
     void gamesChanged(Collection<String> userIds);
+
+    boolean isUserOnline(String userId);
 }

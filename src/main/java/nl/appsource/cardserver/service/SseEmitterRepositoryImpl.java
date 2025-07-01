@@ -144,4 +144,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doSelected(emitters.stream().filter(emitter -> userIds.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateGames);
     }
 
+    @Override
+    public boolean isUserOnline(final String userId) {
+        return emitters.stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
+    }
+
 }
