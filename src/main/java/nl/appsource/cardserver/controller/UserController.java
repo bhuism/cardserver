@@ -18,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,19 +26,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class UserController implements UsersApi, V1Api {
-
-    private static final Comparator<? super User> ONLINEFIRST = (o1, o2) -> {
-        if (o1.getOnline() && !o2.getOnline()) {
-            return -1;
-        }
-
-        if (!o1.getOnline() && o2.getOnline()) {
-            return 1;
-        }
-
-        return 0;
-
-    };
 
     private final UserService userService;
 
@@ -72,7 +58,7 @@ public class UserController implements UsersApi, V1Api {
 
             invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
             invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
-            invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).sorted(ONLINEFIRST).collect(Collectors.toList()));
+            invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
 
             LoggingFilter.requestLogMessage(("incoming: " + invites.getIncoming().size() + ", outgoing: " + invites.getOutgoing().size() + ", friends: " + invites.getFriends().size()));
 
