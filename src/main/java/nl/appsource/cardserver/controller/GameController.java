@@ -51,6 +51,7 @@ public class GameController implements GamesApi, V1Api {
         return gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
             .map(gameToOpenApiConverter::convert)
             .map((game) -> {
+                log.info("Sending: " + game.getTurns().size() + " turns");
                 sseEmitterRepository.gameChanged(game);
                 return game;
             })
