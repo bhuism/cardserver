@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
@@ -25,6 +26,7 @@ import java.util.stream.IntStream;
 
 import static java.lang.Math.abs;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
@@ -69,7 +71,9 @@ public class GameServiceImpl implements GameService {
         game.setPlayerCard(randomCards());
         game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
 
+        log.info("Game count before save: " + gameRepository.findById(creator).stream().count());
         final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(game);
+        log.info("Game count after save: " + gameRepository.findById(creator).stream().count());
 
         sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
 
