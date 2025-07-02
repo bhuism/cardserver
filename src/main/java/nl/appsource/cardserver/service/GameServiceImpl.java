@@ -71,9 +71,9 @@ public class GameServiceImpl implements GameService {
         game.setPlayerCard(randomCards());
         game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
 
-        log.info("Game count before save: " + gameRepository.findById(creator).stream().count());
+        log.info("Game count before save: " + gameRepository.findByUserId(creator).stream().count());
         final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(game);
-        log.info("Game count after save: " + gameRepository.findById(creator).stream().count());
+        log.info("Game count after save: " + gameRepository.findByUserId(creator).stream().count());
 
         sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
 
