@@ -66,7 +66,11 @@ public class GameController implements GamesApi, V1Api {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return ResponseEntity.ok(gameService.getGames(userId).stream().map(gameToOpenApiConverter::convert).collect(Collectors.toList()));
+        final List<Game> games = gameService.getGames(userId).stream().map(gameToOpenApiConverter::convert).collect(Collectors.toList());
+
+        LoggingFilter.requestLogMessage((", size=" + games.size()));
+
+        return ResponseEntity.ok(games);
 
     }
 
