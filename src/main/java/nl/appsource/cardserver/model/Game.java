@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-@Document(replicateTo = ReplicateTo.THREE, durabilityLevel = DurabilityLevel.PERSIST_TO_MAJORITY)
+@Document(durabilityLevel = DurabilityLevel.PERSIST_TO_MAJORITY)
 @Getter
 @Setter
 @NoArgsConstructor
