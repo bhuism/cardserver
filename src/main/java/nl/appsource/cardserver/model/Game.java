@@ -1,7 +1,5 @@
 package nl.appsource.cardserver.model;
 
-import com.couchbase.client.core.msg.kv.DurabilityLevel;
-import com.couchbase.client.java.kv.ReplicateTo;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-@Document(durabilityLevel = DurabilityLevel.PERSIST_TO_MAJORITY)
+@Document
 @Getter
 @Setter
 @NoArgsConstructor
