@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Set;
 
 import static java.lang.System.currentTimeMillis;
 
@@ -19,6 +20,8 @@ import static java.lang.System.currentTimeMillis;
 @Order(1)
 @Slf4j
 public class LoggingFilter extends OncePerRequestFilter {
+
+    private static final Set<String> IGNORE_LOG_FOR_PATHS = Set.of("/api/v1/users/ping", "/api/v1/users/pong");
 
     private static final ThreadLocal<StringBuffer> STRING_THREAD_LOCAL = ThreadLocal.withInitial(StringBuffer::new);
 
@@ -42,9 +45,11 @@ public class LoggingFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
-            log.info(
-                "{} {} {}, {}, {} msec {}",
-                remoteAddr, servletRequest.getMethod(), servletRequest.getRequestURI(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+            if (!IGNORE_LOG_FOR_PATHS.contains(servletRequest.getRequestURI())) {
+                log.info(
+                    "{} {} {}, {}, {} msec {}",
+                    remoteAddr, servletRequest.getMethod(), servletRequest.getRequestURI(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+            }
             STRING_THREAD_LOCAL.remove();
         }
     }
