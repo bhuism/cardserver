@@ -14,10 +14,10 @@ public interface UserRepository extends CouchbaseRepository<User, String> {
 
     Optional<User> findOptionalByEmail(String email);
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY lastLogin DESC")
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY lastLogin DESC", readonly = true)
     List<User> findIncomingInvites(@Param("id") String id);
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND (LOWER(email)=LOWER($searchString) OR LOWER(name)=LOWER($searchString) OR LOWER(displayName)=LOWER($searchString)) ORDER BY lastLogin DESC")
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND (LOWER(email)=LOWER($searchString) OR LOWER(name)=LOWER($searchString) OR LOWER(displayName)=LOWER($searchString)) ORDER BY lastLogin DESC", readonly = true)
     List<User> findInvitees(@Param("searchString") String searchString);
 
     Optional<User> findByDisplayName(String displayName);

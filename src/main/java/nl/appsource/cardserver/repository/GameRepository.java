@@ -23,10 +23,10 @@ public interface GameRepository extends CouchbaseRepository<Game, String>, ListQ
 //    List<Game> findByEmail(@Param("email") String email);
     //@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC", readonly = true)
     List<Game> findByUserId(@Param("userId") String userId);
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC", readonly = true)
     Optional<Game> findByUserIdAndGameId(@Param("userId") String userId, @Param("gameId") String gameId);
 
 
