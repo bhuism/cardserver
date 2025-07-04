@@ -41,10 +41,12 @@ public class LoggingFilter implements WebFilter {
         try {
             return webFilterChain.filter(serverWebExchange);
         } finally {
-            log.info(
-                "{} {} {}, {}, {} msec {}",
-                remoteAddr, request.getMethod(), request.getPath(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
-            STRING_THREAD_LOCAL.remove();
+            if (!request.getPath().toString().startsWith("/manage")) {
+                log.info(
+                    "{} {} {}, {}, {} msec {}",
+                    remoteAddr, request.getMethod(), request.getPath(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
+                STRING_THREAD_LOCAL.remove();
+            }
         }
 
     }
