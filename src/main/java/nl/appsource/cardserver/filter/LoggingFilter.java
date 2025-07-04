@@ -20,7 +20,7 @@ public class LoggingFilter implements WebFilter {
 
     private static final ThreadLocal<StringBuffer> STRING_THREAD_LOCAL = ThreadLocal.withInitial(StringBuffer::new);
 
-    public static final void requestLogMessage(final String message) {
+    public static void requestLogMessage(final String message) {
         STRING_THREAD_LOCAL.get().append(message);
     }
 
@@ -29,14 +29,9 @@ public class LoggingFilter implements WebFilter {
 
         final long start = currentTimeMillis();
         final ServerHttpRequest request = serverWebExchange.getRequest();
-        final String remoteAddr = "" + request.getRemoteAddress().getAddress();
-
+        final String remoteAddr = "" + (request.getRemoteAddress() != null ? request.getRemoteAddress().getAddress() : "");
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String name = authentication != null ? authentication.getName() : "null";
-
-//        log.trace(
-//            "Starting a transaction for req : {}",
-//            servletRequest.getRequestURI());
 
         try {
             return webFilterChain.filter(serverWebExchange);
