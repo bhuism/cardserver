@@ -168,7 +168,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public boolean isUserOnline(final String userId) {
-        return emitters.stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
+        return emitters.values().stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
     }
 
 }
