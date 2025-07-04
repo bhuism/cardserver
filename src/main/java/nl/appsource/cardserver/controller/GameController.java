@@ -66,7 +66,7 @@ public class GameController implements GamesApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .map(userId -> gameService.getGames(userId).map(gameToOpenApiConverter::convert))
+            .mapNotNull(userId -> gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert))
             .map(ResponseEntity::ok);
 
     }

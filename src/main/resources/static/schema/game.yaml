@@ -41,7 +41,7 @@ components:
           minItems: 0
           maxItems: 4
           items:
-            $ref: './user.yaml/#/components/schemas/User'
+            type: string
         turns:
           type: array
           items:

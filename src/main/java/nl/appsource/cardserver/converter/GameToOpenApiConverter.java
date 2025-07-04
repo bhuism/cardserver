@@ -3,13 +3,11 @@ package nl.appsource.cardserver.converter;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
-import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,14 +40,7 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             return gamePlayerCardInner;
         }).collect(Collectors.toCollection(ArrayList::new)));
         target.setElder(Optional.ofNullable(source.getElder()));
-        target.setPlayers(
-            source.getPlayers()
-                .stream()
-                .map(userRepository::findById)
-                .map((Mono<User> source1) -> userToOpenApiConverter.convert(source1.block()))
-                .collect(Collectors.toCollection(ArrayList::new))
-        );
-
+        target.setPlayers(source.getPlayers());
         target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
         target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
 

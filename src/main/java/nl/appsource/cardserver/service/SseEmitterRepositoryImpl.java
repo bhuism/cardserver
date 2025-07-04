@@ -151,7 +151,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Game gameChanged(final Game gameState) {
         doSelected(Flux.fromIterable(emitters.values())
-                .filter(e -> gameState.getPlayers().stream().map(org.openapitools.model.User::getId).toList().contains(e.getUserId())),
+                .filter(e -> gameState.getPlayers().contains(e.getUserId())),
             mySseEmitter -> mySseEmitter.gameChanged(gameState));
         return gameState;
     }
