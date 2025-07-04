@@ -29,7 +29,7 @@ public class LoggingFilter implements WebFilter {
 
         final long start = currentTimeMillis();
         final ServerHttpRequest request = serverWebExchange.getRequest();
-        final String remoteAddr = request.getRemoteAddress().getAddress().toString();
+        final String remoteAddr = "" + request.getRemoteAddress().getAddress();
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String name = authentication != null ? authentication.getName() : "null";
