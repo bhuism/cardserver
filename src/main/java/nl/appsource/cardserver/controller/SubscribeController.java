@@ -3,27 +3,31 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 
 @Slf4j
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class SubscribeController implements V1Api {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-    @GetMapping(value = "/subscribe", produces = TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe() {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-        return sseEmitterRepository.subscribe(userId);
+    @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<Object>> subscribe() {
+
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMapMany(sseEmitterRepository::subscribe);
+
     }
 }
 

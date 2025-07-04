@@ -79,18 +79,18 @@ paths:
     post:
       operationId: ping
       requestBody:
-        $ref: "#/components/requestBodies/uuid"
+        $ref: "#/components/requestBodies/ping"
       responses:
         "200":
-          $ref: "#/components/responses/uuid"
+          description: ok
   /users/pong:
     post:
       operationId: pong
       requestBody:
-        $ref: "#/components/requestBodies/uuid"
+        $ref: "#/components/requestBodies/pong"
       responses:
         "200":
-          $ref: "#/components/responses/uuid"
+          description: ok
   /users/message:
     post:
       operationId: sendMessage
@@ -163,13 +163,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
-    uuid:
+    ping:
       required: true
       content:
         application/json:
           schema:
-            type: string
-            format: uuid
+            $ref: "#/components/schemas/ping"
+    pong:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/pong"
     updatePreferences:
       required: true
       content:
@@ -197,10 +202,8 @@ components:
     createInviteResponse:
       type: object
       properties:
-        invitees:
-          type: array
-          items:
-            $ref: "./user.yaml#/components/schemas/User"
+        count:
+          type: number
       required:
         - invitees
     invitesResponse:
@@ -221,6 +224,22 @@ components:
           type: array
           items:
             $ref: "./user.yaml#/components/schemas/User"
+    ping:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+      required:
+        - uuid
+    pong:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+      required:
+        - uuid
     playCard:
       type: object
       properties:
@@ -291,13 +310,13 @@ components:
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
   responses:
-    uuid:
-      description: a game
-      content:
-        application/json:
-          schema:
-            type: string
-            format: uuid
+#    uuid:
+#      description: a game
+#      content:
+#        application/json:
+#          schema:
+#            type: string
+#            format: uuid
     GameResponse:
       description: a game
       content:

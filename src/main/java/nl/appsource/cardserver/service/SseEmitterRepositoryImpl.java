@@ -4,21 +4,19 @@ import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.Game;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -27,27 +25,24 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final UserRepository userRepository;
 
-    private final GameRepository gameRepository;
+    private final Sinks.Many<UserServerSentEvent> manySinks = Sinks.many().multicast().onBackpressureBuffer();
 
-    private final CopyOnWriteArraySet<MySseEmitter> emitters = new CopyOnWriteArraySet<>();
+    private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
-    private void doSelected(final Set<MySseEmitter> receivers, final Function<MySseEmitter, Boolean> consumer) {
-
-        final Set<MySseEmitter> removers = new HashSet<>();
-
-        receivers.forEach(mySseEmitter -> {
-            if (!consumer.apply(mySseEmitter)) {
-                removers.add(mySseEmitter);
-            }
-        });
-
-        emitters.removeAll(removers);
-
+    private void doSelected(final Flux<MySseEmitter> receivers, final Function<MySseEmitter, UserServerSentEvent> consumer) {
+        receivers.map(consumer).subscribe(manySinks::tryEmitNext);
     }
 
+    private void doSelectedMono(final Flux<MySseEmitter> receivers, final Function<MySseEmitter, Mono<UserServerSentEvent>> consumer) {
+        receivers.flatMap(consumer).subscribe(manySinks::tryEmitNext);
+    }
 
-    private void doAll(final Function<MySseEmitter, Boolean> consumer) {
-        doSelected(emitters, consumer);
+    private void doAll(final Function<MySseEmitter, UserServerSentEvent> consumer) {
+        doSelected(Flux.fromIterable(emitters.values()), consumer);
+    }
+
+    private void doAllMono(final Function<MySseEmitter, Mono<UserServerSentEvent>> consumer) {
+        doSelectedMono(Flux.fromIterable(emitters.values()), consumer);
     }
 
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
@@ -57,37 +52,37 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
     public void pingUpdateStatusAll() {
-        doAll(this::pingUpdateStatus);
+        doAllMono(this::pingUpdateStatus);
     }
 
-    public boolean pingUpdateStatus(final MySseEmitter mySseEmitter) {
-        final List<String> incomingInvites = userRepository.findIncomingInvites(mySseEmitter.getUserId()).stream().map(User::getId).toList();
+    private Mono<UserServerSentEvent> pingUpdateStatus(final MySseEmitter mySseEmitter) {
         return userRepository.findById(mySseEmitter.getUserId())
             .map(User::getInvites)
-            .map(friends -> {
-                friends.retainAll(incomingInvites);
-                friends.retainAll(emitters.stream().map(MySseEmitter::getUserId).collect(Collectors.toList()));
-//                log.info("Sending {} online list:  {}", mySseEmitter.getUserId(), friends);
-                return mySseEmitter.sendOnline(friends);
-            }).orElse(false);
+            .map(list -> {
+
+                userRepository.findIncomingInvites(mySseEmitter.getUserId()).map(User::getId).collectList().subscribe(list::retainAll);
+                return list;
+            })
+            .map(list -> {
+                list.retainAll(emitters.values().stream().map(MySseEmitter::getUserId).toList());
+                return list;
+            })
+            .map(mySseEmitter::sendOnline);
     }
 
     @Override
-    public void sendMessage(final String userId, final String message) {
-        final String fromString = userRepository.findById(userId).map(User::getDisplayName).orElse(userId);
-        doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message));
+    public void broadCastMessage(final String userId, final String message) {
+        userRepository.findById(userId)
+            .map(User::getDisplayName)
+            .switchIfEmpty(Mono.just(userId))
+            .subscribe(fromString -> {
+                doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message));
+            });
     }
 
     @PreDestroy
     public void destroy() {
-
-        emitters.forEach(MySseEmitter::complete);
-
-        try {
-            emitters.clear();
-        } catch (final Throwable e) {
-            log.error("", e);
-        }
+        manySinks.tryEmitComplete();
     }
 
     @Override
@@ -95,53 +90,80 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return emitters.size();
     }
 
+//    private Sinks.Many<ServerSentEvent<String>> testSink = Sinks.many().multicast().onBackpressureBuffer();
+
+
     @Override
-    public SseEmitter subscribe(final String userId) {
+    public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
+
+        //pingUpdateStatusAll();
+
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
+        emitters.put(mySseEmitter.getUuid(), mySseEmitter);
+        manySinks.tryEmitNext(mySseEmitter.sendPing());
 
-        // ping new connection
-        if (!mySseEmitter.sendPing()) {
-            throw new RuntimeException("ping error");
-        }
-
-        emitters.add(mySseEmitter);
-
-        pingUpdateStatusAll();
-
-        return mySseEmitter.getEmitter();
+        return manySinks.asFlux()
+            .filter(userServerSentEvent -> mySseEmitter.getUuid().equals(userServerSentEvent.getUuid()))
+            .map(UserServerSentEvent::getServerSentEvent)
+            .publish()
+            .autoConnect();
     }
+
+//    @Scheduled(fixedDelay = 1000)
+//    public void emit() {
+//        doAll(MySseEmitter::sendPing);
+//    }
+
 
     @Override
     public void ping(final UUID uuid) {
-        doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), mySseEmitter -> {
-            pingUpdateStatus(mySseEmitter);
-            return mySseEmitter.ping();
-        });
+        final long count = emitters.values()
+            .stream()
+            .filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid))
+            .map(MySseEmitter::receivePing)
+            .map(manySinks::tryEmitNext)
+            .count();
+
+
+        if (count == 0) {
+            log.error("ping() Found no emitter for uuid {}", uuid);
+        }
     }
+
 
     @Override
     public void pong(final UUID uuid) {
-        doSelected(emitters.stream().filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid)).collect(Collectors.toSet()), MySseEmitter::pong);
+        final long count = emitters.values()
+            .stream()
+            .filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid))
+            .map(mySseEmitter -> {
+                mySseEmitter.receivePong();
+                return "";
+            })
+            .count();
+
+        if (count == 0) {
+            log.error("pong() Found no emitter for uuid {}", uuid);
+        }
+
     }
 
     @Override
-    public void gameChanged(final Game gameState) {
-        final Set<MySseEmitter> players = emitters
-            .stream()
-            .filter(e -> gameState.getPlayers().stream().map(org.openapitools.model.User::getId).toList().contains(e.getUserId()))
-            .collect(Collectors.toSet());
-
-        doSelected(players, (emitter) -> emitter.gameChanged(gameState));
+    public Game gameChanged(final Game gameState) {
+        doSelected(Flux.fromIterable(emitters.values())
+                .filter(e -> gameState.getPlayers().stream().map(org.openapitools.model.User::getId).toList().contains(e.getUserId())),
+            mySseEmitter -> mySseEmitter.gameChanged(gameState));
+        return gameState;
     }
 
     @Override
     public void friendsChanged(final Collection<String> userIds) {
-        doSelected(emitters.stream().filter(emitter -> userIds.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateFriends);
+        doSelected(Flux.fromIterable(emitters.values()).filter(emitter -> userIds.contains(emitter.getUserId())), MySseEmitter::sendUpdateFriends);
     }
 
     @Override
     public void gamesChanged(final Collection<String> userIds) {
-        doSelected(emitters.stream().filter(emitter -> userIds.contains(emitter.getUserId())).collect(Collectors.toSet()), MySseEmitter::sendUpdateGames);
+        doSelected(Flux.fromIterable(emitters.values()).filter(emitter -> userIds.contains(emitter.getUserId())), MySseEmitter::sendUpdateGames);
     }
 
     @Override

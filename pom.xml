@@ -52,7 +52,7 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
         <dependency>
@@ -99,22 +99,17 @@
             <version>0.2.6</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.querydsl</groupId>
-            <artifactId>querydsl-core</artifactId>
-            <version>${querydsl.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.querydsl</groupId>-->
+<!--            <artifactId>querydsl-core</artifactId>-->
+<!--            <version>${querydsl.version}</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
             <optional>true</optional>
         </dependency>
-
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
-<!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
-<!--        </dependency>-->
 
     </dependencies>
 
@@ -172,6 +167,7 @@
                             <typeMappings>AnyType=java.io.Serializable</typeMappings>
                             <configOptions>
                                 <library>spring-boot</library>
+                                <reactive>true</reactive>
                                 <dateLibrary>java8</dateLibrary>
                                 <serializableModel>true</serializableModel>
                                 <useOptional>true</useOptional>
@@ -180,6 +176,9 @@
                                 <disallowAdditionalPropertiesIfNotPresent>false</disallowAdditionalPropertiesIfNotPresent>
                                 <skipDefaultInterface>true</skipDefaultInterface>
                                 <useBeanValidation>false</useBeanValidation>
+                                <annotationLibrary>none</annotationLibrary>
+                                <useSwaggerUI>false</useSwaggerUI>
+                                <documentationProvider>none</documentationProvider>
                             </configOptions>
                             <typeMappings>
                                 DateTime=Instant
@@ -191,31 +190,31 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.mysema.maven</groupId>
-                <artifactId>apt-maven-plugin</artifactId>
-                <version>1.1.3</version>
-                <executions>
-                    <execution>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>process</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>target/generated-sources</outputDirectory>
-                            <processor>org.springframework.data.couchbase.repository.support.CouchbaseAnnotationProcessor</processor>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.querydsl</groupId>
-                        <artifactId>querydsl-apt</artifactId>
-                        <version>5.1.0</version>
-                        <classifier>jakarta</classifier>
-                    </dependency>
-                </dependencies>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>com.mysema.maven</groupId>-->
+<!--                <artifactId>apt-maven-plugin</artifactId>-->
+<!--                <version>1.1.3</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>process</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <outputDirectory>target/generated-sources</outputDirectory>-->
+<!--                            <processor>org.springframework.data.couchbase.repository.support.CouchbaseAnnotationProcessor</processor>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <dependencies>-->
+<!--                    <dependency>-->
+<!--                        <groupId>com.querydsl</groupId>-->
+<!--                        <artifactId>querydsl-apt</artifactId>-->
+<!--                        <version>5.1.0</version>-->
+<!--                        <classifier>jakarta</classifier>-->
+<!--                    </dependency>-->
+<!--                </dependencies>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

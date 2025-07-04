@@ -1,27 +1,22 @@
 package nl.appsource.cardserver.filter;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Set;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 import static java.lang.System.currentTimeMillis;
 
 @Component
 @Order(1)
 @Slf4j
-public class LoggingFilter extends OncePerRequestFilter {
-
-    private static final Set<String> IGNORE_LOG_FOR_PATHS = Set.of("/api/v1/users/ping", "/api/v1/users/pong");
+public class LoggingFilter implements WebFilter {
 
     private static final ThreadLocal<StringBuffer> STRING_THREAD_LOCAL = ThreadLocal.withInitial(StringBuffer::new);
 
@@ -30,28 +25,29 @@ public class LoggingFilter extends OncePerRequestFilter {
     }
 
     @Override
-    public void doFilterInternal(final HttpServletRequest servletRequest, final HttpServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
+    public Mono<Void> filter(final ServerWebExchange serverWebExchange, final WebFilterChain webFilterChain) {
 
         final long start = currentTimeMillis();
-        final String remoteAddr = servletRequest.getRemoteAddr();
+        final ServerHttpRequest request = serverWebExchange.getRequest();
+        final String remoteAddr = request.getRemoteAddress().getAddress().toString();
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String name = "" + authentication.getName();
+        final String name = authentication != null ? authentication.getName() : "null";
 
-        log.trace(
-            "Starting a transaction for req : {}",
-            servletRequest.getRequestURI());
+//        log.trace(
+//            "Starting a transaction for req : {}",
+//            servletRequest.getRequestURI());
 
         try {
-            filterChain.doFilter(servletRequest, servletResponse);
+            return webFilterChain.filter(serverWebExchange);
         } finally {
-            if (!IGNORE_LOG_FOR_PATHS.contains(servletRequest.getRequestURI())) {
-                log.info(
-                    "{} {} {}, {}, {} msec {}",
-                    remoteAddr, servletRequest.getMethod(), servletRequest.getRequestURI(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
-            }
+            log.info(
+                "{} {} {}, {}, {} msec {}",
+                remoteAddr, request.getMethod(), request.getPath(), name, currentTimeMillis() - start, STRING_THREAD_LOCAL.get());
             STRING_THREAD_LOCAL.remove();
         }
+
     }
+
 
 }

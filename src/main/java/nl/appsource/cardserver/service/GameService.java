@@ -2,20 +2,20 @@ package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public interface GameService {
 
-    Optional<Game> getGame(String userId, String gameId);
+    Mono<Game> getGame(String userId, String gameId);
 
-    List<Game> getGames(String userId);
+    Flux<Game> getGames(String userId);
 
-    Game createGame(String creator, Set<String> players);
+    Mono<Game> createGame(String creator, Set<String> players);
 
-    void deleteGame(String gameId);
+    Mono<Void> deleteGame(String gameId);
 
-    Optional<Game> playCard(String userId, String gameId, Card card);
+    Mono<Game> playCard(String userId, String gameId, Card card);
 }

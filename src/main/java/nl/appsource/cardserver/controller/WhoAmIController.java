@@ -8,15 +8,16 @@ import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.WhoamiApi;
 import org.openapitools.model.WhoAmIResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.Optional;
 
 import static java.util.Collections.emptyList;
 import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
@@ -33,50 +34,54 @@ public class WhoAmIController implements WhoamiApi {
 
 
     @Override
-    public ResponseEntity<WhoAmIResponse> whoami() {
+    public Mono<ResponseEntity<WhoAmIResponse>> whoami(final ServerWebExchange exchange) {
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getPrincipal)
+            .map(Jwt.class::cast)
+            .flatMap(principal -> {
 
-        final Jwt principal = (Jwt) authentication.getPrincipal();
-        final String email = principal.getClaims().get("email").toString();
+                final String email = principal.getClaims().get("email").toString();
 
-        LoggingFilter.requestLogMessage(("whoampi(), email=" + email));
+                LoggingFilter.requestLogMessage(("whoampi(), email=" + email));
 
-        final Instant now = Instant.now();
+                final Instant now = Instant.now();
 
-        return Optional.of(userService.findByEmail(email)
-                .map((user) -> {
+                return userService.findByEmail(email)
+                    .map((user) -> {
 
-                    log.info("User login {}", user.getDisplayName());
+                        log.info("User login {}", user.getDisplayName());
 
-                    user.setLastLogin(now);
-                    user.setUpdated(now);
-                    return user;
-                })
-                .orElseGet(() -> {
+                        user.setLastLogin(now);
+                        user.setUpdated(now);
+                        return user;
+                    })
+                    .switchIfEmpty(Mono.defer(() -> {
 
-                    log.info("Creating a new user {}", email);
+                        log.info("Creating a new user {}", email);
 
-                    final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
+                        final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
 
-                    user.setId(idGen(28));
-                    user.setEmail(email);
-                    user.setCreated(now);
-                    user.setUpdated(now);
-                    user.setName(principal.getClaims().get("name").toString());
-                    user.setDisplayName(principal.getClaims().get("name").toString());
-                    user.setInvites(emptyList());
-                    user.setLastLogin(now);
-                    user.setPhotoURL(principal.getClaims().get("picture") != null ? principal.getClaims().get("picture").toString() : null);
-                    user.setProviderId("google");
+                        user.setId(idGen(28));
+                        user.setEmail(email);
+                        user.setCreated(now);
+                        user.setUpdated(now);
+                        user.setName(principal.getClaims().get("name").toString());
+                        user.setDisplayName(principal.getClaims().get("name").toString());
+                        user.setInvites(emptyList());
+                        user.setLastLogin(now);
+                        user.setPhotoURL(principal.getClaims().get("picture") != null ? principal.getClaims().get("picture").toString() : null);
+                        user.setProviderId("google");
 
-                    return user;
-                }))
-            .map(userService::save)
-            .map(userToOpenApiConverter::convert)
-            .map((user) -> new WhoAmIResponse().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()))
-            .map(ResponseEntity::ok)
-            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                        return Mono.just(user);
+                    }))
+                    .flatMap(userService::save)
+                    .mapNotNull(userToOpenApiConverter::convert)
+                    .map((user) -> new WhoAmIResponse().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()))
+                    .map(ResponseEntity::ok);
+
+            });
 
     }
 

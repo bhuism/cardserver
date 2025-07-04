@@ -8,6 +8,8 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -18,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,17 +39,17 @@ public class GameServiceImpl implements GameService {
     private static final Random RAND = new SecureRandom();
 
     @Override
-    public Optional<Game> getGame(final String userId, final String gameId) {
+    public Mono<Game> getGame(final String userId, final String gameId) {
         return gameRepository.findByUserIdAndGameId(userId, gameId);
     }
 
     @Override
-    public List<Game> getGames(final String userId) {
-        return gameRepository.findByUserId(userId).stream().toList();
+    public Flux<Game> getGames(final String userId) {
+        return gameRepository.findByUserId(userId);
     }
 
     @Override
-    public Game createGame(final String creator, final Set<String> players) {
+    public Mono<Game> createGame(final String creator, final Set<String> players) {
 
         if (players.size() != 4) {
             throw new IllegalArgumentException("players count must be 4");
@@ -71,26 +72,33 @@ public class GameServiceImpl implements GameService {
         game.setPlayerCard(randomCards());
         game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
 
-        final nl.appsource.cardserver.model.Game savedGame = gameRepository.save(game);
-
-        sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
-
-        return savedGame;
+        return gameRepository.save(game)
+            .map(
+                (g2) -> {
+                    sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
+                    return g2;
+                }
+            );
     }
 
     @Override
-    public void deleteGame(final String gameId) {
-        gameRepository.findById(gameId).ifPresent(game -> {
-            final Set<String> players = game.getPlayers().stream().filter((p) -> !Objects.equals(p, game.getCreator())).collect(Collectors.toSet());
-            gameRepository.deleteById(game.getId());
-            sseEmitterRepository.gamesChanged(players);
-        });
-    }
-
-    @Override
-    public Optional<Game> playCard(final String userId, final String gameId, final Card card) {
+    public Mono<Void> deleteGame(final String gameId) {
         return gameRepository.findById(gameId)
-            .map((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)));
+            .flatMap(game -> {
+                final Set<String> players = game.getPlayers().stream().filter((p) -> !Objects.equals(p, game.getCreator())).collect(Collectors.toSet());
+                return gameRepository.delete(game).then(Mono.just(players));
+                //return players;
+            })
+            .flatMap(players -> {
+                sseEmitterRepository.gamesChanged(players);
+                return Mono.empty();
+            });
+    }
+
+    @Override
+    public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
+        return gameRepository.findById(gameId)
+            .flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)));
     }
 
     public static Map<Card, Integer> randomCards() {

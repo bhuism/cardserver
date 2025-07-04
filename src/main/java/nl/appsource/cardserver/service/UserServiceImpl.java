@@ -6,10 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.Collections.singleton;
 
@@ -23,108 +23,124 @@ public class UserServiceImpl implements UserService {
     private final SseEmitterRepository sseEmitterRepository;
 
     @Override
-    public Optional<User> findById(final String userId) {
+    public Mono<User> findById(final String userId) {
         return userRepository.findById(userId);
     }
 
     @Override
-    public List<User> getUsers(final List<String> userIds) {
+    public Flux<User> getUsers(final List<String> userIds) {
         return userRepository.findAllById(userIds);
     }
 
     @Override
-    public Optional<User> findByEmail(final String email) {
-        return userRepository.findOptionalByEmail(email);
+    public Mono<User> findByEmail(final String email) {
+        return userRepository.findByEmail(email);
     }
 
-
     @Override
-    public Optional<InvitesResponse> getInvites(final String userId) {
+    public Mono<InvitesResponse> getInvites(final String userId) {
 
-        final Optional<User> userOptional = userRepository.findById(userId);
-
-        if (userOptional.isEmpty()) {
-            return Optional.empty();
+        if (42 == 42) {
+            return Mono.empty();
         }
+        return Mono.empty();
 
-        final User user = userOptional.get();
-
-        final List<User> allIncoming = userRepository.findIncomingInvites(userId);
-        final List<String> allIdIncoming = allIncoming.stream().map(User::getId).toList();
-        final List<User> incomingInvites = allIncoming.stream().filter(u -> !user.getInvites().contains(u.getId())).toList();
-
-        final List<User> outgoingInvites = new ArrayList<>();
-        final List<User> friends = new ArrayList<>();
-
-        userRepository.findAllById(user.getInvites())
-            .forEach(inv -> {
-                if (allIdIncoming.contains(inv.getId())) {
-                    friends.add(inv);
-                } else {
-                    outgoingInvites.add(inv);
-                }
-            });
-
-        return Optional.of(new InvitesResponse(incomingInvites, outgoingInvites, friends));
+//        return userRepository.findById(userId)
+//            .map(user -> {
+//
+//                final List<User> allIncoming = userRepository.findIncomingInvites(userId);
+//                final List<String> allIdIncoming = allIncoming.stream().map(User::getId).toList();
+//                final List<User> incomingInvites = allIncoming.stream().filter(u -> !user.getInvites().contains(u.getId())).toList();
+//
+//                final List<User> outgoingInvites = new ArrayList<>();
+//                final List<User> friends = new ArrayList<>();
+//
+//                userRepository.findAllById(user.getInvites())
+//                    .forEach(inv -> {
+//                        if (allIdIncoming.contains(inv.getId())) {
+//                            friends.add(inv);
+//                        } else {
+//                            outgoingInvites.add(inv);
+//                        }
+//                    });
+//
+//                return Optional.of(new InvitesResponse(incomingInvites, outgoingInvites, friends))
+//            });
 
     }
 
     @Override
-    public User save(final User user) {
+    public Mono<User> save(final User user) {
         return userRepository.save(user);
     }
 
     @Override
-    public void removeInvite(final String userId, final String friendId) {
-        userRepository.findById(userId)
-            .map(user -> {
-                user.getInvites().remove(friendId);
-                return user;
+    public Mono<Void> removeInvite(final String userId, final String friendId) {
+        return userRepository.findById(userId)
+            .flatMap(user -> {
+                if (user.getInvites().remove(friendId)) {
+                    return Mono.just(user);
+                } else {
+                    return Mono.empty();
+                }
+
             })
-            .map((user) -> userRepository.save(user))
-            .ifPresent((changed) -> sseEmitterRepository.friendsChanged(singleton(friendId)));
+            .flatMap(userRepository::save)
+            .flatMap((user) -> {
+                sseEmitterRepository.friendsChanged(singleton(friendId));
+                return Mono.empty();
+            });
     }
 
     @Override
-    public void acceptInvite(final String userId, final String friendId) {
-        userRepository.findById(userId)
+    public Mono<Void> acceptInvite(final String userId, final String friendId) {
+        return userRepository.findById(userId)
             .map(user -> {
                 user.getInvites().add(friendId);
                 return user;
-            }).map(userRepository::save)
-            .ifPresent(user -> {
+            })
+            .flatMap(userRepository::save)
+            .flatMap((user) -> {
                 sseEmitterRepository.friendsChanged(singleton(friendId));
+                return Mono.empty();
             });
     }
 
     @Override
-    public Optional<List<User>> createInvite(final String userId, final String searchString) {
-        return userRepository.findById(userId)
-            .flatMap(user -> Optional.of(userRepository.findInvitees(searchString)
-                    .stream()
-                    .filter(invitee -> !user.getInvites().contains(invitee.getId()))
-                    .toList())
-                .map(invitees -> {
-                    final List<String> inviteeIds = invitees.stream().map(User::getId).toList();
-                    user.getInvites().addAll(inviteeIds);
-                    userRepository.save(user);
-                    sseEmitterRepository.friendsChanged(inviteeIds);
-                    return invitees;
-                }));
+    public Mono<Integer> createInvite(final String userId, final String searchString) {
+        return Mono.empty();
+//        return userRepository.findById(userId)
+//            .map(
+//                (user) -> {
+//                    final List<String> newFriendIds = userRepository.searchInvitees(searchString)
+//                        .stream()
+//                        .map(User::getId)
+//                        .filter(inviteeId -> !user.getInvites().contains(inviteeId))
+//                        .toList();
+//                    user.getInvites().addAll(newFriendIds);
+//                    sseEmitterRepository.friendsChanged(newFriendIds);
+//                    return newFriendIds.size();
+//                }
+//            );
     }
 
     @Override
-    public Optional<User> updateName(final String userId, final String displayName) {
+    public Mono<User> updateName(final String userId, final String displayName) {
 
-        if (userRepository.findByDisplayName(displayName).isPresent()) {
-            return Optional.empty();
-        }
-
-        return userRepository.findById(userId)
-            .map(user -> {
+        return userRepository.existsByDisplayName(displayName)
+            .flatMap((aBoolean -> {
+                if (aBoolean) {
+                    return Mono.error(new Exception("Username already exists"));
+                } else {
+                    return Mono.just(userId);
+                }
+            }))
+            .flatMap(userRepository::findById)
+            .flatMap(user -> {
                 user.setDisplayName(displayName);
-                userRepository.save(user);
-                return user;
+                return userRepository.save(user);
             });
+
+
     }
 }

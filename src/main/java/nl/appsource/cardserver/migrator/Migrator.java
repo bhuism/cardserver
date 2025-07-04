@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 
@@ -66,7 +65,7 @@ public class Migrator {
 
                 final String id = gameNode.getKey();
 
-                log.info("Game {} {} found", id, gameRepository.existsById(id) ? "" : " not");
+                log.info("Game {} {} found", id, gameRepository.existsById(id).block() ? "" : " not");
 
                 final Game game = new Game();
 
@@ -144,7 +143,7 @@ public class Migrator {
 
                 log.info("Persisting game: {}", game.getId());
 
-                if (gameRepository.existsById(game.getId())) {
+                if (gameRepository.existsById(game.getId()).block()) {
                     gameRepository.deleteById(game.getId());
                 }
                 gameRepository.save(game);
@@ -217,7 +216,7 @@ public class Migrator {
                             user.setEmail(fieldValue.textValue());
                             break;
                         case "invites":
-                            final List<String> invites = StreamSupport.stream(Spliterators.spliteratorUnknownSize(fieldValue.iterator(), Spliterator.ORDERED), false).map(JsonNode::textValue).collect(Collectors.toList());
+                            final List<String> invites = StreamSupport.stream(Spliterators.spliteratorUnknownSize(fieldValue.iterator(), Spliterator.ORDERED), false).map(JsonNode::textValue).toList();
                             user.setInvites(invites);
                             break;
                         case "name":

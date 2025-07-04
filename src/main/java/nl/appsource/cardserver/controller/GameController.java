@@ -14,9 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 
@@ -30,67 +30,64 @@ public class GameController implements GamesApi, V1Api {
     private final SseEmitterRepository sseEmitterRepository;
 
     @Override
-    public ResponseEntity<Game> getGame(final String gameId) {
+    public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
         LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return gameService.getGame(userId, gameId).map(gameToOpenApiConverter::convert).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return gameService.getGame(userId, gameId)
+            .mapNotNull(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok);
     }
 
-
     @Override
-    public ResponseEntity<Game> playCard(final String gameId, final PlayCard playCard) {
-
-        LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
+    public Mono<ResponseEntity<Game>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
-            .map(gameToOpenApiConverter::convert)
-            .map((game) -> {
-                log.info("Sending: " + game.getTurns().size() + " turns");
-                sseEmitterRepository.gameChanged(game);
-                return game;
-            })
+        return playCardMono.map(playCard -> {
+            LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
+            return playCard;
+        }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
+            .mapNotNull(gameToOpenApiConverter::convert)
+            .map(sseEmitterRepository::gameChanged)
             .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+        );
     }
 
     @Override
-    public ResponseEntity<List<Game>> getGames() {
+    public Mono<ResponseEntity<Flux<Game>>> getGames(final ServerWebExchange exchange) {
 
         LoggingFilter.requestLogMessage("getGames()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        final List<Game> games = gameService.getGames(userId).stream().map(gameToOpenApiConverter::convert).collect(Collectors.toList());
-
-        LoggingFilter.requestLogMessage((", size=" + games.size()));
-
-        return ResponseEntity.ok(games);
+        return Mono.just(ResponseEntity.ok(gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert)));
 
     }
 
     @Override
-    public ResponseEntity<Game> createGame(final CreateGame createGame) {
+    public Mono<ResponseEntity<Game>> createGame(final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
 
         LoggingFilter.requestLogMessage("createGame()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return ResponseEntity.ok(gameToOpenApiConverter.convert(gameService.createGame(userId, createGame.getPlayers())));
+        return createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers()))
+            .mapNotNull(gameToOpenApiConverter::convert
+            ).map(ResponseEntity::ok);
+
     }
 
     @Override
-    public ResponseEntity<Void> deleteGame(final String gameId) {
+    public Mono<ResponseEntity<Void>> deleteGame(final String gameId, final ServerWebExchange exchange) {
         LoggingFilter.requestLogMessage("deleteGame(" + gameId + ")");
-        gameService.deleteGame(gameId);
-        return ResponseEntity.ok().build();
+        return gameService.deleteGame(gameId)
+            .then(Mono.just(ResponseEntity.ok().build()));
     }
 
 

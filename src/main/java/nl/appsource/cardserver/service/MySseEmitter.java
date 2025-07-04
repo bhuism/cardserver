@@ -6,22 +6,17 @@ import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.model.event.GameStateEvent;
 import nl.appsource.cardserver.model.event.OnlineListEvent;
 import org.openapitools.model.Game;
-import org.springframework.http.MediaType;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.http.codec.ServerSentEvent;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Slf4j
 @Getter
 public final class MySseEmitter {
 
     private final String userId;
-
-    private final SseEmitter emitter;
 
     private final UUID uuid = UUID.randomUUID();
 
@@ -30,111 +25,66 @@ public final class MySseEmitter {
     private Instant pong;
 
     public MySseEmitter(final String userIdArg) {
-
         this.userId = userIdArg;
-        this.emitter = new SseEmitter(Long.MAX_VALUE);
-
-        emitter.onCompletion(() -> {
-//            log.info("onCompletion() Removing an emitier");
-            throw new RuntimeException();
-        });
-        emitter.onTimeout(() -> {
-//            log.info("onTimeout() Removing an emitier");
-            complete();
-            throw new RuntimeException();
-        });
-
-        emitter.onError(throwable -> {
-//            log.error("onError() Removing an emitter: {}:{}", throwable.getClass().getName(), throwable.getMessage());
-            complete();
-            throw new RuntimeException();
-        });
-
-        LoggingFilter.requestLogMessage(", new MySseEmitter(), uuid=" + uuid);
     }
 
-    public void complete() {
-        try {
-            emitter.complete();
-        } catch (Throwable t) {
-            log.error("onComplete() Error: {}", t.getMessage());
-        }
-    }
 
-    public boolean sendCardServerMessage(final String fromString, final String message) {
+    public UserServerSentEvent sendCardServerMessage(final String fromString, final String message) {
         return internalSend("cardservermessage", fromString + ": " + message);
     }
 
-    public boolean sendPing() {
-        LoggingFilter.requestLogMessage("sendPing " + uuid);
-        return internalSend("ping", uuid.toString());
+    public UserServerSentEvent sendPing() {
+        LoggingFilter.requestLogMessage(", sendPing " + uuid);
+        return internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
-    private boolean sendPong() {
+    private UserServerSentEvent sendPong() {
         LoggingFilter.requestLogMessage(", sending pong " + uuid);
-        return internalSend("pong", uuid.toString());
+        return internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
-    public boolean ping() {
+    public UserServerSentEvent receivePing() {
         LoggingFilter.requestLogMessage(", got ping " + uuid);
         ping = Instant.now();
         return sendPong();
     }
 
-    public boolean pong() {
+    public void receivePong() {
         LoggingFilter.requestLogMessage(", got pong " + uuid);
         pong = Instant.now();
-        return true;
     }
 
-    private boolean internalSend(final String event) {
-        return internalSend(event, null, null);
+    private UserServerSentEvent internalSend(final String event) {
+        return internalSend(event, null);
     }
 
-    private boolean internalSend(final String event, final Object data) {
-        return internalSend(event, data, null);
-    }
-
-    private boolean internalSend(final String event, final Object data, final MediaType mediaType) {
-        try {
-//            log.info("internalSend() sending event '{}' data: '{}' ", event, data);
-            final SseEmitter.SseEventBuilder builder = SseEmitter.event().id(UUID.randomUUID().toString()).reconnectTime(3000).name(event);
-
-            if (data != null) {
-                builder.data(data, mediaType);
-            } else {
-                builder.data("{}", APPLICATION_JSON);
-            }
-
-            emitter.send(builder.build());
-            return true;
-        } catch (final Throwable e) {
-            log.error("{}: event {} to {} data {}", e.getClass().getName() + ":" + e.getMessage(), event, userId, data, e);
-            try {
-                complete();
-            } catch (final Throwable t) {
-
-            }
-            return false;
+    private UserServerSentEvent internalSend(final String event, final Object data) {
+        if (log.isTraceEnabled()) {
+            log.trace("internalSend() sending event '{}' data: '{}' ", event, data);
         }
+
+        final Instant now = Instant.now();
+        final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
+
+        return new UserServerSentEvent(uuid, ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build());
     }
 
-    public boolean gameChanged(final Game game) {
+    public UserServerSentEvent gameChanged(final Game game) {
         final GameStateEvent playCardEvent = new GameStateEvent(game);
-        return internalSend("gameStateUpdate", playCardEvent, APPLICATION_JSON);
+        return internalSend("gameStateUpdate", playCardEvent);
     }
 
-    public boolean sendOnline(final List<String> onlineList) {
+    public UserServerSentEvent sendOnline(final List<String> onlineList) {
         final OnlineListEvent onlineListEvent = new OnlineListEvent();
         onlineListEvent.setOnlineList(onlineList);
-        return internalSend("online", onlineListEvent, APPLICATION_JSON);
+        return internalSend("online", onlineListEvent);
     }
 
-    public boolean sendUpdateFriends() {
+    public UserServerSentEvent sendUpdateFriends() {
         return internalSend("updateFriends");
     }
 
-    public boolean sendUpdateGames() {
+    public UserServerSentEvent sendUpdateGames() {
         return internalSend("updateGames");
     }
 

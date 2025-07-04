@@ -10,17 +10,23 @@ import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInviteResponse;
 import org.openapitools.model.InvitesResponse;
+import org.openapitools.model.Ping;
+import org.openapitools.model.Pong;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,130 +40,139 @@ public class UserController implements UsersApi, V1Api {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    public ResponseEntity<org.openapitools.model.User> getUser(final String userId) {
+    public Mono<ResponseEntity<User>> getUser(final String userId, final ServerWebExchange exchange) {
 
         LoggingFilter.requestLogMessage("getUser(" + userId + ")");
 
-        return userService.findById(userId).map(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+        return userService.findById(userId)
+            .mapNotNull(userToOpenApiConverter::convert)
+            .map(ResponseEntity::ok);
     }
 
 
     @Override
-    public ResponseEntity<InvitesResponse> getInvites() {
+    public Mono<ResponseEntity<InvitesResponse>> getInvites(final ServerWebExchange exchange) {
 
         LoggingFilter.requestLogMessage("getIncomingFriends()");
 
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userService::getInvites)
+            .map(invites -> {
+
+                final InvitesResponse invitesResponse = new InvitesResponse();
+
+                invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).toList());
+                invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).toList());
+                invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).toList());
+
+                LoggingFilter.requestLogMessage(("incoming: " + invites.getIncoming().size() + ", outgoing: " + invites.getOutgoing().size() + ", friends: " + invites.getFriends().size()));
+
+                return invitesResponse;
+
+            }).map(ResponseEntity::ok);
+
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> sendMessage(final Mono<PostMessage> arg, final ServerWebExchange exchange) {
+
+        LoggingFilter.requestLogMessage("sendMessage()");
+
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.getInvites(userId).map(invites -> {
+        return arg.map(postMessage -> {
+            sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
+            return ResponseEntity.ok().build();
+        });
 
-            final InvitesResponse invitesResponse = new InvitesResponse();
-
-            invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
-            invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
-            invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
-
-            LoggingFilter.requestLogMessage(("incoming: " + invites.getIncoming().size() + ", outgoing: " + invites.getOutgoing().size() + ", friends: " + invites.getFriends().size()));
-
-            return invitesResponse;
-
-        }).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-
-    }
-
-    @Override
-    public ResponseEntity<Void> sendMessage(final PostMessage postMessage) {
-
-        LoggingFilter.requestLogMessage("sendAMessage()");
-
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        sseEmitterRepository.sendMessage(userId, postMessage.getMessage());
-
-        return ResponseEntity.ok().build();
     }
 
 
     @Override
-    public ResponseEntity<UUID> ping(final UUID uuid) {
-        sseEmitterRepository.ping(uuid);
-        return ResponseEntity.ok().build();
+    public Mono<ResponseEntity<Void>> ping(final Mono<Ping> ping, final ServerWebExchange exchange) {
+        return ping
+            .map(data -> {
+                sseEmitterRepository.ping(data.getUuid());
+                return ResponseEntity.ok().build();
+            });
     }
 
     @Override
-    public ResponseEntity<UUID> pong(final UUID uuid) {
-        sseEmitterRepository.pong(uuid);
-        return ResponseEntity.ok().build();
+    public Mono<ResponseEntity<Void>> pong(final Mono<Pong> pong, final ServerWebExchange exchange) {
+        return pong
+            .map(data -> {
+                sseEmitterRepository.pong(data.getUuid());
+                return ResponseEntity.ok().build();
+            });
     }
 
     @Override
-    public ResponseEntity<List<User>> getUsers(final List<String> userIds) {
+    public Mono<ResponseEntity<Flux<User>>> getUsers(final List<String> userIds, final ServerWebExchange exchange) {
 
         LoggingFilter.requestLogMessage("getUsers()");
 
 //        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //        final String userId = authentication.getName();
 
-        return ResponseEntity.ok(userService.getUsers(userIds).stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()));
+        return Mono.just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
     }
 
     @Override
-    public ResponseEntity<Void> removeInvite(final String friendId) {
+    public Mono<ResponseEntity<Void>> removeInvite(final String friendId, final ServerWebExchange exchange) {
+
         LoggingFilter.requestLogMessage("removeInvite(" + friendId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        userService.removeInvite(userId, friendId);
-
-        return ResponseEntity.ok().build();
+        return userService.removeInvite(userId, friendId)
+            .then(Mono.just(ResponseEntity.ok().build()));
     }
 
     @Override
-    public ResponseEntity<Void> acceptInvite(final String friendId) {
+    public Mono<ResponseEntity<Void>> acceptInvite(final String friendId, final ServerWebExchange exchange) {
+
         LoggingFilter.requestLogMessage("addInvite(" + friendId + ")");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        userService.acceptInvite(userId, friendId);
-
-        return ResponseEntity.ok().build();
+        return userService.acceptInvite(userId, friendId)
+            .then(Mono.just(ResponseEntity.ok().build()));
 
     }
 
-
     @Override
-    public ResponseEntity<CreateInviteResponse> createInvite(final CreateInvite createInvite) {
-        LoggingFilter.requestLogMessage("addInvite('" + createInvite.getSearchString() + "')");
+    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService
-            .createInvite(userId, createInvite.getSearchString())
-            .map(invitees -> invitees.stream().map(userToOpenApiConverter::convert).collect(Collectors.toList()))
-            .map(invitees -> new CreateInviteResponse().invitees(invitees))
-            .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-
+        return arg.map(createInvite -> {
+                LoggingFilter.requestLogMessage("addInvite('" + createInvite.getSearchString() + "')");
+                return createInvite;
+            })
+            .flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString()))
+            .map(BigDecimal::new)
+            .map(count -> new CreateInviteResponse().count(count))
+            .map(ResponseEntity::ok);
     }
 
+
     @Override
-    public ResponseEntity<User> updatePreferences(final UpdatePreferences updatePreferences) {
+    public Mono<ResponseEntity<User>> updatePreferences(final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
 
         LoggingFilter.requestLogMessage("updatePreferences()");
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         final String userId = authentication.getName();
 
-        return userService.updateName(userId, updatePreferences.getDisplayName())
-            .map(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+        return arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName()))
+            .mapNotNull(userToOpenApiConverter::convert)
+            .map(ResponseEntity::ok);
 
     }
 }
