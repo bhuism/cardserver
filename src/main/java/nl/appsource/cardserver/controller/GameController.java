@@ -12,7 +12,8 @@ import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -33,10 +34,10 @@ public class GameController implements GamesApi, V1Api {
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
         LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return gameService.getGame(userId, gameId)
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> gameService.getGame(userId, gameId))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
     }
@@ -44,17 +45,17 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return playCardMono.map(playCard -> {
-            LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
-            return playCard;
-        }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
-            .mapNotNull(gameToOpenApiConverter::convert)
-            .map(sseEmitterRepository::gameChanged)
-            .map(ResponseEntity::ok)
-        );
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> playCardMono.map(playCard -> {
+                LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
+                return playCard;
+            }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
+                .mapNotNull(gameToOpenApiConverter::convert)
+                .map(sseEmitterRepository::gameChanged)
+                .map(ResponseEntity::ok)
+            ));
     }
 
     @Override
@@ -62,10 +63,11 @@ public class GameController implements GamesApi, V1Api {
 
         LoggingFilter.requestLogMessage("getGames()");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return Mono.just(ResponseEntity.ok(gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert)));
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .map(userId -> gameService.getGames(userId).map(gameToOpenApiConverter::convert))
+            .map(ResponseEntity::ok);
 
     }
 
@@ -74,12 +76,12 @@ public class GameController implements GamesApi, V1Api {
 
         LoggingFilter.requestLogMessage("createGame()");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers()))
-            .mapNotNull(gameToOpenApiConverter::convert
-            ).map(ResponseEntity::ok);
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers())))
+            .mapNotNull(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok);
 
     }
 

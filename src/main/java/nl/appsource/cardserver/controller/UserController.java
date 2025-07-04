@@ -19,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -80,16 +79,14 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("sendMessage()");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return arg.map(postMessage -> {
-            sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
-            return ResponseEntity.ok().build();
-        });
-
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> arg.map(postMessage -> {
+                sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
+                return ResponseEntity.ok().build();
+            }));
     }
-
 
     @Override
     public Mono<ResponseEntity<Void>> ping(final Mono<Ping> ping, final ServerWebExchange exchange) {
@@ -114,9 +111,6 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("getUsers()");
 
-//        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        final String userId = authentication.getName();
-
         return Mono.just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
     }
 
@@ -125,11 +119,12 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("removeInvite(" + friendId + ")");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> userService.removeInvite(userId, friendId))
+            .map(ResponseEntity::ok);
 
-        return userService.removeInvite(userId, friendId)
-            .then(Mono.just(ResponseEntity.ok().build()));
     }
 
     @Override
@@ -137,25 +132,21 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("addInvite(" + friendId + ")");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return userService.acceptInvite(userId, friendId)
-            .then(Mono.just(ResponseEntity.ok().build()));
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> userService.acceptInvite(userId, friendId))
+            .map(ResponseEntity::ok);
 
     }
 
     @Override
     public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return arg.map(createInvite -> {
-                LoggingFilter.requestLogMessage("addInvite('" + createInvite.getSearchString() + "')");
-                return createInvite;
-            })
-            .flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString()))
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> arg.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString())))
             .map(BigDecimal::new)
             .map(count -> new CreateInviteResponse().count(count))
             .map(ResponseEntity::ok);
@@ -167,10 +158,10 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("updatePreferences()");
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String userId = authentication.getName();
-
-        return arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName()))
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName())))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
 
