@@ -210,17 +210,17 @@ components:
       type: object
       properties:
         incoming:
-          description: unaccepted
+          description: unaccepted incoming
           type: array
           items:
             $ref: "./user.yaml#/components/schemas/User"
         outgoing:
-          description: unaccepted
+          description: unaccepted outgoing
           type: array
           items:
             $ref: "./user.yaml#/components/schemas/User"
         friends:
-          description: accepted
+          description: accepted, friends
           type: array
           items:
             $ref: "./user.yaml#/components/schemas/User"

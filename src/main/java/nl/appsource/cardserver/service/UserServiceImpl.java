@@ -40,32 +40,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<InvitesResponse> getInvites(final String userId) {
 
-        if (42 == 42) {
-            return Mono.empty();
-        }
-        return Mono.empty();
+        return userRepository.findById(userId).flatMap(user -> {
 
-//        return userRepository.findById(userId)
-//            .map(user -> {
-//
-//                final List<User> allIncoming = userRepository.findIncomingInvites(userId);
-//                final List<String> allIdIncoming = allIncoming.stream().map(User::getId).toList();
-//                final List<User> incomingInvites = allIncoming.stream().filter(u -> !user.getInvites().contains(u.getId())).toList();
-//
-//                final List<User> outgoingInvites = new ArrayList<>();
-//                final List<User> friends = new ArrayList<>();
-//
-//                userRepository.findAllById(user.getInvites())
-//                    .forEach(inv -> {
-//                        if (allIdIncoming.contains(inv.getId())) {
-//                            friends.add(inv);
-//                        } else {
-//                            outgoingInvites.add(inv);
-//                        }
-//                    });
-//
-//                return Optional.of(new InvitesResponse(incomingInvites, outgoingInvites, friends))
-//            });
+            Flux<User> incomingFlux = userRepository.findIncomingInvites(userId);
+
+//            Flux<User> outgoingFlux = Flux.fromIterable(user.getInvites()).flatMap(userRepository::findById);
+            Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites());
+
+            Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2)));
+
+            Flux<User> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.getId().equals(s2.getId())));
+
+            Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2.getId())));
+
+            return Mono.zip(arr -> new InvitesResponse((List<User>) arr[0], (List<User>) arr[1], (List<User>) arr[2]), onlyIncoming.collectList(), onlyOutgoing.flatMap(userRepository::findById).collectList(), friends.collectList());
+        });
 
     }
 
@@ -76,34 +65,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Void> removeInvite(final String userId, final String friendId) {
-        return userRepository.findById(userId)
-            .flatMap(user -> {
-                if (user.getInvites().remove(friendId)) {
-                    return Mono.just(user);
-                } else {
-                    return Mono.empty();
-                }
-
-            })
-            .flatMap(userRepository::save)
-            .flatMap((user) -> {
-                sseEmitterRepository.friendsChanged(singleton(friendId));
+        return userRepository.findById(userId).flatMap(user -> {
+            if (user.getInvites().remove(friendId)) {
+                return Mono.just(user);
+            } else {
                 return Mono.empty();
-            });
+            }
+
+        }).flatMap(userRepository::save).flatMap((user) -> {
+            sseEmitterRepository.friendsChanged(singleton(friendId));
+            return Mono.empty();
+        });
     }
 
     @Override
     public Mono<Void> acceptInvite(final String userId, final String friendId) {
-        return userRepository.findById(userId)
-            .map(user -> {
-                user.getInvites().add(friendId);
-                return user;
-            })
-            .flatMap(userRepository::save)
-            .flatMap((user) -> {
-                sseEmitterRepository.friendsChanged(singleton(friendId));
-                return Mono.empty();
-            });
+        return userRepository.findById(userId).map(user -> {
+            user.getInvites().add(friendId);
+            return user;
+        }).flatMap(userRepository::save).flatMap((user) -> {
+            sseEmitterRepository.friendsChanged(singleton(friendId));
+            return Mono.empty();
+        });
     }
 
     @Override
@@ -127,19 +110,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<User> updateName(final String userId, final String displayName) {
 
-        return userRepository.existsByDisplayName(displayName)
-            .flatMap((aBoolean -> {
-                if (aBoolean) {
-                    return Mono.error(new Exception("Username already exists"));
-                } else {
-                    return Mono.just(userId);
-                }
-            }))
-            .flatMap(userRepository::findById)
-            .flatMap(user -> {
-                user.setDisplayName(displayName);
-                return userRepository.save(user);
-            });
+        return userRepository.existsByDisplayName(displayName).flatMap((aBoolean -> {
+            if (aBoolean) {
+                return Mono.error(new Exception("Username already exists"));
+            } else {
+                return Mono.just(userId);
+            }
+        })).flatMap(userRepository::findById).flatMap(user -> {
+            user.setDisplayName(displayName);
+            return userRepository.save(user);
+        });
 
 
     }
