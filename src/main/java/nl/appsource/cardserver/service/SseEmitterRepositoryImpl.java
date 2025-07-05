@@ -16,6 +16,8 @@ import reactor.core.publisher.Sinks;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 @Service
@@ -103,6 +105,19 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
         manySinks.tryEmitNext(mySseEmitter.sendPing());
+
+        final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+        sseMvcExecutor.execute(() -> {
+            for (int i = 0; i < 5; i++) {
+                log.info("sseMvcExecutor #{}", i);
+                manySinks.tryEmitNext(mySseEmitter.sendPing());
+                try {
+                    Thread.sleep(1000 * i);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
 
         return manySinks.asFlux()
             .filter(userServerSentEvent -> mySseEmitter.getUuid().equals(userServerSentEvent.getUuid()))
