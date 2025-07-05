@@ -47,7 +47,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doSelectedMono(Flux.fromIterable(emitters.values()), consumer);
     }
 
-    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 60)
+    private final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+
+    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 55)
     public void pingAll() {
         doAll(MySseEmitter::sendPing);
     }
@@ -106,10 +108,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
         manySinks.tryEmitNext(mySseEmitter.sendPing());
 
-        final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
         sseMvcExecutor.execute(() -> {
             for (int i = 0; i < 5; i++) {
-                log.info("sseMvcExecutor #{}", i);
                 manySinks.tryEmitNext(mySseEmitter.sendPing());
                 try {
                     Thread.sleep(1000 * i);
@@ -125,12 +125,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .publish()
             .autoConnect();
     }
-
-//    @Scheduled(fixedDelay = 1000)
-//    public void emit() {
-//        doAll(MySseEmitter::sendPing);
-//    }
-
 
     @Override
     public void ping(final UUID uuid) {

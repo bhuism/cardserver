@@ -44,7 +44,6 @@ public class UserServiceImpl implements UserService {
 
             Flux<User> incomingFlux = userRepository.findIncomingInvites(userId);
 
-//            Flux<User> outgoingFlux = Flux.fromIterable(user.getInvites()).flatMap(userRepository::findById);
             Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites());
 
             Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2)));
