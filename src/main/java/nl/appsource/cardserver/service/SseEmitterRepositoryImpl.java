@@ -96,6 +96,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
 
+        log.info("subscribe({})", userId);
+
         //pingUpdateStatusAll();
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
