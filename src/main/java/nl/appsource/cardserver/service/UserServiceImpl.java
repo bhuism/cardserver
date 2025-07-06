@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findById(userId).flatMap(user -> {
 
-            Flux<User> incomingFlux = userRepository.findIncomingInvites(userId);
+            Flux<User> incomingFlux = userRepository.findIncomingInvites(userId).cache();
 
             Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites());
 
