@@ -11,7 +11,7 @@ public class FLuxTest {
 
     @Test
     void givenFlux_whenMultipleSubscribers_thenEachReceivesData() {
-        List<Integer> incoming = List.of(1, 2, 3, 4, 5);
+        List<Integer> incoming = List.of(1, 2, 3, 4, 5).cache();
         List<Integer> outgoing = List.of(4, 5, 6, 7, 8);
 
         Flux<Integer> incomingFlux = Flux.fromIterable(incoming);
