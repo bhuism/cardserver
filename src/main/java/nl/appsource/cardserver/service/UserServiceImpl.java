@@ -44,11 +44,11 @@ public class UserServiceImpl implements UserService {
 
             Flux<User> incomingFlux = userRepository.findIncomingInvites(userId).cache();
 
-            Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites());
+            Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites()).cache();
 
-            Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2)));
+            Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2))).cache();
 
-            Flux<User> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.getId().equals(s2.getId())));
+            Flux<User> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.getId().equals(s2.getId()))).cache();
 
             Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2.getId())));
 

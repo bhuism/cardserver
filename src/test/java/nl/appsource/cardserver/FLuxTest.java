@@ -15,15 +15,24 @@ public class FLuxTest {
         List<Integer> incoming = List.of(1, 2, 3, 4, 5);
         List<Integer> outgoing = List.of(4, 5, 6, 7, 8);
 
-        Flux<Integer> incomingFlux = Flux.fromIterable(incoming).cache();
-        Flux<Integer> outgoingFlux = Flux.fromIterable(outgoing);
+        Flux<Integer> incomingFlux = Flux.fromIterable(incoming).doOnSubscribe(subscription -> {
+            log.info("Subscribtion onlyIncoming");
+        }).cache();
 
-        Flux<Integer> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).cache();
-        Flux<Integer> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).cache();
-        Flux<Integer> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2)));
+        Flux<Integer> outgoingFlux = Flux.fromIterable(outgoing).doOnSubscribe(subscription -> {
+            log.info("Subscribtion outgoingFlux");
+        }).cache();
 
-        onlyIncoming.subscribe(integer -> {
-            log.info("onlyIncoming flux: " + integer);
+        Flux<Integer> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).doOnSubscribe(subscription -> {
+            log.info("Subscribtion filtered onlyIncoming");
+        }).cache();
+
+        Flux<Integer> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).doOnSubscribe(subscription -> {
+            log.info("Subscribtion filtered friends");
+        }).cache();
+
+        Flux<Integer> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2))).doOnSubscribe(subscription -> {
+            log.info("Subscribtion filtered onlyOutgoing");
         });
 
         StepVerifier.create(onlyIncoming)
