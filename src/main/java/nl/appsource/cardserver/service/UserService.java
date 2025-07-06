@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import jakarta.validation.constraints.NotNull;
 import nl.appsource.cardserver.model.User;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,5 +27,8 @@ public interface UserService {
     Mono<Integer> createInvite(String userId, String searchString);
 
     Mono<User> updateName(String userId, @NotNull String displayName);
+
+    Flux<ServerSentEvent<Object>> subscribe(String userId);
+
 }
 

@@ -43,9 +43,7 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("getUser(" + userId + ")");
 
-        return userService.findById(userId)
-            .mapNotNull(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok);
+        return userService.findById(userId).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
     }
 
 
@@ -58,19 +56,33 @@ public class UserController implements UsersApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userService::getInvites)
-            .map(invites -> {
+            .flatMap(invites -> {
 
-                final InvitesResponse invitesResponse = new InvitesResponse();
+//                final InvitesResponse invitesResponse = new InvitesResponse();
 
-                invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).toList());
-                invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).toList());
-                invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).toList());
+                final Flux<nl.appsource.cardserver.model.User> incoming = invites.getIncoming();
+                final Flux<nl.appsource.cardserver.model.User> outgoing = invites.getOutgoing();
+                final Flux<nl.appsource.cardserver.model.User> friends = invites.getFriends();
 
-                LoggingFilter.requestLogMessage(("incoming: " + invites.getIncoming().size() + ", outgoing: " + invites.getOutgoing().size() + ", friends: " + invites.getFriends().size()));
+
+                final Mono<InvitesResponse> invitesResponse = Mono.zip(arr -> new InvitesResponse()
+                        .incoming((List<User>) arr[0])
+                        .friends((List<User>) arr[1])
+                        .outgoing((List<User>) arr[2]),
+                    incoming.mapNotNull(userToOpenApiConverter::convert).collectList(), friends.mapNotNull(userToOpenApiConverter::convert).collectList(), outgoing.mapNotNull(userToOpenApiConverter::convert).collectList());
+
+//                invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).toList());
+//                invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).toList());
+//                invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).toList());
+
 
                 return invitesResponse;
 
-            }).map(ResponseEntity::ok);
+            }).map(invitesResponse -> {
+                LoggingFilter.requestLogMessage(("incoming: " + invitesResponse.getIncoming().size() + ", outgoing: " + invitesResponse.getOutgoing().size() + ", friends: " + invitesResponse.getFriends().size()));
+                return invitesResponse;
+            })
+            .map(ResponseEntity::ok);
 
     }
 
@@ -79,31 +91,26 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("sendMessage()");
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMap(userId -> arg.map(postMessage -> {
-                sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
-                return ResponseEntity.ok().build();
-            }));
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.map(postMessage -> {
+            sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
+            return ResponseEntity.ok().build();
+        }));
     }
 
     @Override
     public Mono<ResponseEntity<Void>> ping(final Mono<Ping> ping, final ServerWebExchange exchange) {
-        return ping
-            .map(data -> {
-                sseEmitterRepository.ping(data.getUuid());
-                return ResponseEntity.ok().build();
-            });
+        return ping.map(data -> {
+            sseEmitterRepository.ping(data.getUuid());
+            return ResponseEntity.ok().build();
+        });
     }
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final Mono<Pong> pong, final ServerWebExchange exchange) {
-        return pong
-            .map(data -> {
-                sseEmitterRepository.pong(data.getUuid());
-                return ResponseEntity.ok().build();
-            });
+        return pong.map(data -> {
+            sseEmitterRepository.pong(data.getUuid());
+            return ResponseEntity.ok().build();
+        });
     }
 
     @Override
@@ -119,11 +126,7 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("removeInvite(" + friendId + ")");
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMap(userId -> userService.removeInvite(userId, friendId))
-            .map(ResponseEntity::ok);
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.removeInvite(userId, friendId)).map(ResponseEntity::ok);
 
     }
 
@@ -132,24 +135,14 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("addInvite(" + friendId + ")");
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMap(userId -> userService.acceptInvite(userId, friendId))
-            .map(ResponseEntity::ok);
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.acceptInvite(userId, friendId)).map(ResponseEntity::ok);
 
     }
 
     @Override
     public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMap(userId -> arg.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString())))
-            .map(BigDecimal::new)
-            .map(count -> new CreateInviteResponse().count(count))
-            .map(ResponseEntity::ok);
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString()))).map(BigDecimal::new).map(count -> new CreateInviteResponse().count(count)).map(ResponseEntity::ok);
     }
 
 
@@ -158,12 +151,7 @@ public class UserController implements UsersApi, V1Api {
 
         LoggingFilter.requestLogMessage("updatePreferences()");
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName())))
-            .mapNotNull(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok);
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName()))).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
 
     }
 }

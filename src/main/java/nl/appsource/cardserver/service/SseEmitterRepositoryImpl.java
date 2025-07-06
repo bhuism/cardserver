@@ -31,20 +31,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
-    private void doSelected(final Flux<MySseEmitter> receivers, final Function<MySseEmitter, UserServerSentEvent> consumer) {
-        receivers.map(consumer).subscribe(manySinks::tryEmitNext);
-    }
-
-    private void doSelectedMono(final Flux<MySseEmitter> receivers, final Function<MySseEmitter, Mono<UserServerSentEvent>> consumer) {
-        receivers.flatMap(consumer).subscribe(manySinks::tryEmitNext);
+    private void doSelectedUserIds(final Flux<String> userIds, final Function<MySseEmitter, UserServerSentEvent> consumer) {
+        userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).map(consumer).subscribe(manySinks::tryEmitNext);
     }
 
     private void doAll(final Function<MySseEmitter, UserServerSentEvent> consumer) {
-        doSelected(Flux.fromIterable(emitters.values()), consumer);
-    }
-
-    private void doAllMono(final Function<MySseEmitter, Mono<UserServerSentEvent>> consumer) {
-        doSelectedMono(Flux.fromIterable(emitters.values()), consumer);
+        Flux.fromIterable(emitters.values()).map(consumer).subscribe(manySinks::tryEmitNext);
     }
 
     private final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
@@ -56,7 +48,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
     public void pingUpdateStatusAll() {
-        doAllMono(this::pingUpdateStatus);
+        doAll(mySseEmitter -> pingUpdateStatus(mySseEmitter).block());
     }
 
     private Mono<UserServerSentEvent> pingUpdateStatus(final MySseEmitter mySseEmitter) {
@@ -71,7 +63,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 list.retainAll(emitters.values().stream().map(MySseEmitter::getUserId).toList());
                 return list;
             })
-            .map(mySseEmitter::sendOnline);
+            .map(mySseEmitter::createOnlineEvent);
     }
 
     @Override
@@ -94,15 +86,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return emitters.size();
     }
 
-//    private Sinks.Many<ServerSentEvent<String>> testSink = Sinks.many().multicast().onBackpressureBuffer();
-
-
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
 
         log.info("subscribe({})", userId);
-
-        //pingUpdateStatusAll();
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
@@ -161,25 +148,24 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public Game gameChanged(final Game gameState) {
-        doSelected(Flux.fromIterable(emitters.values())
-                .filter(e -> gameState.getPlayers().contains(e.getUserId())),
-            mySseEmitter -> mySseEmitter.gameChanged(gameState));
+        doSelectedUserIds(Flux.fromIterable(gameState.getPlayers()), mySseEmitter -> mySseEmitter.gameChanged(gameState));
         return gameState;
     }
 
     @Override
     public void friendsChanged(final Collection<String> userIds) {
-        doSelected(Flux.fromIterable(emitters.values()).filter(emitter -> userIds.contains(emitter.getUserId())), MySseEmitter::sendUpdateFriends);
+        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateFriends);
     }
 
     @Override
     public void gamesChanged(final Collection<String> userIds) {
-        doSelected(Flux.fromIterable(emitters.values()).filter(emitter -> userIds.contains(emitter.getUserId())), MySseEmitter::sendUpdateGames);
+        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateGames);
     }
 
     @Override
     public boolean isUserOnline(final String userId) {
         return emitters.values().stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
     }
+
 
 }

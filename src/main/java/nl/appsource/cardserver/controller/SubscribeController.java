@@ -2,7 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.Authentication;
@@ -18,7 +18,7 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class SubscribeController implements V1Api {
 
-    private final SseEmitterRepository sseEmitterRepository;
+    private final UserService userService;
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<Object>> subscribe() {
@@ -26,7 +26,7 @@ public class SubscribeController implements V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .flatMapMany(sseEmitterRepository::subscribe);
+            .flatMapMany(userService::subscribe);
 
     }
 }

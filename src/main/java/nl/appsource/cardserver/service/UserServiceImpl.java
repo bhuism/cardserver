@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,17 +43,14 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findById(userId).flatMap(user -> {
 
-            Flux<User> incomingFlux = userRepository.findIncomingInvites(userId).cache();
+            final Flux<User> incomingFlux = userRepository.findIncomingInvites(userId).cache();
+            final Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites()).cache();
+            final Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2))).cache();
+            final Flux<User> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.getId().equals(s2.getId()))).cache();
+            final Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2.getId())));
+            final InvitesResponse invitesResponse = new InvitesResponse(onlyIncoming, onlyOutgoing.flatMap(userRepository::findById), friends);
+            return Mono.just(invitesResponse);
 
-            Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites()).cache();
-
-            Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2))).cache();
-
-            Flux<User> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.getId().equals(s2.getId()))).cache();
-
-            Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2.getId())));
-
-            return Mono.zip(arr -> new InvitesResponse((List<User>) arr[0], (List<User>) arr[1], (List<User>) arr[2]), onlyIncoming.collectList(), onlyOutgoing.flatMap(userRepository::findById).collectList(), friends.collectList());
         });
 
     }
@@ -90,20 +88,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Integer> createInvite(final String userId, final String searchString) {
-        return Mono.empty();
-//        return userRepository.findById(userId)
-//            .map(
-//                (user) -> {
-//                    final List<String> newFriendIds = userRepository.searchInvitees(searchString)
-//                        .stream()
-//                        .map(User::getId)
-//                        .filter(inviteeId -> !user.getInvites().contains(inviteeId))
-//                        .toList();
-//                    user.getInvites().addAll(newFriendIds);
-//                    sseEmitterRepository.friendsChanged(newFriendIds);
-//                    return newFriendIds.size();
-//                }
-//            );
+        return userRepository.findById(userId)
+            .map(
+                (user) -> {
+                    final List<String> newFriendIds = userRepository.searchInvitees(searchString)
+                        .map(User::getId)
+                        .filter(inviteeId -> !user.getInvites().contains(inviteeId))
+                        .collectList().block();
+                    user.getInvites().addAll(newFriendIds);
+                    userRepository.save(user).subscribe();
+                    sseEmitterRepository.friendsChanged(newFriendIds);
+                    return newFriendIds.size();
+                }
+            );
     }
 
     @Override
@@ -119,7 +116,10 @@ public class UserServiceImpl implements UserService {
             user.setDisplayName(displayName);
             return userRepository.save(user);
         });
+    }
 
-
+    @Override
+    public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
+        return sseEmitterRepository.subscribe(userId);
     }
 }

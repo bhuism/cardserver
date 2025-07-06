@@ -74,9 +74,10 @@ public final class MySseEmitter {
         return internalSend("gameStateUpdate", playCardEvent);
     }
 
-    public UserServerSentEvent sendOnline(final List<String> onlineList) {
+    public UserServerSentEvent createOnlineEvent(final List<String> onlineList) {
         final OnlineListEvent onlineListEvent = new OnlineListEvent();
         onlineListEvent.setOnlineList(onlineList);
+        log.info("Sending online friends: " + onlineList);
         return internalSend("online", onlineListEvent);
     }
 

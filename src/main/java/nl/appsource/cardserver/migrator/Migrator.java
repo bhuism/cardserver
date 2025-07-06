@@ -146,7 +146,7 @@ public class Migrator {
                 if (gameRepository.existsById(game.getId()).block()) {
                     gameRepository.deleteById(game.getId());
                 }
-                gameRepository.save(game);
+                gameRepository.save(game).subscribe();
 
             });
         }
@@ -242,7 +242,7 @@ public class Migrator {
 
                 log.info("Persisting user: {}", user);
 
-                userRepository.save(user);
+                userRepository.save(user).subscribe();
 
 
             });
