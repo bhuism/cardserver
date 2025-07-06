@@ -18,14 +18,6 @@ public class FLuxTest {
         Flux<Integer> incomingFlux = Flux.fromIterable(incoming).cache();
         Flux<Integer> outgoingFlux = Flux.fromIterable(outgoing);
 
-//        incomingFlux.subscribe(integer -> {
-//            log.info(("subscribe incoming " + integer));
-//        });
-//
-//        outgoingFlux.subscribe(integer -> {
-//            log.info(("subscribe outgoing " + integer));
-//        });
-
         Flux<Integer> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).cache();
         Flux<Integer> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).cache();
         Flux<Integer> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2)));
