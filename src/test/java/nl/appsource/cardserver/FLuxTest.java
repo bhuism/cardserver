@@ -3,6 +3,7 @@ package nl.appsource.cardserver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 
@@ -33,13 +34,25 @@ public class FLuxTest {
             log.info("onlyIncoming flux: " + integer);
         });
 
-        friends.subscribe(integer -> {
-            log.info("friends flux: " + integer);
-        });
+        StepVerifier.create(onlyIncoming)
+            .expectNext(1)
+            .expectNext(2)
+            .expectNext(3)
+            .expectComplete()
+            .verify();
 
-        onlyOutgoing.subscribe(integer -> {
-            log.info("onlyOutgoing flux: " + integer);
-        });
+        StepVerifier.create(friends)
+            .expectNext(4)
+            .expectNext(5)
+            .expectComplete()
+            .verify();
+
+        StepVerifier.create(onlyOutgoing)
+            .expectNext(6)
+            .expectNext(7)
+            .expectNext(8)
+            .expectComplete()
+            .verify();
 
     }
 
