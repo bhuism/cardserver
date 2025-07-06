@@ -28,17 +28,16 @@ public final class MySseEmitter {
         this.userId = userIdArg;
     }
 
-
     public UserServerSentEvent sendCardServerMessage(final String fromString, final String message) {
         return internalSend("cardservermessage", fromString + ": " + message);
     }
 
-    public UserServerSentEvent sendPing() {
+    public UserServerSentEvent createPing() {
         LoggingFilter.requestLogMessage(", sendPing " + uuid);
         return internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
-    private UserServerSentEvent sendPong() {
+    private UserServerSentEvent createPong() {
         LoggingFilter.requestLogMessage(", sending pong " + uuid);
         return internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
     }
@@ -46,7 +45,7 @@ public final class MySseEmitter {
     public UserServerSentEvent receivePing() {
         LoggingFilter.requestLogMessage(", got ping " + uuid);
         ping = Instant.now();
-        return sendPong();
+        return createPong();
     }
 
     public void receivePong() {

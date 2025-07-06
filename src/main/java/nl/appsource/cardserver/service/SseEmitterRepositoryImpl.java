@@ -14,11 +14,14 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+
+import static reactor.util.concurrent.Queues.SMALL_BUFFER_SIZE;
 
 @Service
 @Slf4j
@@ -27,23 +30,31 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final UserRepository userRepository;
 
-    private final Sinks.Many<UserServerSentEvent> manySinks = Sinks.many().multicast().onBackpressureBuffer();
+    private final Sinks.Many<UserServerSentEvent> manySinks = Sinks.many().multicast().onBackpressureBuffer(SMALL_BUFFER_SIZE, false);
 
     private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
+    private final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+
     private void doSelectedUserIds(final Flux<String> userIds, final Function<MySseEmitter, UserServerSentEvent> consumer) {
-        userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).map(consumer).subscribe(manySinks::tryEmitNext);
+        userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).map(consumer).subscribe(this::tryEmitNext);
     }
 
     private void doAll(final Function<MySseEmitter, UserServerSentEvent> consumer) {
-        Flux.fromIterable(emitters.values()).map(consumer).subscribe(manySinks::tryEmitNext);
+        Flux.fromIterable(emitters.values()).map(consumer).subscribe(this::tryEmitNext);
     }
 
-    private final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
+    private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
+        manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
+            log.info("Removing emitter {} due to {}:{}", userServerSentEvent.getUuid(), signalType, emitResult);
+            return false;
+        });
+    }
 
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 55)
     public void pingAll() {
-        doAll(MySseEmitter::sendPing);
+        log.info("Current subscriber count: {}", manySinks.currentSubscriberCount());
+        doAll(MySseEmitter::createPing);
     }
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
@@ -89,15 +100,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
 
-        log.info("subscribe({})", userId);
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
+
+        log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), manySinks.currentSubscriberCount());
+
+
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
-        manySinks.tryEmitNext(mySseEmitter.sendPing());
 
         sseMvcExecutor.execute(() -> {
             for (int i = 0; i < 5; i++) {
-                manySinks.tryEmitNext(mySseEmitter.sendPing());
+                tryEmitNext(mySseEmitter.createPing());
                 try {
                     Thread.sleep(1000 * i);
                 } catch (InterruptedException e) {
@@ -115,17 +128,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void ping(final UUID uuid) {
-        final long count = emitters.values()
-            .stream()
-            .filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid))
-            .map(MySseEmitter::receivePing)
-            .map(manySinks::tryEmitNext)
-            .count();
-
-
-        if (count == 0) {
-            log.error("ping() Found no emitter for uuid {}", uuid);
-        }
+        Optional.ofNullable(emitters.get(uuid))
+            .ifPresentOrElse(mySseEmitter -> mySseEmitter.receivePing(), () -> {
+                log.error("SseEmitter not found for uuid {}", uuid);
+            });
     }
 
 
