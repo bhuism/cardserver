@@ -77,7 +77,7 @@ public final class MySseEmitter {
     public UserServerSentEvent createOnlineEvent(final List<String> onlineList) {
         final OnlineListEvent onlineListEvent = new OnlineListEvent();
         onlineListEvent.setOnlineList(onlineList);
-        log.info("Sending online friends: " + onlineList);
+        log.info("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
         return internalSend("online", onlineListEvent);
     }
 
