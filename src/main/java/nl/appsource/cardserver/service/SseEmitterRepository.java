@@ -11,8 +11,6 @@ public interface SseEmitterRepository {
 
     void broadCastMessage(String userId, String message);
 
-    Integer size();
-
     Flux<ServerSentEvent<Object>> subscribe(String userId);
 
     void ping(UUID uuid);
