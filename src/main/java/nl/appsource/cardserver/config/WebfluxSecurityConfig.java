@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -37,14 +38,10 @@ public class WebfluxSecurityConfig {
     @Order(1)
     public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) throws Exception {
 
-        http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
-            .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST))
-            .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
-            .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> {
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource())).securityMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST)).authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated()).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> {
                 //httpSecurityOAuth2ResourceServerConfigurer.jwt(Customizer.withDefaults());
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter()));
             });
@@ -61,8 +58,7 @@ public class WebfluxSecurityConfig {
     @Order(2)
     public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) throws Exception {
 
-        http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
@@ -76,15 +72,9 @@ public class WebfluxSecurityConfig {
     @Order(3)
     public SecurityWebFilterChain securityFilterChainRest(final ServerHttpSecurity http) throws Exception {
 
-        http
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
-            .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/logo512.png", "/schema/**", "/error/**")
-                .permitAll()
-                .anyExchange()
-                .denyAll()
-            );
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource())).authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/logo512.png", "/schema/**", "/error/**").permitAll().anyExchange().denyAll());
 
         return http.build();
     }
@@ -92,7 +82,7 @@ public class WebfluxSecurityConfig {
     public CorsConfigurationSource getCorsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:4280", "https://www.klaversjassen.nl"));
+        configuration.setAllowedOrigins(List.of(environment.acceptsProfiles(Profiles.of("production")) ? "https://www.klaversjassen.nl" : "http://localhost:4280"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowedMethods(Collections.singletonList("*"));
         configuration.setExposedHeaders(Collections.singletonList("*"));
