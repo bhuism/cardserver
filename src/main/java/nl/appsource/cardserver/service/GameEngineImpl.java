@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
+import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 
 import java.time.Instant;
@@ -24,6 +25,10 @@ public class GameEngineImpl implements GameEngine {
         if (isCompleted()) {
             log.warn("Game {} allready completed", game.getId());
             throw new GameCompletedException();
+        }
+
+        if (!game.getPlayers().contains(userId)) {
+            throw new NotAPlayerException();
         }
 
         if (game.getTurns().stream().anyMatch((c) -> c == card)) {
@@ -50,6 +55,7 @@ public class GameEngineImpl implements GameEngine {
 //            return game;
 //        }
 
+        log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
         // FIXME: add check: is speler aan slag?
 
