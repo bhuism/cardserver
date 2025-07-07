@@ -64,7 +64,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         emitters.forEach((uuid, mySseEmitter) -> {
             if (mySseEmitter.getCancelled() != null) {
                 try {
-                    log.info("Cleaning emitter: {}", mySseEmitter.getUuid());
                     mySseEmitter.tryEmitComplete();
                 } catch (final RuntimeException e) {
                     log.error("", e);
@@ -93,10 +92,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
         getFriends(mySseEmitter.getUserId())
-            .map(strings -> {
-                log.info("New update status for {}, online list: {}", mySseEmitter.getUuid(), strings);
-                return strings;
-            })
             .subscribe(mySseEmitter::sendOneList);
     }
 

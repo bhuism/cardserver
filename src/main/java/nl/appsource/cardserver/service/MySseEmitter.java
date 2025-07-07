@@ -10,6 +10,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -24,10 +25,16 @@ public final class MySseEmitter {
     private final UUID uuid = UUID.randomUUID();
 
     @Getter
-    private Instant ping;
+    private Instant pingReceived;
 
     @Getter
-    private Instant pong;
+    private Instant pongReceived;
+
+    @Getter
+    private Instant pingSent;
+
+    @Getter
+    private Instant pongSent;
 
     @Getter
     private Instant cancelled;
@@ -52,23 +59,26 @@ public final class MySseEmitter {
 
     public void sendPing() {
         LoggingFilter.requestLogMessage(", sendPing " + uuid);
+        this.pingSent = Instant.now();
         internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     private void sendPong() {
         LoggingFilter.requestLogMessage(", sending pong " + uuid);
+        this.pongSent = Instant.now();
         internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     public void receivePing() {
         LoggingFilter.requestLogMessage(", got ping " + uuid);
-        ping = Instant.now();
+        pingReceived = Instant.now();
         sendPong();
     }
 
     public void receivePong() {
         LoggingFilter.requestLogMessage(", got pong " + uuid);
-        pong = Instant.now();
+        pongReceived = Instant.now();
+        log.debug("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
     }
 
     private void internalSend(final String event) {
