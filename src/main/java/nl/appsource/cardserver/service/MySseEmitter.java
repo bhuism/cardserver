@@ -93,12 +93,10 @@ public final class MySseEmitter {
     }
 
     public void sendOneList(final List<String> onlineList) {
-        final OnlineListEvent onlineListEvent = new OnlineListEvent();
-        onlineListEvent.setOnlineList(onlineList);
         if (log.isTraceEnabled()) {
             log.trace("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
         }
-        internalSend("online", onlineListEvent);
+        internalSend("online", new OnlineListEvent().onlineList(onlineList));
     }
 
     public void sendUpdateFriends() {
