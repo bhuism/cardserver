@@ -16,6 +16,7 @@ import reactor.core.scheduler.Schedulers;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -77,17 +78,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
-        userRepository.findById(mySseEmitter.getUserId())
+    private Mono<List<String>> getFriends(final String userId) {
+        return userRepository.findById(userId)
             .map(User::getInvites)
             .map(list -> {
-                userRepository.findIncomingInvites(mySseEmitter.getUserId()).map(User::getId).collectList().subscribe(list::retainAll);
+                userRepository.findIncomingInvites(userId).map(User::getId).collectList().subscribe(list::retainAll);
                 return list;
             })
             .map(list -> {
                 list.retainAll(emitters.values().stream().map(MySseEmitter::getUserId).toList());
                 return list;
-            })
+            });
+    }
+
+    private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
+        getFriends(mySseEmitter.getUserId())
             .map(strings -> {
                 log.info("New update status for {}, online list: {}", mySseEmitter.getUuid(), strings);
                 return strings;
@@ -124,7 +129,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.range(1, 5)
             .delayElements(Duration.ofMillis(500), Schedulers.single()).subscribe(integer -> mySseEmitter.sendPing());
 
+        // for me
         pingUpdateStatus(mySseEmitter);
+
+        // for my friends
+        getFriends(userId).subscribe(friends -> {
+            Flux.fromIterable(emitters.values()).filter(friendEmitter -> friends.contains(friendEmitter.getUserId())).subscribe(this::pingUpdateStatus);
+        });
 
         return mySseEmitter.subscribe().doOnCancel(() -> {
             mySseEmitter.cancel();

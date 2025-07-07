@@ -40,7 +40,9 @@ public class WebfluxSecurityConfig {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource())).securityMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST)).authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated()).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> {
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
+            .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST))
+            .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated()).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> {
                 //httpSecurityOAuth2ResourceServerConfigurer.jwt(Customizer.withDefaults());
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter()));
             });
@@ -73,7 +75,11 @@ public class WebfluxSecurityConfig {
 
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource())).authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/logo512.png", "/schema/**", "/error/**").permitAll().anyExchange().denyAll());
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
+            .authorizeExchange(
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/logo512.png", "/schema/**", "/error/**").permitAll()
+                    .anyExchange().denyAll()
+            );
 
         return http.build();
     }
