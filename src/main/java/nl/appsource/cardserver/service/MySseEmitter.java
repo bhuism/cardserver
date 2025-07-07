@@ -78,7 +78,7 @@ public final class MySseEmitter {
     public void receivePong() {
         LoggingFilter.requestLogMessage(", got pong " + uuid);
         pongReceived = Instant.now();
-        log.debug("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
+        log.info("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
     }
 
     private void internalSend(final String event) {
