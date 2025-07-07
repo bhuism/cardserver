@@ -6,10 +6,13 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.api.GamesApi;
+import org.openapitools.model.Both;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -42,9 +45,9 @@ public class GameController implements GamesApi, V1Api {
             .map(ResponseEntity::ok);
     }
 
-    @Override
-    public Mono<ResponseEntity<Game>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
 
+    //    @Override
+    public Mono<ResponseEntity<Both>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -54,6 +57,8 @@ public class GameController implements GamesApi, V1Api {
             }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
                 .mapNotNull(gameToOpenApiConverter::convert)
                 .map(sseEmitterRepository::gameChanged)
+                .map(Both.class::cast)
+                .onErrorResume(GameEngineException.class, throwable -> Mono.just(new UserMessage(throwable.getMessage(), throwable.getVariant())))
                 .map(ResponseEntity::ok)
                 .onErrorReturn(ResponseEntity.unprocessableEntity().build())
             ));

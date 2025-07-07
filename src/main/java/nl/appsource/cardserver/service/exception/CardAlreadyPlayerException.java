@@ -1,12 +1,12 @@
 package nl.appsource.cardserver.service.exception;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Card;
+import org.openapitools.model.UserMessage;
 
 @Getter
-@RequiredArgsConstructor
 public class CardAlreadyPlayerException extends GameEngineException {
-    private final String gameId;
-    private final Card card;
+    public CardAlreadyPlayerException(final Card card) {
+        super("Card " + card + " has already been played", UserMessage.VariantEnum.WARNING);
+    }
 }

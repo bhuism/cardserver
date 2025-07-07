@@ -23,12 +23,12 @@ public class GameEngineImpl implements GameEngine {
 
         if (isCompleted()) {
             log.warn("Game {} allready completed", game.getId());
-            throw new GameCompletedException(game.getId());
+            throw new GameCompletedException();
         }
 
         if (game.getTurns().stream().anyMatch((c) -> c == card)) {
             log.warn("Card {} allready played", card);
-            throw new CardAlreadyPlayerException(game.getId(), card);
+            throw new CardAlreadyPlayerException(card);
         }
 
         final int laatsteKaart = game.getTurns().size() % 4;

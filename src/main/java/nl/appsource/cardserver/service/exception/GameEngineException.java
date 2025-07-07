@@ -1,10 +1,15 @@
 package nl.appsource.cardserver.service.exception;
 
-public class GameEngineException extends RuntimeException {
-    public GameEngineException() {
-    }
+import lombok.Getter;
+import org.openapitools.model.UserMessage;
 
-    public GameEngineException(final String message) {
+@Getter
+public class GameEngineException extends RuntimeException {
+
+    private final UserMessage.VariantEnum variant;
+
+    public GameEngineException(final String message, final UserMessage.VariantEnum variantArg) {
         super(message);
+        this.variant = variantArg;
     }
 }

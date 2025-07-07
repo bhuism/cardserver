@@ -1,10 +1,11 @@
 package nl.appsource.cardserver.service.exception;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import org.openapitools.model.UserMessage;
 
 @Getter
-@RequiredArgsConstructor
 public final class GameCompletedException extends GameEngineException {
-    private final String gameId;
+    public GameCompletedException() {
+        super("Game has been completed", UserMessage.VariantEnum.WARNING);
+    }
 }

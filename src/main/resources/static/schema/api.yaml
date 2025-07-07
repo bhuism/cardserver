@@ -25,7 +25,7 @@ paths:
         $ref: "#/components/requestBodies/playCard"
       responses:
         "200":
-          $ref: "#/components/responses/GameResponse"
+          $ref: "#/components/responses/PlayCardResponse"
         "422":
           description: some application error
         "404":
@@ -188,6 +188,20 @@ components:
           schema:
             $ref: "#/components/schemas/postMessage"
   schemas:
+    UserMessage:
+      type: object
+      properties:
+        message:
+          type: string
+        variant:
+          enum:
+            - error
+            - warning
+            - info
+            - success
+      required:
+        - message
+        - variant
     whoAmIResponse:
       type: object
       properties:
@@ -282,6 +296,10 @@ components:
             type: string
       required:
         - players
+    both:
+      oneOf:
+        - $ref: "./game.yaml#/components/schemas/Game"
+        - $ref: "#/components/schemas/UserMessage"
   parameters:
     gameId:
       name: gameId
@@ -310,13 +328,12 @@ components:
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
   responses:
-#    uuid:
-#      description: a game
-#      content:
-#        application/json:
-#          schema:
-#            type: string
-#            format: uuid
+    PlayCardResponse:
+      description: a game
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/both"
     GameResponse:
       description: a game
       content:
