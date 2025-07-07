@@ -11,9 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -121,9 +119,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         mySseEmitter.sendPing();
 
-        Flux.range(1, 5)
-            .delayElements(Duration.ofMillis(500), Schedulers.single()).subscribe(integer -> mySseEmitter.sendPing());
-
         // for me
         pingUpdateStatus(mySseEmitter);
 
@@ -135,7 +130,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return mySseEmitter.subscribe().doOnCancel(() -> {
             mySseEmitter.cancel();
             janitor();
-            pingUpdateStatusAll();
+
+            getFriends(userId).subscribe(friends -> {
+                Flux.fromIterable(emitters.values()).filter(friendEmitter -> friends.contains(friendEmitter.getUserId())).subscribe(this::pingUpdateStatus);
+            });
+
         });
 
     }
