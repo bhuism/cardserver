@@ -117,7 +117,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
-        log.info("subscribe() userId={}, sseEmitter={}", userId, mySseEmitter.getUuid());
+        log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
