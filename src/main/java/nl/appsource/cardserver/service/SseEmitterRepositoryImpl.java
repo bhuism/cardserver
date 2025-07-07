@@ -120,6 +120,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 doId(mySseEmitter.getUuid(), MySseEmitter::sendPing);
             });
 
+        pingUpdateStatus(mySseEmitter);
+
         return mySseEmitter.subscribe();
 
     }
