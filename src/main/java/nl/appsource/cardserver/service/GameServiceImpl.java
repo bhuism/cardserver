@@ -7,6 +7,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -95,8 +96,12 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
-        return gameRepository.findById(gameId)
-            .flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)));
+        try {
+            return gameRepository.findById(gameId)
+                .flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)));
+        } catch (GameEngineException e) {
+            return Mono.error(e);
+        }
     }
 
     public static Map<Card, Integer> randomCards() {

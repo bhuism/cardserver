@@ -55,6 +55,7 @@ public class GameController implements GamesApi, V1Api {
                 .mapNotNull(gameToOpenApiConverter::convert)
                 .map(sseEmitterRepository::gameChanged)
                 .map(ResponseEntity::ok)
+                .onErrorReturn(ResponseEntity.unprocessableEntity().build())
             ));
     }
 
