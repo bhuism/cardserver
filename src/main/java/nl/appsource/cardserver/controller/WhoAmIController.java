@@ -32,7 +32,6 @@ public class WhoAmIController implements WhoamiApi {
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
 
-
     @Override
     public Mono<ResponseEntity<WhoAmIResponse>> whoami(final ServerWebExchange exchange) {
 
