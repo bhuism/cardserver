@@ -47,6 +47,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
         manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
             log.info("Removing emitter {} due to {}:{}", userServerSentEvent.getUuid(), signalType, emitResult);
+            emitters.remove(userServerSentEvent.getUuid());
             return false;
         });
     }
@@ -93,18 +94,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Integer size() {
-        return emitters.size();
-    }
-
-    @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
-
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
         log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), manySinks.currentSubscriberCount());
-
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
@@ -137,18 +131,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void pong(final UUID uuid) {
-        final long count = emitters.values()
-            .stream()
-            .filter(mySseEmitter -> mySseEmitter.getUuid().equals(uuid))
-            .map(mySseEmitter -> {
-                mySseEmitter.receivePong();
-                return "";
-            })
-            .count();
-
-        if (count == 0) {
-            log.error("pong() Found no emitter for uuid {}", uuid);
-        }
+        Optional.ofNullable(emitters.get(uuid))
+            .ifPresentOrElse(mySseEmitter -> mySseEmitter.receivePong(), () -> {
+                log.error("SseEmitter not found for uuid {}", uuid);
+            });
 
     }
 
