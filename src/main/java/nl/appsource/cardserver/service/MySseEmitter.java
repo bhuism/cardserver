@@ -32,7 +32,7 @@ public final class MySseEmitter {
     @Getter
     private Instant cancelled;
 
-    private final Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureError();
+    private final Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
 
     public MySseEmitter(final String userIdArg) {
         this.userId = userIdArg;
