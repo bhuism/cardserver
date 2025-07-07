@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,8 @@ import java.time.Instant;
 
 import static java.util.Collections.emptyList;
 import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
+import static org.springframework.web.bind.annotation.RequestMethod.OPTIONS;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,6 +36,7 @@ public class WhoAmIController implements WhoamiApi {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
+    @CrossOrigin(origins = {"http://localhost:4280/", "https://www.klaversjassen.nl/"}, allowCredentials = "true", allowedHeaders = "*", exposedHeaders = "*", methods = {POST, OPTIONS})
     public Mono<ResponseEntity<WhoAmIResponse>> whoami(final ServerWebExchange exchange) {
 
         return ReactiveSecurityContextHolder.getContext()
