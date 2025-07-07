@@ -30,9 +30,9 @@ public final class MySseEmitter {
     private Instant pong;
 
     @Getter
-    private Sinks.EmitResult errorEmitResult;
+    private Instant cancelled;
 
-    private final Sinks.Many<UserServerSentEvent> manySinks = Sinks.many().unicast().onBackpressureError();
+    private final Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureError();
 
     public MySseEmitter(final String userIdArg) {
         this.userId = userIdArg;
@@ -43,18 +43,12 @@ public final class MySseEmitter {
     }
 
     private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
-        manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
+        final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
 
-            if (emitResult.isFailure()) {
-                log.info("{} Marking emitter {} for removal, due to {}", signalType, getUuid(), emitResult);
-                this.errorEmitResult = emitResult;
-            }
-            if (emitResult.isSuccess()) {
-                log.info("{} Succes in sending: {}  to {}", signalType, userServerSentEvent, getUuid());
-            }
-
-            return false;
-        });
+        if (emitResult.isFailure()) {
+            log.info("Marking emitter {} for removal, due to {}", getUuid(), emitResult);
+            this.cancelled = Instant.now();
+        }
     }
 
     public void sendPing() {
@@ -114,11 +108,13 @@ public final class MySseEmitter {
     }
 
     public void tryEmitComplete() {
-        manySinks.tryEmitComplete();
+        unicastSink.tryEmitComplete();
     }
 
     public Flux<ServerSentEvent<Object>> subscribe() {
-        return manySinks.asFlux().map(UserServerSentEvent::getServerSentEvent).publish().autoConnect();
+        return unicastSink.asFlux().map(UserServerSentEvent::getServerSentEvent).publish().autoConnect().doOnCancel(() -> {
+            this.cancelled = Instant.now();
+        });
     }
 }
 

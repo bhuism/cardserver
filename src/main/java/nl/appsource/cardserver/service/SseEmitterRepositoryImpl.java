@@ -15,7 +15,9 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -43,23 +45,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.fromIterable(emitters.values()).subscribe(consumer);
     }
 
-//    private void doOne(final MySseEmitter mySseEmitter, Function<MySseEmitter, Mono<UserServerSentEvent>> consumer) {
-//        consumer.apply(mySseEmitter).subscribe(event ->
-//            mySseEmitter.getManySinks().tryEmitNext(event)
-//        );
-//        mySseEmitter.send()
-//    }
-
-//    private void tryEmitNext(final Mono<UserServerSentEvent> userServerSentEventMono) {
-//        userServerSentEventMono.subscribe(userServerSentEvent -> {
-//            manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
-//                log.info("Removing emitter {} due to {}:{}", userServerSentEvent.getUuid(), signalType, emitResult);
-//                emitters.remove(userServerSentEvent.getUuid());
-//                return false;
-//            });
-//        });
-//    }
-
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 55)
     public void pingAll() {
 //        log.info("Current subscriber count: {}", .currentSubscriberCount());
@@ -74,20 +59,28 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 5)
     public void janitor() {
-        doAll(mySseEmitter -> {
-            if (mySseEmitter.getErrorEmitResult() != null) {
-                mySseEmitter.tryEmitComplete();
-                log.info("Cleaning emitter: {}", mySseEmitter.getUuid());
-                this.emitters.remove(mySseEmitter.getUuid());
+        final Set<UUID> removers = new HashSet<>();
+        emitters.forEach((uuid, mySseEmitter) -> {
+            if (mySseEmitter.getCancelled() != null) {
+                try {
+                    log.info("Cleaning emitter: {}", mySseEmitter.getUuid());
+                    mySseEmitter.tryEmitComplete();
+                } catch (final RuntimeException e) {
+                    log.error("", e);
+                } finally {
+                    removers.add(uuid);
+                }
             }
         });
+
+        removers.forEach(emitters::remove);
+
     }
 
     private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
         userRepository.findById(mySseEmitter.getUserId())
             .map(User::getInvites)
             .map(list -> {
-
                 userRepository.findIncomingInvites(mySseEmitter.getUserId()).map(User::getId).collectList().subscribe(list::retainAll);
                 return list;
             })
