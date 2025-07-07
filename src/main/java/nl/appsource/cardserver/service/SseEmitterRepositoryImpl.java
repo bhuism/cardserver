@@ -122,7 +122,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         pingUpdateStatus(mySseEmitter);
 
-        return mySseEmitter.subscribe();
+        return mySseEmitter.subscribe().doOnCancel(() -> {
+            mySseEmitter.cancel();
+            janitor();
+            pingUpdateStatusAll();
+        });
 
     }
 

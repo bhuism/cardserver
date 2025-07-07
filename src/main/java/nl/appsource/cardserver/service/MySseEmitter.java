@@ -116,5 +116,9 @@ public final class MySseEmitter {
             this.cancelled = Instant.now();
         });
     }
+
+    public void cancel() {
+        this.cancelled = Instant.now();
+    }
 }
 
