@@ -45,6 +45,7 @@ public final class MySseEmitter {
     private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
         final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
         if (emitResult.isFailure()) {
+            unicastSink.tryEmitComplete();
             this.cancelled = Instant.now();
         }
     }
