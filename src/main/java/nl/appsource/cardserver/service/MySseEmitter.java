@@ -44,9 +44,7 @@ public final class MySseEmitter {
 
     private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
         final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
-
         if (emitResult.isFailure()) {
-            log.info("Marking emitter {} for removal, due to {}", getUuid(), emitResult);
             this.cancelled = Instant.now();
         }
     }
@@ -112,9 +110,7 @@ public final class MySseEmitter {
     }
 
     public Flux<ServerSentEvent<Object>> subscribe() {
-        return unicastSink.asFlux().map(UserServerSentEvent::getServerSentEvent).publish().autoConnect().doOnCancel(() -> {
-            this.cancelled = Instant.now();
-        });
+        return unicastSink.asFlux().map(UserServerSentEvent::getServerSentEvent).publish().autoConnect().doOnCancel(this::cancel);
     }
 
     public void cancel() {

@@ -88,6 +88,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 list.retainAll(emitters.values().stream().map(MySseEmitter::getUserId).toList());
                 return list;
             })
+            .map(strings -> {
+                log.info("New update status for {}, online list: {}", mySseEmitter.getUuid(), strings);
+                return strings;
+            })
             .subscribe(mySseEmitter::sendOneList);
     }
 
