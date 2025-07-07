@@ -10,7 +10,7 @@ import org.springframework.web.reactive.config.WebFluxConfigurer;
 public class WebConfig implements WebFluxConfigurer {
 
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    public void addCorsMappings(final CorsRegistry registry) {
         registry.addMapping("/**")
             .allowedOrigins("http://localhost:3000", "http://localhost:4280", "https://www.klaversjassen.nl")
             .allowedMethods("*")
