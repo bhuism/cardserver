@@ -115,10 +115,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
+        mySseEmitter.sendPing();
+
         Flux.range(1, 5)
-            .delayElements(Duration.ofMillis(500), Schedulers.single()).subscribe(integer -> {
-                doId(mySseEmitter.getUuid(), MySseEmitter::sendPing);
-            });
+            .delayElements(Duration.ofMillis(500), Schedulers.single()).subscribe(integer -> mySseEmitter.sendPing());
 
         pingUpdateStatus(mySseEmitter);
 
