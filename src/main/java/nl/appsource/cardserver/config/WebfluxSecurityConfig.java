@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -82,7 +81,7 @@ public class WebfluxSecurityConfig {
     public CorsConfigurationSource getCorsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(environment.acceptsProfiles(Profiles.of("production")) ? List.of("https://www.klaversjassen.nl") : List.of("http://localhost:4280", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of("https://www.klaversjassen.nl", "http://localhost:3000"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
         configuration.setExposedHeaders(Collections.singletonList("*"));
