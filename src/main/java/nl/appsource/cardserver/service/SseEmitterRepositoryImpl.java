@@ -11,17 +11,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.Function;
-
-import static reactor.util.concurrent.Queues.SMALL_BUFFER_SIZE;
+import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -30,41 +27,63 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final UserRepository userRepository;
 
-    private final Sinks.Many<UserServerSentEvent> manySinks = Sinks.many().multicast().onBackpressureBuffer(SMALL_BUFFER_SIZE, false);
-
     private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
-    private final ExecutorService sseMvcExecutor = Executors.newSingleThreadExecutor();
-
-    private void doSelectedUserIds(final Flux<String> userIds, final Function<MySseEmitter, UserServerSentEvent> consumer) {
-        userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).map(consumer).subscribe(this::tryEmitNext);
+    private void doSelectedUserIds(final Flux<String> userIds, final Consumer<MySseEmitter> consumer) {
+        userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).subscribe(consumer);
     }
 
-    private void doAll(final Function<MySseEmitter, UserServerSentEvent> consumer) {
-        Flux.fromIterable(emitters.values()).map(consumer).subscribe(this::tryEmitNext);
+    private void doId(final UUID uuid, final Consumer<MySseEmitter> consumer) {
+        Optional.ofNullable(emitters.get(uuid))
+            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for uuid {}", uuid));
     }
 
-    private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
-        manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
-            log.info("Removing emitter {} due to {}:{}", userServerSentEvent.getUuid(), signalType, emitResult);
-            emitters.remove(userServerSentEvent.getUuid());
-            return false;
-        });
+
+    private void doAll(final Consumer<MySseEmitter> consumer) {
+        Flux.fromIterable(emitters.values()).subscribe(consumer);
     }
+
+//    private void doOne(final MySseEmitter mySseEmitter, Function<MySseEmitter, Mono<UserServerSentEvent>> consumer) {
+//        consumer.apply(mySseEmitter).subscribe(event ->
+//            mySseEmitter.getManySinks().tryEmitNext(event)
+//        );
+//        mySseEmitter.send()
+//    }
+
+//    private void tryEmitNext(final Mono<UserServerSentEvent> userServerSentEventMono) {
+//        userServerSentEventMono.subscribe(userServerSentEvent -> {
+//            manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
+//                log.info("Removing emitter {} due to {}:{}", userServerSentEvent.getUuid(), signalType, emitResult);
+//                emitters.remove(userServerSentEvent.getUuid());
+//                return false;
+//            });
+//        });
+//    }
 
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 55)
     public void pingAll() {
-        log.info("Current subscriber count: {}", manySinks.currentSubscriberCount());
-        doAll(MySseEmitter::createPing);
+//        log.info("Current subscriber count: {}", .currentSubscriberCount());
+        doAll(MySseEmitter::sendPing);
     }
+
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
     public void pingUpdateStatusAll() {
-        doAll(mySseEmitter -> pingUpdateStatus(mySseEmitter).block());
+        doAll(this::pingUpdateStatus);
     }
 
-    private Mono<UserServerSentEvent> pingUpdateStatus(final MySseEmitter mySseEmitter) {
-        return userRepository.findById(mySseEmitter.getUserId())
+    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 5)
+    public void janitor() {
+        doAll(mySseEmitter -> {
+            if (mySseEmitter.getErrorEmitResult() != null) {
+                mySseEmitter.tryEmitComplete();
+                this.emitters.remove(mySseEmitter.getUuid());
+            }
+        });
+    }
+
+    private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
+        userRepository.findById(mySseEmitter.getUserId())
             .map(User::getInvites)
             .map(list -> {
 
@@ -75,7 +94,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 list.retainAll(emitters.values().stream().map(MySseEmitter::getUserId).toList());
                 return list;
             })
-            .map(mySseEmitter::createOnlineEvent);
+            .subscribe(mySseEmitter::sendOneList);
     }
 
     @Override
@@ -90,7 +109,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @PreDestroy
     public void destroy() {
-        manySinks.tryEmitComplete();
+        janitor();
     }
 
     @Override
@@ -98,49 +117,32 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
-        log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), manySinks.currentSubscriberCount());
+        log.info("subscribe() userId={}, sseEmitter={}", userId, mySseEmitter.getUuid());
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
-        sseMvcExecutor.execute(() -> {
-            for (int i = 0; i < 5; i++) {
-                tryEmitNext(mySseEmitter.createPing());
-                try {
-                    Thread.sleep(1000 * i);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        Flux.range(1, 5)
+            .delayElements(Duration.ofMillis(500), Schedulers.single()).subscribe(integer -> {
+                doId(mySseEmitter.getUuid(), MySseEmitter::sendPing);
+            });
 
-        return manySinks.asFlux()
-            .filter(userServerSentEvent -> mySseEmitter.getUuid().equals(userServerSentEvent.getUuid()))
-            .map(UserServerSentEvent::getServerSentEvent)
-            .publish()
-            .autoConnect();
+        return mySseEmitter.subscribe();
+
     }
 
     @Override
     public void ping(final UUID uuid) {
-        Optional.ofNullable(emitters.get(uuid))
-            .ifPresentOrElse(mySseEmitter -> mySseEmitter.receivePing(), () -> {
-                log.error("SseEmitter not found for uuid {}", uuid);
-            });
+        doId(uuid, MySseEmitter::receivePing);
     }
-
 
     @Override
     public void pong(final UUID uuid) {
-        Optional.ofNullable(emitters.get(uuid))
-            .ifPresentOrElse(mySseEmitter -> mySseEmitter.receivePong(), () -> {
-                log.error("SseEmitter not found for uuid {}", uuid);
-            });
-
+        doId(uuid, MySseEmitter::receivePong);
     }
 
     @Override
     public Game gameChanged(final Game gameState) {
-        doSelectedUserIds(Flux.fromIterable(gameState.getPlayers()), mySseEmitter -> mySseEmitter.gameChanged(gameState));
+        doSelectedUserIds(Flux.fromIterable(gameState.getPlayers()), mySseEmitter -> mySseEmitter.sendGameChanged(gameState));
         return gameState;
     }
 

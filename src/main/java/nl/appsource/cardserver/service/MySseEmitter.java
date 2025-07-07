@@ -7,45 +7,70 @@ import nl.appsource.cardserver.model.event.GameStateEvent;
 import nl.appsource.cardserver.model.event.OnlineListEvent;
 import org.openapitools.model.Game;
 import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-@Getter
 public final class MySseEmitter {
 
+    @Getter
     private final String userId;
 
+    @Getter
     private final UUID uuid = UUID.randomUUID();
 
+    @Getter
     private Instant ping;
 
+    @Getter
     private Instant pong;
+
+    @Getter
+    private Sinks.EmitResult errorEmitResult;
+
+    private final Sinks.Many<UserServerSentEvent> manySinks = Sinks.many().unicast().onBackpressureError();
 
     public MySseEmitter(final String userIdArg) {
         this.userId = userIdArg;
     }
 
-    public UserServerSentEvent sendCardServerMessage(final String fromString, final String message) {
-        return internalSend("cardservermessage", fromString + ": " + message);
+    public void sendCardServerMessage(final String fromString, final String message) {
+        internalSend("cardservermessage", fromString + ": " + message);
     }
 
-    public UserServerSentEvent createPing() {
+    private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
+        manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
+
+            if (emitResult.isFailure()) {
+                log.info("Removing emitter {} due to {}:{}", getUuid(), signalType, emitResult);
+                this.errorEmitResult = emitResult;
+            }
+            if (emitResult.isSuccess()) {
+                log.info("Succes in sending: {}  to {}", userServerSentEvent, getUuid());
+            }
+
+            return false;
+        });
+    }
+
+    public void sendPing() {
         LoggingFilter.requestLogMessage(", sendPing " + uuid);
-        return internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
+        internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
-    private UserServerSentEvent createPong() {
+    private void sendPong() {
         LoggingFilter.requestLogMessage(", sending pong " + uuid);
-        return internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
+        internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
-    public UserServerSentEvent receivePing() {
+    public void receivePing() {
         LoggingFilter.requestLogMessage(", got ping " + uuid);
         ping = Instant.now();
-        return createPong();
+        sendPong();
     }
 
     public void receivePong() {
@@ -53,11 +78,11 @@ public final class MySseEmitter {
         pong = Instant.now();
     }
 
-    private UserServerSentEvent internalSend(final String event) {
-        return internalSend(event, null);
+    private void internalSend(final String event) {
+        internalSend(event, null);
     }
 
-    private UserServerSentEvent internalSend(final String event, final Object data) {
+    private void internalSend(final String event, final Object data) {
         if (log.isTraceEnabled()) {
             log.trace("internalSend() sending event '{}' data: '{}' ", event, data);
         }
@@ -65,28 +90,35 @@ public final class MySseEmitter {
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
 
-        return new UserServerSentEvent(uuid, ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build());
+        tryEmitNext(new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build()));
     }
 
-    public UserServerSentEvent gameChanged(final Game game) {
+    public void sendGameChanged(final Game game) {
         final GameStateEvent playCardEvent = new GameStateEvent(game);
-        return internalSend("gameStateUpdate", playCardEvent);
+        internalSend("gameStateUpdate", playCardEvent);
     }
 
-    public UserServerSentEvent createOnlineEvent(final List<String> onlineList) {
+    public void sendOneList(final List<String> onlineList) {
         final OnlineListEvent onlineListEvent = new OnlineListEvent();
         onlineListEvent.setOnlineList(onlineList);
         log.info("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
-        return internalSend("online", onlineListEvent);
+        internalSend("online", onlineListEvent);
     }
 
-    public UserServerSentEvent sendUpdateFriends() {
-        return internalSend("updateFriends");
+    public void sendUpdateFriends() {
+        internalSend("updateFriends");
     }
 
-    public UserServerSentEvent sendUpdateGames() {
-        return internalSend("updateGames");
+    public void sendUpdateGames() {
+        internalSend("updateGames");
     }
 
+    public void tryEmitComplete() {
+        manySinks.tryEmitComplete();
+    }
+
+    public Flux<ServerSentEvent<Object>> subscribe() {
+        return manySinks.asFlux().map(UserServerSentEvent::getServerSentEvent).publish().autoConnect();
+    }
 }
 
