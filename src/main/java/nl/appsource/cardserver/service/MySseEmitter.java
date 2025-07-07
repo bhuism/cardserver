@@ -46,11 +46,11 @@ public final class MySseEmitter {
         manySinks.emitNext(userServerSentEvent, (signalType, emitResult) -> {
 
             if (emitResult.isFailure()) {
-                log.info("Removing emitter {} due to {}:{}", getUuid(), signalType, emitResult);
+                log.info("{} Marking emitter {} for removal, due to {}", signalType, getUuid(), emitResult);
                 this.errorEmitResult = emitResult;
             }
             if (emitResult.isSuccess()) {
-                log.info("Succes in sending: {}  to {}", userServerSentEvent, getUuid());
+                log.info("{} Succes in sending: {}  to {}", signalType, userServerSentEvent, getUuid());
             }
 
             return false;

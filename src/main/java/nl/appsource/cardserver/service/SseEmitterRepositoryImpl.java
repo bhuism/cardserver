@@ -77,6 +77,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doAll(mySseEmitter -> {
             if (mySseEmitter.getErrorEmitResult() != null) {
                 mySseEmitter.tryEmitComplete();
+                log.info("Cleaning emitter: {}", mySseEmitter.getUuid());
                 this.emitters.remove(mySseEmitter.getUuid());
             }
         });
