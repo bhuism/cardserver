@@ -36,24 +36,22 @@ public class GameEngineImpl implements GameEngine {
             throw new CardAlreadyPlayerException(card);
         }
 
+        if (game.getTurns().isEmpty()) {
+            final int gotTurn = (game.getDealer() + 1) % 4;
+            if (gotTurn != game.getPlayers().indexOf(userId)) {
+                log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
+            }
+        }
+
         final int laatsteKaart = game.getTurns().size() % 4;
         if (laatsteKaart % 4 != 0) {
             final int cardPlayer = whoHasCard(card);
             final int gotTurn = (whoHasCard(game.getTurns().getLast()) + 1) % 4;
             if (cardPlayer != gotTurn) {
-                log.warn("playCard({}) It's player {} turn, not {}", card, gotTurn, cardPlayer);
+                log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
                 throw new NotPlayersTurnException();
             }
         }
-
-//        final Integer playerNum = game.getPlayers().indexOf(userId);
-//
-//        final Integer howHasCard = game.getPlayerCard().get(card);
-//
-//        if (howHasCard != playerNum) {
-//            log.warn("Player {} does not have card {}, player {} does", userId, card, howHasCard);
-//            return game;
-//        }
 
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
