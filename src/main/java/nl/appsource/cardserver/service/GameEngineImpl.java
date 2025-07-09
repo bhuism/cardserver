@@ -38,7 +38,7 @@ public class GameEngineImpl implements GameEngine {
 
         if (game.getTurns().isEmpty()) {
             final int gotTurn = (game.getDealer() + 1) % 4;
-            if (gotTurn != whoHasCard(card) {
+            if (gotTurn != whoHasCard(card)) {
                 log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
                 throw new NotPlayersTurnException();
             }
