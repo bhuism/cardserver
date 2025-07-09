@@ -40,6 +40,7 @@ public class GameEngineImpl implements GameEngine {
             final int gotTurn = (game.getDealer() + 1) % 4;
             if (gotTurn != game.getPlayers().indexOf(userId)) {
                 log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
+                throw new NotPlayersTurnException();
             }
         }
 
