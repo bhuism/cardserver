@@ -128,6 +128,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         });
 
         return mySseEmitter.subscribe().doOnCancel(() -> {
+
+            log.info("unsubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
+
             mySseEmitter.cancel();
             janitor();
 
