@@ -44,17 +44,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.fromIterable(emitters.values()).subscribe(consumer);
     }
 
-    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 55)
+    @Scheduled(fixedDelay = 1000 * 5, initialDelay = 1000 * 55)
     public void pingAll() {
-//        log.info("Current subscriber count: {}", .currentSubscriberCount());
         doAll(MySseEmitter::sendPing);
     }
 
-
-    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
-    public void pingUpdateStatusAll() {
-        doAll(this::pingUpdateStatus);
-    }
+//    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
+//    public void pingUpdateStatusAll() {
+//        doAll(this::pingUpdateStatus);
+//    }
 
     @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 5)
     public void janitor() {
@@ -90,7 +88,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
         getFriends(mySseEmitter.getUserId())
-            .subscribe(mySseEmitter::sendOneList);
+            .subscribe(mySseEmitter::sendOnlineList);
     }
 
     @Override

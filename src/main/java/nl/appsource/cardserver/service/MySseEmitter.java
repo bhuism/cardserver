@@ -100,7 +100,7 @@ public final class MySseEmitter {
         internalSend("gameStateUpdate", playCardEvent);
     }
 
-    public void sendOneList(final List<String> onlineList) {
+    public void sendOnlineList(final List<String> onlineList) {
         if (log.isTraceEnabled()) {
             log.trace("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
         }
