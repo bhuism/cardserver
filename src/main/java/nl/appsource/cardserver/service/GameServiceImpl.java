@@ -20,10 +20,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -74,7 +72,7 @@ public class GameServiceImpl implements GameService {
         return gameRepository.save(game)
             .map(
                 (g2) -> {
-                    sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
+                    sseEmitterRepository.gamesChanged(players);
                     return g2;
                 }
             );
@@ -83,11 +81,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Void> deleteGame(final String gameId) {
         return gameRepository.findById(gameId)
-            .flatMap(game -> {
-                final Set<String> players = game.getPlayers().stream().filter((p) -> !Objects.equals(p, game.getCreator())).collect(Collectors.toSet());
-                return gameRepository.delete(game).then(Mono.just(players));
-                //return players;
-            })
+            .flatMap(game -> gameRepository.delete(game).then(Mono.just(game.getPlayers())))
             .flatMap(players -> {
                 sseEmitterRepository.gamesChanged(players);
                 return Mono.empty();
