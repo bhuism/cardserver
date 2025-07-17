@@ -76,22 +76,19 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    private Mono<Flux<String>> getFriends(final String userId) {
+    private Flux<String> getFriends(final String userId) {
         return userRepository.findById(userId)
             .map(User::getInvites)
-            .map(list -> userRepository.findIncomingInvites(userId).map(User::getId).filter(list::contains));
+            .flatMapMany(list -> userRepository.findIncomingInvites(userId).map(User::getId).filter(list::contains));
     }
 
     @Override
     public void sendOnlineListToFriendsOf(final String userId) {
-        getFriends(userId).subscribe(friends -> {
-            doSelectedUserIds(friends, this::sendOnlineList);
-        });
+        doSelectedUserIds(getFriends(userId).filter(this::isUserOnline), this::sendOnlineList);
     }
 
     private void sendOnlineList(final MySseEmitter mySseEmitter) {
-        getFriends(mySseEmitter.getUserId())
-            .subscribe(mySseEmitter::sendOnlineList);
+        mySseEmitter.sendOnlineList(getFriends(mySseEmitter.getUserId()).filter(this::isUserOnline));
     }
 
     @Override
