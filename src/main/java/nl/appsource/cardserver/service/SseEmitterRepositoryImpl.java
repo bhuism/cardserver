@@ -90,7 +90,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             });
     }
 
-    private void pingUpdateStatus(final MySseEmitter mySseEmitter) {
+    @Override
+    public void sendOnlineListToFriendsOf(final String userId) {
+        getFriends(userId).subscribe(friends ->
+            Flux.fromIterable(emitters.values())
+                .filter(friendEmitter -> friends.contains(friendEmitter.getUserId()))
+                .subscribe(this::sendOnlineList));
+    }
+
+    private void sendOnlineList(final MySseEmitter mySseEmitter) {
         getFriends(mySseEmitter.getUserId())
             .subscribe(mySseEmitter::sendOnlineList);
     }
@@ -120,13 +128,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         mySseEmitter.sendPing();
 
         // for me
-        pingUpdateStatus(mySseEmitter);
+        sendOnlineList(mySseEmitter);
 
-        // for my friends
-        getFriends(userId).subscribe(friends ->
-            Flux.fromIterable(emitters.values())
-                .filter(friendEmitter -> friends.contains(friendEmitter.getUserId()))
-                .subscribe(this::pingUpdateStatus));
+
+        sendOnlineListToFriendsOf(userId);
 
         return mySseEmitter.subscribe().doOnCancel(() -> {
 
@@ -135,11 +140,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             mySseEmitter.cancel();
             janitor();
 
-            getFriends(userId).subscribe(friends ->
-                Flux.fromIterable(emitters.values())
-                    .filter(friendEmitter -> friends.contains(friendEmitter.getUserId()))
-                    .subscribe(this::pingUpdateStatus)
-            );
+            sendOnlineListToFriendsOf(userId);
+
 
         });
 
