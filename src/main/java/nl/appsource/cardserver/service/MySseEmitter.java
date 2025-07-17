@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.model.event.GameStateEvent;
+import nl.appsource.cardserver.model.event.NewGameEvent;
 import nl.appsource.cardserver.model.event.OnlineListEvent;
 import org.openapitools.model.Game;
 import org.springframework.http.codec.ServerSentEvent;
@@ -96,8 +97,7 @@ public final class MySseEmitter {
     }
 
     public void sendGameChanged(final Game game) {
-        final GameStateEvent playCardEvent = new GameStateEvent(game);
-        internalSend("gameStateUpdate", playCardEvent);
+        internalSend("gameStateUpdate", new GameStateEvent(game));
     }
 
     public void sendOnlineList(final List<String> onlineList) {
@@ -113,6 +113,10 @@ public final class MySseEmitter {
 
     public void sendUpdateGames() {
         internalSend("updateGames");
+    }
+
+    public void newGame(final Game game) {
+        internalSend("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
     }
 
     public void tryEmitComplete() {

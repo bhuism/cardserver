@@ -3,9 +3,10 @@ package nl.appsource.cardserver.service;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converter.GameToOpenApiConverter;
+import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
-import org.openapitools.model.Game;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +31,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final UserRepository userRepository;
 
     private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
+
+    private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private void doSelectedUserIds(final Flux<String> userIds, final Consumer<MySseEmitter> consumer) {
         userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).subscribe(consumer);
@@ -96,9 +100,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userRepository.findById(userId)
             .map(User::getDisplayName)
             .switchIfEmpty(Mono.just(userId))
-            .subscribe(fromString -> {
-                doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message));
-            });
+            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message)));
     }
 
     @PreDestroy
@@ -121,9 +123,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         pingUpdateStatus(mySseEmitter);
 
         // for my friends
-        getFriends(userId).subscribe(friends -> {
-            Flux.fromIterable(emitters.values()).filter(friendEmitter -> friends.contains(friendEmitter.getUserId())).subscribe(this::pingUpdateStatus);
-        });
+        getFriends(userId).subscribe(friends ->
+            Flux.fromIterable(emitters.values())
+                .filter(friendEmitter -> friends.contains(friendEmitter.getUserId()))
+                .subscribe(this::pingUpdateStatus));
 
         return mySseEmitter.subscribe().doOnCancel(() -> {
 
@@ -132,9 +135,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             mySseEmitter.cancel();
             janitor();
 
-            getFriends(userId).subscribe(friends -> {
-                Flux.fromIterable(emitters.values()).filter(friendEmitter -> friends.contains(friendEmitter.getUserId())).subscribe(this::pingUpdateStatus);
-            });
+            getFriends(userId).subscribe(friends ->
+                Flux.fromIterable(emitters.values())
+                    .filter(friendEmitter -> friends.contains(friendEmitter.getUserId()))
+                    .subscribe(this::pingUpdateStatus)
+            );
 
         });
 
@@ -152,7 +157,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public Game gameChanged(final Game gameState) {
-        doSelectedUserIds(Flux.fromIterable(gameState.getPlayers()), mySseEmitter -> mySseEmitter.sendGameChanged(gameState));
+        doSelectedUserIds(Flux.fromIterable(gameState.getPlayers()), mySseEmitter -> mySseEmitter.sendGameChanged(gameToOpenApiConverter.convert(gameState)));
         return gameState;
     }
 
@@ -164,6 +169,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void gamesChanged(final Collection<String> userIds) {
         doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateGames);
+    }
+
+    @Override
+    public void newGame(final Game game) {
+        doSelectedUserIds(Flux.fromIterable(game.getPlayers()), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
     }
 
     @Override

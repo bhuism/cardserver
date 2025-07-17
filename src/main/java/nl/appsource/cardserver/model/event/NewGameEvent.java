@@ -6,16 +6,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.openapitools.model.Game;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true, fluent = true)
-public class GameStateEvent {
+public class NewGameEvent {
 
     @JsonProperty
-    private Game gameState;
+    private String gameId;
+
+    @JsonProperty
+    private String displayNameCreator;
 
 }

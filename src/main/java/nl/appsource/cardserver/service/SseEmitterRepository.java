@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.service;
 
-import org.openapitools.model.Game;
+import nl.appsource.cardserver.model.Game;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
@@ -23,5 +23,8 @@ public interface SseEmitterRepository {
 
     void gamesChanged(Collection<String> userIds);
 
+    void newGame(Game game);
+
     boolean isUserOnline(String userId);
+
 }

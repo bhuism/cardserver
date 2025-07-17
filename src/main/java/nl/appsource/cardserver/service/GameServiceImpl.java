@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
@@ -9,6 +8,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -54,30 +54,26 @@ public class GameServiceImpl implements GameService {
             throw new IllegalArgumentException("players count must be 4");
         }
 
-        if (StringUtils.isBlank(creator)) {
+        if (!StringUtils.hasText(creator)) {
             throw new IllegalArgumentException("creator cannot be empty");
         }
 
-        final nl.appsource.cardserver.model.Game game = new nl.appsource.cardserver.model.Game();
+        return Mono.just(new nl.appsource.cardserver.model.Game())
+            .doOnNext((game) -> {
+                game.setId(idGen(20));
+                game.setCreator(creator);
+                game.setCreated(Instant.now());
+                game.setUpdated(Instant.now());
+                game.setPlayers(new ArrayList<>(players));
+                game.setDealer(RAND.nextInt(4));
+                game.setElder(RAND.nextInt(4));
+                game.setTurns(new ArrayList<>());
+                game.setPlayerCard(randomCards());
+                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+            }).flatMap(gameRepository::save)
+            .doOnNext((game) -> sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet())))
+            .doOnNext(sseEmitterRepository::newGame);
 
-        game.setId(idGen(20));
-        game.setCreator(creator);
-        game.setCreated(Instant.now());
-        game.setUpdated(Instant.now());
-        game.setPlayers(new ArrayList<>(players));
-        game.setDealer(RAND.nextInt(4));
-        game.setElder(RAND.nextInt(4));
-        game.setTurns(new ArrayList<>());
-        game.setPlayerCard(randomCards());
-        game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-
-        return gameRepository.save(game)
-            .map(
-                (g2) -> {
-                    sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet()));
-                    return g2;
-                }
-            );
     }
 
     @Override
@@ -98,7 +94,8 @@ public class GameServiceImpl implements GameService {
     public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
         try {
             return gameRepository.findById(gameId)
-                .flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)));
+                .flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)))
+                .map(sseEmitterRepository::gameChanged);
         } catch (GameEngineException e) {
             return Mono.error(e);
         }

@@ -3,7 +3,6 @@ package nl.appsource.cardserver.converter;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
-import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.core.convert.converter.Converter;
@@ -18,10 +17,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Component
 public class GameToOpenApiConverter implements Converter<Game, org.openapitools.model.Game> {
-
-    private final UserRepository userRepository;
-
-    private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
     public org.openapitools.model.Game convert(final Game source) {
@@ -60,11 +55,6 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         return nl.appsource.cardserver.model.Card.valueOf(source.getValue());
     }
 
-//    public static org.openapitools.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
-//        return org.openapitools.model.Card.valueOf(source.name());
-//    }
-
-
     private static final Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
         Suit.Clubs, org.openapitools.model.Suit.CLUBS,
         Suit.Hearts, org.openapitools.model.Suit.HEARTS,
@@ -74,12 +64,5 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
     private static org.openapitools.model.Suit convertSuit(final Suit trump) {
         return Optional.ofNullable(trump).map(SUITCONVERTER::get).orElse(null);
     }
-
-//    private static final Map<org.openapitools.model.Suit, Suit> SUITCONVERTER_REVERSE = Map.of(
-//        org.openapitools.model.Suit.CLUBS, Suit.Clubs,
-//        org.openapitools.model.Suit.HEARTS, Suit.Hearts,
-//        org.openapitools.model.Suit.SPADES, Suit.Spades,
-//        org.openapitools.model.Suit.DIAMONDS, Suit.Diamonds);
-
 
 }
