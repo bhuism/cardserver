@@ -71,6 +71,7 @@ public class UserServiceImpl implements UserService {
 
         }).flatMap(userRepository::save).flatMap((user) -> {
             sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
+            sseEmitterRepository.sendOnlineListToFriendsOf(userId);
             sseEmitterRepository.sendOnlineListToFriendsOf(friendId);
             return Mono.empty();
         });
@@ -84,6 +85,7 @@ public class UserServiceImpl implements UserService {
         }).flatMap(userRepository::save).flatMap((user) -> {
             sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
             sseEmitterRepository.sendOnlineListToFriendsOf(userId);
+            sseEmitterRepository.sendOnlineListToFriendsOf(friendId);
             return Mono.empty();
         });
     }
