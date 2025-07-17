@@ -15,7 +15,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -77,25 +76,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    private Mono<List<String>> getFriends(final String userId) {
+    private Mono<Flux<String>> getFriends(final String userId) {
         return userRepository.findById(userId)
             .map(User::getInvites)
-            .map(list -> {
-                userRepository.findIncomingInvites(userId).map(User::getId).collectList().subscribe(list::retainAll);
-                return list;
-            })
-            .map(list -> {
-                list.retainAll(emitters.values().stream().map(MySseEmitter::getUserId).toList());
-                return list;
-            });
+            .map(list -> userRepository.findIncomingInvites(userId).map(User::getId).filter(list::contains));
     }
 
     @Override
     public void sendOnlineListToFriendsOf(final String userId) {
-        getFriends(userId).subscribe(friends ->
-            Flux.fromIterable(emitters.values())
-                .filter(friendEmitter -> friends.contains(friendEmitter.getUserId()))
-                .subscribe(this::sendOnlineList));
+        getFriends(userId).subscribe(friends -> {
+            doSelectedUserIds(friends, this::sendOnlineList);
+        });
     }
 
     private void sendOnlineList(final MySseEmitter mySseEmitter) {

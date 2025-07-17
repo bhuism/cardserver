@@ -12,7 +12,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -100,11 +99,13 @@ public final class MySseEmitter {
         internalSend("gameStateUpdate", new GameStateEvent(game));
     }
 
-    public void sendOnlineList(final List<String> onlineList) {
+    public void sendOnlineList(final Flux<String> onlineList) {
         if (log.isTraceEnabled()) {
             log.trace("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
         }
-        internalSend("online", new OnlineListEvent().onlineList(onlineList));
+        onlineList.collectList().subscribe(list ->
+            internalSend("online", new OnlineListEvent().onlineList(list))
+        );
     }
 
     public void sendUpdateFriends() {
