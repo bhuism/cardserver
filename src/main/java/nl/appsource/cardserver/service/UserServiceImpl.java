@@ -11,8 +11,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-
-import static java.util.Collections.singleton;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
             }
 
         }).flatMap(userRepository::save).flatMap((user) -> {
-            sseEmitterRepository.friendsChanged(singleton(friendId));
+            sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
             return Mono.empty();
         });
     }
@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
             user.getInvites().add(friendId);
             return user;
         }).flatMap(userRepository::save).flatMap((user) -> {
-            sseEmitterRepository.friendsChanged(singleton(friendId));
+            sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
             return Mono.empty();
         });
     }
@@ -91,13 +91,15 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
             .map(
                 (user) -> {
-                    final List<String> newFriendIds = userRepository.searchInvitees(searchString)
+                    final Set<String> newFriendIds = userRepository.searchInvitees(searchString)
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
-                        .collectList().block();
+                        .collect(Collectors.toSet())
+                        .block();
                     user.getInvites().addAll(newFriendIds);
-                    userRepository.save(user).subscribe();
-                    sseEmitterRepository.friendsChanged(newFriendIds);
+                    userRepository.save(user).subscribe((usere) -> {
+                        sseEmitterRepository.friendsChanged(newFriendIds);
+                    });
                     return newFriendIds.size();
                 }
             );

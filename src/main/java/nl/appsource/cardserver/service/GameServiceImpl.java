@@ -71,7 +71,7 @@ public class GameServiceImpl implements GameService {
                 game.setPlayerCard(randomCards());
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
             }).flatMap(gameRepository::save)
-            .doOnNext((game) -> sseEmitterRepository.gamesChanged(players.stream().filter((p) -> !Objects.equals(p, creator)).collect(Collectors.toSet())))
+            .doOnNext((game) -> sseEmitterRepository.gamesChanged(players))
             .doOnNext(sseEmitterRepository::newGame);
 
     }
