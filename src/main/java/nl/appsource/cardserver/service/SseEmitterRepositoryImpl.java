@@ -84,7 +84,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void sendOnlineListToFriendsOf(final String userId) {
-        doSelectedUserIds(getFriends(userId).filter(this::isUserOnline), this::sendOnlineList);
+        doSelectedUserIds(getFriends(userId), this::sendOnlineList);
     }
 
     private void sendOnlineList(final MySseEmitter mySseEmitter) {
