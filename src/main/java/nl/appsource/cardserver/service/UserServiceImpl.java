@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
             return user;
         }).flatMap(userRepository::save).flatMap((user) -> {
             sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
-            sseEmitterRepository.sendOnlineListToFriendsOf(friendId);
+            sseEmitterRepository.sendOnlineListToFriendsOf(userId);
             return Mono.empty();
         });
     }
