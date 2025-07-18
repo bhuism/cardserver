@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.singleton;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -71,8 +73,8 @@ public class UserServiceImpl implements UserService {
 
         }).flatMap(userRepository::save).flatMap((user) -> {
             sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
-            sseEmitterRepository.sendOnlineListToFriendsOf(userId);
-            sseEmitterRepository.sendOnlineListToFriendsOf(friendId);
+            sseEmitterRepository.sendOnlineListTo(userId);
+            sseEmitterRepository.sendOnlineListTo(friendId);
             return Mono.empty();
         });
     }
@@ -84,8 +86,8 @@ public class UserServiceImpl implements UserService {
             return user;
         }).flatMap(userRepository::save).flatMap((user) -> {
             sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
-            sseEmitterRepository.sendOnlineListToFriendsOf(userId);
-            sseEmitterRepository.sendOnlineListToFriendsOf(friendId);
+            sseEmitterRepository.sendOnlineListTo(userId);
+            sseEmitterRepository.sendOnlineListTo(friendId);
             return Mono.empty();
         });
     }
@@ -95,16 +97,26 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
             .map(
                 (user) -> {
-                    final Set<String> newFriendIds = userRepository.searchInvitees(searchString)
+                    //noinspection DataFlowIssue
+                    int count = userRepository.searchInvitees(searchString)
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
+                        .doOnNext((friend) -> user.getInvites().add(friend))
+                        .doOnComplete(() -> {
+                            log.debug("first save");
+                            userRepository.save(user);
+                        })
                         .collect(Collectors.toSet())
-                        .block();
-                    user.getInvites().addAll(newFriendIds);
-                    userRepository.save(user).subscribe((usere) -> {
-                        sseEmitterRepository.friendsChanged(newFriendIds);
-                    });
-                    return newFriendIds.size();
+                        .map(newFriendIds -> {
+                            log.debug("then imform friends");
+                            sseEmitterRepository.friendsChanged(singleton(userId));
+                            sseEmitterRepository.friendsChanged(newFriendIds);
+                            sseEmitterRepository.sendOnlineListTo(userId);
+                            newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
+                            return newFriendIds.size();
+                        }).block();
+
+                    return count;
                 }
             );
     }

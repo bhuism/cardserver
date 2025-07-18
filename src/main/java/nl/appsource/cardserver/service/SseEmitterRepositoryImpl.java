@@ -37,6 +37,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).subscribe(consumer);
     }
 
+    private void doUserId(final String userId, final Consumer<MySseEmitter> consumer) {
+        Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId)).subscribe(consumer);
+    }
+
     private void doId(final UUID uuid, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(uuid))
             .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for uuid {}", uuid));
@@ -85,12 +89,19 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void sendOnlineListToFriendsOf(final String userId) {
         log.info("sending online list to friends of user {}", userId);
-        doSelectedUserIds(getFriends(userId).filter(this::isUserOnline), this::sendOnlineList);
+//        doSelectedUserIds(getFriends(userId).filter(this::isUserOnline), this::sendOnlineList);
+
+        getFriends(userId).filter(this::isUserOnline).subscribe(this::sendOnlineListTo);
     }
 
-    private void sendOnlineList(final MySseEmitter mySseEmitter) {
-        log.info("sending online list to friends of sseEmitter {} {}", mySseEmitter.getUuid(), mySseEmitter.getUserId());
+    @Override
+    public void sendOnlineListTo(final String userId) {
+//        log.info("sending online list to friends of user {}", userId);
+        doUserId(userId, this::_sendOnlineList);
+    }
 
+    private void _sendOnlineList(final MySseEmitter mySseEmitter) {
+        log.info("sending online list to friends of sseEmitter {} {}", mySseEmitter.getUuid(), mySseEmitter.getUserId());
 
         mySseEmitter.sendOnlineList(getFriends(mySseEmitter.getUserId()).doOnNext(s -> {
             //log.info("got before filter: {}", s);
@@ -124,8 +135,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         mySseEmitter.sendPing();
 
         // for me
-        sendOnlineList(mySseEmitter);
-
+        sendOnlineListTo(userId);
 
         sendOnlineListToFriendsOf(userId);
 

@@ -11,6 +11,8 @@ public interface SseEmitterRepository {
 
     void sendOnlineListToFriendsOf(String userId);
 
+    void sendOnlineListTo(String userId);
+
     void broadCastMessage(String userId, String message);
 
     Flux<ServerSentEvent<Object>> subscribe(String userId);
