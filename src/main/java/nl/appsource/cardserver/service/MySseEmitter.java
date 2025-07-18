@@ -11,6 +11,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -92,7 +93,7 @@ public final class MySseEmitter {
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
 
-        tryEmitNext(new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build()));
+        tryEmitNext(new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).retry(Duration.ofMillis(999)).build()));
     }
 
     public void sendGameChanged(final Game game) {
