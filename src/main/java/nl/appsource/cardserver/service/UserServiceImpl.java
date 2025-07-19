@@ -102,20 +102,15 @@ public class UserServiceImpl implements UserService {
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
                         .doOnNext((friend) -> user.getInvites().add(friend))
-                        .doOnComplete(() -> {
-                            log.info("first save");
-                            userRepository.save(user);
-                        })
                         .collect(Collectors.toSet())
                         .map(newFriendIds -> {
-                            log.info("then imform friends");
                             sseEmitterRepository.friendsChanged(singleton(userId));
                             sseEmitterRepository.friendsChanged(newFriendIds);
                             sseEmitterRepository.sendOnlineListTo(userId);
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
                             return newFriendIds.size();
                         }).block();
-
+                    userRepository.save(user);
                     return count;
                 }
             );
