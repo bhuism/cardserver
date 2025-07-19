@@ -97,12 +97,14 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
             .map(
                 (user) -> {
+                    log.info("total before: ",  user.getInvites());
                     //noinspection DataFlowIssue
                     int count = userRepository.searchInvitees(searchString)
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
                         .collect(Collectors.toSet())
                         .map(newFriendIds -> {
+                            log.info("adding: ",  newFriendIds);
                             user.getInvites().addAll(newFriendIds);
                             sseEmitterRepository.friendsChanged(singleton(userId));
                             sseEmitterRepository.friendsChanged(newFriendIds);
@@ -110,6 +112,7 @@ public class UserServiceImpl implements UserService {
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
                             return newFriendIds.size();
                         }).block();
+                    log.info("total after: ",  user.getInvites());
                     userRepository.save(user);
                     return count;
                 }
