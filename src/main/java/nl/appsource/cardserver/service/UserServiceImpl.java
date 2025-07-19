@@ -101,9 +101,9 @@ public class UserServiceImpl implements UserService {
                     int count = userRepository.searchInvitees(searchString)
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
-                        .doOnNext((friend) -> user.getInvites().add(friend))
                         .collect(Collectors.toSet())
                         .map(newFriendIds -> {
+                            user.getInvites().addAll(newFriendIds);
                             sseEmitterRepository.friendsChanged(singleton(userId));
                             sseEmitterRepository.friendsChanged(newFriendIds);
                             sseEmitterRepository.sendOnlineListTo(userId);
