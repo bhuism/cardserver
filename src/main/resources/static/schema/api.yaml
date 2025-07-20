@@ -300,6 +300,16 @@ components:
       oneOf:
         - $ref: "./game.yaml#/components/schemas/Game"
         - $ref: "#/components/schemas/UserMessage"
+    NewGameEvent:
+      type: object
+      properties:
+        gameId:
+          type: string
+        displayNameCreator:
+          type: string
+      required:
+        - gameId
+        - displayNameCreator
   parameters:
     gameId:
       name: gameId
