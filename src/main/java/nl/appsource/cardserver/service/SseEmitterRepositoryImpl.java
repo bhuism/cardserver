@@ -88,26 +88,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void sendOnlineListToFriendsOf(final String userId) {
-        log.info("sending online list to friends of user {}", userId);
-//        doSelectedUserIds(getFriends(userId).filter(this::isUserOnline), this::sendOnlineList);
-
         getFriends(userId).filter(this::isUserOnline).subscribe(this::sendOnlineListTo);
     }
 
     @Override
     public void sendOnlineListTo(final String userId) {
-//        log.info("sending online list to friends of user {}", userId);
         doUserId(userId, this::_sendOnlineList);
     }
 
     private void _sendOnlineList(final MySseEmitter mySseEmitter) {
-        log.info("sending online list to friends of sseEmitter {} {}", mySseEmitter.getUuid(), mySseEmitter.getUserId());
-
-        mySseEmitter.sendOnlineList(getFriends(mySseEmitter.getUserId()).doOnNext(s -> {
-            //log.info("got before filter: {}", s);
-        }).filter(this::isUserOnline).doOnNext(s -> {
-            log.info("got after filter: {}", s);
-        }));
+        mySseEmitter.sendOnlineList(getFriends(mySseEmitter.getUserId()).filter(this::isUserOnline));
     }
 
     @Override
