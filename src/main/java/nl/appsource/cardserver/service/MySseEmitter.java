@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import org.openapitools.model.Game;
 import org.openapitools.model.GameStateEvent;
+import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
 import org.springframework.http.codec.ServerSentEvent;
@@ -119,6 +120,10 @@ public final class MySseEmitter {
 
     public void newGame(final Game game) {
         internalSend("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
+    }
+
+    public void newFriend(final String newFriendId) {
+        internalSend("newFriend", new NewFriendEvent().newFriendId(newFriendId));
     }
 
     public void tryEmitComplete() {

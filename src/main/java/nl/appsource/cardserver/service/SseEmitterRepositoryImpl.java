@@ -179,5 +179,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return emitters.values().stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
     }
 
-
+    @Override
+    public void newFriend(String userId, String friendId) {
+        doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
+    }
 }

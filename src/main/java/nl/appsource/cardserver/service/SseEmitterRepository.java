@@ -31,4 +31,5 @@ public interface SseEmitterRepository {
 
     boolean isUserOnline(String userId);
 
+    void newFriend(String userId, String friendId);
 }
