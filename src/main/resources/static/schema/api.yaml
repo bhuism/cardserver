@@ -300,6 +300,16 @@ components:
       oneOf:
         - $ref: "./game.yaml#/components/schemas/Game"
         - $ref: "#/components/schemas/UserMessage"
+    OnlineListEvent:
+      type: object
+      properties:
+        onlineList:
+          type: array
+          items:
+            type: string
+            uniqueItems: true
+      required:
+        - onlineList
     NewGameEvent:
       type: object
       properties:
@@ -310,6 +320,13 @@ components:
       required:
         - gameId
         - displayNameCreator
+    GameStateEvent:
+      type: object
+      properties:
+        gameState:
+          $ref: "./game.yaml#/components/schemas/Game"
+      required:
+        - gameState
   parameters:
     gameId:
       name: gameId
