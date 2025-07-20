@@ -180,7 +180,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void newFriend(String userId, String friendId) {
+    public void newFriend(final String userId, final String friendId) {
         doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
     }
 }
