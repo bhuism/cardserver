@@ -108,9 +108,9 @@ public class UserServiceImpl implements UserService {
                             user.getInvites().addAll(newFriendIds);
                             userRepository.save(user).block();
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
+                            sseEmitterRepository.sendOnlineListTo(userId);
                             sseEmitterRepository.friendsChanged(newFriendIds);
                             sseEmitterRepository.friendsChanged(singleton(userId));
-                            sseEmitterRepository.sendOnlineListTo(userId);
                             return newFriendIds.size();
                         }));
                 }
