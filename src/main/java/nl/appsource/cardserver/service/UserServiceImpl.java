@@ -95,27 +95,23 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<Integer> createInvite(final String userId, final String searchString) {
         return userRepository.findById(userId)
-            .map(
+            .flatMap(
                 (user) -> {
                     log.info("total before: {}", user.getInvites());
                     //noinspection DataFlowIssue
-                    final Set<String> newFriendIds = userRepository.searchInvitees(searchString)
+                    return userRepository.searchInvitees(searchString)
                         .map(User::getId)
-                        .doOnNext(s -> {
-                            log.info("found friend: {}", s);
-                        })
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
-                        .collect(Collectors.toSet()).block();
-                    log.info("adding: {}", newFriendIds);
-                    user.getInvites().addAll(newFriendIds);
-                    log.info("total after: {}", user.getInvites());
-                    userRepository.save(user);
-                    newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
-                    sseEmitterRepository.friendsChanged(newFriendIds);
-                    sseEmitterRepository.friendsChanged(singleton(userId));
-                    sseEmitterRepository.sendOnlineListTo(userId);
-
-                    return newFriendIds.size();
+                        .collect(Collectors.toSet())
+                        .map((newFriendIds -> {
+                            user.getInvites().addAll(newFriendIds);
+                            userRepository.save(user).block();
+                            newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
+                            sseEmitterRepository.friendsChanged(newFriendIds);
+                            sseEmitterRepository.friendsChanged(singleton(userId));
+                            sseEmitterRepository.sendOnlineListTo(userId);
+                            return newFriendIds.size();
+                        }));
                 }
             );
     }
