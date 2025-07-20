@@ -171,7 +171,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void newGame(final Game game) {
-        doSelectedUserIds(Flux.fromIterable(game.getPlayers()), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
+        doSelectedUserIds(Flux.fromIterable(game.getPlayers()).filter(player -> !player.equals(game.getCreator())), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
     }
 
     @Override
