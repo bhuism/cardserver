@@ -77,7 +77,7 @@ public class GameEngineImpl implements GameEngine {
 
         final Suit requestedSuit = trick.getFirst().getSuit();
 
-        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).min(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(IllegalArgumentException::new);
+        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(IllegalArgumentException::new);
 
     }
 
