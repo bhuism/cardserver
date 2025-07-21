@@ -228,19 +228,16 @@ components:
           type: array
           items:
             type: string
-          uniqueItems: true
         outgoing:
           description: unaccepted outgoing
           type: array
           items:
             type: string
-          uniqueItems: true
         friends:
           description: accepted, friends
           type: array
           items:
             type: string
-          uniqueItems: true
     ping:
       type: object
       properties:

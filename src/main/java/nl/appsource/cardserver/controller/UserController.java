@@ -25,10 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -67,19 +64,11 @@ public class UserController implements UsersApi, V1Api {
                 final Flux<String> outgoing = invites.getOutgoing();
                 final Flux<String> friends = invites.getFriends();
 
-
-                final Mono<InvitesResponse> invitesResponse = Mono.zip(arr -> new InvitesResponse()
-                        .incoming(new HashSet<>((Set<String>) arr[0]))
-                        .friends(new HashSet<>((Set<String>) arr[1]))
-                        .outgoing(new HashSet<>((Set<String>) arr[2])),
-                    incoming.collect(Collectors.toSet()), friends.collect(Collectors.toSet()), outgoing.collect(Collectors.toSet()));
-
-//                invitesResponse.setIncoming(invites.getIncoming().stream().map(userToOpenApiConverter::convert).toList());
-//                invitesResponse.setOutgoing(invites.getOutgoing().stream().map(userToOpenApiConverter::convert).toList());
-//                invitesResponse.setFriends(invites.getFriends().stream().map(userToOpenApiConverter::convert).toList());
-
-
-                return invitesResponse;
+                return Mono.zip(arr -> new InvitesResponse()
+                        .incoming((List<String>) arr[0])
+                        .friends((List<String>) arr[1])
+                        .outgoing((List<String>) arr[2]),
+                    incoming.collectList(), friends.collectList(), outgoing.collectList());
 
             }).map(invitesResponse -> {
                 LoggingFilter.requestLogMessage(("incoming: " + invitesResponse.getIncoming().size() + ", outgoing: " + invitesResponse.getOutgoing().size() + ", friends: " + invitesResponse.getFriends().size()));
