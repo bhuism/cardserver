@@ -2,7 +2,6 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.model.User;
 import reactor.core.publisher.Flux;
 
 
