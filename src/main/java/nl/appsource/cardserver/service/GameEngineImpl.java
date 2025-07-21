@@ -28,10 +28,10 @@ public class GameEngineImpl implements GameEngine {
 
     private static final Map<CardNr, Integer> RANK_REGULAR = Map.of(
         CardNr.Ace, 8,
-        CardNr.King, 7,
-        CardNr.Queen, 6,
-        CardNr.Jack, 5,
-        CardNr.Ten, 4,
+        CardNr.King, 6,
+        CardNr.Queen, 5,
+        CardNr.Jack, 4,
+        CardNr.Ten, 7,
         CardNr.Nine, 3,
         CardNr.Eight, 2,
         CardNr.Seven, 1
