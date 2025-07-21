@@ -13,8 +13,8 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
 
     Mono<User> findByEmail(String email);
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
-    Flux<User> findIncomingInvites(@Param("id") String id);
+    @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
+    Flux<String> findIncomingInvites(@Param("id") String id);
 
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND (email=$searchString OR LOWER(name)=LOWER($searchString) OR LOWER(displayName)=LOWER($searchString)) OR META().id=$searchString")
     Flux<User> searchInvitees(@Param("searchString") String searchString);

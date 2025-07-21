@@ -45,12 +45,12 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findById(userId).flatMap(user -> {
 
-            final Flux<User> incomingFlux = userRepository.findIncomingInvites(userId).cache();
+            final Flux<String> incomingFlux = userRepository.findIncomingInvites(userId).cache();
             final Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites()).cache();
-            final Flux<User> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.getId().equals(s2))).cache();
-            final Flux<User> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.getId().equals(s2.getId()))).cache();
-            final Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2.getId())));
-            final InvitesResponse invitesResponse = new InvitesResponse(onlyIncoming, onlyOutgoing.flatMap(userRepository::findById), friends);
+            final Flux<String> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).cache();
+            final Flux<String> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).cache();
+            final Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2)));
+            final InvitesResponse invitesResponse = new InvitesResponse(onlyIncoming, onlyOutgoing, friends);
             return Mono.just(invitesResponse);
 
         });

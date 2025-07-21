@@ -83,7 +83,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private Flux<String> getFriends(final String userId) {
         return userRepository.findById(userId)
             .map(User::getInvites)
-            .flatMapMany(list -> userRepository.findIncomingInvites(userId).map(User::getId).filter(list::contains));
+            .flatMapMany(list -> userRepository.findIncomingInvites(userId).filter(list::contains));
     }
 
     @Override

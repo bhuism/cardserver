@@ -227,17 +227,20 @@ components:
           description: unaccepted incoming
           type: array
           items:
-            $ref: "./user.yaml#/components/schemas/User"
+            type: string
+          uniqueItems: true
         outgoing:
           description: unaccepted outgoing
           type: array
           items:
-            $ref: "./user.yaml#/components/schemas/User"
+            type: string
+          uniqueItems: true
         friends:
           description: accepted, friends
           type: array
           items:
-            $ref: "./user.yaml#/components/schemas/User"
+            type: string
+          uniqueItems: true
     ping:
       type: object
       properties:

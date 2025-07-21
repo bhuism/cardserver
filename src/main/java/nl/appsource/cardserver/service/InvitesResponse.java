@@ -9,8 +9,8 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 @Getter
 public final class InvitesResponse {
-    private final Flux<User> incoming;
-    private final Flux<User> outgoing;
-    private final Flux<User> friends;
+    private final Flux<String> incoming;
+    private final Flux<String> outgoing;
+    private final Flux<String> friends;
 
 }
