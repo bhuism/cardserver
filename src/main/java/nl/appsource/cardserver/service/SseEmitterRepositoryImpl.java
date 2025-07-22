@@ -20,6 +20,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Service
@@ -132,13 +134,20 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return mySseEmitter.subscribe().doOnCancel(() -> {
 
             log.info("unsubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
-
             mySseEmitter.cancel();
             janitor();
 
-            sendOnlineListToFriendsOf(userId);
-
-
+            try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+                executor.submit(() -> {
+                    try {
+                        Thread.sleep(2000);
+                        sendOnlineListToFriendsOf(userId);
+                    } catch (final InterruptedException e) {
+                        log.error("", e);
+                    }
+                });
+                executor.shutdown();
+            }
         });
 
     }
