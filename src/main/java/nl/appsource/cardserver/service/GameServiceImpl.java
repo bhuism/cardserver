@@ -24,6 +24,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -54,6 +56,10 @@ public class GameServiceImpl implements GameService {
 
         if (!StringUtils.hasText(creator)) {
             throw new IllegalArgumentException("creator cannot be empty");
+        }
+
+        while (players.size() < 4) {
+            players.add(AI_USER_ID.get(players.size() - 1));
         }
 
         return Mono.just(new nl.appsource.cardserver.model.Game())
