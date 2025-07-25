@@ -1,10 +1,9 @@
 package nl.appsource.cardserver.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.CardNr;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
@@ -12,46 +11,64 @@ import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
 
 @Slf4j
-@RequiredArgsConstructor
 public class GameEngineImpl implements GameEngine {
 
     private final String userId;
 
     private final Game game;
 
-    private static final Map<CardNr, Integer> RANK_REGULAR = Map.of(
-        CardNr.Ace, 8,
-        CardNr.King, 6,
-        CardNr.Queen, 5,
-        CardNr.Jack, 4,
-        CardNr.Ten, 7,
-        CardNr.Nine, 3,
-        CardNr.Eight, 2,
-        CardNr.Seven, 1
+    private final List<Card> hand = new ArrayList<>();
+
+    private final Integer playerNum;
+
+    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(
+        Rank.Ace, 8,
+        Rank.King, 6,
+        Rank.Queen, 5,
+        Rank.Jack, 4,
+        Rank.Ten, 7,
+        Rank.Nine, 3,
+        Rank.Eight, 2,
+        Rank.Seven, 1
     );
 
-    private static final Map<CardNr, Integer> RANK_TRUMP = Map.of(
-        CardNr.Ace, 6,
-        CardNr.King, 4,
-        CardNr.Queen, 3,
-        CardNr.Jack, 8,
-        CardNr.Ten, 5,
-        CardNr.Nine, 7,
-        CardNr.Eight, 2,
-        CardNr.Seven, 1
+    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(
+        Rank.Ace, 14,
+        Rank.King, 12,
+        Rank.Queen, 11,
+        Rank.Jack, 16,
+        Rank.Ten, 13,
+        Rank.Nine, 15,
+        Rank.Eight, 10,
+        Rank.Seven, 9
     );
 
-    private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> RANK_TRUMP.get(o.getCardNr()));
+    private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> RANK_TRUMP.get(o.getRank()));
 
-    private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> RANK_REGULAR.get(o.getCardNr()));
+    private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> RANK_REGULAR.get(o.getRank()));
 
+    public GameEngineImpl(final String userIdArg, final Game gameArg) {
+        this.userId = userIdArg;
+        this.game = gameArg;
+
+        this.playerNum = this.game.getPlayers().indexOf(userId);
+
+        game.getPlayerCard().forEach((card, player) -> {
+            if (player.equals(playerNum)) {
+                this.hand.add(card);
+            }
+        });
+    }
 
     private int calcTricksPlayed() {
         return this.game.getTurns().size() / 4;
@@ -152,4 +169,132 @@ public class GameEngineImpl implements GameEngine {
     private int whoHasCard(final Card card) {
         return game.getPlayerCard().get(card);
     }
+
+
+    private boolean hasSuit(final Suit suit) {
+        return hand.stream().map(Card::getSuit).anyMatch(handCardSuit -> handCardSuit.equals(suit));
+    }
+
+    private List<Card> getCardsOfSuit(final Suit suit) {
+        return hand.stream().filter(card -> card.getSuit().equals(suit)).collect(Collectors.toList());
+    }
+
+    private Integer getKlaverjassenValue(final Card c1) {
+        return c1.getSuit().equals(game.getTrump()) ? RANK_TRUMP.get(c1.getRank()) : RANK_REGULAR.get(c1.getRank());
+    }
+
+    private int compareKlaverjassenCards(final Card card1, final Card card2) {
+        return Integer.compare(getKlaverjassenValue(card1), getKlaverjassenValue(card2));
+    }
+
+
+    public Card getHighestCardInTrick(final List<Card> trick) {
+        if (trick.isEmpty()) {
+            return null;
+        }
+        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(IllegalArgumentException::new);
+    }
+
+    public Card chooseCard(final List<Card> currentTrick, final Suit trumpSuit, final boolean isFirstPlayerInTrick) {
+
+        // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
+        if (isFirstPlayerInTrick) {
+            // Try to play a low card from a non-trump suit
+            for (Card card : hand) {
+                if (card.getSuit() != trumpSuit && card.getRank() != Rank.Seven && card.getRank() != Rank.Eight) {
+                    return card;
+                }
+            }
+            // If only trumps or high cards, play the lowest card
+            return hand.getFirst();
+        } else {
+            // Not the first player, must follow suit if possible
+            Card leadingCard = currentTrick.get(0);
+            Suit leadingSuit = leadingCard.getSuit();
+
+            List<Card> playableCards = new ArrayList<>();
+
+            // Rule 1: Must follow suit if possible
+            if (hasSuit(leadingSuit)) {
+                List<Card> cardsOfLeadingSuit = getCardsOfSuit(leadingSuit);
+                // Try to beat the current highest card in the trick if possible and not trump
+                Card highestInTrick = getHighestCardInTrick(currentTrick);
+
+                for (Card card : cardsOfLeadingSuit) {
+                    // If leading suit is trump, or if card can beat the highest non-trump card
+                    if (leadingSuit == trumpSuit || compareKlaverjassenCards(card, highestInTrick) > 0) {
+                        playableCards.add(card);
+                    }
+                }
+
+                if (!playableCards.isEmpty()) {
+                    // Play the lowest card that can beat the current highest, or lowest if none can beat
+                    Collections.sort(playableCards, (c1, c2) -> {
+                        int val1 = getKlaverjassenValue(c1);
+                        int val2 = getKlaverjassenValue(c2);
+                        return Integer.compare(val1, val2);
+                    });
+                    // Prioritize beating the card if possible, otherwise play lowest of suit
+                    for (Card card : playableCards) {
+                        if (compareKlaverjassenCards(card, highestInTrick) > 0) {
+                            return card; // Play a card that beats
+                        }
+                    }
+                    return playableCards.get(0); // Play lowest if cannot beat
+                } else {
+                    // If has suit but no card can beat, play the lowest of the leading suit
+                    Collections.sort(cardsOfLeadingSuit, (c1, c2) -> {
+                        int val1 = getKlaverjassenValue(c1);
+                        int val2 = getKlaverjassenValue(c2);
+                        return Integer.compare(val1, val2);
+                    });
+                    return cardsOfLeadingSuit.get(0);
+                }
+            } else {
+                // Cannot follow suit
+                // Rule 2: If leading suit is not trump, and player has trump, must trump if possible
+                if (leadingSuit != trumpSuit && hasSuit(trumpSuit)) {
+                    List<Card> trumpCards = getCardsOfSuit(trumpSuit);
+                    Card highestInTrick = getHighestCardInTrick(currentTrick);
+
+                    // Try to play a trump that can beat the current highest card in the trick
+                    for (Card trumpCard : trumpCards) {
+                        if (compareKlaverjassenCards(trumpCard, highestInTrick) > 0) {
+                            playableCards.add(trumpCard);
+                        }
+                    }
+
+                    if (!playableCards.isEmpty()) {
+                        // Play the lowest trump that can beat
+                        Collections.sort(playableCards, (c1, c2) -> {
+                            int val1 = getKlaverjassenValue(c1);
+                            int val2 = getKlaverjassenValue(c2);
+                            return Integer.compare(val1, val2);
+                        });
+                        return playableCards.get(0);
+                    } else {
+                        // If has trump but cannot beat, play the lowest trump
+                        Collections.sort(trumpCards, (c1, c2) -> {
+                            int val1 = getKlaverjassenValue(c1);
+                            int val2 = getKlaverjassenValue(c2);
+                            return Integer.compare(val1, val2);
+                        });
+                        return trumpCards.get(0);
+                    }
+                } else {
+                    // Cannot follow suit and cannot trump (or leading suit is trump and cannot follow)
+                    // Rule 3: Discard a low card (preferably from a non-trump suit)
+                    for (Card card : hand) {
+                        if (card.getSuit() != trumpSuit) {
+                            return card; // Play a non-trump card
+                        }
+                    }
+                    // If only trumps left, play the lowest trump
+                    return hand.get(0);
+                }
+            }
+        }
+    }
+
+
 }

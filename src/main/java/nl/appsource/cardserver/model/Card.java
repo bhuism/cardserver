@@ -7,43 +7,44 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Card {
 
-    Ac(CardNr.Ace, Suit.Clubs),
-    Kc(CardNr.King, Suit.Clubs),
-    Qc(CardNr.Queen, Suit.Clubs),
-    Jc(CardNr.Jack, Suit.Clubs),
-    Tc(CardNr.Ten, Suit.Clubs),
-    Nc(CardNr.Nine, Suit.Clubs),
-    Ec(CardNr.Eight, Suit.Clubs),
-    Sc(CardNr.Seven, Suit.Clubs),
+    Ac(Rank.Ace, Suit.Clubs),
+    Kc(Rank.King, Suit.Clubs),
+    Qc(Rank.Queen, Suit.Clubs),
+    Jc(Rank.Jack, Suit.Clubs),
+    Tc(Rank.Ten, Suit.Clubs),
+    Nc(Rank.Nine, Suit.Clubs),
+    Ec(Rank.Eight, Suit.Clubs),
+    Sc(Rank.Seven, Suit.Clubs),
 
-    Ad(CardNr.Ace, Suit.Diamonds),
-    Kd(CardNr.King, Suit.Diamonds),
-    Qd(CardNr.Queen, Suit.Diamonds),
-    Jd(CardNr.Jack, Suit.Diamonds),
-    Td(CardNr.Ten, Suit.Diamonds),
-    Nd(CardNr.Nine, Suit.Diamonds),
-    Ed(CardNr.Eight, Suit.Diamonds),
-    Sd(CardNr.Seven, Suit.Diamonds),
+    Ad(Rank.Ace, Suit.Diamonds),
+    Kd(Rank.King, Suit.Diamonds),
+    Qd(Rank.Queen, Suit.Diamonds),
+    Jd(Rank.Jack, Suit.Diamonds),
+    Td(Rank.Ten, Suit.Diamonds),
+    Nd(Rank.Nine, Suit.Diamonds),
+    Ed(Rank.Eight, Suit.Diamonds),
+    Sd(Rank.Seven, Suit.Diamonds),
 
-    Ah(CardNr.Ace, Suit.Hearts),
-    Kh(CardNr.King, Suit.Hearts),
-    Qh(CardNr.Queen, Suit.Hearts),
-    Jh(CardNr.Jack, Suit.Hearts),
-    Th(CardNr.Ten, Suit.Hearts),
-    Nh(CardNr.Nine, Suit.Hearts),
-    Eh(CardNr.Eight, Suit.Hearts),
-    Sh(CardNr.Seven, Suit.Hearts),
+    Ah(Rank.Ace, Suit.Hearts),
+    Kh(Rank.King, Suit.Hearts),
+    Qh(Rank.Queen, Suit.Hearts),
+    Jh(Rank.Jack, Suit.Hearts),
+    Th(Rank.Ten, Suit.Hearts),
+    Nh(Rank.Nine, Suit.Hearts),
+    Eh(Rank.Eight, Suit.Hearts),
+    Sh(Rank.Seven, Suit.Hearts),
 
-    As(CardNr.Ace, Suit.Spades),
-    Ks(CardNr.King, Suit.Spades),
-    Qs(CardNr.Queen, Suit.Spades),
-    Js(CardNr.Jack, Suit.Spades),
-    Ts(CardNr.Ten, Suit.Spades),
-    Ns(CardNr.Nine, Suit.Spades),
-    Es(CardNr.Eight, Suit.Spades),
-    Ss(CardNr.Seven, Suit.Spades);
+    As(Rank.Ace, Suit.Spades),
+    Ks(Rank.King, Suit.Spades),
+    Qs(Rank.Queen, Suit.Spades),
+    Js(Rank.Jack, Suit.Spades),
+    Ts(Rank.Ten, Suit.Spades),
+    Ns(Rank.Nine, Suit.Spades),
+    Es(Rank.Eight, Suit.Spades),
+    Ss(Rank.Seven, Suit.Spades);
 
-    private final CardNr cardNr;
+    private final Rank rank;
 
     private final Suit suit;
+
 }

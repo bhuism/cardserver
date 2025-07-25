@@ -48,8 +48,8 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Game> createGame(final String creator, final Set<String> players) {
 
-        if (players.size() != 4) {
-            throw new IllegalArgumentException("players count must be 4");
+        if (players.isEmpty()) {
+            throw new IllegalArgumentException("need at least one player");
         }
 
         if (!StringUtils.hasText(creator)) {
