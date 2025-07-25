@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Suit {
-    Clubs(CardColor.BLACK), Diamonds(CardColor.RED), Hearts(CardColor.RED), Spades(CardColor.BLACK);
+    Clubs(CardColor.BLACK, "♣"), Diamonds(CardColor.RED, "♦"), Hearts(CardColor.RED, "♥"), Spades(CardColor.BLACK, "♠");
     private final CardColor color;
+    private final String symbol;
 }

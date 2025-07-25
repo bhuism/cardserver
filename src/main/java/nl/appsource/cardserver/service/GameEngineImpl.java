@@ -197,13 +197,17 @@ public class GameEngineImpl implements GameEngine {
         return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(IllegalArgumentException::new);
     }
 
-    public Card chooseCard(final List<Card> currentTrick, final Suit trumpSuit, final boolean isFirstPlayerInTrick) {
+    public Card calcAiCard() {
+
+        final boolean isFirstPlayerInTrick = game.getTurns().size() % 4 == 0;
+
+        final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
 
         // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
         if (isFirstPlayerInTrick) {
             // Try to play a low card from a non-trump suit
             for (Card card : hand) {
-                if (card.getSuit() != trumpSuit && card.getRank() != Rank.Seven && card.getRank() != Rank.Eight) {
+                if (card.getSuit() != game.getTrump() && card.getRank() != Rank.Seven && card.getRank() != Rank.Eight) {
                     return card;
                 }
             }
@@ -224,7 +228,7 @@ public class GameEngineImpl implements GameEngine {
 
                 for (Card card : cardsOfLeadingSuit) {
                     // If leading suit is trump, or if card can beat the highest non-trump card
-                    if (leadingSuit == trumpSuit || compareKlaverjassenCards(card, highestInTrick) > 0) {
+                    if (leadingSuit == game.getTrump() || compareKlaverjassenCards(card, highestInTrick) > 0) {
                         playableCards.add(card);
                     }
                 }
@@ -255,8 +259,8 @@ public class GameEngineImpl implements GameEngine {
             } else {
                 // Cannot follow suit
                 // Rule 2: If leading suit is not trump, and player has trump, must trump if possible
-                if (leadingSuit != trumpSuit && hasSuit(trumpSuit)) {
-                    List<Card> trumpCards = getCardsOfSuit(trumpSuit);
+                if (leadingSuit != game.getTrump() && hasSuit(game.getTrump())) {
+                    List<Card> trumpCards = getCardsOfSuit(game.getTrump());
                     Card highestInTrick = getHighestCardInTrick(currentTrick);
 
                     // Try to play a trump that can beat the current highest card in the trick
@@ -287,7 +291,7 @@ public class GameEngineImpl implements GameEngine {
                     // Cannot follow suit and cannot trump (or leading suit is trump and cannot follow)
                     // Rule 3: Discard a low card (preferably from a non-trump suit)
                     for (Card card : hand) {
-                        if (card.getSuit() != trumpSuit) {
+                        if (card.getSuit() != game.getTrump()) {
                             return card; // Play a non-trump card
                         }
                     }

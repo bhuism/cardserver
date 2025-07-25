@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum Card {
+public enum Card implements Comparable<Card> {
 
     Ac(Rank.Ace, Suit.Clubs),
     Kc(Rank.King, Suit.Clubs),
@@ -46,5 +46,10 @@ public enum Card {
     private final Rank rank;
 
     private final Suit suit;
+
+    @Override
+    public String toString() {
+        return rank.getSymbol() + suit.getSymbol();
+    }
 
 }
