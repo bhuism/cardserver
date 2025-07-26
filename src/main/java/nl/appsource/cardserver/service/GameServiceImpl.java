@@ -141,9 +141,12 @@ public class GameServiceImpl implements GameService {
         gameSink.tryEmitNext(sse);
     }
 
-
     @Override
     public Publisher<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
-        return gameSink.asFlux().filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
+        log.info("subscribe() gameId={}", gameId);
+        return gameSink.asFlux().doOnCancel(() -> {
+            log.info("subscribe() gameId={}", gameId);
+        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
     }
+
 }
