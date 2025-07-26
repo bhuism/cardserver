@@ -125,7 +125,7 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-    private final Sinks.Many<ServerSentEvent<org.openapitools.model.Game>> gameSink = reactor.core.publisher.Sinks.many().multicast().onBackpressureBuffer();
+    private final Sinks.Many<ServerSentEvent<org.openapitools.model.Game>> gameSink = Sinks.many().multicast().onBackpressureBuffer();
 
     private Game gameChanged(final Game game) {
         internalSend(gameToOpenApiConverter.convert(game));
@@ -167,9 +167,14 @@ public class GameServiceImpl implements GameService {
             executor.shutdown();
         }
 
-        return gameSink.asFlux().log().doOnCancel(() -> {
+//        return gameSink.asFlux().log().doOnCancel(() -> {
+//            log.info("subscribe() gameId={}", gameId);
+//        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
+
+        return gameSink.asFlux().doOnCancel(() -> {
             log.info("subscribe() gameId={}", gameId);
-        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
+        }).log();
+
     }
 
 }
