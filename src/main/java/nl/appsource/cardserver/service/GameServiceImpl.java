@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
@@ -43,6 +45,7 @@ public class GameServiceImpl implements GameService {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private static final Random RAND = new SecureRandom();
+    private final GameService gameService;
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
@@ -124,13 +127,10 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-
     private final Sinks.Many<ServerSentEvent<org.openapitools.model.Game>> gameSink = reactor.core.publisher.Sinks.many().multicast().onBackpressureBuffer();
 
-    public Game gameChanged(final Game game) {
-
+    private Game gameChanged(final Game game) {
         internalSend(gameToOpenApiConverter.convert(game));
-
         return game;
     }
 
@@ -144,6 +144,18 @@ public class GameServiceImpl implements GameService {
     @Override
     public Publisher<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
         log.info("subscribe() gameId={}", gameId);
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            executor.submit(() -> {
+                try {
+                    Thread.sleep(1000);
+                    gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
+                } catch (final InterruptedException e) {
+                    log.error("", e);
+                }
+            });
+            executor.shutdown();
+        }
+
         return gameSink.asFlux().doOnCancel(() -> {
             log.info("subscribe() gameId={}", gameId);
         }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
