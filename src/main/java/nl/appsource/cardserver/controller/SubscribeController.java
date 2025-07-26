@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
 public class SubscribeController implements V1Api {
 
     private final UserService userService;
+
     private final GameService gameService;
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

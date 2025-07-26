@@ -45,7 +45,6 @@ public class GameServiceImpl implements GameService {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private static final Random RAND = new SecureRandom();
-    private final GameService gameService;
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {

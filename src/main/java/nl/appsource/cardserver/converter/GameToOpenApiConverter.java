@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.converter;
 
-import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import org.openapitools.model.Card;
@@ -14,7 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@RequiredArgsConstructor
 @Component
 public class GameToOpenApiConverter implements Converter<Game, org.openapitools.model.Game> {
 

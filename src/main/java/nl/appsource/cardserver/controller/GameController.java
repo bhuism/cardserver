@@ -29,6 +29,7 @@ import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCa
 public class GameController implements GamesApi, V1Api {
 
     private final GameService gameService;
+
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     @Override
