@@ -163,12 +163,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Game gameChanged(final Game gameState) {
-        doSelectedUserIds(Flux.fromIterable(gameState.getPlayers()), mySseEmitter -> mySseEmitter.sendGameChanged(gameToOpenApiConverter.convert(gameState)));
-        return gameState;
-    }
-
-    @Override
     public void friendsChanged(final Collection<String> userIds) {
         doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateFriends);
     }

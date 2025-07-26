@@ -8,6 +8,18 @@ servers:
     description: Klavers Jassen
 
 paths:
+#  /subscribe:
+#    get:
+#      operationId: subscribe
+#      responses:
+#        "200":
+#          description: OK
+#          content:
+#            text/event-stream:
+#              schema:
+#                type: array
+#                items:
+#                  type: object
   /whoami:
     post:
       tags:
@@ -327,13 +339,6 @@ components:
           type: string
       required:
         - newFriendId
-    GameStateEvent:
-      type: object
-      properties:
-        gameState:
-          $ref: "./game.yaml#/components/schemas/Game"
-      required:
-        - gameState
   parameters:
     gameId:
       name: gameId

@@ -2,6 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -9,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
@@ -19,15 +21,23 @@ import reactor.core.publisher.Flux;
 public class SubscribeController implements V1Api {
 
     private final UserService userService;
+    private final GameService gameService;
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<Object>> subscribe() {
-
+    public Flux<? extends ServerSentEvent<Object>> subscribe() {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMapMany(userService::subscribe);
-
     }
+
+    @GetMapping(path = "/gamestream/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final @PathVariable("gameId") String gameId) {
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMapMany(userId -> gameService.gameStream(userId, gameId));
+    }
+
 }
 

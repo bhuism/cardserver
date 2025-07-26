@@ -2,17 +2,22 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.reactivestreams.Publisher;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +39,8 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
 
     private final SseEmitterRepository sseEmitterRepository;
+
+    private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private static final Random RAND = new SecureRandom();
 
@@ -62,43 +69,36 @@ public class GameServiceImpl implements GameService {
             players.add(AI_USER_ID.get(players.size() - 1));
         }
 
-        return Mono.just(new nl.appsource.cardserver.model.Game())
-            .doOnNext((game) -> {
-                game.setId(idGen(20));
-                game.setCreator(creator);
-                game.setCreated(Instant.now());
-                game.setUpdated(Instant.now());
-                game.setPlayers(new ArrayList<>(players));
-                game.setDealer(RAND.nextInt(4));
-                game.setElder(RAND.nextInt(4));
-                game.setTurns(new ArrayList<>());
-                game.setPlayerCard(randomCards());
-                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-            }).flatMap(gameRepository::save)
-            .doOnNext((game) -> sseEmitterRepository.gamesChanged(players))
-            .doOnNext(sseEmitterRepository::newGame);
+        return Mono.just(new nl.appsource.cardserver.model.Game()).doOnNext((game) -> {
+            game.setId(idGen(20));
+            game.setCreator(creator);
+            game.setCreated(Instant.now());
+            game.setUpdated(Instant.now());
+            game.setPlayers(new ArrayList<>(players));
+            game.setDealer(RAND.nextInt(4));
+            game.setElder(RAND.nextInt(4));
+            game.setTurns(new ArrayList<>());
+            game.setPlayerCard(randomCards());
+            game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+        }).flatMap(gameRepository::save).doOnNext((game) -> sseEmitterRepository.gamesChanged(players)).doOnNext(sseEmitterRepository::newGame);
 
     }
 
     @Override
     public Mono<Void> deleteGame(final String gameId) {
-        return gameRepository.findById(gameId)
-            .flatMap(game -> {
-                final List<String> players = game.getPlayers();
-                return gameRepository.delete(game).then(Mono.just(players));
-            })
-            .flatMap(players -> {
-                sseEmitterRepository.gamesChanged(players);
-                return Mono.empty();
-            });
+        return gameRepository.findById(gameId).flatMap(game -> {
+            final List<String> players = game.getPlayers();
+            return gameRepository.delete(game).then(Mono.just(players));
+        }).flatMap(players -> {
+            sseEmitterRepository.gamesChanged(players);
+            return Mono.empty();
+        });
     }
 
     @Override
     public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
         try {
-            return gameRepository.findById(gameId)
-                .flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card)))
-                .map(sseEmitterRepository::gameChanged);
+            return gameRepository.findById(gameId).flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card))).map(this::gameChanged);
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
@@ -124,4 +124,26 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
+
+    private final Sinks.Many<ServerSentEvent<org.openapitools.model.Game>> gameSink = reactor.core.publisher.Sinks.many().multicast().onBackpressureBuffer();
+
+    public Game gameChanged(final Game game) {
+
+        internalSend(gameToOpenApiConverter.convert(game));
+
+        return game;
+    }
+
+    private void internalSend(final org.openapitools.model.Game data) {
+        final Instant now = Instant.now();
+        final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
+        final ServerSentEvent<org.openapitools.model.Game> sse = ServerSentEvent.<org.openapitools.model.Game>builder().event("gameStateUpdate").id(id).data(data).retry(Duration.ofMillis(999)).build();
+        gameSink.tryEmitNext(sse);
+    }
+
+
+    @Override
+    public Publisher<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
+        return gameSink.asFlux().filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
+    }
 }

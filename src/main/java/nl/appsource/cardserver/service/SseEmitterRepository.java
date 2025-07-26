@@ -21,7 +21,7 @@ public interface SseEmitterRepository {
 
     void pong(UUID uuid);
 
-    Game gameChanged(Game gameState);
+//    Game gameChanged(Game gameState);
 
     void friendsChanged(Collection<String> userIds);
 

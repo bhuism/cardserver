@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.filter.LoggingFilter;
 import org.openapitools.model.Game;
-import org.openapitools.model.GameStateEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
@@ -95,10 +94,6 @@ public final class MySseEmitter {
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
 
         tryEmitNext(new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).retry(Duration.ofMillis(999)).build()));
-    }
-
-    public void sendGameChanged(final Game game) {
-        internalSend("gameStateUpdate", new GameStateEvent(game));
     }
 
     public void sendOnlineList(final Flux<String> onlineList) {
