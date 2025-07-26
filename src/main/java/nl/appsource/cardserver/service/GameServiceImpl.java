@@ -134,6 +134,7 @@ public class GameServiceImpl implements GameService {
     }
 
     private void internalSend(final org.openapitools.model.Game data) {
+        log.info("send() game={}", data.getId());
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
         final ServerSentEvent<org.openapitools.model.Game> sse = ServerSentEvent.<org.openapitools.model.Game>builder().event("gameStateUpdate").id(id).data(data).retry(Duration.ofMillis(999)).build();
@@ -146,7 +147,7 @@ public class GameServiceImpl implements GameService {
         try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             executor.submit(() -> {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(5000);
                     gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
                 } catch (final InterruptedException e) {
                     log.error("", e);
@@ -155,9 +156,21 @@ public class GameServiceImpl implements GameService {
             executor.shutdown();
         }
 
-        return gameSink.asFlux().doOnCancel(() -> {
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+            executor.submit(() -> {
+                try {
+                    Thread.sleep(10000);
+                    gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
+                } catch (final InterruptedException e) {
+                    log.error("", e);
+                }
+            });
+            executor.shutdown();
+        }
+
+        return gameSink.asFlux().log().doOnCancel(() -> {
             log.info("subscribe() gameId={}", gameId);
-        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
+        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId)).log();
     }
 
 }
