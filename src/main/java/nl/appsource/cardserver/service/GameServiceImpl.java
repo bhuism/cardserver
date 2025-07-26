@@ -8,7 +8,6 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
-import org.reactivestreams.Publisher;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -142,7 +141,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Publisher<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
+    public Flux<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
         log.info("subscribe() gameId={}", gameId);
         try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             executor.submit(() -> {
@@ -170,7 +169,7 @@ public class GameServiceImpl implements GameService {
 
         return gameSink.asFlux().log().doOnCancel(() -> {
             log.info("subscribe() gameId={}", gameId);
-        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId)).log();
+        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
     }
 
 }
