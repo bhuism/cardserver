@@ -44,7 +44,7 @@ public class GameController implements GamesApi, V1Api {
     }
 
 
-    //    @Override
+    @Override
     public Mono<ResponseEntity<Both>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
