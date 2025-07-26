@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
@@ -133,37 +130,26 @@ public class GameServiceImpl implements GameService {
     }
 
     private void internalSend(final org.openapitools.model.Game data) {
-        log.info("send() game={}", data.getId());
+//        log.info("send() game={} count={}", data, gameSink.currentSubscriberCount());
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
-        final ServerSentEvent<org.openapitools.model.Game> sse = ServerSentEvent.<org.openapitools.model.Game>builder().event("gameStateUpdate").id(id).data(data).retry(Duration.ofMillis(999)).build();
+        final ServerSentEvent<org.openapitools.model.Game> sse = ServerSentEvent.<org.openapitools.model.Game>builder().event("gameStateUpdate").id(id).data(data).build();
         gameSink.tryEmitNext(sse);
     }
+
+//    @Scheduled(initialDelay = 10000, fixedDelay = 5000)
+//    private void resetsome() {
+//        gameRepository.findById("Di4H9wUKHoR5fPdE8EQH").subscribe(this::gameChanged);
+//    }
 
     @Override
     public Flux<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
         log.info("subscribe() gameId={}", gameId);
-        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-            executor.submit(() -> {
-                try {
-                    while (true) {
-                        Thread.sleep(1000);
-                        gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
-                    }
-                } catch (final InterruptedException e) {
-                    log.error("", e);
-                }
-            });
-            executor.shutdown();
-        }
-
-//        return gameSink.asFlux().log().doOnCancel(() -> {
-//            log.info("subscribe() gameId={}", gameId);
-//        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId));
+        gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
 
         return gameSink.asFlux().doOnCancel(() -> {
-            log.info("subscribe() gameId={}", gameId);
-        }).log();
+            log.info("unsubscribe() gameId={}", gameId);
+        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId)).publish().autoConnect();
 
     }
 
