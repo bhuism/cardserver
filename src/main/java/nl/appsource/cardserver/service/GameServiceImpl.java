@@ -146,20 +146,10 @@ public class GameServiceImpl implements GameService {
         try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             executor.submit(() -> {
                 try {
-                    Thread.sleep(5000);
-                    gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
-                } catch (final InterruptedException e) {
-                    log.error("", e);
-                }
-            });
-            executor.shutdown();
-        }
-
-        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-            executor.submit(() -> {
-                try {
-                    Thread.sleep(10000);
-                    gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
+                    while (true) {
+                        Thread.sleep(1000);
+                        gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
+                    }
                 } catch (final InterruptedException e) {
                     log.error("", e);
                 }
