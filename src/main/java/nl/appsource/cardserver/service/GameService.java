@@ -20,5 +20,5 @@ public interface GameService {
 
     Mono<Game> playCard(String userId, String gameId, Card card);
 
-    Flux<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(String userId, String gameId);
+    Flux<ServerSentEvent<?>> gameStream(String userId, String gameId);
 }

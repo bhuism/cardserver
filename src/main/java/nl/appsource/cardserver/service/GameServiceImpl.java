@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -139,29 +140,41 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-    private final Sinks.Many<ServerSentEvent<org.openapitools.model.Game>> gameSink = Sinks.many().multicast().onBackpressureBuffer();
+    private final Sinks.Many<ServerSentEvent<?>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
+
+    private final Object test = Flux.interval(Duration.ofSeconds(5), Duration.ofSeconds(1)).subscribe(event -> {
+        ping();
+    });
+
+    private void ping() {
+        internalSend("ping", null);
+    }
 
     private Game gameChanged(final Game game) {
-        internalSend(gameToOpenApiConverter.convert(game));
+        log.info("Sending new game event");
+        internalSend("gameStateUpdate", gameToOpenApiConverter.convert(game));
         return game;
     }
 
-    private void internalSend(final org.openapitools.model.Game data) {
-//        log.info("send() game={} count={}", data, gameSink.currentSubscriberCount());
+    private void internalSend(final String eventName, final Object data) {
+        log.debug("send({}) data={} count={}", eventName, data, gameSink.currentSubscriberCount());
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
-        final ServerSentEvent<org.openapitools.model.Game> sse = ServerSentEvent.<org.openapitools.model.Game>builder().event("gameStateUpdate").id(id).data(data).build();
-        gameSink.tryEmitNext(sse);
+        gameSink.tryEmitNext(ServerSentEvent.builder().event(eventName).id(id).data(data != null ? data : "{}").build());
     }
 
     @Override
-    public Flux<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {
-        log.info("subscribe() gameId={}", gameId);
-        gameRepository.findById(gameId).subscribe(game -> internalSend(gameToOpenApiConverter.convert(game)));
+    public Flux<ServerSentEvent<?>> gameStream(final String userId, final String gameId) {
+        log.info("subscribe() gameId={} count={}", gameId, gameSink.currentSubscriberCount());
 
-        return gameSink.asFlux().doOnCancel(() -> {
-            log.info("unsubscribe() gameId={}", gameId);
-        }).filter(gameServerSentEvent -> gameServerSentEvent.data().getId().equals(gameId)).publish().autoConnect();
+        ping();
+        return gameSink.asFlux().filter(sse -> {
+            if (sse.data() instanceof org.openapitools.model.Game) {
+                return ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
+            } else {
+                return true;
+            }
+        });
 
     }
 
