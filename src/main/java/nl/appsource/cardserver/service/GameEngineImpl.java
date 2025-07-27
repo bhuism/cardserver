@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
@@ -7,8 +8,10 @@ import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
+import org.openapitools.model.UserMessage;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -25,51 +28,25 @@ public class GameEngineImpl implements GameEngine {
 
     public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9");
 
-    private final String userId;
+//    private final String userId;
 
+    @Getter
     private final Game game;
 
-    private final List<Card> hand = new ArrayList<>();
+    //  private final List<Card> hand = new ArrayList<>();
 
-    private final Integer playerNum;
+    // private final Integer playerNum;
 
-    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(
-        Rank.Ace, 8,
-        Rank.King, 6,
-        Rank.Queen, 5,
-        Rank.Jack, 4,
-        Rank.Ten, 7,
-        Rank.Nine, 3,
-        Rank.Eight, 2,
-        Rank.Seven, 1
-    );
+    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
 
-    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(
-        Rank.Ace, 14,
-        Rank.King, 12,
-        Rank.Queen, 11,
-        Rank.Jack, 16,
-        Rank.Ten, 13,
-        Rank.Nine, 15,
-        Rank.Eight, 10,
-        Rank.Seven, 9
-    );
+    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(Rank.Ace, 14, Rank.King, 12, Rank.Queen, 11, Rank.Jack, 16, Rank.Ten, 13, Rank.Nine, 15, Rank.Eight, 10, Rank.Seven, 9);
 
     private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> RANK_TRUMP.get(o.getRank()));
 
     private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> RANK_REGULAR.get(o.getRank()));
 
-    public GameEngineImpl(final String userIdArg, final Game gameArg) {
-        this.userId = userIdArg;
+    public GameEngineImpl(final Game gameArg) {
         this.game = gameArg;
-
-        this.playerNum = this.game.getPlayers().indexOf(userId);
-
-        game.getPlayerCard().forEach((card, player) -> {
-            if (player.equals(playerNum)) {
-                this.hand.add(card);
-            }
-        });
     }
 
     private int calcTricksPlayed() {
@@ -77,26 +54,27 @@ public class GameEngineImpl implements GameEngine {
     }
 
     private List<Card> getTrickCards(final int trickNr) {
-        return game.getTurns().subList(trickNr * 4, trickNr * 4 + 4);
+        log.info("getTrickcards() {}", trickNr);
+        return game.getTurns().subList(trickNr * 4, Math.min(game.getTurns().size(), trickNr * 4 + 4));
     }
 
     private Card determineTrickWinningCard(final int trickNr) {
 
         if (trickNr >= calcTricksPlayed() || trickNr < 0) {
-            throw new IllegalArgumentException("no such trick " + trickNr);
+            throw new GameEngineException("no such trick " + trickNr, UserMessage.VariantEnum.ERROR);
         }
 
         final List<Card> trick = getTrickCards(trickNr);
 
         if (trick.size() != 4) {
-            throw new IllegalArgumentException("Not 5 trick cards in tick " + trickNr);
+            throw new GameEngineException("Not 5 trick cards in tick " + trickNr, UserMessage.VariantEnum.ERROR);
         }
 
         final boolean troefAanwezig = trick.stream().anyMatch(c -> c.getSuit().equals(game.getTrump()));
 
         final Suit requestedSuit = trick.getFirst().getSuit();
 
-        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(IllegalArgumentException::new);
+        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(() -> new GameEngineException("No card found", UserMessage.VariantEnum.ERROR));
 
     }
 
@@ -105,9 +83,40 @@ public class GameEngineImpl implements GameEngine {
         return whoHasCard(winningCard);
     }
 
+    public int calcWhoHasTurn() {
+
+        final int laatsteKaart = game.getTurns().size() % 4;
+
+        if (laatsteKaart != 0) {
+            return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
+        } else {
+            if (game.getTurns().isEmpty()) {
+                return (game.getDealer() + 1) % 4;
+            } else {
+
+                final int tricksPlayedCount = calcTricksPlayed();
+                return determineTrickWinner(tricksPlayedCount - 1) + game.getTurns().size() % 4;
+
+            }
+        }
+    }
 
     @Override
-    public Game playCard(final Card card) {
+    public boolean isAiPlayerAanslag() {
+
+        if (isCompleted()) {
+            return false;
+        }
+
+        final int gotTurn = calcWhoHasTurn();
+        return AI_USER_ID.contains(game.getPlayers().get(gotTurn));
+    }
+
+
+    @Override
+    public void playCard(final String userId, final Card card) {
+
+        final int playerNum = this.game.getPlayers().indexOf(userId);
 
         if (isCompleted()) {
             log.warn("Game {} allready completed", game.getId());
@@ -118,53 +127,33 @@ public class GameEngineImpl implements GameEngine {
             throw new NotAPlayerException();
         }
 
+        final int cardOwner = whoHasCard(card);
+
+        if (playerNum != cardOwner) {
+            log.warn("Player does not have card {}", card);
+        }
+
         if (game.getTurns().stream().anyMatch((c) -> c == card)) {
             log.warn("Card {} allready played", card);
             throw new CardAlreadyPlayerException(card);
         }
 
-        final int laatsteKaart = game.getTurns().size() % 4;
+        final int gotTurn = calcWhoHasTurn();
 
-        final int cardPlayer = whoHasCard(card);
-
-        if (laatsteKaart != 0) {
-            final int gotTurn = (whoHasCard(game.getTurns().getLast()) + 1) % 4;
-            if (cardPlayer != gotTurn) {
-                log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
-                throw new NotPlayersTurnException();
-            }
-        } else {
-            if (game.getTurns().isEmpty()) {
-                final int gotTurn = (game.getDealer() + 1) % 4;
-                if (gotTurn != whoHasCard(card)) {
-                    log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
-                    throw new NotPlayersTurnException();
-                }
-            } else {
-
-                final int tricksPlayedCount = calcTricksPlayed();
-                final int gotTurn = determineTrickWinner(tricksPlayedCount - 1) + game.getTurns().size() % 4;
-
-                if (gotTurn != cardPlayer) {
-                    log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
-                    throw new NotPlayersTurnException();
-
-                }
-            }
+        if (gotTurn != playerNum) {
+            log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
+            throw new NotPlayersTurnException();
         }
 
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
-        // FIXME: add check: is speler aan slag?
-
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
 
-        return game;
-
     }
 
-    private boolean isCompleted() {
+    @Override
+    public boolean isCompleted() {
         return game.getTurns().size() >= 32;
     }
 
@@ -172,12 +161,11 @@ public class GameEngineImpl implements GameEngine {
         return game.getPlayerCard().get(card);
     }
 
-
-    private boolean hasSuit(final Suit suit) {
+    private static boolean hasSuit(final List<Card> hand, final Suit suit) {
         return hand.stream().map(Card::getSuit).anyMatch(handCardSuit -> handCardSuit.equals(suit));
     }
 
-    private List<Card> getCardsOfSuit(final Suit suit) {
+    private static List<Card> getCardsOfSuit(final List<Card> hand, final Suit suit) {
         return hand.stream().filter(card -> card.getSuit().equals(suit)).collect(Collectors.toList());
     }
 
@@ -194,14 +182,45 @@ public class GameEngineImpl implements GameEngine {
         if (trick.isEmpty()) {
             return null;
         }
-        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(IllegalArgumentException::new);
+        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(() -> new GameEngineException("Can not find highest card in trick", UserMessage.VariantEnum.ERROR));
     }
 
-    public Card calcAiCard() {
+    @Override
+    public void playAiCard() {
+
+        final int gotTurn = calcWhoHasTurn();
+
+        final String aiUserId = game.getPlayers().get(gotTurn);
+
+        if (!AI_USER_ID.contains(aiUserId)) {
+            throw new GameEngineException("Player who is aan slag is not an AI player", UserMessage.VariantEnum.ERROR);
+        }
+
+        final Card card = calcAiCard(aiUserId);
+
+        log.info("Ai {} plays card {}", aiUserId, card);
+
+        playCard(aiUserId, card);
+
+    }
+
+    public Card calcAiCard(final String userId) {
+
+        log.info("calcAiCard() userId={}", userId);
+
+        if (!AI_USER_ID.contains(userId)) {
+            throw new GameEngineException("Not an Ai player", UserMessage.VariantEnum.ERROR);
+        }
+
+        final int playerNum = this.game.getPlayers().indexOf(userId);
 
         final boolean isFirstPlayerInTrick = game.getTurns().size() % 4 == 0;
 
-        final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
+        log.info("isFirstPlayerInTrick={}", isFirstPlayerInTrick);
+
+        final List<Card> hand = game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
+
+        log.info("hande={}", hand);
 
         // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
         if (isFirstPlayerInTrick) {
@@ -214,6 +233,10 @@ public class GameEngineImpl implements GameEngine {
             // If only trumps or high cards, play the lowest card
             return hand.getFirst();
         } else {
+
+            final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
+
+
             // Not the first player, must follow suit if possible
             Card leadingCard = currentTrick.get(0);
             Suit leadingSuit = leadingCard.getSuit();
@@ -221,8 +244,8 @@ public class GameEngineImpl implements GameEngine {
             List<Card> playableCards = new ArrayList<>();
 
             // Rule 1: Must follow suit if possible
-            if (hasSuit(leadingSuit)) {
-                List<Card> cardsOfLeadingSuit = getCardsOfSuit(leadingSuit);
+            if (hasSuit(hand, leadingSuit)) {
+                List<Card> cardsOfLeadingSuit = getCardsOfSuit(hand, leadingSuit);
                 // Try to beat the current highest card in the trick if possible and not trump
                 Card highestInTrick = getHighestCardInTrick(currentTrick);
 
@@ -259,8 +282,8 @@ public class GameEngineImpl implements GameEngine {
             } else {
                 // Cannot follow suit
                 // Rule 2: If leading suit is not trump, and player has trump, must trump if possible
-                if (leadingSuit != game.getTrump() && hasSuit(game.getTrump())) {
-                    List<Card> trumpCards = getCardsOfSuit(game.getTrump());
+                if (leadingSuit != game.getTrump() && hasSuit(hand, game.getTrump())) {
+                    List<Card> trumpCards = getCardsOfSuit(hand, game.getTrump());
                     Card highestInTrick = getHighestCardInTrick(currentTrick);
 
                     // Try to play a trump that can beat the current highest card in the trick

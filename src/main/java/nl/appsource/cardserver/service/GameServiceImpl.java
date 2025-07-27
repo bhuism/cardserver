@@ -96,7 +96,24 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
         try {
-            return gameRepository.findById(gameId).flatMap((game) -> gameRepository.save(new GameEngineImpl(userId, game).playCard(card))).map(this::gameChanged);
+
+            return gameRepository.findById(gameId).flatMap((game) -> {
+
+                int cardOwnerIndex = game.getPlayerCard().get(card);
+
+                final String playerId = game.getPlayers().get(cardOwnerIndex);
+
+                final GameEngine gameEngine = new GameEngineImpl(game);
+
+                gameEngine.playCard(playerId, card);
+
+                while (gameEngine.isAiPlayerAanslag() && !gameEngine.isCompleted()) {
+                    log.info("Ai is aan slag");
+                    gameEngine.playAiCard();
+                }
+
+                return gameRepository.save(gameEngine.getGame());
+            }).map(this::gameChanged);
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
@@ -136,11 +153,6 @@ public class GameServiceImpl implements GameService {
         final ServerSentEvent<org.openapitools.model.Game> sse = ServerSentEvent.<org.openapitools.model.Game>builder().event("gameStateUpdate").id(id).data(data).build();
         gameSink.tryEmitNext(sse);
     }
-
-//    @Scheduled(initialDelay = 10000, fixedDelay = 5000)
-//    private void resetsome() {
-//        gameRepository.findById("Di4H9wUKHoR5fPdE8EQH").subscribe(this::gameChanged);
-//    }
 
     @Override
     public Flux<? extends ServerSentEvent<org.openapitools.model.Game>> gameStream(final String userId, final String gameId) {

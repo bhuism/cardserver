@@ -6,5 +6,14 @@ import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
 
 public interface GameEngine {
-    Game playCard(Card card) throws GameCompletedException, CardAlreadyPlayerException;
+    boolean isAiPlayerAanslag();
+
+    void playCard(String userId, Card card) throws GameCompletedException, CardAlreadyPlayerException;
+
+    boolean isCompleted();
+
+    void playAiCard();
+
+    Game getGame();
+
 }

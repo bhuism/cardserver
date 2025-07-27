@@ -47,8 +47,7 @@ public enum Card implements Comparable<Card> {
 
     private final Suit suit;
 
-    @Override
-    public String toString() {
+    public String getNiceString() {
         return rank.getSymbol() + suit.getSymbol();
     }
 

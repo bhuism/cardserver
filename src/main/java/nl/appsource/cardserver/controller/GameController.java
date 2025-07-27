@@ -57,8 +57,11 @@ public class GameController implements GamesApi, V1Api {
                 .mapNotNull(gameToOpenApiConverter::convert)
                 .map(Both.class::cast)
                 .onErrorResume(GameEngineException.class, throwable -> Mono.just(new UserMessage(throwable.getMessage(), throwable.getVariant())))
+                .onErrorResume(Throwable.class, throwable -> {
+                    log.error("", throwable);
+                    return Mono.just(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                })
                 .map(ResponseEntity::ok)
-                .onErrorReturn(ResponseEntity.unprocessableEntity().build())
             ));
     }
 
