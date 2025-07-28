@@ -1,7 +1,10 @@
 package nl.appsource.cardserver.converter;
 
+import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.service.GameEngine;
+import nl.appsource.cardserver.service.GameEngineImpl;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.core.convert.converter.Converter;
@@ -14,6 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class GameToOpenApiConverter implements Converter<Game, org.openapitools.model.Game> {
 
     @Override
@@ -36,6 +40,13 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         target.setPlayers(source.getPlayers());
         target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
         target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
+
+
+        final GameEngine gameEngine = new GameEngineImpl(source);
+
+        if (!gameEngine.isCompleted()) {
+            target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
+        }
 
         return target;
 

@@ -50,6 +50,8 @@ components:
           maxItems: 32
         trump:
           $ref: '#/components/schemas/Suit'
+        whosTurn:
+          type: integer
       required:
         - id
         - trump

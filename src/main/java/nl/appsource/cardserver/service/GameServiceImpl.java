@@ -206,7 +206,7 @@ public class GameServiceImpl implements GameService {
             } else {
                 return true;
             }
-        });
+        }).publish().autoConnect();
 
     }
 
