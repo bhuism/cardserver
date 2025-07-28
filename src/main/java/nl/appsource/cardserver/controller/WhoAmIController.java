@@ -3,7 +3,6 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
-import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.WhoamiApi;
@@ -43,7 +42,7 @@ public class WhoAmIController implements WhoamiApi {
 
                 final String email = principal.getClaims().get("email").toString();
 
-                LoggingFilter.requestLogMessage(("whoampi(), email=" + email));
+                log.info(("whoampi(), email=" + email));
 
                 final Instant now = Instant.now();
 

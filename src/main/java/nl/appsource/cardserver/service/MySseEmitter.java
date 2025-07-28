@@ -2,7 +2,6 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.filter.LoggingFilter;
 import org.openapitools.model.Game;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
@@ -57,25 +56,25 @@ public final class MySseEmitter {
     }
 
     public void sendPing() {
-        LoggingFilter.requestLogMessage(", sendPing " + uuid);
+        log.info(", sendPing " + uuid);
         this.pingSent = Instant.now();
         internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     private void sendPong() {
-        LoggingFilter.requestLogMessage(", sending pong " + uuid);
+        log.info(", sending pong " + uuid);
         this.pongSent = Instant.now();
         internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     public void receivePing() {
-        LoggingFilter.requestLogMessage(", got ping " + uuid);
+        log.info(", got ping " + uuid);
         pingReceived = Instant.now();
         sendPong();
     }
 
     public void receivePong() {
-        LoggingFilter.requestLogMessage(", got pong " + uuid);
+        log.info(", got pong " + uuid);
         pongReceived = Instant.now();
         // log.trace("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
     }

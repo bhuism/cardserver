@@ -3,7 +3,6 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
-import nl.appsource.cardserver.filter.LoggingFilter;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.api.GamesApi;
@@ -34,7 +33,8 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
-        LoggingFilter.requestLogMessage("getGame(" + gameId + ")");
+
+        log.info("getGame(" + gameId + ")");
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -51,7 +51,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                LoggingFilter.requestLogMessage("playCard(" + playCard.getCard() + ")");
+                log.info("playCard(" + playCard.getCard() + ")");
                 return playCard;
             }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
                 .mapNotNull(gameToOpenApiConverter::convert)
@@ -68,7 +68,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final ServerWebExchange exchange) {
 
-        LoggingFilter.requestLogMessage("getGames()");
+        log.info("getGames()");
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -81,7 +81,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> createGame(final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
 
-        LoggingFilter.requestLogMessage("createGame()");
+        log.info("createGame()");
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -94,7 +94,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final String gameId, final ServerWebExchange exchange) {
-        LoggingFilter.requestLogMessage("deleteGame(" + gameId + ")");
+        log.info("deleteGame(" + gameId + ")");
         return gameService.deleteGame(gameId)
             .then(Mono.just(ResponseEntity.ok().build()));
     }
