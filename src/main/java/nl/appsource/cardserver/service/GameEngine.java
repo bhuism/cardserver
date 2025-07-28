@@ -21,4 +21,6 @@ public interface GameEngine {
     Card calcAiCard(String userId);
 
     boolean hasFullTrick();
+
+    boolean isAiTurn();
 }

@@ -320,5 +320,11 @@ public class GameEngineImpl implements GameEngine {
         }
     }
 
-
+    @Override
+    public boolean isAiTurn() {
+        if (isCompleted()) {
+            return false;
+        }
+        return AI_USER_ID.contains(game.getPlayers().get(calcWhoHasTurn()));
+    }
 }

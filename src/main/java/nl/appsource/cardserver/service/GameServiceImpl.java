@@ -107,20 +107,24 @@ public class GameServiceImpl implements GameService {
                 final GameEngine gameEngine = new GameEngineImpl(game);
 
                 gameEngine.playCard(playerId, card);
-
-
-//                String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-
-//                while (!gameEngine.isCompleted() && AI_USER_ID.contains(game.getPlayers().get(gameEngine.calcWhoHasTurn())) && !gameEngine.hasFullTrick()) {
-//                    final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-//                    log.info("Ai " + aiUserId + " is aan slag");
-//                    gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
-//                }
+                playSomeAi(gameEngine);
 
                 return gameRepository.save(gameEngine.getGame());
             }).map(this::gameChanged);
         } catch (GameEngineException e) {
             return Mono.error(e);
+        }
+    }
+
+    private void playSomeAi(final GameEngine gameEngine) {
+        while (!gameEngine.isCompleted() && gameEngine.isAiTurn()) {
+            final String aiUserId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
+            log.info("Ai " + aiUserId + " is aan slag");
+            gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
+
+            if (gameEngine.hasFullTrick()) {
+                break;
+            }
         }
     }
 
@@ -133,15 +137,7 @@ public class GameServiceImpl implements GameService {
 
                     final GameEngine gameEngine = new GameEngineImpl(game);
 
-                    while (!gameEngine.isCompleted() && AI_USER_ID.contains(game.getPlayers().get(gameEngine.calcWhoHasTurn()))) {
-                        final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                        log.info("Ai " + aiUserId + " is aan slag");
-                        gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
-
-                        if (gameEngine.hasFullTrick()) {
-                            break;
-                        }
-                    }
+                    playSomeAi(gameEngine);
 
                     return gameRepository.save(gameEngine.getGame());
                 }).map(this::gameChanged);
