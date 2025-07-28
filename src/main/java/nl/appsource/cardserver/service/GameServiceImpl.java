@@ -150,8 +150,9 @@ public class GameServiceImpl implements GameService {
         internalSend("ping", null);
     }
 
-    private Game gameChanged(final Game game) {
-        log.info("Sending new game event");
+    @Override
+    public Game gameChanged(final Game game) {
+        log.info("Sending gameChanged event");
         internalSend("gameStateUpdate", gameToOpenApiConverter.convert(game));
         return game;
     }

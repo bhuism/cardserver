@@ -40,6 +40,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> gameService.getGame(userId, gameId))
+            .map(gameService::gameChanged)
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
     }
@@ -51,7 +52,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                log.info("playCard(" + playCard.getCard() + ")");
+                log.info("playCard() user " + userId + " plays card " + playCard.getCard());
                 return playCard;
             }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
                 .mapNotNull(gameToOpenApiConverter::convert)

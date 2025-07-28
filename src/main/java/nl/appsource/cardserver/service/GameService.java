@@ -20,5 +20,7 @@ public interface GameService {
 
     Mono<Game> playCard(String userId, String gameId, Card card);
 
+    Game gameChanged(Game game);
+
     Flux<ServerSentEvent<?>> gameStream(String userId, String gameId);
 }
