@@ -56,25 +56,25 @@ public final class MySseEmitter {
     }
 
     public void sendPing() {
-        log.info(", sendPing " + uuid);
+//        log.info(", sendPing " + uuid);
         this.pingSent = Instant.now();
         internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     private void sendPong() {
-        log.info(", sending pong " + uuid);
+//        log.info(", sending pong " + uuid);
         this.pongSent = Instant.now();
         internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     public void receivePing() {
-        log.info(", got ping " + uuid);
+//        log.info(", got ping " + uuid);
         pingReceived = Instant.now();
         sendPong();
     }
 
     public void receivePong() {
-        log.info(", got pong " + uuid);
+//        log.info(", got pong " + uuid);
         pongReceived = Instant.now();
         // log.trace("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
     }
