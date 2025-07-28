@@ -8,18 +8,18 @@ servers:
     description: Klavers Jassen
 
 paths:
-#  /subscribe:
-#    get:
-#      operationId: subscribe
-#      responses:
-#        "200":
-#          description: OK
-#          content:
-#            text/event-stream:
-#              schema:
-#                type: array
-#                items:
-#                  type: object
+  #  /subscribe:
+  #    get:
+  #      operationId: subscribe
+  #      responses:
+  #        "200":
+  #          description: OK
+  #          content:
+  #            text/event-stream:
+  #              schema:
+  #                type: array
+  #                items:
+  #                  type: object
   /whoami:
     post:
       tags:
@@ -35,6 +35,18 @@ paths:
         - $ref: "#/components/parameters/gameId"
       requestBody:
         $ref: "#/components/requestBodies/playCard"
+      responses:
+        "200":
+          $ref: "#/components/responses/PlayCardResponse"
+        "422":
+          description: some application error
+        "404":
+          description: not found
+  /games/{gameId}/playAiCard:
+    post:
+      operationId: playAiCard
+      parameters:
+        - $ref: "#/components/parameters/gameId"
       responses:
         "200":
           $ref: "#/components/responses/PlayCardResponse"
@@ -204,16 +216,19 @@ components:
       type: object
       properties:
         message:
-          type: string
-        variant:
-          enum:
-            - error
-            - warning
-            - info
-            - success
-      required:
-        - message
-        - variant
+          type: object
+          properties:
+            message:
+              type: string
+            variant:
+              enum:
+                - error
+                - warning
+                - info
+                - success
+          required:
+            - message
+            - variant
     whoAmIResponse:
       type: object
       properties:
@@ -308,10 +323,6 @@ components:
             type: string
       required:
         - players
-    both:
-      oneOf:
-        - $ref: "./game.yaml#/components/schemas/Game"
-        - $ref: "#/components/schemas/UserMessage"
     OnlineListEvent:
       type: object
       properties:
@@ -372,7 +383,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/both"
+            $ref: "#/components/schemas/UserMessage"
     GameResponse:
       description: a game
       content:

@@ -6,11 +6,11 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.api.GamesApi;
-import org.openapitools.model.Both;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.UserMessage;
+import org.openapitools.model.UserMessageMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -47,24 +47,40 @@ public class GameController implements GamesApi, V1Api {
 
 
     @Override
-    public Mono<ResponseEntity<Both>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<UserMessage>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                log.info("playCard() user " + userId + " plays card " + playCard.getCard());
-                return playCard;
-            }).flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))
-                .mapNotNull(gameToOpenApiConverter::convert)
-                .map(Both.class::cast)
-                .onErrorResume(GameEngineException.class, throwable -> Mono.just(new UserMessage(throwable.getMessage(), throwable.getVariant())))
-                .onErrorResume(Throwable.class, throwable -> {
-                    log.error("", throwable);
-                    return Mono.just(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                    log.info("playCard() user " + userId + " plays card " + playCard.getCard());
+                    return playCard;
                 })
-                .map(ResponseEntity::ok)
-            ));
+                .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard())))
+                .map((game) -> new UserMessage()))
+            .onErrorResume(GameEngineException.class, throwable -> Mono.just(new UserMessage().message(new UserMessageMessage().message(throwable.getMessage()).variant(throwable.getVariant()))))
+            .onErrorResume(Throwable.class, throwable -> {
+                log.error("", throwable);
+                return Mono.just(new UserMessage().message(new UserMessageMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessageMessage.VariantEnum.ERROR)));
+            })
+            .map(ResponseEntity::ok);
     }
+
+
+    @Override
+    public Mono<ResponseEntity<UserMessage>> playAiCard(final String gameId, final ServerWebExchange exchange) {
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> gameService.playAiCard(userId, gameId))
+            .map((game) -> new UserMessage())
+            .onErrorResume(GameEngineException.class, throwable -> Mono.just(new UserMessage().message(new UserMessageMessage().message(throwable.getMessage()).variant(throwable.getVariant()))))
+            .onErrorResume(Throwable.class, throwable -> {
+                log.error("", throwable);
+                return Mono.just(new UserMessage().message(new UserMessageMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessageMessage.VariantEnum.ERROR)));
+            })
+            .map(ResponseEntity::ok);
+    }
+
 
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final ServerWebExchange exchange) {

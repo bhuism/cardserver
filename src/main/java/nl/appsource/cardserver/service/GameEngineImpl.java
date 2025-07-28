@@ -11,7 +11,7 @@ import nl.appsource.cardserver.service.exception.GameCompletedException;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
-import org.openapitools.model.UserMessage;
+import org.openapitools.model.UserMessageMessage;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -66,20 +66,20 @@ public class GameEngineImpl implements GameEngine {
     private Card determineTrickWinningCard(final int trickNr) {
 
         if (trickNr >= calcTricksPlayed() || trickNr < 0) {
-            throw new GameEngineException("no such trick " + trickNr, UserMessage.VariantEnum.ERROR);
+            throw new GameEngineException("no such trick " + trickNr, UserMessageMessage.VariantEnum.ERROR);
         }
 
         final List<Card> trick = getTrickCards(trickNr);
 
         if (trick.size() != 4) {
-            throw new GameEngineException("Not 5 trick cards in tick " + trickNr, UserMessage.VariantEnum.ERROR);
+            throw new GameEngineException("Not 5 trick cards in tick " + trickNr, UserMessageMessage.VariantEnum.ERROR);
         }
 
         final boolean troefAanwezig = trick.stream().anyMatch(c -> c.getSuit().equals(game.getTrump()));
 
         final Suit requestedSuit = trick.getFirst().getSuit();
 
-        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(() -> new GameEngineException("No card found", UserMessage.VariantEnum.ERROR));
+        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(() -> new GameEngineException("No card found", UserMessageMessage.VariantEnum.ERROR));
 
     }
 
@@ -176,7 +176,7 @@ public class GameEngineImpl implements GameEngine {
         if (trick.isEmpty()) {
             return null;
         }
-        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(() -> new GameEngineException("Can not find highest card in trick", UserMessage.VariantEnum.ERROR));
+        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(() -> new GameEngineException("Can not find highest card in trick", UserMessageMessage.VariantEnum.ERROR));
     }
 
 //    @Override
@@ -204,7 +204,7 @@ public class GameEngineImpl implements GameEngine {
         log.info("calcAiCard() userId={}", userId);
 
         if (!AI_USER_ID.contains(userId)) {
-            throw new GameEngineException("Not an Ai player", UserMessage.VariantEnum.ERROR);
+            throw new GameEngineException("Not an Ai player", UserMessageMessage.VariantEnum.ERROR);
         }
 
         final int playerNum = this.game.getPlayers().indexOf(userId);

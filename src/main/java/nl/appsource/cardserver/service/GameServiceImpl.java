@@ -111,11 +111,11 @@ public class GameServiceImpl implements GameService {
 
 //                String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
 
-                while (!gameEngine.isCompleted() && AI_USER_ID.contains(game.getPlayers().get(gameEngine.calcWhoHasTurn())) && !gameEngine.hasFullTrick()) {
-                    final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                    log.info("Ai " + aiUserId + " is aan slag");
-                    gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
-                }
+//                while (!gameEngine.isCompleted() && AI_USER_ID.contains(game.getPlayers().get(gameEngine.calcWhoHasTurn())) && !gameEngine.hasFullTrick()) {
+//                    final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+//                    log.info("Ai " + aiUserId + " is aan slag");
+//                    gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
+//                }
 
                 return gameRepository.save(gameEngine.getGame());
             }).map(this::gameChanged);
@@ -123,6 +123,29 @@ public class GameServiceImpl implements GameService {
             return Mono.error(e);
         }
     }
+
+    @Override
+    public Mono<Game> playAiCard(final String userId, final String gameId) {
+        try {
+
+            return gameRepository.findById(gameId)
+                .flatMap((game) -> {
+
+                    final GameEngine gameEngine = new GameEngineImpl(game);
+
+                    while (!gameEngine.isCompleted() && AI_USER_ID.contains(game.getPlayers().get(gameEngine.calcWhoHasTurn())) && !gameEngine.hasFullTrick()) {
+                        final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+                        log.info("Ai " + aiUserId + " is aan slag");
+                        gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
+                    }
+
+                    return gameRepository.save(gameEngine.getGame());
+                }).map(this::gameChanged);
+        } catch (GameEngineException e) {
+            return Mono.error(e);
+        }
+    }
+
 
     public static Map<Card, Integer> randomCards() {
         final Map<Card, Integer> cards = new HashMap<>();
