@@ -109,10 +109,11 @@ public class GameServiceImpl implements GameService {
                 gameEngine.playCard(playerId, card);
 
 
-                final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+//                String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
 
-                while (!gameEngine.isCompleted() && AI_USER_ID.contains(aiUserId) && !gameEngine.hasFullTrick()) {
-                    log.info("Ai is aan slag");
+                while (!gameEngine.isCompleted() && AI_USER_ID.contains(game.getPlayers().get(gameEngine.calcWhoHasTurn())) && !gameEngine.hasFullTrick()) {
+                    final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+                    log.info("Ai " + aiUserId + " is aan slag");
                     gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
                 }
 
