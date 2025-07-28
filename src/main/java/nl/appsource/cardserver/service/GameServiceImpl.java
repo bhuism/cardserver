@@ -108,9 +108,12 @@ public class GameServiceImpl implements GameService {
 
                 gameEngine.playCard(playerId, card);
 
-                while (gameEngine.isAiPlayerAanslag() && !gameEngine.isCompleted()) {
+
+                final String aiUserId = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+
+                while (!gameEngine.isCompleted() && AI_USER_ID.contains(aiUserId) && !gameEngine.hasFullTrick()) {
                     log.info("Ai is aan slag");
-                    gameEngine.playAiCard();
+                    gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
                 }
 
                 return gameRepository.save(gameEngine.getGame());

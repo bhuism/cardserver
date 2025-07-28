@@ -53,6 +53,11 @@ public class GameEngineImpl implements GameEngine {
         return this.game.getTurns().size() / 4;
     }
 
+    @Override
+    public boolean hasFullTrick() {
+        return this.game.getTurns().size() >= 4 && this.game.getTurns().size() % 4 == 0;
+    }
+
     private List<Card> getTrickCards(final int trickNr) {
         log.info("getTrickcards() {}", trickNr);
         return game.getTurns().subList(trickNr * 4, Math.min(game.getTurns().size(), trickNr * 4 + 4));
@@ -83,6 +88,7 @@ public class GameEngineImpl implements GameEngine {
         return whoHasCard(winningCard);
     }
 
+    @Override
     public int calcWhoHasTurn() {
 
         final int laatsteKaart = game.getTurns().size() % 4;
@@ -100,18 +106,6 @@ public class GameEngineImpl implements GameEngine {
             }
         }
     }
-
-    @Override
-    public boolean isAiPlayerAanslag() {
-
-        if (isCompleted()) {
-            return false;
-        }
-
-        final int gotTurn = calcWhoHasTurn();
-        return AI_USER_ID.contains(game.getPlayers().get(gotTurn));
-    }
-
 
     @Override
     public void playCard(final String userId, final Card card) {
@@ -185,25 +179,26 @@ public class GameEngineImpl implements GameEngine {
         return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(() -> new GameEngineException("Can not find highest card in trick", UserMessage.VariantEnum.ERROR));
     }
 
+//    @Override
+//    public void playAiCard() {
+//
+//        final int gotTurn = calcWhoHasTurn();
+//
+//        final String aiUserId = game.getPlayers().get(gotTurn);
+//
+//        if (!AI_USER_ID.contains(aiUserId)) {
+//            throw new GameEngineException("Player who is aan slag is not an AI player", UserMessage.VariantEnum.ERROR);
+//        }
+//
+//        final Card card = calcAiCard(aiUserId);
+//
+//        log.info("Ai {} plays card {}", aiUserId, card);
+//
+//        playCard(aiUserId, card);
+//
+//    }
+
     @Override
-    public void playAiCard() {
-
-        final int gotTurn = calcWhoHasTurn();
-
-        final String aiUserId = game.getPlayers().get(gotTurn);
-
-        if (!AI_USER_ID.contains(aiUserId)) {
-            throw new GameEngineException("Player who is aan slag is not an AI player", UserMessage.VariantEnum.ERROR);
-        }
-
-        final Card card = calcAiCard(aiUserId);
-
-        log.info("Ai {} plays card {}", aiUserId, card);
-
-        playCard(aiUserId, card);
-
-    }
-
     public Card calcAiCard(final String userId) {
 
         log.info("calcAiCard() userId={}", userId);
