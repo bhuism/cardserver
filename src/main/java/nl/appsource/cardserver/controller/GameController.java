@@ -40,7 +40,6 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> gameService.getGame(userId, gameId))
-            .map(gameService::gameChanged)
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
     }

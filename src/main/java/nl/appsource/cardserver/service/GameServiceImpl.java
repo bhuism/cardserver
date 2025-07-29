@@ -98,19 +98,20 @@ public class GameServiceImpl implements GameService {
     public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
         try {
 
-            return gameRepository.findById(gameId).flatMap((game) -> {
+            return gameRepository.findById(gameId)
+                .flatMap((game) -> {
 
-                int cardOwnerIndex = game.getPlayerCard().get(card);
+                    int cardOwnerIndex = game.getPlayerCard().get(card);
 
-                final String playerId = game.getPlayers().get(cardOwnerIndex);
+                    final String playerId = game.getPlayers().get(cardOwnerIndex);
 
-                final GameEngine gameEngine = new GameEngineImpl(game);
+                    final GameEngine gameEngine = new GameEngineImpl(game);
 
-                gameEngine.playCard(playerId, card);
-                playSomeAi(gameEngine);
+                    gameEngine.playCard(playerId, card);
+                    playSomeAi(gameEngine);
 
-                return gameRepository.save(gameEngine.getGame());
-            }).map(this::gameChanged);
+                    return gameRepository.save(gameEngine.getGame());
+                }).map(this::gameChanged);
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
