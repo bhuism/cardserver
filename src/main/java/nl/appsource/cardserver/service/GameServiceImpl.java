@@ -116,16 +116,30 @@ public class GameServiceImpl implements GameService {
         }
     }
 
-    private void playSomeAi(final GameEngine gameEngine) {
+    /**
+     *
+     * @param gameEngine the engine
+     * @return if the game was changed
+     */
+
+    private boolean playSomeAi(final GameEngine gameEngine) {
+
+        boolean gameWasChanged = false;
+
         while (!gameEngine.isCompleted() && gameEngine.isAiTurn()) {
             final String aiUserId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
+
             log.info("Ai " + aiUserId + " is aan slag");
             gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
+
+            gameWasChanged = true;
 
             if (gameEngine.hasFullTrick()) {
                 break;
             }
         }
+
+        return gameWasChanged;
     }
 
     @Override
@@ -137,10 +151,16 @@ public class GameServiceImpl implements GameService {
 
                     final GameEngine gameEngine = new GameEngineImpl(game);
 
-                    playSomeAi(gameEngine);
+                    final boolean gameWasChanged = playSomeAi(gameEngine);
 
-                    return gameRepository.save(gameEngine.getGame());
-                }).map(this::gameChanged);
+                    if (gameWasChanged) {
+                        return gameRepository.save(gameEngine.getGame()).map(this::gameChanged);
+                    } else {
+                        return Mono.just(gameEngine.getGame());
+                    }
+
+                });
+
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
