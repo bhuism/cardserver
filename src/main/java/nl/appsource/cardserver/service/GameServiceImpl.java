@@ -8,6 +8,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.openapitools.model.PlayCardResponse;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
@@ -96,7 +97,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<List<UserMessage>> playCard(final String userId, final String gameId, final Card card) {
+    public Mono<PlayCardResponse> playCard(final String userId, final String gameId, final Card card) {
         try {
 
             return gameRepository.findById(gameId)
@@ -112,7 +113,7 @@ public class GameServiceImpl implements GameService {
 
                     playSomeAi(gameEngine);
 
-                    return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> userMessages);
+                    return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> new PlayCardResponse().messages(userMessages).cardWasPlayed(true));
                 });
         } catch (GameEngineException e) {
             return Mono.error(e);
@@ -146,7 +147,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Game> playAiCard(final String userId, final String gameId) {
+    public Mono<PlayCardResponse> playAiCard(final String userId, final String gameId) {
         try {
 
             return gameRepository.findById(gameId)
@@ -157,9 +158,9 @@ public class GameServiceImpl implements GameService {
                     final boolean gameWasChanged = playSomeAi(gameEngine);
 
                     if (gameWasChanged) {
-                        return gameRepository.save(gameEngine.getGame()).map(this::gameChanged);
+                        return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
                     } else {
-                        return Mono.just(gameEngine.getGame());
+                        return Mono.just(new PlayCardResponse().cardWasPlayed(false));
                     }
 
                 });

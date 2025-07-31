@@ -215,10 +215,15 @@ components:
     PlayCardResponse:
       type: object
       properties:
+        cardWasPlayed:
+          type: boolean
         messages:
           type: array
           items:
             $ref: "#/components/schemas/UserMessage"
+      required:
+        - cardWasPlayed
+        - messages
     UserMessage:
       type: object
       properties:

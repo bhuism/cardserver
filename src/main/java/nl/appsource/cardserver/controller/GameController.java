@@ -9,8 +9,8 @@ import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
-import org.openapitools.model.UserMessage;
 import org.openapitools.model.PlayCardResponse;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -58,13 +58,12 @@ public class GameController implements GamesApi, V1Api {
                 })
                 .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))))
             .onErrorResume(GameEngineException.class, throwable -> {
-                return Mono.just(List.of(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant())));
+                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()))).cardWasPlayed(false));
             })
             .onErrorResume(Throwable.class, throwable -> {
                 log.error("", throwable);
-                return Mono.just(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR)));
+                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR))).cardWasPlayed(false));
             })
-            .map(userMessages -> new PlayCardResponse().messages(userMessages))
             .map(ResponseEntity::ok);
     }
 
