@@ -28,14 +28,8 @@ public class GameEngineImpl implements GameEngine {
 
     public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9");
 
-//    private final String userId;
-
     @Getter
     private final Game game;
-
-    //  private final List<Card> hand = new ArrayList<>();
-
-    // private final Integer playerNum;
 
     private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
 
@@ -145,7 +139,7 @@ public class GameEngineImpl implements GameEngine {
 
         if (!currentTrick.isEmpty()) {
             final Card leadingCard = currentTrick.getFirst();
-            if (leadingCard.getSuit() != card.getSuit()) {
+            if (leadingCard.getSuit() != card.getSuit() && getHand(userId).stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()))) {
                 userMessages.add(new UserMessage().message("U heeft verzaakt").variant(UserMessage.VariantEnum.WARNING));
             }
         }
@@ -212,6 +206,11 @@ public class GameEngineImpl implements GameEngine {
 //
 //    }
 
+    private List<Card> getHand(final String userId) {
+        final int playerNum = this.game.getPlayers().indexOf(userId);
+        return game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
+    }
+
     @Override
     public Card calcAiCard(final String userId) {
 
@@ -221,11 +220,10 @@ public class GameEngineImpl implements GameEngine {
             throw new GameEngineException("Not an Ai player", UserMessage.VariantEnum.ERROR);
         }
 
-        final int playerNum = this.game.getPlayers().indexOf(userId);
 
         final boolean isFirstPlayerInTrick = game.getTurns().size() % 4 == 0;
 
-        final List<Card> hand = game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
+        final List<Card> hand = getHand(userId);
 
         // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
         if (isFirstPlayerInTrick) {
