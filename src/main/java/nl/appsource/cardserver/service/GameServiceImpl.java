@@ -192,9 +192,7 @@ public class GameServiceImpl implements GameService {
 
     private final Sinks.Many<ServerSentEvent<?>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
 
-    private final Object test = Flux.interval(Duration.ofSeconds(5), Duration.ofSeconds(1)).subscribe(event -> {
-        ping();
-    });
+    private final Object intervaller = Flux.interval(Duration.ofSeconds(15), Duration.ofSeconds(5)).subscribe(event -> ping());
 
     private void ping() {
         internalSend("ping", null);
