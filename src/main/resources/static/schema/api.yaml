@@ -49,7 +49,7 @@ paths:
         - $ref: "#/components/parameters/gameId"
       responses:
         "200":
-          $ref: "#/components/responses/PlayCardResponse"
+          description: ai played some
         "422":
           description: some application error
         "404":
@@ -212,23 +212,27 @@ components:
           schema:
             $ref: "#/components/schemas/postMessage"
   schemas:
+    UserMessageResponse:
+      type: object
+      properties:
+        message:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserMessage"
     UserMessage:
       type: object
       properties:
         message:
-          type: object
-          properties:
-            message:
-              type: string
-            variant:
-              enum:
-                - error
-                - warning
-                - info
-                - success
-          required:
-            - message
-            - variant
+          type: string
+        variant:
+          enum:
+            - error
+            - warning
+            - info
+            - success
+      required:
+        - message
+        - variant
     whoAmIResponse:
       type: object
       properties:
@@ -383,7 +387,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserMessage"
+            $ref: "#/components/schemas/UserMessageResponse"
     GameResponse:
       description: a game
       content:

@@ -8,6 +8,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -95,7 +96,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Game> playCard(final String userId, final String gameId, final Card card) {
+    public Mono<List<UserMessage>> playCard(final String userId, final String gameId, final Card card) {
         try {
 
             return gameRepository.findById(gameId)
@@ -107,11 +108,12 @@ public class GameServiceImpl implements GameService {
 
                     final GameEngine gameEngine = new GameEngineImpl(game);
 
-                    gameEngine.playCard(playerId, card);
+                    List<UserMessage> userMessages = gameEngine.playCard(playerId, card);
+
                     playSomeAi(gameEngine);
 
-                    return gameRepository.save(gameEngine.getGame());
-                }).map(this::gameChanged);
+                    return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> userMessages);
+                });
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
@@ -131,7 +133,7 @@ public class GameServiceImpl implements GameService {
             final String aiUserId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
 
 //            log.info("Ai " + aiUserId + " is aan slag");
-            gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
+            gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId)); // we don't user ai user message, he's not a real boy remember, there is no spoon he said
 
             gameWasChanged = true;
 
