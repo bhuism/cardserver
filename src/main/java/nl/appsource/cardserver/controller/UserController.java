@@ -69,9 +69,6 @@ public class UserController implements UsersApi, V1Api {
                         .outgoing((List<String>) arr[2]),
                     incoming.collectList(), friends.collectList(), outgoing.collectList());
 
-            }).map(invitesResponse -> {
-                log.info(("incoming: " + invitesResponse.getIncoming().size() + ", outgoing: " + invitesResponse.getOutgoing().size() + ", friends: " + invitesResponse.getFriends().size()));
-                return invitesResponse;
             })
             .map(ResponseEntity::ok);
 
