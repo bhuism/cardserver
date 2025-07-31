@@ -74,6 +74,10 @@ public class GameController implements GamesApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
+            .map(userId -> {
+                log.info("playAiCard() user " + userId);
+                return userId;
+            })
             .flatMap(userId -> gameService.playAiCard(userId, gameId))
 //            .onErrorResume(GameEngineException.class, throwable -> {
 //                return Mono.just(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant());
