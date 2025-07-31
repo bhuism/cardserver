@@ -130,7 +130,7 @@ public class GameServiceImpl implements GameService {
         while (!gameEngine.isCompleted() && gameEngine.isAiTurn()) {
             final String aiUserId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
 
-            log.info("Ai " + aiUserId + " is aan slag");
+//            log.info("Ai " + aiUserId + " is aan slag");
             gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId));
 
             gameWasChanged = true;
@@ -200,7 +200,6 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Game gameChanged(final Game game) {
-        log.info("Sending gameChanged event");
         internalSend("gameStateUpdate", gameToOpenApiConverter.convert(game));
         return game;
     }

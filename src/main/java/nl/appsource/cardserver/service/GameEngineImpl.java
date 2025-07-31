@@ -59,7 +59,6 @@ public class GameEngineImpl implements GameEngine {
     }
 
     private List<Card> getTrickCards(final int trickNr) {
-        log.info("getTrickcards() {}", trickNr);
         return game.getTurns().subList(trickNr * 4, Math.min(game.getTurns().size(), trickNr * 4 + 4));
     }
 
@@ -201,7 +200,7 @@ public class GameEngineImpl implements GameEngine {
     @Override
     public Card calcAiCard(final String userId) {
 
-        log.info("calcAiCard() userId={}", userId);
+//        log.info("calcAiCard() userId={}", userId);
 
         if (!AI_USER_ID.contains(userId)) {
             throw new GameEngineException("Not an Ai player", UserMessageMessage.VariantEnum.ERROR);
@@ -211,11 +210,7 @@ public class GameEngineImpl implements GameEngine {
 
         final boolean isFirstPlayerInTrick = game.getTurns().size() % 4 == 0;
 
-        log.info("isFirstPlayerInTrick={}", isFirstPlayerInTrick);
-
         final List<Card> hand = game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
-
-        log.info("hande={}", hand);
 
         // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
         if (isFirstPlayerInTrick) {
