@@ -215,7 +215,7 @@ components:
     UserMessageResponse:
       type: object
       properties:
-        message:
+        messages:
           type: array
           items:
             $ref: "#/components/schemas/UserMessage"

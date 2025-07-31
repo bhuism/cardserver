@@ -64,7 +64,7 @@ public class GameController implements GamesApi, V1Api {
                 log.error("", throwable);
                 return Mono.just(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR)));
             })
-            .map(userMessages -> new UserMessageResponse().message(userMessages))
+            .map(userMessages -> new UserMessageResponse().messages(userMessages))
             .map(ResponseEntity::ok);
     }
 
