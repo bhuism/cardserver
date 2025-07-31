@@ -13,6 +13,7 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
@@ -41,7 +42,7 @@ public class WebfluxSecurityConfig {
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getCorsConfigurationSource()))
-            .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST))
+            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.OPTIONS)))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated()).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> {
                 //httpSecurityOAuth2ResourceServerConfigurer.jwt(Customizer.withDefaults());
                 httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter()));
