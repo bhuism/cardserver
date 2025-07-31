@@ -212,7 +212,7 @@ components:
           schema:
             $ref: "#/components/schemas/postMessage"
   schemas:
-    UserMessageResponse:
+    PlayCardResponse:
       type: object
       properties:
         messages:
@@ -387,7 +387,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/UserMessageResponse"
+            $ref: "#/components/schemas/PlayCardResponse"
     GameResponse:
       description: a game
       content:

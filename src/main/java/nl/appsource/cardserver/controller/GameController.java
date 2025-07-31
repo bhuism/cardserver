@@ -10,7 +10,7 @@ import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.UserMessage;
-import org.openapitools.model.UserMessageResponse;
+import org.openapitools.model.PlayCardResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -48,7 +48,7 @@ public class GameController implements GamesApi, V1Api {
 
 
     @Override
-    public Mono<ResponseEntity<UserMessageResponse>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<PlayCardResponse>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -64,7 +64,7 @@ public class GameController implements GamesApi, V1Api {
                 log.error("", throwable);
                 return Mono.just(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR)));
             })
-            .map(userMessages -> new UserMessageResponse().messages(userMessages))
+            .map(userMessages -> new PlayCardResponse().messages(userMessages))
             .map(ResponseEntity::ok);
     }
 
