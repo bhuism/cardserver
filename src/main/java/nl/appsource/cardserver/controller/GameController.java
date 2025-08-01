@@ -69,7 +69,7 @@ public class GameController implements GamesApi, V1Api {
 
 
     @Override
-    public Mono<ResponseEntity<Void>> playAiCard(final String gameId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<PlayCardResponse>> playAiCard(final String gameId, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -78,13 +78,13 @@ public class GameController implements GamesApi, V1Api {
                 return userId;
             })
             .flatMap(userId -> gameService.playAiCard(userId, gameId))
-//            .onErrorResume(GameEngineException.class, throwable -> {
-//                return Mono.just(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant());
-//            })
-//            .onErrorResume(Throwable.class, throwable -> {
-//                log.error("", throwable);
-//                return Mono.just(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR);
-//            })
+            .onErrorResume(GameEngineException.class, throwable -> {
+                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()))).cardWasPlayed(false));
+            })
+            .onErrorResume(Throwable.class, throwable -> {
+                log.error("", throwable);
+                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR))).cardWasPlayed(false));
+            })
             .map(_g -> ResponseEntity.ok().build());
     }
 

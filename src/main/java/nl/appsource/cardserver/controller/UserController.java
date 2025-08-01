@@ -51,26 +51,17 @@ public class UserController implements UsersApi, V1Api {
 
         log.info("getIncomingFriends()");
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMap(userService::getInvites)
-            .flatMap(invites -> {
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userService::getInvites).flatMap(invites -> {
 
 //                final InvitesResponse invitesResponse = new InvitesResponse();
 
-                final Flux<String> incoming = invites.getIncoming();
-                final Flux<String> outgoing = invites.getOutgoing();
-                final Flux<String> friends = invites.getFriends();
+            final Flux<String> incoming = invites.getIncoming();
+            final Flux<String> outgoing = invites.getOutgoing();
+            final Flux<String> friends = invites.getFriends();
 
-                return Mono.zip(arr -> new InvitesResponse()
-                        .incoming((List<String>) arr[0])
-                        .friends((List<String>) arr[1])
-                        .outgoing((List<String>) arr[2]),
-                    incoming.collectList(), friends.collectList(), outgoing.collectList());
+            return Mono.zip(arr -> new InvitesResponse().incoming((List<String>) arr[0]).friends((List<String>) arr[1]).outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
 
-            })
-            .map(ResponseEntity::ok);
+        }).map(ResponseEntity::ok);
 
     }
 

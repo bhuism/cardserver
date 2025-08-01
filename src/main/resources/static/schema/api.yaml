@@ -49,7 +49,7 @@ paths:
         - $ref: "#/components/parameters/gameId"
       responses:
         "200":
-          description: ai played some
+          $ref: "#/components/responses/PlayCardResponse"
         "422":
           description: some application error
         "404":
