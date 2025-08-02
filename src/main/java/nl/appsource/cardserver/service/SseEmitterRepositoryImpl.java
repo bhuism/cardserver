@@ -120,35 +120,33 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
-        log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
-
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
-        mySseEmitter.sendPing();
+        return mySseEmitter
+            .subscribe()
+            .doOnSubscribe((s) -> {
+                log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
+                mySseEmitter.sendPing();
+                sendOnlineListTo(userId);
+                sendOnlineListToFriendsOf(userId);
+            })
+            .doOnCancel(() -> {
+                log.info("unSubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
+                mySseEmitter.cancel();
+                janitor();
 
-        // for me
-        sendOnlineListTo(userId);
-
-        sendOnlineListToFriendsOf(userId);
-
-        return mySseEmitter.subscribe().doOnCancel(() -> {
-
-            log.info("unsubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
-            mySseEmitter.cancel();
-            janitor();
-
-            try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-                executor.submit(() -> {
-                    try {
-                        Thread.sleep(2000);
-                        sendOnlineListToFriendsOf(userId);
-                    } catch (final InterruptedException e) {
-                        log.error("", e);
-                    }
-                });
-                executor.shutdown();
-            }
-        });
+                try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+                    executor.submit(() -> {
+                        try {
+                            Thread.sleep(2000);
+                            sendOnlineListToFriendsOf(userId);
+                        } catch (final InterruptedException e) {
+                            log.error("", e);
+                        }
+                    });
+                    executor.shutdown();
+                }
+            });
 
     }
 
