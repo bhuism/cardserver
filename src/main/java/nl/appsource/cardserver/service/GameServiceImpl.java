@@ -111,7 +111,9 @@ public class GameServiceImpl implements GameService {
 
                     List<UserMessage> userMessages = gameEngine.playCard(playerId, card);
 
-                    playSomeAi(gameEngine);
+                    if (!gameEngine.hasFullTrick()) {
+                        playSomeAi(gameEngine);
+                    }
 
                     return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> new PlayCardResponse().messages(userMessages).cardWasPlayed(true));
                 });
@@ -121,7 +123,6 @@ public class GameServiceImpl implements GameService {
     }
 
     /**
-     *
      * @param gameEngine the engine
      * @return if the game was changed
      */
