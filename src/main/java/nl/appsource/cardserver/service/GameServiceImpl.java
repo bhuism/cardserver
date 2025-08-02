@@ -226,6 +226,7 @@ public class GameServiceImpl implements GameService {
                 log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
                 ping();
             })
+            .publish()
             .filter(sse -> {
                 if (sse.data() instanceof org.openapitools.model.Game) {
                     return ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
