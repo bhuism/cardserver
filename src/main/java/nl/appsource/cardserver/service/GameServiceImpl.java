@@ -215,16 +215,24 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<ServerSentEvent<?>> gameStream(final String userId, final String gameId) {
-        log.info("subscribe() gameId={} count={}", gameId, gameSink.currentSubscriberCount());
+        //log.info("subscribe() gameId={} count={}", gameId, gameSink.currentSubscriberCount());
 
-        ping();
-        return gameSink.asFlux().filter(sse -> {
-            if (sse.data() instanceof org.openapitools.model.Game) {
-                return ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
-            } else {
-                return true;
-            }
-        });
+        //ping();
+        return gameSink.asFlux()
+            .doOnSubscribe((a) -> {
+                log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
+                ping();
+            }).doOnCancel(() -> {
+                log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
+                ping();
+            })
+            .filter(sse -> {
+                if (sse.data() instanceof org.openapitools.model.Game) {
+                    return ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
+                } else {
+                    return true;
+                }
+            });
 
     }
 
