@@ -101,7 +101,6 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<PlayCardResponse> playCard(final String userId, final String gameId, final Card card) {
         try {
-
             return gameRepository.findById(gameId)
                 .map((game) -> {
                     final int cardOwnerIndex = game.getPlayerCard().get(card);
@@ -110,32 +109,32 @@ public class GameServiceImpl implements GameService {
                     return game;
                 })
                 .flatMap(gameRepository::save).doOnNext(this::sendGameChangedEvent)
-//                .flatMap(this::playSomeExtraAi).delayElement(Duration.ofSeconds(2))
-//                .flatMap(this::playSomeExtraAi).delayElement(Duration.ofSeconds(2))
-//                .flatMap(this::playSomeExtraAi).delayElement(Duration.ofSeconds(2))
+                .doOnNext((game) -> {
+                    Mono.just(game.getId())
+                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
+                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
+                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
+                        .subscribe();
+                })
                 .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
     }
 
-    private Mono<Game> playSomeExtraAi(final Game g) {
+    private Mono<String> playSomeExtraAi(final String gameId) {
         log.info("playSomeExtraAi");
-        return Mono.just(g)
+        return gameRepository.findById(gameId)
             .flatMap((game) -> {
                 final GameEngineImpl gameEngine = new GameEngineImpl(game);
                 log.info("Check for full trick");
                 if (!gameEngine.hasFullTrick()) {
-
                     final boolean gameWasChanged = gameEngine.playAiCard();
-
                     if (gameWasChanged) {
-                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
+                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).map(Game::getId);
                     }
                 }
-
                 return Mono.empty();
-
             });
     }
 
@@ -145,18 +144,22 @@ public class GameServiceImpl implements GameService {
 
             return gameRepository.findById(gameId)
                 .flatMap((game) -> {
-
                     final GameEngineImpl gameEngine = new GameEngineImpl(game);
-
                     final boolean gameWasChanged = gameEngine.playAiCard();
-
                     if (gameWasChanged) {
-                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).then();
+                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
                     } else {
                         return Mono.empty();
                     }
 
-                });
+                }).doOnNext((game) -> {
+                    Mono.just(game.getId())
+                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
+                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
+                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
+                        .subscribe();
+                })
+                .then();
 
         } catch (GameEngineException e) {
             return Mono.error(e);
