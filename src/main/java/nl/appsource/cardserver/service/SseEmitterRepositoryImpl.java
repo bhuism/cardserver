@@ -54,7 +54,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.fromIterable(emitters.values()).subscribe(consumer);
     }
 
-    @Scheduled(fixedDelay = 1000 * 5, initialDelay = 1000 * 55)
+    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 30)
     public void pingAll() {
         doAll(MySseEmitter::sendPing);
     }

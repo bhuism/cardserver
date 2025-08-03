@@ -12,6 +12,7 @@ import org.openapitools.model.MessageEvent;
 import org.openapitools.model.PlayCardResponse;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -19,7 +20,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -197,7 +197,11 @@ public class GameServiceImpl implements GameService {
 
     private final Sinks.Many<ServerSentEvent<?>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
 
-    private final Object intervaller = Flux.interval(Duration.ofSeconds(15), Duration.ofSeconds(5)).subscribe(event -> ping());
+    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 30)
+    public void pingAll() {
+        this.ping();
+    }
+
 
     private void ping() {
         internalSend("ping", null);
