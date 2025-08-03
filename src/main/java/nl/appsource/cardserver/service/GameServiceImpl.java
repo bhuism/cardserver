@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,9 +110,9 @@ public class GameServiceImpl implements GameService {
                     return game;
                 })
                 .flatMap(gameRepository::save).doOnNext(this::sendGameChangedEvent)
-                .flatMap(this::playSomeExtraAi)
-                .flatMap(this::playSomeExtraAi)
-                .flatMap(this::playSomeExtraAi)
+//                .flatMap(this::playSomeExtraAi).delayElement(Duration.ofSeconds(2))
+//                .flatMap(this::playSomeExtraAi).delayElement(Duration.ofSeconds(2))
+//                .flatMap(this::playSomeExtraAi).delayElement(Duration.ofSeconds(2))
                 .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
         } catch (GameEngineException e) {
             return Mono.error(e);
@@ -133,7 +134,7 @@ public class GameServiceImpl implements GameService {
                     }
                 }
 
-                return Mono.just(game);
+                return Mono.empty();
 
             });
     }
@@ -152,7 +153,7 @@ public class GameServiceImpl implements GameService {
                     if (gameWasChanged) {
                         return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).then();
                     } else {
-                        return Mono.just(true).then();
+                        return Mono.empty();
                     }
 
                 });
