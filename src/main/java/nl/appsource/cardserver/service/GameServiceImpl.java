@@ -234,7 +234,6 @@ public class GameServiceImpl implements GameService {
                 ping();
             }).doOnCancel(() -> {
                 log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
-                ping();
             })
             .filter(sse -> {
                 assert sse.event() != null;
