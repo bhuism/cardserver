@@ -101,6 +101,25 @@ public class GameEngineImpl implements GameEngine {
     }
 
     @Override
+    public boolean playAiCard() {
+
+        if (isCompleted()) {
+            return false;
+        }
+
+        final String userId = game.getPlayers().get(calcWhoHasTurn());
+
+        if (isAiPlayer(userId)) {
+            // we don't user ai user message, he's not a real boy remember, there IS no spoon he said
+            playCard(userId, calcAiCard(userId));
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    @Override
     public List<UserMessage> playCard(final String userId, final Card card) {
 
         final List<UserMessage> userMessages = new ArrayList<>();
@@ -333,6 +352,10 @@ public class GameEngineImpl implements GameEngine {
         if (isCompleted()) {
             return false;
         }
-        return AI_USER_ID.contains(game.getPlayers().get(calcWhoHasTurn()));
+        return isAiPlayer(game.getPlayers().get(calcWhoHasTurn()));
+    }
+
+    boolean isAiPlayer(final String userId) {
+        return AI_USER_ID.contains(userId);
     }
 }

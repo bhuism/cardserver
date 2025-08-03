@@ -22,9 +22,9 @@ public interface GameService {
 
     Mono<PlayCardResponse> playCard(String userId, String gameId, Card card);
 
-    Mono<PlayCardResponse> playAiCard(String userId, String gameId);
+    Mono<Void> playAiCard(String userId, String gameId);
 
-    Game sendGameChangedEvent(Game game);
+    void sendGameChangedEvent(Game game);
 
     void sendUserMessage(UserMessage userMessage);
 

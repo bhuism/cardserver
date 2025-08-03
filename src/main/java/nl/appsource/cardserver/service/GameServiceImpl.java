@@ -102,69 +102,57 @@ public class GameServiceImpl implements GameService {
         try {
 
             return gameRepository.findById(gameId)
-                .flatMap((game) -> {
-
-                    int cardOwnerIndex = game.getPlayerCard().get(card);
-
+                .map((game) -> {
+                    final int cardOwnerIndex = game.getPlayerCard().get(card);
                     final String playerId = game.getPlayers().get(cardOwnerIndex);
-
-                    final GameEngine gameEngine = new GameEngineImpl(game);
-
-                    final List<UserMessage> userMessages = gameEngine.playCard(playerId, card);
-
-                    userMessages.forEach(this::sendUserMessage);
-
-                    if (!gameEngine.hasFullTrick()) {
-                        playSomeAi(gameEngine);
-                    }
-
-                    return gameRepository.save(gameEngine.getGame()).map(this::sendGameChangedEvent).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
-                });
+                    new GameEngineImpl(game).playCard(playerId, card).forEach(this::sendUserMessage);
+                    return game;
+                })
+                .flatMap(gameRepository::save).doOnNext(this::sendGameChangedEvent)
+                .flatMap(this::playSomeExtraAi)
+                .flatMap(this::playSomeExtraAi)
+                .flatMap(this::playSomeExtraAi)
+                .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
         } catch (GameEngineException e) {
             return Mono.error(e);
         }
     }
 
-    /**
-     * @param gameEngine the engine
-     * @return if the game was changed
-     */
+    private Mono<Game> playSomeExtraAi(final Game g) {
+        log.info("playSomeExtraAi");
+        return Mono.just(g)
+            .flatMap((game) -> {
+                final GameEngineImpl gameEngine = new GameEngineImpl(game);
+                log.info("Check for full trick");
+                if (!gameEngine.hasFullTrick()) {
 
-    private boolean playSomeAi(final GameEngine gameEngine) {
+                    final boolean gameWasChanged = gameEngine.playAiCard();
 
-        boolean gameWasChanged = false;
+                    if (gameWasChanged) {
+                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
+                    }
+                }
 
-        while (!gameEngine.isCompleted() && gameEngine.isAiTurn()) {
-            final String aiUserId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
+                return Mono.just(game);
 
-//            log.info("Ai " + aiUserId + " is aan slag");
-            gameEngine.playCard(aiUserId, gameEngine.calcAiCard(aiUserId)); // we don't user ai user message, he's not a real boy remember, there is no spoon he said
-
-            gameWasChanged = true;
-
-            if (gameEngine.hasFullTrick()) {
-                break;
-            }
-        }
-
-        return gameWasChanged;
+            });
     }
 
     @Override
-    public Mono<PlayCardResponse> playAiCard(final String userId, final String gameId) {
+    public Mono<Void> playAiCard(final String userId, final String gameId) {
         try {
 
             return gameRepository.findById(gameId)
                 .flatMap((game) -> {
 
-                    final GameEngine gameEngine = new GameEngineImpl(game);
+                    final GameEngineImpl gameEngine = new GameEngineImpl(game);
 
-                    final boolean gameWasChanged = playSomeAi(gameEngine);
+                    final boolean gameWasChanged = gameEngine.playAiCard();
 
                     if (gameWasChanged) {
-                        return gameRepository.save(gameEngine.getGame()).map(this::sendGameChangedEvent).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
+                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).then();
                     } else {
-                        return Mono.just(new PlayCardResponse().cardWasPlayed(false));
+                        return Mono.just(true).then();
                     }
 
                 });
@@ -208,9 +196,8 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Game sendGameChangedEvent(final Game game) {
+    public void sendGameChangedEvent(final Game game) {
         internalSend(createServerSentEvent("gameStateUpdate", gameToOpenApiConverter.convert(game)));
-        return game;
     }
 
     @Override

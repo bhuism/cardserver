@@ -15,6 +15,8 @@ public interface GameEngine {
 
     List<UserMessage> playCard(String userId, Card card) throws GameCompletedException, CardAlreadyPlayerException;
 
+    boolean playAiCard();
+
     boolean isCompleted();
 
 //    void playAiCard();
