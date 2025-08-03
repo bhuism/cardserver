@@ -7,6 +7,7 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -107,12 +108,47 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userRepository.findById(userId)
             .map(User::getDisplayName)
             .switchIfEmpty(Mono.just(userId))
-            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.sendCardServerMessage(fromString, message)));
+            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().message(fromString + ": " + message))));
     }
 
     @PreDestroy
     public void destroy() {
         janitor();
+    }
+
+    @Override
+    public void ping(final UUID uuid) {
+        doId(uuid, MySseEmitter::receivePing);
+    }
+
+    @Override
+    public void pong(final UUID uuid) {
+        doId(uuid, MySseEmitter::receivePong);
+    }
+
+    @Override
+    public void friendsChanged(final Collection<String> userIds) {
+        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateFriends);
+    }
+
+    @Override
+    public void gamesChanged(final Collection<String> userIds) {
+        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateGames);
+    }
+
+    @Override
+    public void newGame(final Game game) {
+        doSelectedUserIds(Flux.fromIterable(game.getPlayers()).filter(player -> !player.equals(game.getCreator())), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
+    }
+
+    @Override
+    public boolean isUserOnline(final String userId) {
+        return emitters.values().stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
+    }
+
+    @Override
+    public void newFriend(final String userId, final String friendId) {
+        doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
     }
 
     @Override
@@ -150,38 +186,4 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    @Override
-    public void ping(final UUID uuid) {
-        doId(uuid, MySseEmitter::receivePing);
-    }
-
-    @Override
-    public void pong(final UUID uuid) {
-        doId(uuid, MySseEmitter::receivePong);
-    }
-
-    @Override
-    public void friendsChanged(final Collection<String> userIds) {
-        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateFriends);
-    }
-
-    @Override
-    public void gamesChanged(final Collection<String> userIds) {
-        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateGames);
-    }
-
-    @Override
-    public void newGame(final Game game) {
-        doSelectedUserIds(Flux.fromIterable(game.getPlayers()).filter(player -> !player.equals(game.getCreator())), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
-    }
-
-    @Override
-    public boolean isUserOnline(final String userId) {
-        return emitters.values().stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
-    }
-
-    @Override
-    public void newFriend(final String userId, final String friendId) {
-        doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
-    }
 }

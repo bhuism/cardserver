@@ -3,9 +3,11 @@ package nl.appsource.cardserver.service;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Game;
+import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -43,8 +45,8 @@ public final class MySseEmitter {
         this.userId = userIdArg;
     }
 
-    public void sendCardServerMessage(final String fromString, final String message) {
-        internalSend("cardservermessage", fromString + ": " + message);
+    public void message(final UserMessage userMessage) {
+        internalSend("messageEvent", new MessageEvent().message(userMessage));
     }
 
     private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {

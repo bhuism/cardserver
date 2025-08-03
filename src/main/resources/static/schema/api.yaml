@@ -359,6 +359,11 @@ components:
           type: string
       required:
         - newFriendId
+    MessageEvent:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/UserMessage'
   parameters:
     gameId:
       name: gameId
