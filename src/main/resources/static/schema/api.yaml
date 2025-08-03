@@ -219,7 +219,6 @@ components:
           type: boolean
       required:
         - cardWasPlayed
-        - messages
     UserMessage:
       type: object
       properties:
