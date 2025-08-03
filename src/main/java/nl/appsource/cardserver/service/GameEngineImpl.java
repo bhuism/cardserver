@@ -43,7 +43,7 @@ public class GameEngineImpl implements GameEngine {
         this.game = gameArg;
     }
 
-    private int calcTricksPlayed() {
+    public int calcTricksPlayed() {
         return this.game.getTurns().size() / 4;
     }
 

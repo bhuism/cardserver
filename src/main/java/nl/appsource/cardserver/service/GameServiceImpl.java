@@ -109,12 +109,9 @@ public class GameServiceImpl implements GameService {
                     return game;
                 })
                 .flatMap(gameRepository::save).doOnNext(this::sendGameChangedEvent)
-                .doOnNext((game) -> {
-                    Mono.just(game.getId())
-                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
-                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
-                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
-                        .subscribe();
+                .doOnNext(game -> {
+                    final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
+                    finishTrick(game.getId(), tricksPlayed);
                 })
                 .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
         } catch (GameEngineException e) {
@@ -122,13 +119,22 @@ public class GameServiceImpl implements GameService {
         }
     }
 
-    private Mono<String> playSomeExtraAi(final String gameId) {
+    protected void finishTrick(final String g, final int currentTrickNr) {
+        log.info("Finishing trick #{}", currentTrickNr);
+        Mono.just(g)
+            .delayElement(Duration.ofSeconds(2)).flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr))
+            .delayElement(Duration.ofSeconds(2)).flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr))
+            .delayElement(Duration.ofSeconds(2)).flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr))
+            .subscribe();
+    }
+
+    private Mono<String> playSomeExtraAi(final String gameId, final int trickNr) {
         log.info("playSomeExtraAi");
         return gameRepository.findById(gameId)
             .flatMap((game) -> {
                 final GameEngineImpl gameEngine = new GameEngineImpl(game);
                 log.info("Check for full trick");
-                if (!gameEngine.hasFullTrick()) {
+                if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr) {
                     final boolean gameWasChanged = gameEngine.playAiCard();
                     if (gameWasChanged) {
                         return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).map(Game::getId);
@@ -141,7 +147,6 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Void> playAiCard(final String userId, final String gameId) {
         try {
-
             return gameRepository.findById(gameId)
                 .flatMap((game) -> {
                     final GameEngineImpl gameEngine = new GameEngineImpl(game);
@@ -152,12 +157,10 @@ public class GameServiceImpl implements GameService {
                         return Mono.empty();
                     }
 
-                }).doOnNext((game) -> {
-                    Mono.just(game.getId())
-                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
-                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
-                        .delayElement(Duration.ofSeconds(2)).flatMap(this::playSomeExtraAi)
-                        .subscribe();
+                })
+                .doOnNext(game -> {
+                    final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
+                    finishTrick(game.getId(), tricksPlayed);
                 })
                 .then();
 
