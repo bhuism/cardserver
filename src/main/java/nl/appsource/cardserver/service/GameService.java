@@ -28,6 +28,6 @@ public interface GameService {
 
     void sendUserMessage(UserMessage userMessage);
 
-    Flux<ServerSentEvent<?>> gameStream(String userId, String gameId);
+    Flux<ServerSentEvent<Object>> gameStream(String userId, String gameId);
 
 }

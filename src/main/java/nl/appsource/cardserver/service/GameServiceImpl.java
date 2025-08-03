@@ -195,7 +195,7 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-    private final Sinks.Many<ServerSentEvent<?>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
+    private final Sinks.Many<ServerSentEvent<Object>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 30)
     public void pingAll() {
@@ -204,50 +204,58 @@ public class GameServiceImpl implements GameService {
 
 
     private void ping() {
-        internalSend("ping", null);
+        internalSend(createServerSentEvent("ping"));
     }
 
     @Override
     public Game sendGameChangedEvent(final Game game) {
-        internalSend("gameStateUpdate", gameToOpenApiConverter.convert(game));
+        internalSend(createServerSentEvent("gameStateUpdate", gameToOpenApiConverter.convert(game)));
         return game;
     }
 
     @Override
     public void sendUserMessage(final UserMessage userMessage) {
-        internalSend("messageEvent", new MessageEvent().message(userMessage));
+        internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
     }
 
-    private void internalSend(final String eventName, final Object data) {
-        log.debug("send({}) data={} count={}", eventName, data, gameSink.currentSubscriberCount());
+    private void internalSend(final ServerSentEvent<Object> serverSentEvent) {
+        gameSink.tryEmitNext(serverSentEvent);
+    }
+
+    private ServerSentEvent<Object> createServerSentEvent(final String event) {
+        return createServerSentEvent(event, null);
+    }
+
+    private ServerSentEvent<Object> createServerSentEvent(final String event, final Object data) {
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
-        gameSink.tryEmitNext(ServerSentEvent.builder().event(eventName).id(id).data(data != null ? data : "{}").build());
+        return ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build();
     }
 
     @Override
-    public Flux<ServerSentEvent<?>> gameStream(final String userId, final String gameId) {
-
-        return gameSink.asFlux()
-            .doOnSubscribe((a) -> {
-                log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
-                ping();
-            }).doOnCancel(() -> {
-                log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
-            })
-            .filter(sse -> {
-                assert sse.event() != null;
-                return switch (sse.event()) {
-                    case "ping" -> true;
-                    case "messageEvent" -> true;
-                    case "gameStateUpdate" -> ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
-                    default -> {
-                        log.error("Unknown event: " + sse.event());
-                        yield false;
-                    }
-                };
-            });
-
+    public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId) {
+        return
+            Flux.just(createServerSentEvent("ping"))
+                .concatWith(
+                    gameSink.asFlux()
+                        .doOnSubscribe((a) -> {
+                            log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
+                        }).doOnCancel(() -> {
+                            log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
+                        })
+                        .filter(sse -> {
+                            assert sse.event() != null;
+                            return switch (sse.event()) {
+                                case "ping" -> true;
+                                case "messageEvent" -> true;
+                                case "gameStateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
+                                default -> {
+                                    log.error("Unknown event: {}", sse.event());
+                                    yield false;
+                                }
+                            };
+                        })
+                );
     }
 
 }

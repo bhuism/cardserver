@@ -46,7 +46,7 @@ public final class MySseEmitter {
     }
 
     public void message(final UserMessage userMessage) {
-        internalSend("messageEvent", new MessageEvent().message(userMessage));
+        internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
     }
 
     private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
@@ -60,13 +60,17 @@ public final class MySseEmitter {
     public void sendPing() {
 //        log.info(", sendPing " + uuid);
         this.pingSent = Instant.now();
-        internalSend("ping", "{ \"uuid\": \"" + uuid + "\"}");
+        internalSend(createPingEvent());
+    }
+
+    public UserServerSentEvent createPingEvent() {
+        return createServerSentEvent("ping", "{ \"uuid\": \"" + uuid + "\"}");
     }
 
     private void sendPong() {
 //        log.info(", sending pong " + uuid);
         this.pongSent = Instant.now();
-        internalSend("pong", "{ \"uuid\": \"" + uuid + "\"}");
+        internalSend(createServerSentEvent("pong", "{ \"uuid\": \"" + uuid + "\"}"));
     }
 
     public void receivePing() {
@@ -81,19 +85,21 @@ public final class MySseEmitter {
         // log.trace("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
     }
 
-    private void internalSend(final String event) {
-        internalSend(event, null);
+    private void internalSend(final UserServerSentEvent userServerSentEvent) {
+        if (log.isTraceEnabled()) {
+            log.trace("internalSend() sending event '{}' data: '{}' ", userServerSentEvent.getServerSentEvent().event(), userServerSentEvent.getServerSentEvent().data());
+        }
+        tryEmitNext(userServerSentEvent);
     }
 
-    private void internalSend(final String event, final Object data) {
-        if (log.isTraceEnabled()) {
-            log.trace("internalSend() sending event '{}' data: '{}' ", event, data);
-        }
+    public UserServerSentEvent createServerSentEvent(final String event) {
+        return createServerSentEvent(event, null);
+    }
 
+    public UserServerSentEvent createServerSentEvent(final String event, final Object data) {
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
-
-        tryEmitNext(new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build()));
+        return new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build());
     }
 
     public void sendOnlineList(final Flux<String> onlineList) {
@@ -101,24 +107,24 @@ public final class MySseEmitter {
             log.trace("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
         }
         onlineList.collectList().subscribe(list ->
-            internalSend("online", new OnlineListEvent().onlineList(list))
+            internalSend(createServerSentEvent("online", new OnlineListEvent().onlineList(list)))
         );
     }
 
     public void sendUpdateFriends() {
-        internalSend("updateFriends");
+        internalSend(createServerSentEvent("updateFriends"));
     }
 
     public void sendUpdateGames() {
-        internalSend("updateGames");
+        internalSend(createServerSentEvent("updateGames"));
     }
 
     public void newGame(final Game game) {
-        internalSend("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
+        internalSend(createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId())));
     }
 
     public void newFriend(final String newFriendId) {
-        internalSend("newFriend", new NewFriendEvent().newFriendId(newFriendId));
+        internalSend(createServerSentEvent("newFriend", new NewFriendEvent().newFriendId(newFriendId)));
     }
 
     public void tryEmitComplete() {

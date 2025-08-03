@@ -158,11 +158,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
-        return mySseEmitter
-            .subscribe()
+        return Flux.just(mySseEmitter.createPingEvent().getServerSentEvent())
+            .concatWith(mySseEmitter.subscribe())
             .doOnSubscribe((s) -> {
                 log.info("subscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.mappingCount());
-                mySseEmitter.sendPing();
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             })

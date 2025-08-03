@@ -33,7 +33,7 @@ public class SubscribeController implements V1Api {
     }
 
     @GetMapping(path = "/gamestream/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<?>> gameStream(final @PathVariable("gameId") String gameId) {
+    public Flux<ServerSentEvent<Object>> gameStream(final @PathVariable("gameId") String gameId) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
