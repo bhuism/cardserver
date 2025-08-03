@@ -217,10 +217,6 @@ components:
       properties:
         cardWasPlayed:
           type: boolean
-        messages:
-          type: array
-          items:
-            $ref: "#/components/schemas/UserMessage"
       required:
         - cardWasPlayed
         - messages

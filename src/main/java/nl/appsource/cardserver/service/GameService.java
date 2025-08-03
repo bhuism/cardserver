@@ -3,6 +3,7 @@ package nl.appsource.cardserver.service;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import org.openapitools.model.PlayCardResponse;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,7 +24,9 @@ public interface GameService {
 
     Mono<PlayCardResponse> playAiCard(String userId, String gameId);
 
-    Game gameChanged(Game game);
+    Game sendGameChangedEvent(Game game);
+
+    void sendUserMessage(UserMessage userMessage);
 
     Flux<ServerSentEvent<?>> gameStream(String userId, String gameId);
 

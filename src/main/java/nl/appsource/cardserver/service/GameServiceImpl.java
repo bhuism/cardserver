@@ -8,6 +8,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.openapitools.model.MessageEvent;
 import org.openapitools.model.PlayCardResponse;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
@@ -109,13 +110,15 @@ public class GameServiceImpl implements GameService {
 
                     final GameEngine gameEngine = new GameEngineImpl(game);
 
-                    List<UserMessage> userMessages = gameEngine.playCard(playerId, card);
+                    final List<UserMessage> userMessages = gameEngine.playCard(playerId, card);
+
+                    userMessages.forEach(this::sendUserMessage);
 
                     if (!gameEngine.hasFullTrick()) {
                         playSomeAi(gameEngine);
                     }
 
-                    return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> new PlayCardResponse().messages(userMessages).cardWasPlayed(true));
+                    return gameRepository.save(gameEngine.getGame()).map(this::sendGameChangedEvent).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
                 });
         } catch (GameEngineException e) {
             return Mono.error(e);
@@ -159,7 +162,7 @@ public class GameServiceImpl implements GameService {
                     final boolean gameWasChanged = playSomeAi(gameEngine);
 
                     if (gameWasChanged) {
-                        return gameRepository.save(gameEngine.getGame()).map(this::gameChanged).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
+                        return gameRepository.save(gameEngine.getGame()).map(this::sendGameChangedEvent).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
                     } else {
                         return Mono.just(new PlayCardResponse().cardWasPlayed(false));
                     }
@@ -201,9 +204,14 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Game gameChanged(final Game game) {
+    public Game sendGameChangedEvent(final Game game) {
         internalSend("gameStateUpdate", gameToOpenApiConverter.convert(game));
         return game;
+    }
+
+    @Override
+    public void sendUserMessage(final UserMessage userMessage) {
+        internalSend("messageEvent", new MessageEvent().message(userMessage));
     }
 
     private void internalSend(final String eventName, final Object data) {
@@ -215,9 +223,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<ServerSentEvent<?>> gameStream(final String userId, final String gameId) {
-        //log.info("subscribe() gameId={} count={}", gameId, gameSink.currentSubscriberCount());
 
-        //ping();
         return gameSink.asFlux()
             .doOnSubscribe((a) -> {
                 log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
@@ -226,13 +232,17 @@ public class GameServiceImpl implements GameService {
                 log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
                 ping();
             })
-//            .publish()
             .filter(sse -> {
-                if (sse.data() instanceof org.openapitools.model.Game) {
-                    return ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
-                } else {
-                    return true;
-                }
+                assert sse.event() != null;
+                return switch (sse.event()) {
+                    case "ping" -> true;
+                    case "messageEvent" -> true;
+                    case "gameStateUpdate" -> ((org.openapitools.model.Game) sse.data()).getId().equals(gameId);
+                    default -> {
+                        log.error("Unknown event: " + sse.event());
+                        yield false;
+                    }
+                };
             });
 
     }

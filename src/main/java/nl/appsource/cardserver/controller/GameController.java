@@ -20,8 +20,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 
 @RestController
@@ -58,11 +56,13 @@ public class GameController implements GamesApi, V1Api {
                 })
                 .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))))
             .onErrorResume(GameEngineException.class, throwable -> {
-                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()))).cardWasPlayed(false));
+                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()));
+                return Mono.just(new PlayCardResponse().cardWasPlayed(false));
             })
             .onErrorResume(Throwable.class, throwable -> {
                 log.error("", throwable);
-                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR))).cardWasPlayed(false));
+                gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                return Mono.just(new PlayCardResponse().cardWasPlayed(false));
             })
             .map(ResponseEntity::ok);
     }
@@ -79,11 +79,13 @@ public class GameController implements GamesApi, V1Api {
             })
             .flatMap(userId -> gameService.playAiCard(userId, gameId))
             .onErrorResume(GameEngineException.class, throwable -> {
-                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()))).cardWasPlayed(false));
+                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()));
+                return Mono.just(new PlayCardResponse().cardWasPlayed(false));
             })
             .onErrorResume(Throwable.class, throwable -> {
                 log.error("", throwable);
-                return Mono.just(new PlayCardResponse().messages(List.of(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR))).cardWasPlayed(false));
+                gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                return Mono.just(new PlayCardResponse().cardWasPlayed(false));
             })
             .map(_g -> ResponseEntity.ok().build());
     }
