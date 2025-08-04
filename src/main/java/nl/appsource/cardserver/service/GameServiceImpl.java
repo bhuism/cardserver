@@ -11,6 +11,7 @@ import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.MessageEvent;
 import org.openapitools.model.PlayCardResponse;
 import org.openapitools.model.UserMessage;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
+import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
 @Slf4j
 @Service
@@ -49,12 +51,20 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
-        return gameRepository.findByUserIdAndGameId(userId, gameId);
+        if (isAdmin(userId)) {
+            return gameRepository.findById(gameId);
+        } else {
+            return gameRepository.findByUserIdAndGameId(userId, gameId);
+        }
     }
 
     @Override
     public Flux<Game> getGames(final String userId) {
-        return gameRepository.findByUserId(userId);
+        if (isAdmin(userId)) {
+            return gameRepository.findAll(Sort.by(Sort.Direction.DESC, "updated"));
+        } else {
+            return gameRepository.findByUserId(userId);
+        }
     }
 
     @Override
