@@ -93,7 +93,7 @@ public class GameServiceImpl implements GameService {
             game.setTurns(new ArrayList<>());
             game.setPlayerCard(randomCards());
             game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-        }).flatMap(gameRepository::save).doOnNext((game) -> sseEmitterRepository.gamesChanged(players)).doOnNext(sseEmitterRepository::newGame);
+        }).flatMap(gameRepository::save).doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers())).doOnNext(sseEmitterRepository::newGame);
 
     }
 
@@ -122,6 +122,9 @@ public class GameServiceImpl implements GameService {
                 .doOnNext(game -> {
                     final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
                     finishTrick(game.getId(), tricksPlayed);
+                })
+                .doOnNext(game -> {
+                    sseEmitterRepository.gamesChanged(game.getPlayers());
                 })
                 .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
         } catch (GameEngineException e) {
