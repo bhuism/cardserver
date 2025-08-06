@@ -26,6 +26,8 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static reactor.core.publisher.Mono.just;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -40,7 +42,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<User>> getUser(final String userId, final ServerWebExchange exchange) {
 
-        log.info("getUser(" + userId + ")");
+        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress(), userId);
 
         return userService.findById(userId).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
     }
@@ -49,7 +51,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<InvitesResponse>> getInvites(final ServerWebExchange exchange) {
 
-        log.info("getIncomingFriends()");
+        log.info("{} getIncomingFriends()", exchange.getRequest().getRemoteAddress());
 
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userService::getInvites).flatMap(invites -> {
 
@@ -68,7 +70,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> sendMessage(final Mono<PostMessage> arg, final ServerWebExchange exchange) {
 
-        log.info("sendMessage()");
+        log.info("{} sendMessage()", exchange.getRequest().getRemoteAddress());
 
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.map(postMessage -> {
             sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
@@ -95,41 +97,35 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Flux<User>>> getUsers(final List<String> userIds, final ServerWebExchange exchange) {
 
-        log.info("getUsers()");
+        log.info("{} getUsers()", exchange.getRequest().getRemoteAddress());
 
-        return Mono.just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
+        return just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
     }
 
     @Override
     public Mono<ResponseEntity<Void>> removeInvite(final String friendId, final ServerWebExchange exchange) {
 
-        log.info("removeInvite(" + friendId + ")");
+        log.info("{} removeInvite({})", exchange.getRequest().getRemoteAddress(), friendId);
 
-        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.removeInvite(userId, friendId)).map(ResponseEntity::ok);
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.removeInvite(userId, friendId)).then(just(ResponseEntity.ok().build()));
 
     }
 
     @Override
     public Mono<ResponseEntity<Void>> acceptInvite(final String friendId, final ServerWebExchange exchange) {
-
-        log.info("addInvite(" + friendId + ")");
-
-        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.acceptInvite(userId, friendId)).map(ResponseEntity::ok);
-
+        log.info("{} addInvite({})", exchange.getRequest().getRemoteAddress(), friendId);
+        return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.acceptInvite(userId, friendId)).then(just(ResponseEntity.ok().build()));
     }
 
     @Override
     public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
-
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString()))).map(BigDecimal::new).map(count -> new CreateInviteResponse().count(count)).map(ResponseEntity::ok);
     }
 
 
     @Override
     public Mono<ResponseEntity<User>> updatePreferences(final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
-
-        log.info("updatePreferences()");
-
+        log.info("{} updatePreferences()", exchange.getRequest().getRemoteAddress());
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName()))).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
 
     }

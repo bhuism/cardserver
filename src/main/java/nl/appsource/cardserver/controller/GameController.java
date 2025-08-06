@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
+import static reactor.core.publisher.Mono.just;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,7 +35,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
 
-        log.info("getGame(" + gameId + ")");
+        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -51,18 +52,18 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                    log.info("playCard() user " + userId + " plays card " + playCard.getCard());
+                    log.info("{} playCard() user {} plays card {}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
                     return playCard;
                 })
                 .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))))
             .onErrorResume(GameEngineException.class, throwable -> {
                 gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()));
-                return Mono.just(new PlayCardResponse().cardWasPlayed(false));
+                return just(new PlayCardResponse().cardWasPlayed(false));
             })
             .onErrorResume(Throwable.class, throwable -> {
                 log.error("", throwable);
                 gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.just(new PlayCardResponse().cardWasPlayed(false));
+                return just(new PlayCardResponse().cardWasPlayed(false));
             })
             .map(ResponseEntity::ok);
     }
@@ -74,7 +75,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .map(userId -> {
-                log.info("playAiCard() user " + userId);
+                log.info("{} playAiCard() {}", exchange.getRequest().getRemoteAddress(), userId);
                 return userId;
             })
             .flatMap(userId -> gameService.playAiCard(userId, gameId))
@@ -87,14 +88,14 @@ public class GameController implements GamesApi, V1Api {
                 gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
                 return Mono.justOrEmpty(true).then();
             })
-            .map(_g -> ResponseEntity.ok().build());
+            .then(just(ResponseEntity.ok().build()));
     }
 
 
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final ServerWebExchange exchange) {
 
-        log.info("getGames()");
+        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -107,7 +108,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> createGame(final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
 
-        log.info("createGame()");
+        log.info("{} createGame()", exchange.getRequest().getRemoteAddress());
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -120,9 +121,9 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final String gameId, final ServerWebExchange exchange) {
-        log.info("deleteGame(" + gameId + ")");
+        log.info("{} deleteGame({})", gameId, exchange.getRequest().getRemoteAddress());
         return gameService.deleteGame(gameId)
-            .then(Mono.just(ResponseEntity.ok().build()));
+            .then(just(ResponseEntity.ok().build()));
     }
 
 
