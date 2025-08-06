@@ -42,7 +42,7 @@ public class WhoAmIController implements WhoamiApi {
 
                 final String email = principal.getClaims().get("email").toString();
 
-                log.info("{} whoampi(), email={}", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), email);
+                log.info("{} whoampi(), email={}", exchange.getRequest().getRemoteAddress(), email);
 
                 final Instant now = Instant.now();
 
@@ -57,7 +57,7 @@ public class WhoAmIController implements WhoamiApi {
                     })
                     .switchIfEmpty(Mono.defer(() -> {
 
-                        log.info("{} Creating a new user {}", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), email);
+                        log.info("{} Creating a new user {}", exchange.getRequest().getRemoteAddress(), email);
 
                         final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
 

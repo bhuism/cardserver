@@ -42,7 +42,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<User>> getUser(final String userId, final ServerWebExchange exchange) {
 
-        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), userId);
+        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress(), userId);
 
         return userService.findById(userId).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
     }
@@ -51,7 +51,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<InvitesResponse>> getInvites(final ServerWebExchange exchange) {
 
-        log.info("{} getIncomingFriends()", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+        log.info("{} getIncomingFriends()", exchange.getRequest().getRemoteAddress());
 
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userService::getInvites).flatMap(invites -> {
 
@@ -70,7 +70,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> sendMessage(final Mono<PostMessage> arg, final ServerWebExchange exchange) {
 
-        log.info("{} sendMessage()", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+        log.info("{} sendMessage()", exchange.getRequest().getRemoteAddress());
 
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.map(postMessage -> {
             sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
@@ -97,7 +97,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Flux<User>>> getUsers(final List<String> userIds, final ServerWebExchange exchange) {
 
-        log.info("{} getUsers()", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+        log.info("{} getUsers()", exchange.getRequest().getRemoteAddress());
 
         return just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
     }
@@ -105,7 +105,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> removeInvite(final String friendId, final ServerWebExchange exchange) {
 
-        log.info("{} removeInvite({})", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), friendId);
+        log.info("{} removeInvite({})", exchange.getRequest().getRemoteAddress(), friendId);
 
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.removeInvite(userId, friendId)).then(just(ResponseEntity.ok().build()));
 
@@ -113,7 +113,7 @@ public class UserController implements UsersApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> acceptInvite(final String friendId, final ServerWebExchange exchange) {
-        log.info("{} addInvite({})", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), friendId);
+        log.info("{} addInvite({})", exchange.getRequest().getRemoteAddress(), friendId);
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> userService.acceptInvite(userId, friendId)).then(just(ResponseEntity.ok().build()));
     }
 
@@ -125,7 +125,7 @@ public class UserController implements UsersApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<User>> updatePreferences(final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
-        log.info("{} updatePreferences()", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
+        log.info("{} updatePreferences()", exchange.getRequest().getRemoteAddress());
         return ReactiveSecurityContextHolder.getContext().map(SecurityContext::getAuthentication).map(Authentication::getName).flatMap(userId -> arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName()))).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
 
     }
