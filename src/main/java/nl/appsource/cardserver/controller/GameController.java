@@ -35,7 +35,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
 
-        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
+        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), gameId);
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -52,7 +52,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                    log.info("{} playCard() user {} plays card {}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
+                    log.info("{} playCard() user {} plays card {}", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), userId, playCard.getCard());
                     return playCard;
                 })
                 .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))))
@@ -75,7 +75,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .map(userId -> {
-                log.info("{} playAiCard() {}", exchange.getRequest().getRemoteAddress(), userId);
+                log.info("{} playAiCard() {}", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), userId);
                 return userId;
             })
             .flatMap(userId -> gameService.playAiCard(userId, gameId))
@@ -95,7 +95,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final ServerWebExchange exchange) {
 
-        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
+        log.info("{} getGames()", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -108,7 +108,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> createGame(final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
 
-        log.info("{} createGame()", exchange.getRequest().getRemoteAddress());
+        log.info("{} createGame()", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -121,7 +121,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final String gameId, final ServerWebExchange exchange) {
-        log.info("{} deleteGame({})", gameId, exchange.getRequest().getRemoteAddress());
+        log.info("{} deleteGame({})", gameId, exchange.getRequest().getRemoteAddress().getAddress().getHostAddress());
         return gameService.deleteGame(gameId)
             .then(just(ResponseEntity.ok().build()));
     }

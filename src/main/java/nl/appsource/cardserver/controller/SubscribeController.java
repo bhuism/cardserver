@@ -31,7 +31,7 @@ public class SubscribeController implements V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .doOnNext(userId -> {
-                log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress(), userId);
+                log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), userId);
             })
             .flatMapMany(userService::subscribe);
     }
@@ -42,7 +42,7 @@ public class SubscribeController implements V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .doOnNext(userId -> {
-                log.info("{} gameStream() userId={}", exchange.getRequest().getRemoteAddress(), userId);
+                log.info("{} gameStream() userId={}", exchange.getRequest().getRemoteAddress().getAddress().getHostAddress(), userId);
             })
             .flatMapMany(userId -> gameService.gameStream(userId, gameId));
     }
