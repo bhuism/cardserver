@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 
 
@@ -25,18 +26,24 @@ public class SubscribeController implements V1Api {
     private final GameService gameService;
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<? extends ServerSentEvent<Object>> subscribe() {
+    public Flux<? extends ServerSentEvent<Object>> subscribe(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
+            .doOnNext(userId -> {
+                log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress(), userId);
+            })
             .flatMapMany(userService::subscribe);
     }
 
     @GetMapping(path = "/gamestream/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<Object>> gameStream(final @PathVariable("gameId") String gameId) {
+    public Flux<ServerSentEvent<Object>> gameStream(final @PathVariable("gameId") String gameId, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
+            .doOnNext(userId -> {
+                log.info("{} gameStream() userId={}", exchange.getRequest().getRemoteAddress(), userId);
+            })
             .flatMapMany(userId -> gameService.gameStream(userId, gameId));
     }
 
