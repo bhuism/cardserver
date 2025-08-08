@@ -64,7 +64,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //        doAll(this::pingUpdateStatus);
 //    }
 
-    @Scheduled(fixedDelay = 1000 * 60, initialDelay = 1000 * 5)
+    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 5)
     public void janitor() {
         final Set<UUID> removers = new HashSet<>();
         emitters.forEach((uuid, mySseEmitter) -> {
@@ -158,7 +158,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
-        return Flux.just(mySseEmitter.createPingEvent().getServerSentEvent())
+        return Flux.just(mySseEmitter.createPingEvent().getServerSentEvent(), mySseEmitter.createPingEvent().getServerSentEvent(), mySseEmitter.createPingEvent().getServerSentEvent())
             .concatWith(mySseEmitter.subscribe())
             .doOnSubscribe((s) -> {
                 log.info("subscribe() userId={}, sseEmitter={} ", userId, mySseEmitter.getUuid());

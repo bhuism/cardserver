@@ -123,9 +123,7 @@ public class GameServiceImpl implements GameService {
                     final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
                     finishTrick(game.getId(), tricksPlayed);
                 })
-                .doOnNext(game -> {
-                    sseEmitterRepository.gamesChanged(game.getPlayers());
-                })
+                .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
                 .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
         } catch (GameEngineException e) {
             return Mono.error(e);
@@ -205,7 +203,7 @@ public class GameServiceImpl implements GameService {
 
     private final Sinks.Many<ServerSentEvent<Object>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
 
-    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 30)
+    @Scheduled(fixedDelay = 1000 * 5, initialDelay = 1000 * 5)
     public void pingAll() {
         this.ping();
     }
@@ -242,14 +240,11 @@ public class GameServiceImpl implements GameService {
     @Override
     public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId) {
         return
-            Flux.just(createServerSentEvent("ping"))
+            Flux.just(createServerSentEvent("ping"), createServerSentEvent("ping"), createServerSentEvent("ping"))
                 .concatWith(
                     gameSink.asFlux()
-                        .doOnSubscribe((a) -> {
-                            log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
-                        }).doOnCancel(() -> {
-                            log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount());
-                        })
+                        .doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
+                        .doOnCancel(() -> log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
                         .filter(sse -> {
                             assert sse.event() != null;
                             return switch (sse.event()) {
