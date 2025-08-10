@@ -7,6 +7,8 @@ import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
+import org.openapitools.model.PingEvent;
+import org.openapitools.model.PongEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
@@ -64,13 +66,13 @@ public final class MySseEmitter {
     }
 
     public UserServerSentEvent createPingEvent() {
-        return createServerSentEvent("ping", "{ \"uuid\": \"" + uuid + "\"}");
+        return createServerSentEvent("ping", new PingEvent().uuid(uuid.toString()));
     }
 
     private void sendPong() {
 //        log.info(", sending pong " + uuid);
         this.pongSent = Instant.now();
-        internalSend(createServerSentEvent("pong", "{ \"uuid\": \"" + uuid + "\"}"));
+        internalSend(createServerSentEvent("pong", new PongEvent().uuid(uuid.toString())));
     }
 
     public void receivePing() {

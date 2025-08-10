@@ -327,6 +327,20 @@ components:
             type: string
       required:
         - players
+    PingEvent:
+      type: object
+      properties:
+        uuid:
+          type: string
+      required:
+        - uuid
+    PongEvent:
+      type: object
+      properties:
+        uuid:
+          type: string
+      required:
+        - uuid
     OnlineListEvent:
       type: object
       properties:
