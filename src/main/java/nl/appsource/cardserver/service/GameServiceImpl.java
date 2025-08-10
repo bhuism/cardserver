@@ -210,7 +210,11 @@ public class GameServiceImpl implements GameService {
 
 
     private void ping() {
-        internalSend(createServerSentEvent("ping"));
+        internalSend(createPing());
+    }
+
+    private ServerSentEvent<Object> createPing() {
+        return createServerSentEvent("gamePing");
     }
 
     @Override
@@ -240,7 +244,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId) {
         return
-            Flux.just(createServerSentEvent("ping"), createServerSentEvent("ping"), createServerSentEvent("ping"))
+            Flux.just(createPing(), createPing(), createPing())
                 .concatWith(
                     gameSink.asFlux()
                         .doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
@@ -248,8 +252,8 @@ public class GameServiceImpl implements GameService {
                         .filter(sse -> {
                             assert sse.event() != null;
                             return switch (sse.event()) {
-                                case "ping" -> true;
-                                case "messageEvent" -> true;
+                                case "gamePing" -> true;
+                                case "gameMessageEvent" -> true;
                                 case "gameStateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
                                 default -> {
                                     log.error("Unknown event: {}", sse.event());
