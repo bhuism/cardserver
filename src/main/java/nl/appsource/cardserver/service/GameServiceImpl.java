@@ -220,7 +220,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void sendUserMessage(final UserMessage userMessage) {
-        internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
+        internalSend(createServerSentEvent("gameMessageEvent", new MessageEvent().message(userMessage)));
     }
 
     private void internalSend(final ServerSentEvent<Object> serverSentEvent) {
