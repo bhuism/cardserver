@@ -66,13 +66,13 @@ public final class MySseEmitter {
     }
 
     public UserServerSentEvent createPingEvent() {
-        return createServerSentEvent("ping", new PingEvent().uuid(uuid.toString()));
+        return createServerSentEvent("ping", new PingEvent().uuid(uuid));
     }
 
     private void sendPong() {
 //        log.info(", sending pong " + uuid);
         this.pongSent = Instant.now();
-        internalSend(createServerSentEvent("pong", new PongEvent().uuid(uuid.toString())));
+        internalSend(createServerSentEvent("pong", new PongEvent().uuid(uuid)));
     }
 
     public void receivePing() {
