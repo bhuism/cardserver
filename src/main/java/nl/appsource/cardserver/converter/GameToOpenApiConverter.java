@@ -41,7 +41,6 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
         target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
 
-
         final GameEngine gameEngine = new GameEngineImpl(source);
 
         if (!gameEngine.isCompleted()) {
