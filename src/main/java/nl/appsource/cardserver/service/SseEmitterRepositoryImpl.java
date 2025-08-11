@@ -158,7 +158,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.put(mySseEmitter.getUuid(), mySseEmitter);
 
-        return Flux.just(mySseEmitter.createPingEvent().getServerSentEvent(), mySseEmitter.createPingEvent().getServerSentEvent(), mySseEmitter.createPingEvent().getServerSentEvent())
+        return Flux.just(mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent())
             .concatWith(mySseEmitter.subscribe())
             .doOnSubscribe((s) -> {
                 log.info("subscribe() userId={}, sseEmitter={} ", userId, mySseEmitter.getUuid());

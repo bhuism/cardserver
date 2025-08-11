@@ -99,14 +99,13 @@ public class UserServiceImpl implements UserService {
             .flatMap(
                 (user) -> {
                     log.info("total before: {}", user.getInvites());
-                    //noinspection DataFlowIssue
                     return userRepository.searchInvitees(searchString)
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
                         .collect(Collectors.toSet())
                         .map((newFriendIds -> {
                             user.getInvites().addAll(newFriendIds);
-                            userRepository.save(user).block();
+                            userRepository.save(user).subscribe();
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
                             sseEmitterRepository.sendOnlineListTo(userId);
                             sseEmitterRepository.friendsChanged(newFriendIds);

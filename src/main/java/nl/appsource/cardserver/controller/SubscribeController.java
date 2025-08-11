@@ -30,9 +30,7 @@ public class SubscribeController implements V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .doOnNext(userId -> {
-                log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress(), userId);
-            })
+            .doOnNext(userId -> log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress(), userId))
             .flatMapMany(userService::subscribe);
     }
 
@@ -41,9 +39,7 @@ public class SubscribeController implements V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .doOnNext(userId -> {
-                log.info("{} gameStream() userId={}", exchange.getRequest().getRemoteAddress(), userId);
-            })
+            .doOnNext(userId -> log.info("{} gameStream() userId={}", exchange.getRequest().getRemoteAddress(), userId))
             .flatMapMany(userId -> gameService.gameStream(userId, gameId));
     }
 

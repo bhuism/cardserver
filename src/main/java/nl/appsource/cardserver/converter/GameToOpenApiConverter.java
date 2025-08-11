@@ -45,9 +45,7 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         final Map<String, Boolean> says = new HashMap<>();
 
         if (source.getSay() != null) {
-            source.getSay().forEach((integer, aBoolean) -> {
-                says.put("" + integer, aBoolean);
-            });
+            source.getSay().forEach((integer, aBoolean) -> says.put("" + integer, aBoolean));
         }
 
         target.setSays(says);

@@ -44,14 +44,14 @@ public class Migrator {
 
     @PostConstruct
     @SuppressWarnings("AvoidNestedBlocks")
-    public void init() throws IOException {
+    public void init() {
         //loadUser("users.json");
         //loadGames("games.json");
     }
 
     private void loadGames(final String fileName) throws IOException {
 
-        log.info("Found {} games in db", gameRepository.count());
+        log.info("Found {} games in db", gameRepository.count().block());
 
         final File gameFile = new File(fileName);
 

@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.UserMessage;
 
@@ -13,6 +12,8 @@ public interface GameEngine {
 
     int calcWhoHasTurn() throws GameEngineException;
 
+    void sayAi() throws GameEngineException;
+
     List<UserMessage> playCard(String userId, Card card) throws GameEngineException;
 
     List<UserMessage> say(String userId, Boolean say) throws GameEngineException;
@@ -21,7 +22,7 @@ public interface GameEngine {
 
     boolean isCompleted();
 
-    Game getGame();
+    int calcTricksPlayed();
 
     boolean hasFullTrick();
 

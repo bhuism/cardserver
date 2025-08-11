@@ -57,9 +57,9 @@ public class UserController implements UsersApi, V1Api {
 
 //                final InvitesResponse invitesResponse = new InvitesResponse();
 
-            final Flux<String> incoming = invites.getIncoming();
-            final Flux<String> outgoing = invites.getOutgoing();
-            final Flux<String> friends = invites.getFriends();
+            final Flux<String> incoming = invites.incoming();
+            final Flux<String> outgoing = invites.outgoing();
+            final Flux<String> friends = invites.friends();
 
             return Mono.zip(arr -> new InvitesResponse().incoming((List<String>) arr[0]).friends((List<String>) arr[1]).outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
 

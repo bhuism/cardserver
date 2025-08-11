@@ -153,7 +153,7 @@ public class GameServiceImpl implements GameService {
     private Mono<String> playSomeExtraAi(final String gameId, final int trickNr) {
         log.info("playSomeExtraAi");
         return gameRepository.findById(gameId).flatMap((game) -> {
-            final GameEngineImpl gameEngine = new GameEngineImpl(game);
+            final GameEngine gameEngine = new GameEngineImpl(game);
             log.info("Check for full trick");
             if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr) {
                 try {
@@ -173,7 +173,7 @@ public class GameServiceImpl implements GameService {
     public Mono<Void> kickAi(final String userId, final String gameId) {
         return gameRepository.findById(gameId).flatMap((game) -> {
 
-            final GameEngineImpl gameEngine = new GameEngineImpl(game);
+            final GameEngine gameEngine = new GameEngineImpl(game);
 
             try {
 

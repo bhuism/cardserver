@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
@@ -27,14 +26,11 @@ import java.util.stream.Collectors;
 import static java.util.Comparator.comparing;
 
 @Slf4j
-public class GameEngineImpl implements GameEngine {
+public record GameEngineImpl(Game game) implements GameEngine {
 
     public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9");
 
-    @Getter
-    private final Game game;
-
-//    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
+    //    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
 //
 //    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(Rank.Ace, 14, Rank.King, 12, Rank.Queen, 11, Rank.Jack, 16, Rank.Ten, 13, Rank.Nine, 15, Rank.Eight, 10, Rank.Seven, 9);
 
@@ -42,10 +38,7 @@ public class GameEngineImpl implements GameEngine {
 
     private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> o.rank.standardValue);
 
-    public GameEngineImpl(final Game gameArg) {
-        this.game = gameArg;
-    }
-
+    @Override
     public int calcTricksPlayed() {
         return this.game.getTurns().size() / 4;
     }
@@ -82,7 +75,7 @@ public class GameEngineImpl implements GameEngine {
 
     }
 
-    final int determineTrickWinner(final int trickNr) throws GameEngineException {
+    int determineTrickWinner(final int trickNr) throws GameEngineException {
         final Card winningCard = determineTrickWinningCard(trickNr);
         return whoHasCard(winningCard);
     }
@@ -160,6 +153,7 @@ public class GameEngineImpl implements GameEngine {
 
     }
 
+    @Override
     public void sayAi() throws GameEngineException {
 
         if (isCompleted()) {
@@ -459,7 +453,7 @@ public class GameEngineImpl implements GameEngine {
 
         int currentScore = 0;
 
-        final List<Card> trumpCards = hand.stream().filter(c -> c.suit == game.getTrump()).collect(Collectors.toList());
+        final List<Card> trumpCards = hand.stream().filter(c -> c.suit == game.getTrump()).toList();
         final Map<Rank, Long> trumpRanks = trumpCards.stream().collect(Collectors.groupingBy(c -> c.rank, Collectors.counting()));
 
         // Points for high trumps

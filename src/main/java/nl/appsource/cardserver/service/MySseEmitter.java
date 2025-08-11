@@ -89,7 +89,7 @@ public final class MySseEmitter {
 
     private void internalSend(final UserServerSentEvent userServerSentEvent) {
         if (log.isTraceEnabled()) {
-            log.trace("internalSend() sending event '{}' data: '{}' ", userServerSentEvent.getServerSentEvent().event(), userServerSentEvent.getServerSentEvent().data());
+            log.trace("internalSend() sending event '{}' data: '{}' ", userServerSentEvent.serverSentEvent().event(), userServerSentEvent.serverSentEvent().data());
         }
         tryEmitNext(userServerSentEvent);
     }
@@ -134,7 +134,7 @@ public final class MySseEmitter {
     }
 
     public Flux<ServerSentEvent<Object>> subscribe() {
-        return unicastSink.asFlux().map(UserServerSentEvent::getServerSentEvent).publish().autoConnect().doOnCancel(this::cancel);
+        return unicastSink.asFlux().map(UserServerSentEvent::serverSentEvent).publish().autoConnect().doOnCancel(this::cancel);
     }
 
     public void cancel() {

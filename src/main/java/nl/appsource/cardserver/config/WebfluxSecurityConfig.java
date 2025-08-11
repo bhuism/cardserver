@@ -30,13 +30,11 @@ import java.util.List;
 @Slf4j
 public class WebfluxSecurityConfig {
 
-    private final Environment environment;
-
     private final CardServerJwtModem cardServerJwtModem;
 
     @Bean
     @Order(1)
-    public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) {
 
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
@@ -58,7 +56,7 @@ public class WebfluxSecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) {
 
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
@@ -72,7 +70,7 @@ public class WebfluxSecurityConfig {
 
     @Bean
     @Order(3)
-    public SecurityWebFilterChain securityFilterChainRest(final ServerHttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityFilterChainRest(final ServerHttpSecurity http) {
 
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
