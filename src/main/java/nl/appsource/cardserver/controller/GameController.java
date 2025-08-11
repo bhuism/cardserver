@@ -78,7 +78,7 @@ public class GameController implements GamesApi, V1Api {
                 log.info("{} playAiCard() {}", exchange.getRequest().getRemoteAddress(), userId);
                 return userId;
             })
-            .flatMap(userId -> gameService.playAiCard(userId, gameId))
+            .flatMap(userId -> gameService.kickAi(userId, gameId))
             .onErrorResume(GameEngineException.class, throwable -> {
                 gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
                 return Mono.justOrEmpty(true).then();

@@ -1,13 +1,21 @@
 package nl.appsource.cardserver.model;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-@Getter
 @RequiredArgsConstructor
 public enum Rank {
 
-    Ace("A"), King("K"), Queen("Q"), Jack("J"), Ten("10"), Nine("9"), Eight("8"), Seven("7");
+    ACE("A", 11, 11),
+    KING("K", 4, 4),
+    QUEEN("Q", 3, 3),
+    JACK("J", 2, 20),
+    TEN("10", 10, 10),
+    NINE("9", 0, 14),
+    EIGHT("8", 0, 0),
+    SEVEN("7", 0, 0);
 
-    private final String symbol;
+    public final String symbol;
+    public final int standardValue;
+    public final int trumpValue;
+
 }

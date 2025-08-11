@@ -17,15 +17,15 @@ public interface GameEngine {
 
     List<UserMessage> say(String userId, Boolean say) throws GameEngineException;
 
-    boolean playAiCard() throws GameEngineException;
+    void playAiCard() throws GameEngineException;
 
     boolean isCompleted();
 
     Game getGame();
 
-    Card calcAiCard(String userId) throws GameEngineException;
-
     boolean hasFullTrick();
 
     boolean isAiTurn() throws GameEngineException;
+
+    boolean isAiSay() throws GameEngineException;
 }

@@ -34,13 +34,13 @@ public class GameEngineImpl implements GameEngine {
     @Getter
     private final Game game;
 
-    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
+//    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
+//
+//    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(Rank.Ace, 14, Rank.King, 12, Rank.Queen, 11, Rank.Jack, 16, Rank.Ten, 13, Rank.Nine, 15, Rank.Eight, 10, Rank.Seven, 9);
 
-    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(Rank.Ace, 14, Rank.King, 12, Rank.Queen, 11, Rank.Jack, 16, Rank.Ten, 13, Rank.Nine, 15, Rank.Eight, 10, Rank.Seven, 9);
+    private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> o.rank.trumpValue);
 
-    private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> RANK_TRUMP.get(o.getRank()));
-
-    private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> RANK_REGULAR.get(o.getRank()));
+    private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> o.rank.standardValue);
 
     public GameEngineImpl(final Game gameArg) {
         this.game = gameArg;
@@ -144,21 +144,37 @@ public class GameEngineImpl implements GameEngine {
     }
 
     @Override
-    public boolean playAiCard() throws GameEngineException {
+    public void playAiCard() throws GameEngineException {
 
         if (isCompleted()) {
-            return false;
+            throw new GameCompletedException();
+        }
+
+        if (!isAiTurn()) {
+            throw new IllegalStateException("Not ai's turn to play a card");
         }
 
         final String userId = game.getPlayers().get(calcWhoHasTurn());
 
-        if (isAiPlayer(userId)) {
-            // we don't user ai user message, he's not a real boy remember, there IS no spoon he said
-            playCard(userId, calcAiCard(userId));
-            return true;
-        } else {
-            return false;
+        playCard(userId, calcAiCard(userId));
+
+    }
+
+    public void sayAi() throws GameEngineException {
+
+        if (isCompleted()) {
+            throw new GameCompletedException();
         }
+
+        if (!isAiSay()) {
+            throw new IllegalStateException("Not ai's turn to say");
+        }
+
+        final int whoSay = calcWhoSay();
+
+        final String userId = this.game.getPlayers().get(whoSay);
+
+        say(userId, decideBid(userId));
 
     }
 
@@ -278,7 +294,7 @@ public class GameEngineImpl implements GameEngine {
     }
 
     private Integer getKlaverjassenValue(final Card c1) {
-        return c1.getSuit().equals(game.getTrump()) ? RANK_TRUMP.get(c1.getRank()) : RANK_REGULAR.get(c1.getRank());
+        return c1.getSuit().equals(game.getTrump()) ? c1.getRank().trumpValue : c1.getRank().standardValue;
     }
 
     private int compareKlaverjassenCards(final Card card1, final Card card2) {
@@ -317,7 +333,6 @@ public class GameEngineImpl implements GameEngine {
         return game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
     }
 
-    @Override
     public Card calcAiCard(final String userId) throws GameEngineException {
 
 //        log.info("calcAiCard() userId={}", userId);
@@ -335,7 +350,7 @@ public class GameEngineImpl implements GameEngine {
         if (isFirstPlayerInTrick) {
             // Try to play a low card from a non-trump suit
             for (Card card : hand) {
-                if (card.getSuit() != game.getTrump() && card.getRank() != Rank.Seven && card.getRank() != Rank.Eight) {
+                if (card.getSuit() != game.getTrump() && card.getRank() != Rank.SEVEN && card.getRank() != Rank.EIGHT) {
                     return card;
                 }
             }
@@ -434,6 +449,50 @@ public class GameEngineImpl implements GameEngine {
         }
     }
 
+
+    private static final int BIDDING_THRESHOLD = 25;
+
+
+    public boolean decideBid(final String userId) {
+
+        final List<Card> hand = getHand(userId);
+
+        int currentScore = 0;
+
+        final List<Card> trumpCards = hand.stream().filter(c -> c.suit == game.getTrump()).collect(Collectors.toList());
+        final Map<Rank, Long> trumpRanks = trumpCards.stream().collect(Collectors.groupingBy(c -> c.rank, Collectors.counting()));
+
+        // Points for high trumps
+        if (trumpRanks.containsKey(Rank.JACK)) {
+            currentScore += 10;
+        }
+        if (trumpRanks.containsKey(Rank.NINE)) {
+            currentScore += 8;
+        }
+
+        // Points for length (more than 3 trumps is good)
+        if (trumpCards.size() > 3) {
+            currentScore += (trumpCards.size() - 3) * 3;
+        }
+
+        // Points for a "marriage" (King & Queen of trump)
+        if (trumpRanks.containsKey(Rank.KING) && trumpRanks.containsKey(Rank.QUEEN)) {
+            currentScore += 5;
+        }
+
+        // Points for Aces in side suits
+        for (Card card : hand) {
+            if (card.suit != game.getTrump() && card.rank == Rank.ACE) {
+                currentScore += 6;
+            }
+        }
+
+        log.info("{}: evaluates their hand for trump: {}  with score: {}", userId, game.getTrump(), currentScore);
+
+        return currentScore >= BIDDING_THRESHOLD;
+
+    }
+
     @Override
     public boolean isAiTurn() throws GameEngineException {
         if (isCompleted()) {
@@ -442,7 +501,34 @@ public class GameEngineImpl implements GameEngine {
         return isAiPlayer(game.getPlayers().get(calcWhoHasTurn()));
     }
 
+    @Override
+    public boolean isAiSay() throws GameEngineException {
+
+        if (isCompleted()) {
+            log.warn("Game {} allready completed", game.getId());
+            throw new GameCompletedException();
+        }
+
+        if (game.getSay() == null) {
+            game.setSay(new HashMap<>());
+        }
+
+        if (game.getSay().containsValue(Boolean.TRUE)) {
+            return false;
+        }
+
+        if (game.getSay().size() == 4) {
+            throw new NeedNewSayRound(null);
+        }
+
+        final int whoSay = calcWhoSay();
+
+        return isAiPlayer(game.getPlayers().get(whoSay));
+
+    }
+
     boolean isAiPlayer(final String userId) {
         return AI_USER_ID.contains(userId);
     }
+
 }

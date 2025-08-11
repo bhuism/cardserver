@@ -7,48 +7,48 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Card implements Comparable<Card> {
 
-    Ac(Rank.Ace, Suit.Clubs),
-    Kc(Rank.King, Suit.Clubs),
-    Qc(Rank.Queen, Suit.Clubs),
-    Jc(Rank.Jack, Suit.Clubs),
-    Tc(Rank.Ten, Suit.Clubs),
-    Nc(Rank.Nine, Suit.Clubs),
-    Ec(Rank.Eight, Suit.Clubs),
-    Sc(Rank.Seven, Suit.Clubs),
+    Ac(Rank.ACE, Suit.Clubs),
+    Kc(Rank.KING, Suit.Clubs),
+    Qc(Rank.QUEEN, Suit.Clubs),
+    Jc(Rank.JACK, Suit.Clubs),
+    Tc(Rank.TEN, Suit.Clubs),
+    Nc(Rank.NINE, Suit.Clubs),
+    Ec(Rank.EIGHT, Suit.Clubs),
+    Sc(Rank.SEVEN, Suit.Clubs),
 
-    Ad(Rank.Ace, Suit.Diamonds),
-    Kd(Rank.King, Suit.Diamonds),
-    Qd(Rank.Queen, Suit.Diamonds),
-    Jd(Rank.Jack, Suit.Diamonds),
-    Td(Rank.Ten, Suit.Diamonds),
-    Nd(Rank.Nine, Suit.Diamonds),
-    Ed(Rank.Eight, Suit.Diamonds),
-    Sd(Rank.Seven, Suit.Diamonds),
+    Ad(Rank.ACE, Suit.Diamonds),
+    Kd(Rank.KING, Suit.Diamonds),
+    Qd(Rank.QUEEN, Suit.Diamonds),
+    Jd(Rank.JACK, Suit.Diamonds),
+    Td(Rank.TEN, Suit.Diamonds),
+    Nd(Rank.NINE, Suit.Diamonds),
+    Ed(Rank.EIGHT, Suit.Diamonds),
+    Sd(Rank.SEVEN, Suit.Diamonds),
 
-    Ah(Rank.Ace, Suit.Hearts),
-    Kh(Rank.King, Suit.Hearts),
-    Qh(Rank.Queen, Suit.Hearts),
-    Jh(Rank.Jack, Suit.Hearts),
-    Th(Rank.Ten, Suit.Hearts),
-    Nh(Rank.Nine, Suit.Hearts),
-    Eh(Rank.Eight, Suit.Hearts),
-    Sh(Rank.Seven, Suit.Hearts),
+    Ah(Rank.ACE, Suit.Hearts),
+    Kh(Rank.KING, Suit.Hearts),
+    Qh(Rank.QUEEN, Suit.Hearts),
+    Jh(Rank.JACK, Suit.Hearts),
+    Th(Rank.TEN, Suit.Hearts),
+    Nh(Rank.NINE, Suit.Hearts),
+    Eh(Rank.EIGHT, Suit.Hearts),
+    Sh(Rank.SEVEN, Suit.Hearts),
 
-    As(Rank.Ace, Suit.Spades),
-    Ks(Rank.King, Suit.Spades),
-    Qs(Rank.Queen, Suit.Spades),
-    Js(Rank.Jack, Suit.Spades),
-    Ts(Rank.Ten, Suit.Spades),
-    Ns(Rank.Nine, Suit.Spades),
-    Es(Rank.Eight, Suit.Spades),
-    Ss(Rank.Seven, Suit.Spades);
+    As(Rank.ACE, Suit.Spades),
+    Ks(Rank.KING, Suit.Spades),
+    Qs(Rank.QUEEN, Suit.Spades),
+    Js(Rank.JACK, Suit.Spades),
+    Ts(Rank.TEN, Suit.Spades),
+    Ns(Rank.NINE, Suit.Spades),
+    Es(Rank.EIGHT, Suit.Spades),
+    Ss(Rank.SEVEN, Suit.Spades);
 
-    private final Rank rank;
+    public final Rank rank;
 
-    private final Suit suit;
+    public final Suit suit;
 
     public String getNiceString() {
-        return rank.getSymbol() + suit.getSymbol();
+        return rank.symbol + suit.symbol;
     }
 
 }

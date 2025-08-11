@@ -157,12 +157,8 @@ public class GameServiceImpl implements GameService {
             log.info("Check for full trick");
             if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr) {
                 try {
-                    final boolean gameWasChanged = gameEngine.playAiCard();
-                    if (gameWasChanged) {
-                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).map(Game::getId);
-                    } else {
-                        return Mono.just(gameId);
-                    }
+                    gameEngine.playAiCard();
+                    return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).map(Game::getId);
                 } catch (GameEngineException e) {
                     log.error("Exception during playAiCard()", e);
                     return Mono.error(e);
@@ -174,20 +170,31 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> playAiCard(final String userId, final String gameId) {
+    public Mono<Void> kickAi(final String userId, final String gameId) {
         return gameRepository.findById(gameId).flatMap((game) -> {
+
             final GameEngineImpl gameEngine = new GameEngineImpl(game);
+
             try {
-                final boolean gameWasChanged = gameEngine.playAiCard();
-                if (gameWasChanged) {
+
+                if (gameEngine.isAiSay()) {
+                    gameEngine.sayAi();
                     return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
-                } else {
-                    return Mono.just(game);
                 }
+
+                if (gameEngine.isAiTurn()) {
+                    gameEngine.playAiCard();
+                    return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
+                }
+
+                return Mono.just(game);
+
+
             } catch (GameEngineException e) {
-                log.error("Exception during playAiCard()", e);
+                log.error("Exception during sayAi()", e);
                 return Mono.error(e);
             }
+
 
         }).doOnNext(game -> {
             final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
