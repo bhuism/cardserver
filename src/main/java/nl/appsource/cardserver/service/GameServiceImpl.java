@@ -135,7 +135,7 @@ public class GameServiceImpl implements GameService {
                     return gameRepository.save(g).doOnNext(this::sendGameChangedEvent).doOnNext(game -> {
                         final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
                         finishTrickWithAi(game.getId(), tricksPlayed);
-                    }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                    }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()));
                 } catch (GameEngineException e) {
                     return Mono.error(e);
                 }
