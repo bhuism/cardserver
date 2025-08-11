@@ -10,6 +10,7 @@ import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayCardResponse;
+import org.openapitools.model.PlayerSay;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -57,7 +58,7 @@ public class GameController implements GamesApi, V1Api {
                 })
                 .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))))
             .onErrorResume(GameEngineException.class, throwable -> {
-                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()));
+                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
                 return just(new PlayCardResponse().cardWasPlayed(false));
             })
             .onErrorResume(Throwable.class, throwable -> {
@@ -80,7 +81,7 @@ public class GameController implements GamesApi, V1Api {
             })
             .flatMap(userId -> gameService.playAiCard(userId, gameId))
             .onErrorResume(GameEngineException.class, throwable -> {
-                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(throwable.getVariant()));
+                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
                 return Mono.justOrEmpty(true).then();
             })
             .onErrorResume(Throwable.class, throwable -> {
@@ -126,5 +127,27 @@ public class GameController implements GamesApi, V1Api {
             .then(just(ResponseEntity.ok().build()));
     }
 
+    @Override
+    public Mono<ResponseEntity<Void>> say(final String gameId, final Mono<PlayerSay> playerSay, final ServerWebExchange exchange) {
 
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap(userId -> playerSay.map(say -> {
+                    log.info("{} say() user {} says {}", exchange.getRequest().getRemoteAddress(), userId, say.getSay());
+                    return say.getSay();
+                })
+                .flatMap(say -> gameService.say(userId, gameId, say)))
+            .onErrorResume(GameEngineException.class, throwable -> {
+                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                return Mono.empty();
+            })
+            .onErrorResume(Throwable.class, throwable -> {
+                log.error("", throwable);
+                gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                return Mono.empty();
+            })
+            .then(just(ResponseEntity.ok().build()));
+    }
 }
+

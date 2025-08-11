@@ -16,6 +16,20 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/WhoAmIResponse"
+  /games/{gameId}/say:
+    post:
+      operationId: say
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      requestBody:
+        $ref: "#/components/requestBodies/sayRequest"
+      responses:
+        "200":
+          description: ok
+        "422":
+          description: some application error
+        "404":
+          description: not found
   /games/{gameId}/playCard:
     post:
       operationId: playCard
@@ -169,6 +183,12 @@ paths:
           description: not found
 components:
   requestBodies:
+    sayRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/playerSay"
     playCard:
       required: true
       content:
@@ -273,6 +293,13 @@ components:
           format: uuid
       required:
         - uuid
+    playerSay:
+      type: object
+      properties:
+        say:
+          type: boolean
+      required:
+        - say
     playCard:
       type: object
       properties:

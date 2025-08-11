@@ -30,4 +30,5 @@ public interface GameService {
 
     Flux<ServerSentEvent<Object>> gameStream(String userId, String gameId);
 
+    Mono<Void> say(String userId, String gameId, Boolean say);
 }

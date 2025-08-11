@@ -19,6 +19,7 @@ import org.openapitools.model.UserMessage;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,20 +62,23 @@ public class GameEngineImpl implements GameEngine {
     private Card determineTrickWinningCard(final int trickNr) throws GameEngineException {
 
         if (trickNr >= calcTricksPlayed() || trickNr < 0) {
-            throw new GameEngineException("no such trick " + trickNr, UserMessage.VariantEnum.ERROR);
+            throw new GameEngineException("no such trick " + trickNr);
         }
 
         final List<Card> trick = getTrickCards(trickNr);
 
         if (trick.size() != 4) {
-            throw new GameEngineException("Not 5 trick cards in tick " + trickNr, UserMessage.VariantEnum.ERROR);
+            throw new GameEngineException("Not 5 trick cards in tick " + trickNr);
         }
 
         final boolean troefAanwezig = trick.stream().anyMatch(c -> c.getSuit().equals(game.getTrump()));
 
         final Suit requestedSuit = trick.getFirst().getSuit();
 
-        return trick.stream().filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit)).max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER).orElseThrow(() -> new GameEngineException("No card found", UserMessage.VariantEnum.ERROR));
+        return trick.stream()
+            .filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit))
+            .max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER)
+            .orElseThrow(() -> new GameEngineException("determineTrickWinningCard() No card found"));
 
     }
 
@@ -94,14 +98,14 @@ public class GameEngineImpl implements GameEngine {
         }
 
         if (game.getSay().containsValue(Boolean.TRUE)) {
-            throw new ElderException(null, UserMessage.VariantEnum.ERROR);
+            throw new ElderException(null);
         }
 
         if (game.getSay().size() <= 3) {
             return (game.getDealer() + 1 + game.getSay().size()) % 4;
         }
 
-        throw new NeedNewSayRound(null, UserMessage.VariantEnum.ERROR);
+        throw new NeedNewSayRound(null);
 
     }
 
@@ -113,7 +117,7 @@ public class GameEngineImpl implements GameEngine {
         }
 
         if (game.getSay() == null || !game.getSay().containsValue(Boolean.TRUE)) {
-            throw new NoElderException(null, UserMessage.VariantEnum.ERROR);
+            throw new NoElderException(null);
         }
 
         final int laatsteKaart = game.getTurns().size() % 4;
@@ -129,7 +133,7 @@ public class GameEngineImpl implements GameEngine {
                     .filter((e) -> Boolean.TRUE.equals(e.getValue()))
                     .findFirst()
                     .map(Map.Entry::getKey)
-                    .orElseThrow(() -> new NoElderException(null, UserMessage.VariantEnum.ERROR));
+                    .orElseThrow(() -> new NoElderException(null));
 
                 return (wieGegaan + 1) % 4;
             } else {
@@ -206,9 +210,54 @@ public class GameEngineImpl implements GameEngine {
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
 
-
         return userMessages;
 
+    }
+
+
+    @Override
+    public List<UserMessage> say(final String userId, final Boolean say) throws GameEngineException {
+
+        final List<UserMessage> userMessages = new ArrayList<>();
+
+        final int playerNum = this.game.getPlayers().indexOf(userId);
+
+        if (isCompleted()) {
+            log.warn("Game {} allready completed", game.getId());
+            throw new GameCompletedException();
+        }
+
+        if (!game.getPlayers().contains(userId)) {
+            throw new NotAPlayerException();
+        }
+
+        if (game.getSay() == null) {
+            game.setSay(new HashMap<>());
+        }
+
+        if (game.getSay().containsValue(Boolean.TRUE)) {
+            throw new ElderException("Er is al iemand gegaan");
+        }
+
+        if (game.getSay().containsKey(playerNum)) {
+            throw new ElderException("Je hebt al gezegd");
+        }
+
+        if (game.getSay().size() == 4) {
+            throw new NeedNewSayRound(null);
+        }
+
+        final int whoSay = calcWhoSay();
+
+        if (whoSay != playerNum) {
+            log.warn("say() It's player {} turn to say", game.getPlayers().get(whoSay));
+            throw new NotPlayersTurnException();
+        }
+
+        game.setUpdated(Instant.now());
+        game.getSay().put(playerNum, say);
+
+        return userMessages;
     }
 
     @Override
@@ -252,7 +301,7 @@ public class GameEngineImpl implements GameEngine {
 //        final String aiUserId = game.getPlayers().get(gotTurn);
 //
 //        if (!AI_USER_ID.contains(aiUserId)) {
-//            throw new GameEngineException("Player who is aan slag is not an AI player", UserMessage.VariantEnum.ERROR);
+//            throw new GameEngineException("Player who is aan slag is not an AI player");
 //        }
 //
 //        final Card card = calcAiCard(aiUserId);
@@ -274,7 +323,7 @@ public class GameEngineImpl implements GameEngine {
 //        log.info("calcAiCard() userId={}", userId);
 
         if (!AI_USER_ID.contains(userId)) {
-            throw new GameEngineException("Not an Ai player", UserMessage.VariantEnum.ERROR);
+            throw new GameEngineException("Not an Ai player");
         }
 
 

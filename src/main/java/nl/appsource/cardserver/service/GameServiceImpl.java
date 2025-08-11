@@ -126,6 +126,19 @@ public class GameServiceImpl implements GameService {
         });
     }
 
+    @Override
+    public Mono<Void> say(final String userId, final String gameId, final Boolean say) {
+        return gameRepository.findById(gameId)
+            .flatMap(g -> {
+                try {
+                    new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
+                    return gameRepository.save(g);
+                } catch (GameEngineException e) {
+                    return Mono.error(e);
+                }
+            }).then(Mono.empty());
+    }
+
     protected void finishTrick(final String g, final int currentTrickNr) {
         log.info("Finishing trick #{}", currentTrickNr);
         Mono.just(g).delayElement(Duration.ofSeconds(2))
