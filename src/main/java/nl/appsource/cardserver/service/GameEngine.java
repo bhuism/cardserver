@@ -2,8 +2,6 @@ package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
-import nl.appsource.cardserver.service.exception.GameCompletedException;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.UserMessage;
 
