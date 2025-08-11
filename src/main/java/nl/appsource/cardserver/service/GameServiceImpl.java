@@ -132,7 +132,7 @@ public class GameServiceImpl implements GameService {
             .flatMap(g -> {
                 try {
                     new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
-                    return gameRepository.save(g);
+                    return gameRepository.save(g).doOnNext(this::sendGameChangedEvent);
                 } catch (GameEngineException e) {
                     return Mono.error(e);
                 }
