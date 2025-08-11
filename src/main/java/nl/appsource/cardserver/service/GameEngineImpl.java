@@ -112,7 +112,7 @@ public class GameEngineImpl implements GameEngine {
             throw new GameCompletedException();
         }
 
-        if (!game.getSay().containsValue(Boolean.TRUE)) {
+        if (game.getSay() == null || !game.getSay().containsValue(Boolean.TRUE)) {
             throw new NoElderException(null, UserMessage.VariantEnum.ERROR);
         }
 
