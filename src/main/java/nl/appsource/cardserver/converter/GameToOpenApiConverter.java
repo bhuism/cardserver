@@ -12,6 +12,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +41,16 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         target.setPlayers(source.getPlayers());
         target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
         target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
+
+        final Map<String, Boolean> says = new HashMap<>();
+
+        if (source.getSay() != null) {
+            source.getSay().forEach((integer, aBoolean) -> {
+                says.put("" + integer, aBoolean);
+            });
+        }
+
+        target.setSays(says);
 
         final GameEngine gameEngine = new GameEngineImpl(source);
 

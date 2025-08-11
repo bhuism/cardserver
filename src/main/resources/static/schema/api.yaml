@@ -8,18 +8,6 @@ servers:
     description: Klavers Jassen
 
 paths:
-  #  /subscribe:
-  #    get:
-  #      operationId: subscribe
-  #      responses:
-  #        "200":
-  #          description: OK
-  #          content:
-  #            text/event-stream:
-  #              schema:
-  #                type: array
-  #                items:
-  #                  type: object
   /whoami:
     post:
       tags:

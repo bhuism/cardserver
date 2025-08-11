@@ -36,6 +36,10 @@ components:
 #          type: integer
 #          minimum: 0
 #          maximum: 3
+        says:
+          type: object
+          additionalProperties:
+            type: boolean
         players:
           type: array
           minItems: 0
