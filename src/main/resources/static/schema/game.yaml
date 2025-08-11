@@ -32,10 +32,10 @@ components:
             required:
               - card
               - player
-        elder:
-          type: integer
-          minimum: 0
-          maximum: 3
+#        elder:
+#          type: integer
+#          minimum: 0
+#          maximum: 3
         players:
           type: array
           minItems: 0
