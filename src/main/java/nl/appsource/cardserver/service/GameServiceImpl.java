@@ -117,7 +117,7 @@ public class GameServiceImpl implements GameService {
                 new GameEngineImpl(g).playCard(playerId, card).forEach(this::sendUserMessage);
                 return gameRepository.save(g).doOnNext(this::sendGameChangedEvent).doOnNext(game -> {
                         final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-                        finishTrick(game.getId(), tricksPlayed);
+                        finishTrickWithAi(game.getId(), tricksPlayed);
                     }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
                     .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
             } catch (GameEngineException e) {
@@ -132,15 +132,18 @@ public class GameServiceImpl implements GameService {
             .flatMap(g -> {
                 try {
                     new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
-                    return gameRepository.save(g).doOnNext(this::sendGameChangedEvent);
+                    return gameRepository.save(g).doOnNext(this::sendGameChangedEvent).doOnNext(game -> {
+                        final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
+                        finishTrickWithAi(game.getId(), tricksPlayed);
+                    }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
                 } catch (GameEngineException e) {
                     return Mono.error(e);
                 }
             }).then(Mono.empty());
     }
 
-    protected void finishTrick(final String g, final int currentTrickNr) {
-        log.info("Finishing trick #{}", currentTrickNr);
+    protected void finishTrickWithAi(final String g, final int currentTrickNr) {
+        log.info("Finishing Ai trick #{}", currentTrickNr);
         Mono.just(g).delayElement(Duration.ofSeconds(2))
             .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
             .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
@@ -188,7 +191,7 @@ public class GameServiceImpl implements GameService {
 
         }).doOnNext(game -> {
             final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-            finishTrick(game.getId(), tricksPlayed);
+            finishTrickWithAi(game.getId(), tricksPlayed);
         }).then();
 
     }
