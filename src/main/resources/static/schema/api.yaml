@@ -44,9 +44,9 @@ paths:
           description: some application error
         "404":
           description: not found
-  /games/{gameId}/playAiCard:
+  /games/{gameId}/kickAi:
     post:
-      operationId: playAiCard
+      operationId: kickAi
       parameters:
         - $ref: "#/components/parameters/gameId"
       responses:

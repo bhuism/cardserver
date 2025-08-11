@@ -69,9 +69,8 @@ public class GameController implements GamesApi, V1Api {
             .map(ResponseEntity::ok);
     }
 
-
     @Override
-    public Mono<ResponseEntity<Void>> playAiCard(final String gameId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> kickAi(final String gameId, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
