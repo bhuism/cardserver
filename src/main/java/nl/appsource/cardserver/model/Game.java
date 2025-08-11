@@ -45,7 +45,7 @@ public class Game {
     private Integer dealer;
 
     @Field
-    private Integer elder;
+    private Map<Integer, Boolean> say;
 
     @NotNull
     @Field

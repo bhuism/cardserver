@@ -102,7 +102,12 @@ public class Migrator {
                             game.setTrump(convertSuit(fieldValue.intValue()));
                             break;
                         case "elder":
-                            game.setElder(fieldValue.isInt() ? fieldValue.intValue() : null);
+                            final Map<Integer, Boolean> say = new HashMap<>();
+                            if (fieldValue.isInt()) {
+                                final int elder = fieldValue.intValue();
+                                say.put(elder, true);
+                            }
+                            game.setSay(say);
                             break;
                         case "ended":
                             break;

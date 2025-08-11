@@ -4,28 +4,28 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.UserMessage;
 
 import java.util.List;
 
 public interface GameEngine {
-    int calcWhoHasTurn();
 
-//    boolean isAiPlayerAanslag();
+    int calcWhoSay() throws GameEngineException;
 
-    List<UserMessage> playCard(String userId, Card card) throws GameCompletedException, CardAlreadyPlayerException;
+    int calcWhoHasTurn() throws GameEngineException;
 
-    boolean playAiCard();
+    List<UserMessage> playCard(String userId, Card card) throws GameEngineException;
+
+    boolean playAiCard() throws GameEngineException;
 
     boolean isCompleted();
 
-//    void playAiCard();
-
     Game getGame();
 
-    Card calcAiCard(String userId);
+    Card calcAiCard(String userId) throws GameEngineException;
 
     boolean hasFullTrick();
 
-    boolean isAiTurn();
+    boolean isAiTurn() throws GameEngineException;
 }

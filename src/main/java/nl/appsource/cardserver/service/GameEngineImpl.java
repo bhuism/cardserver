@@ -7,15 +7,17 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
+import nl.appsource.cardserver.service.exception.ElderException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import nl.appsource.cardserver.service.exception.NeedNewSayRound;
+import nl.appsource.cardserver.service.exception.NoElderException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 import org.openapitools.model.UserMessage;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +58,7 @@ public class GameEngineImpl implements GameEngine {
         return game.getTurns().subList(trickNr * 4, Math.min(game.getTurns().size(), trickNr * 4 + 4));
     }
 
-    private Card determineTrickWinningCard(final int trickNr) {
+    private Card determineTrickWinningCard(final int trickNr) throws GameEngineException {
 
         if (trickNr >= calcTricksPlayed() || trickNr < 0) {
             throw new GameEngineException("no such trick " + trickNr, UserMessage.VariantEnum.ERROR);
@@ -76,13 +78,43 @@ public class GameEngineImpl implements GameEngine {
 
     }
 
-    final int determineTrickWinner(final int trickNr) {
+    final int determineTrickWinner(final int trickNr) throws GameEngineException {
         final Card winningCard = determineTrickWinningCard(trickNr);
         return whoHasCard(winningCard);
     }
 
+    public int calcWhoSay() throws GameEngineException {
+
+        if (isCompleted()) {
+            throw new GameCompletedException();
+        }
+
+        if (game.getSay() == null) {
+            return (game.getDealer() + 1) % 4;
+        }
+
+        if (game.getSay().containsValue(Boolean.TRUE)) {
+            throw new ElderException(null, UserMessage.VariantEnum.ERROR);
+        }
+
+        if (game.getSay().size() <= 3) {
+            return (game.getDealer() + 1 + game.getSay().size()) % 4;
+        }
+
+        throw new NeedNewSayRound(null, UserMessage.VariantEnum.ERROR);
+
+    }
+
     @Override
-    public int calcWhoHasTurn() {
+    public int calcWhoHasTurn() throws GameEngineException {
+
+        if (isCompleted()) {
+            throw new GameCompletedException();
+        }
+
+        if (!game.getSay().containsValue(Boolean.TRUE)) {
+            throw new NoElderException(null, UserMessage.VariantEnum.ERROR);
+        }
 
         final int laatsteKaart = game.getTurns().size() % 4;
 
@@ -90,18 +122,25 @@ public class GameEngineImpl implements GameEngine {
             return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
         } else {
             if (game.getTurns().isEmpty()) {
-                return (game.getDealer() + 1) % 4;
-            } else {
 
+                final int wieGegaan = game.getSay()
+                    .entrySet()
+                    .stream()
+                    .filter((e) -> Boolean.TRUE.equals(e.getValue()))
+                    .findFirst()
+                    .map(Map.Entry::getKey)
+                    .orElseThrow(() -> new NoElderException(null, UserMessage.VariantEnum.ERROR));
+
+                return (wieGegaan + 1) % 4;
+            } else {
                 final int tricksPlayedCount = calcTricksPlayed();
                 return determineTrickWinner(tricksPlayedCount - 1) + game.getTurns().size() % 4;
-
             }
         }
     }
 
     @Override
-    public boolean playAiCard() {
+    public boolean playAiCard() throws GameEngineException {
 
         if (isCompleted()) {
             return false;
@@ -120,7 +159,7 @@ public class GameEngineImpl implements GameEngine {
     }
 
     @Override
-    public List<UserMessage> playCard(final String userId, final Card card) {
+    public List<UserMessage> playCard(final String userId, final Card card) throws GameEngineException {
 
         final List<UserMessage> userMessages = new ArrayList<>();
 
@@ -152,7 +191,6 @@ public class GameEngineImpl implements GameEngine {
             log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
             throw new NotPlayersTurnException();
         }
-
 
         final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
 
@@ -203,7 +241,7 @@ public class GameEngineImpl implements GameEngine {
         if (trick.isEmpty()) {
             return null;
         }
-        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow(() -> new GameEngineException("Can not find highest card in trick", UserMessage.VariantEnum.ERROR));
+        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow();
     }
 
 //    @Override
@@ -231,7 +269,7 @@ public class GameEngineImpl implements GameEngine {
     }
 
     @Override
-    public Card calcAiCard(final String userId) {
+    public Card calcAiCard(final String userId) throws GameEngineException {
 
 //        log.info("calcAiCard() userId={}", userId);
 
@@ -260,7 +298,7 @@ public class GameEngineImpl implements GameEngine {
 
 
             // Not the first player, must follow suit if possible
-            Card leadingCard = currentTrick.get(0);
+            Card leadingCard = currentTrick.getFirst();
             Suit leadingSuit = leadingCard.getSuit();
 
             List<Card> playableCards = new ArrayList<>();
@@ -280,7 +318,7 @@ public class GameEngineImpl implements GameEngine {
 
                 if (!playableCards.isEmpty()) {
                     // Play the lowest card that can beat the current highest, or lowest if none can beat
-                    Collections.sort(playableCards, (c1, c2) -> {
+                    playableCards.sort((c1, c2) -> {
                         int val1 = getKlaverjassenValue(c1);
                         int val2 = getKlaverjassenValue(c2);
                         return Integer.compare(val1, val2);
@@ -291,15 +329,15 @@ public class GameEngineImpl implements GameEngine {
                             return card; // Play a card that beats
                         }
                     }
-                    return playableCards.get(0); // Play lowest if cannot beat
+                    return playableCards.getFirst(); // Play lowest if cannot beat
                 } else {
                     // If has suit but no card can beat, play the lowest of the leading suit
-                    Collections.sort(cardsOfLeadingSuit, (c1, c2) -> {
+                    cardsOfLeadingSuit.sort((c1, c2) -> {
                         int val1 = getKlaverjassenValue(c1);
                         int val2 = getKlaverjassenValue(c2);
                         return Integer.compare(val1, val2);
                     });
-                    return cardsOfLeadingSuit.get(0);
+                    return cardsOfLeadingSuit.getFirst();
                 }
             } else {
                 // Cannot follow suit
@@ -317,20 +355,20 @@ public class GameEngineImpl implements GameEngine {
 
                     if (!playableCards.isEmpty()) {
                         // Play the lowest trump that can beat
-                        Collections.sort(playableCards, (c1, c2) -> {
+                        playableCards.sort((c1, c2) -> {
                             int val1 = getKlaverjassenValue(c1);
                             int val2 = getKlaverjassenValue(c2);
                             return Integer.compare(val1, val2);
                         });
-                        return playableCards.get(0);
+                        return playableCards.getFirst();
                     } else {
                         // If has trump but cannot beat, play the lowest trump
-                        Collections.sort(trumpCards, (c1, c2) -> {
+                        trumpCards.sort((c1, c2) -> {
                             int val1 = getKlaverjassenValue(c1);
                             int val2 = getKlaverjassenValue(c2);
                             return Integer.compare(val1, val2);
                         });
-                        return trumpCards.get(0);
+                        return trumpCards.getFirst();
                     }
                 } else {
                     // Cannot follow suit and cannot trump (or leading suit is trump and cannot follow)
@@ -341,14 +379,14 @@ public class GameEngineImpl implements GameEngine {
                         }
                     }
                     // If only trumps left, play the lowest trump
-                    return hand.get(0);
+                    return hand.getFirst();
                 }
             }
         }
     }
 
     @Override
-    public boolean isAiTurn() {
+    public boolean isAiTurn() throws GameEngineException {
         if (isCompleted()) {
             return false;
         }

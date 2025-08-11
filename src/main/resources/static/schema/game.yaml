@@ -52,6 +52,8 @@ components:
           $ref: '#/components/schemas/Suit'
         whosTurn:
           type: integer
+        whoSay:
+          type: integer
       required:
         - id
         - trump

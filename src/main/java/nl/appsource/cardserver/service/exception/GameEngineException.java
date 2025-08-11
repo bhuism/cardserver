@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.openapitools.model.UserMessage;
 
 @Getter
-public class GameEngineException extends RuntimeException {
+public class GameEngineException extends Exception {
 
     private final UserMessage.VariantEnum variant;
 

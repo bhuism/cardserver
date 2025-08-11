@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.GameEngine;
 import nl.appsource.cardserver.service.GameEngineImpl;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
 import org.springframework.core.convert.converter.Converter;
@@ -36,7 +37,6 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
             return gamePlayerCardInner;
         }).collect(Collectors.toCollection(ArrayList::new)));
-        target.setElder(Optional.ofNullable(source.getElder()));
         target.setPlayers(source.getPlayers());
         target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
         target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
@@ -45,7 +45,17 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         final GameEngine gameEngine = new GameEngineImpl(source);
 
         if (!gameEngine.isCompleted()) {
-            target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
+            try {
+                target.setWhoSay(Optional.of(gameEngine.calcWhoSay()));
+            } catch (GameEngineException e) {
+                target.setWhoSay(Optional.empty());
+            }
+
+            try {
+                target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
+            } catch (GameEngineException e) {
+                target.setWhosTurn(Optional.empty());
+            }
         }
 
         return target;

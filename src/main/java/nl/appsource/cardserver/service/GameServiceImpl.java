@@ -110,74 +110,74 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<PlayCardResponse> playCard(final String userId, final String gameId, final Card card) {
-        try {
-            return gameRepository.findById(gameId)
-                .map((game) -> {
-                    final int cardOwnerIndex = game.getPlayerCard().get(card);
-                    final String playerId = game.getPlayers().get(cardOwnerIndex);
-                    new GameEngineImpl(game).playCard(playerId, card).forEach(this::sendUserMessage);
-                    return game;
-                })
-                .flatMap(gameRepository::save).doOnNext(this::sendGameChangedEvent)
-                .doOnNext(game -> {
-                    final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-                    finishTrick(game.getId(), tricksPlayed);
-                })
-                .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
-                .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
-        } catch (GameEngineException e) {
-            return Mono.error(e);
-        }
+        return gameRepository.findById(gameId).flatMap((g) -> {
+            final int cardOwnerIndex = g.getPlayerCard().get(card);
+            final String playerId = g.getPlayers().get(cardOwnerIndex);
+            try {
+                new GameEngineImpl(g).playCard(playerId, card).forEach(this::sendUserMessage);
+                return gameRepository.save(g).doOnNext(this::sendGameChangedEvent).doOnNext(game -> {
+                        final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
+                        finishTrick(game.getId(), tricksPlayed);
+                    }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                    .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
+            } catch (GameEngineException e) {
+                return Mono.error(e);
+            }
+        });
     }
 
     protected void finishTrick(final String g, final int currentTrickNr) {
         log.info("Finishing trick #{}", currentTrickNr);
-        Mono.just(g)
-            .delayElement(Duration.ofSeconds(2)).flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr))
-            .delayElement(Duration.ofSeconds(2)).flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr))
-            .delayElement(Duration.ofSeconds(2)).flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr))
-            .subscribe();
+        Mono.just(g).delayElement(Duration.ofSeconds(2))
+            .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
+            .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
+            .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).subscribe();
     }
 
     private Mono<String> playSomeExtraAi(final String gameId, final int trickNr) {
         log.info("playSomeExtraAi");
-        return gameRepository.findById(gameId)
-            .flatMap((game) -> {
-                final GameEngineImpl gameEngine = new GameEngineImpl(game);
-                log.info("Check for full trick");
-                if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr) {
+        return gameRepository.findById(gameId).flatMap((game) -> {
+            final GameEngineImpl gameEngine = new GameEngineImpl(game);
+            log.info("Check for full trick");
+            if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr) {
+                try {
                     final boolean gameWasChanged = gameEngine.playAiCard();
                     if (gameWasChanged) {
                         return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).map(Game::getId);
+                    } else {
+                        return Mono.just(gameId);
                     }
+                } catch (GameEngineException e) {
+                    log.error("Exception during playAiCard()", e);
+                    return Mono.error(e);
                 }
+            } else {
                 return Mono.empty();
-            });
+            }
+        });
     }
 
     @Override
     public Mono<Void> playAiCard(final String userId, final String gameId) {
-        try {
-            return gameRepository.findById(gameId)
-                .flatMap((game) -> {
-                    final GameEngineImpl gameEngine = new GameEngineImpl(game);
-                    final boolean gameWasChanged = gameEngine.playAiCard();
-                    if (gameWasChanged) {
-                        return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
-                    } else {
-                        return Mono.empty();
-                    }
+        return gameRepository.findById(gameId).flatMap((game) -> {
+            final GameEngineImpl gameEngine = new GameEngineImpl(game);
+            try {
+                final boolean gameWasChanged = gameEngine.playAiCard();
+                if (gameWasChanged) {
+                    return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
+                } else {
+                    return Mono.just(game);
+                }
+            } catch (GameEngineException e) {
+                log.error("Exception during playAiCard()", e);
+                return Mono.error(e);
+            }
 
-                })
-                .doOnNext(game -> {
-                    final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-                    finishTrick(game.getId(), tricksPlayed);
-                })
-                .then();
+        }).doOnNext(game -> {
+            final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
+            finishTrick(game.getId(), tricksPlayed);
+        }).then();
 
-        } catch (GameEngineException e) {
-            return Mono.error(e);
-        }
     }
 
 
@@ -243,25 +243,18 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId) {
-        return
-            Flux.just(createPing(), createPing(), createPing())
-                .concatWith(
-                    gameSink.asFlux()
-                        .doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
-                        .doOnCancel(() -> log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
-                        .filter(sse -> {
-                            assert sse.event() != null;
-                            return switch (sse.event()) {
-                                case "gamePing" -> true;
-                                case "gameMessageEvent" -> true;
-                                case "gameStateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
-                                default -> {
-                                    log.error("Unknown event: {}", sse.event());
-                                    yield false;
-                                }
-                            };
-                        })
-                );
+        return Flux.just(createPing(), createPing(), createPing()).concatWith(gameSink.asFlux().doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount())).doOnCancel(() -> log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount())).filter(sse -> {
+            assert sse.event() != null;
+            return switch (sse.event()) {
+                case "gamePing" -> true;
+                case "gameMessageEvent" -> true;
+                case "gameStateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
+                default -> {
+                    log.error("Unknown event: {}", sse.event());
+                    yield false;
+                }
+            };
+        }));
     }
 
 }
