@@ -29,7 +29,6 @@ jobs:
 #        run: mvn -ntp -B clean verify org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
 
   build:
-    if: github.event_name != 'pull_request'
     strategy:
       fail-fast: true
       matrix:
@@ -80,6 +79,7 @@ jobs:
           cache: 'maven'
 
       - name: Buid and publish image via spring build-image
+        if: github.event_name != 'pull_request'
         run: |
           mvn -ntp -B -DskipTests clean spring-boot:build-image -Dspring-boot.build-image.imagePlatform=linux/${{ matrix.platform }} -Dspring-boot.build-image.imageName=ghcr.io/bhuism/cardserver:latest-${{ matrix.platform }}
 
@@ -91,7 +91,7 @@ jobs:
     name: Manifest and Push
     runs-on: ubuntu-latest
     needs: build
-    if: success()
+    if: success() && github.event_name != 'pull_request'
 
     permissions:
       contents: read
@@ -112,6 +112,10 @@ jobs:
           docker manifest create ghcr.io/bhuism/cardserver:latest \
             ghcr.io/bhuism/cardserver:latest-amd64 ghcr.io/bhuism/cardserver:latest-arm64
           docker manifest push ghcr.io/bhuism/cardserver:latest
+
+      - name: remove intermediate containers
+        run: |
+          docker rmi ghcr.io/bhuism/cardserver:latest-amd64 ghcr.io/bhuism/cardserver:latest-arm64
 
   rollout-restart:
     needs: manifest-and-push
