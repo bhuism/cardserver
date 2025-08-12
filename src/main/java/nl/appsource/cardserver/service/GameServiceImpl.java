@@ -147,7 +147,6 @@ public class GameServiceImpl implements GameService {
     }
 
     protected void finishTrickWithAi(final String gameId) {
-        log.info("Finishing Ai");
         gameRepository.findById(gameId).subscribe((game) -> {
 
             final GameEngine gameEngine = new GameEngineImpl(game);
@@ -164,7 +163,6 @@ public class GameServiceImpl implements GameService {
     }
 
     private Mono<String> _playSomeExtraAi(final String gameId, final int trickNr) {
-        log.info("_playSomeExtraAi()");
         return gameRepository.findById(gameId).flatMap((g) -> {
             final GameEngine gameEngine = new GameEngineImpl(g);
             if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr && gameEngine.isAiTurn()) {
