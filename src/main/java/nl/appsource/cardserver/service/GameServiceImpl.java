@@ -78,6 +78,10 @@ public class GameServiceImpl implements GameService {
             throw new IllegalArgumentException("creator cannot be empty");
         }
 
+        if (!players.contains(creator)) {
+            throw new IllegalArgumentException("creator needs to be a player");
+        }
+
         while (players.size() < 4) {
             players.add(AI_USER_ID.get(players.size() - 1));
         }
@@ -85,6 +89,8 @@ public class GameServiceImpl implements GameService {
         final List<String> randomizedOrderPlayers = new ArrayList<>(players);
 
         shuffle(randomizedOrderPlayers, RAND);
+
+        log.info("Creating a new game with players {}", randomizedOrderPlayers);
 
         return Mono.just(new nl.appsource.cardserver.model.Game()).doOnNext((game) -> {
             game.setId(idGen(20));
