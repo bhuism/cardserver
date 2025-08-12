@@ -113,10 +113,6 @@ jobs:
             ghcr.io/bhuism/cardserver:latest-amd64 ghcr.io/bhuism/cardserver:latest-arm64
           docker manifest push ghcr.io/bhuism/cardserver:latest
 
-      - name: remove intermediate containers
-        run: |
-          docker rmi ghcr.io/bhuism/cardserver:latest-amd64 ghcr.io/bhuism/cardserver:latest-arm64
-
   rollout-restart:
     needs: manifest-and-push
     runs-on: ubuntu-latest
