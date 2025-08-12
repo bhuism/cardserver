@@ -26,7 +26,7 @@ public interface GameEngine {
 
     boolean hasFullTrick();
 
-    boolean isAiTurn() throws GameEngineException;
+    boolean isAiTurn();
 
-    boolean isAiSay() throws GameEngineException;
+    boolean isAiSay();
 }

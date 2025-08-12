@@ -115,10 +115,10 @@ public class GameServiceImpl implements GameService {
             final String playerId = g.getPlayers().get(cardOwnerIndex);
             try {
                 new GameEngineImpl(g).playCard(playerId, card).forEach(this::sendUserMessage);
-                return gameRepository.save(g).doOnNext(this::sendGameChangedEvent).doOnNext(game -> {
-                        final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-                        finishTrickWithAi(game.getId(), tricksPlayed);
-                    }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                return gameRepository.save(g)
+                    .doOnNext(this::sendGameChangedEvent)
+                    .doOnNext(game -> finishTrickWithAi(game.getId()))
+                    .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
                     .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
             } catch (GameEngineException e) {
                 return Mono.error(e);
@@ -132,33 +132,44 @@ public class GameServiceImpl implements GameService {
             .flatMap(g -> {
                 try {
                     new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
-                    return gameRepository.save(g).doOnNext(this::sendGameChangedEvent).doOnNext(game -> {
-                        final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-                        finishTrickWithAi(game.getId(), tricksPlayed);
-                    }).doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()));
+                    return gameRepository.save(g)
+                        .doOnNext(this::sendGameChangedEvent)
+                        .doOnNext(game -> finishTrickWithAi(game.getId()))
+                        .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()));
                 } catch (GameEngineException e) {
                     return Mono.error(e);
                 }
             }).then(Mono.empty());
     }
 
-    protected void finishTrickWithAi(final String g, final int currentTrickNr) {
-        log.info("Finishing Ai trick #{}", currentTrickNr);
-        Mono.just(g).delayElement(Duration.ofSeconds(2))
-            .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
-            .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
-            .flatMap(gameId -> playSomeExtraAi(gameId, currentTrickNr)).subscribe();
+    protected void finishTrickWithAi(final String gameId) {
+        log.info("Finishing Ai");
+        gameRepository.findById(gameId).subscribe((game) -> {
+
+            final GameEngine gameEngine = new GameEngineImpl(game);
+            final int currentTrickNr = gameEngine.calcTricksPlayed();
+
+            if (!gameEngine.hasFullTrick() && gameEngine.isAiTurn()) {
+                Mono.just(gameId).delayElement(Duration.ofSeconds(2))
+                    .flatMap(g -> _playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
+                    .flatMap(g -> _playSomeExtraAi(gameId, currentTrickNr)).delayElement(Duration.ofSeconds(2))
+                    .flatMap(g -> _playSomeExtraAi(gameId, currentTrickNr))
+                    .subscribe();
+            }
+        });
     }
 
-    private Mono<String> playSomeExtraAi(final String gameId, final int trickNr) {
-        log.info("playSomeExtraAi");
-        return gameRepository.findById(gameId).flatMap((game) -> {
-            final GameEngine gameEngine = new GameEngineImpl(game);
-            log.info("Check for full trick");
-            if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr) {
+    private Mono<String> _playSomeExtraAi(final String gameId, final int trickNr) {
+        log.info("_playSomeExtraAi()");
+        return gameRepository.findById(gameId).flatMap((g) -> {
+            final GameEngine gameEngine = new GameEngineImpl(g);
+            if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr && gameEngine.isAiTurn()) {
                 try {
                     gameEngine.playAiCard();
-                    return gameRepository.save(game).doOnNext(this::sendGameChangedEvent).map(Game::getId);
+                    return gameRepository.save(g)
+                        .doOnNext(this::sendGameChangedEvent)
+                        .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                        .map(Game::getId);
                 } catch (GameEngineException e) {
                     log.error("Exception during playAiCard()", e);
                     return Mono.error(e);
@@ -197,8 +208,7 @@ public class GameServiceImpl implements GameService {
 
 
         }).doOnNext(game -> {
-            final int tricksPlayed = new GameEngineImpl(game).calcTricksPlayed();
-            finishTrickWithAi(game.getId(), tricksPlayed);
+            finishTrickWithAi(game.getId());
         }).then();
 
     }

@@ -488,19 +488,29 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public boolean isAiTurn() throws GameEngineException {
+    public boolean isAiTurn() {
+
         if (isCompleted()) {
             return false;
         }
-        return isAiPlayer(game.getPlayers().get(calcWhoHasTurn()));
+
+        if (game.getSay() == null || !game.getSay().containsValue(Boolean.TRUE)) {
+            return false;
+        }
+
+        try {
+            return isAiPlayer(game.getPlayers().get(calcWhoHasTurn()));
+        } catch (GameEngineException e) {
+            return false;
+        }
+
     }
 
     @Override
-    public boolean isAiSay() throws GameEngineException {
+    public boolean isAiSay() {
 
         if (isCompleted()) {
-            log.warn("Game {} allready completed", game.getId());
-            throw new GameCompletedException();
+            return false;
         }
 
         if (game.getSay() == null) {
@@ -512,12 +522,14 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         if (game.getSay().size() == 4) {
-            throw new NeedNewSayRound(null);
+            return false;
         }
 
-        final int whoSay = calcWhoSay();
-
-        return isAiPlayer(game.getPlayers().get(whoSay));
+        try {
+            return isAiPlayer(game.getPlayers().get(calcWhoSay()));
+        } catch (GameEngineException e) {
+            return false;
+        }
 
     }
 
