@@ -25,7 +25,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import static java.util.Collections.shuffle;
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
 import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
@@ -82,12 +82,16 @@ public class GameServiceImpl implements GameService {
             players.add(AI_USER_ID.get(players.size() - 1));
         }
 
+        final List<String> randomizedOrderPlayers = new ArrayList<>(players);
+
+        shuffle(randomizedOrderPlayers, RAND);
+
         return Mono.just(new nl.appsource.cardserver.model.Game()).doOnNext((game) -> {
             game.setId(idGen(20));
             game.setCreator(creator);
             game.setCreated(Instant.now());
             game.setUpdated(Instant.now());
-            game.setPlayers(new ArrayList<>(players));
+            game.setPlayers(randomizedOrderPlayers);
             game.setDealer(RAND.nextInt(4));
             game.setSay(new HashMap<>());
             game.setTurns(new ArrayList<>());
@@ -217,7 +221,7 @@ public class GameServiceImpl implements GameService {
     public static Map<Card, Integer> randomCards() {
         final Map<Card, Integer> cards = new HashMap<>();
         final List<Card> deck = Arrays.asList(Card.values());
-        Collections.shuffle(deck, RAND);
+        shuffle(deck, RAND);
         IntStream.range(0, deck.size()).forEach(index -> cards.put(deck.get(index), index % 4));
         return cards;
     }
