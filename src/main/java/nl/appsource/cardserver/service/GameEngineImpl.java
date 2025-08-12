@@ -435,7 +435,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
 
-    private static final int BIDDING_THRESHOLD = 25;
+    private static final int BIDDING_THRESHOLD = 20;
 
 
     public boolean decideBid(final String userId) {
