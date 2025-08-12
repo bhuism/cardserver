@@ -119,16 +119,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
         } else {
             if (game.getTurns().isEmpty()) {
-
-                final int wieGegaan = game.getSay()
-                    .entrySet()
-                    .stream()
-                    .filter((e) -> Boolean.TRUE.equals(e.getValue()))
-                    .findFirst()
-                    .map(Map.Entry::getKey)
-                    .orElseThrow(() -> new NoElderException(null));
-
-                return (wieGegaan + 1) % 4;
+                return (game.getDealer() + 1) % 4;
             } else {
                 final int tricksPlayedCount = calcTricksPlayed();
                 return determineTrickWinner(tricksPlayedCount - 1) + game.getTurns().size() % 4;
