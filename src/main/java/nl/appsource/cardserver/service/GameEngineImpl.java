@@ -246,9 +246,19 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new ElderException("Je hebt al gezegd");
         }
 
-        if (iedereenHeeftGezegd()) {
 
-            log.info("Iedereen heeft gezegd, roteer troef");
+        final int whoSay = calcWhoSay();
+
+        if (whoSay != playerNum) {
+            log.warn("say() It's player {} turn to say", game.getPlayers().get(whoSay));
+            throw new NotPlayersTurnException();
+        }
+
+        game.getSay().put(playerNum, say);
+
+        if (niemandIsGegaan()) {
+
+            log.info("Iedereen heeft gepast, roteer troef");
 
             final Suit oldTrump = this.game.getTrump();
 
@@ -256,18 +266,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
             }
             while (oldTrump == game.getTrump());
-            game.setSay(new HashMap<>());
 
-        } else {
+            game.getSay().clear();
 
-            final int whoSay = calcWhoSay();
-
-            if (whoSay != playerNum) {
-                log.warn("say() It's player {} turn to say", game.getPlayers().get(whoSay));
-                throw new NotPlayersTurnException();
-            }
-
-            game.getSay().put(playerNum, say);
         }
 
         game.setUpdated(Instant.now());
@@ -543,6 +544,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     boolean isErGegaan() {
         return game.getSay().containsValue(Boolean.TRUE);
+    }
+
+    boolean niemandIsGegaan() {
+        return iedereenHeeftGezegd() && !game.getSay().containsValue(Boolean.TRUE);
     }
 
     boolean iedereenHeeftGezegd() {
