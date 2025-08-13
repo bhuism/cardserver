@@ -78,7 +78,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Buid and publish image via spring build-image
+      - name: Buid image
         run: |
           mvn -ntp -B -DskipTests clean spring-boot:build-image -Dspring-boot.build-image.imagePlatform=linux/${{ matrix.platform }} -Dspring-boot.build-image.imageName=ghcr.io/bhuism/cardserver:latest-${{ matrix.platform }}
 
