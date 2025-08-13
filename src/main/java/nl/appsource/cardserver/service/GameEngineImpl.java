@@ -15,12 +15,14 @@ import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 import org.openapitools.model.UserMessage;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
@@ -37,6 +39,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
     private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> o.rank.trumpValue);
 
     private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> o.rank.standardValue);
+
+    private static final Random RAND = new SecureRandom();
 
     @Override
     public int calcTricksPlayed() {
@@ -90,7 +94,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return (game.getDealer() + 1) % 4;
         }
 
-        if (game.getSay().containsValue(Boolean.TRUE)) {
+        if (isErGegaan()) {
             throw new ElderException(null);
         }
 
@@ -109,7 +113,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new GameCompletedException();
         }
 
-        if (game.getSay() == null || !game.getSay().containsValue(Boolean.TRUE)) {
+        if (game.getSay() == null || !isErGegaan()) {
             throw new NoElderException(null);
         }
 
@@ -217,9 +221,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
 
     @Override
-    public List<UserMessage> say(final String userId, final Boolean say) throws GameEngineException {
-
-        final List<UserMessage> userMessages = new ArrayList<>();
+    public void say(final String userId, final Boolean say) throws GameEngineException {
 
         final int playerNum = this.game.getPlayers().indexOf(userId);
 
@@ -236,7 +238,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             game.setSay(new HashMap<>());
         }
 
-        if (game.getSay().containsValue(Boolean.TRUE)) {
+        if (isErGegaan()) {
             throw new ElderException("Er is al iemand gegaan");
         }
 
@@ -244,21 +246,32 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new ElderException("Je hebt al gezegd");
         }
 
-        if (game.getSay().size() == 4) {
-            throw new NeedNewSayRound(null);
-        }
+        if (iedereenHeeftGezegd()) {
 
-        final int whoSay = calcWhoSay();
+            log.info("Iedereen heeft gezegd, roteer troef");
 
-        if (whoSay != playerNum) {
-            log.warn("say() It's player {} turn to say", game.getPlayers().get(whoSay));
-            throw new NotPlayersTurnException();
+            final Suit oldTrump = this.game.getTrump();
+
+            do {
+                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+            }
+            while (oldTrump == game.getTrump());
+            game.setSay(new HashMap<>());
+
+        } else {
+
+            final int whoSay = calcWhoSay();
+
+            if (whoSay != playerNum) {
+                log.warn("say() It's player {} turn to say", game.getPlayers().get(whoSay));
+                throw new NotPlayersTurnException();
+            }
+
+            game.getSay().put(playerNum, say);
         }
 
         game.setUpdated(Instant.now());
-        game.getSay().put(playerNum, say);
 
-        return userMessages;
     }
 
     @Override
@@ -472,9 +485,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
             }
         }
 
-        log.info("{}: evaluates their hand for trump: {}  with score: {}", userId, game.getTrump(), currentScore);
+        final boolean decision = currentScore >= BIDDING_THRESHOLD;
 
-        return currentScore >= BIDDING_THRESHOLD;
+        log.info("{}: evaluates their hand for trump: {}, with score: {}, decision={}", userId, game.getTrump(), currentScore, decision);
+
+        return decision;
 
     }
 
@@ -485,7 +500,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return false;
         }
 
-        if (game.getSay() == null || !game.getSay().containsValue(Boolean.TRUE)) {
+        if (game.getSay() == null || !isErGegaan()) {
             return false;
         }
 
@@ -508,11 +523,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
             game.setSay(new HashMap<>());
         }
 
-        if (game.getSay().containsValue(Boolean.TRUE)) {
+        if (isErGegaan()) {
             return false;
         }
 
-        if (game.getSay().size() == 4) {
+        if (iedereenHeeftGezegd()) {
             return false;
         }
 
@@ -526,6 +541,14 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     boolean isAiPlayer(final String userId) {
         return AI_USER_ID.contains(userId);
+    }
+
+    boolean isErGegaan() {
+        return game.getSay().containsValue(Boolean.TRUE);
+    }
+
+    boolean iedereenHeeftGezegd() {
+        return game.getSay().size() == 4;
     }
 
 }

@@ -16,7 +16,7 @@ public interface GameEngine {
 
     List<UserMessage> playCard(String userId, Card card) throws GameEngineException;
 
-    List<UserMessage> say(String userId, Boolean say) throws GameEngineException;
+    void say(String userId, Boolean say) throws GameEngineException;
 
     void playAiCard() throws GameEngineException;
 

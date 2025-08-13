@@ -143,7 +143,7 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId)
             .flatMap(g -> {
                 try {
-                    new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
+                    new GameEngineImpl(g).say(userId, say);
                     return gameRepository.save(g)
                         .doOnNext(this::sendGameChangedEvent)
                         .doOnNext(game -> finishTrickWithAi(game.getId()))
