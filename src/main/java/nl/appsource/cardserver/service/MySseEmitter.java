@@ -134,7 +134,19 @@ public final class MySseEmitter {
     }
 
     public Flux<ServerSentEvent<Object>> subscribe() {
-        return unicastSink.asFlux().map(UserServerSentEvent::serverSentEvent).publish().autoConnect().doOnCancel(this::cancel);
+        return unicastSink.asFlux()
+            .map(UserServerSentEvent::serverSentEvent)
+            .doOnNext(objectServerSentEvent -> {
+                if ("message".equals(objectServerSentEvent.event())) {
+                    final UserMessage userMessage = (UserMessage) objectServerSentEvent.data();
+                    if (userMessage == null || !userMessage.getUserId().equals(userId)) {
+                        log.warn("Message for wrong user");
+                    }
+                }
+            })
+            .publish()
+            .autoConnect()
+            .doOnCancel(this::cancel);
     }
 
     public void cancel() {

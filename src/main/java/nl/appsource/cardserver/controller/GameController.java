@@ -53,19 +53,21 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                    log.info("{} playCard() user {} plays card {}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
-                    return playCard;
-                })
-                .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard()))))
-            .onErrorResume(GameEngineException.class, throwable -> {
-                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return just(new PlayCardResponse().cardWasPlayed(false));
-            })
-            .onErrorResume(Throwable.class, throwable -> {
-                log.error("", throwable);
-                gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return just(new PlayCardResponse().cardWasPlayed(false));
-            })
+                        log.info("{} playCard() user {} plays card {}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
+                        return playCard;
+                    })
+                    .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard())))
+                    .onErrorResume(GameEngineException.class, throwable -> {
+                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                        return just(new PlayCardResponse().cardWasPlayed(false));
+                    })
+                    .onErrorResume(Throwable.class, throwable -> {
+                        log.error("", throwable);
+                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                        return just(new PlayCardResponse().cardWasPlayed(false));
+                    })
+            )
+
             .map(ResponseEntity::ok);
     }
 
@@ -78,16 +80,17 @@ public class GameController implements GamesApi, V1Api {
                 log.info("{} playAiCard() {}", exchange.getRequest().getRemoteAddress(), userId);
                 return userId;
             })
-            .flatMap(userId -> gameService.kickAi(userId, gameId))
-            .onErrorResume(GameEngineException.class, throwable -> {
-                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.justOrEmpty(true).then();
-            })
-            .onErrorResume(Throwable.class, throwable -> {
-                log.error("", throwable);
-                gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.justOrEmpty(true).then();
-            })
+            .flatMap(userId -> gameService.kickAi(userId, gameId).onErrorResume(GameEngineException.class, throwable -> {
+                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                        return Mono.justOrEmpty(true).then();
+                    })
+                    .onErrorResume(Throwable.class, throwable -> {
+                        log.error("", throwable);
+                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                        return Mono.justOrEmpty(true).then();
+                    })
+
+            )
             .then(just(ResponseEntity.ok().build()));
     }
 
@@ -136,16 +139,16 @@ public class GameController implements GamesApi, V1Api {
                     log.info("{} say() user {} says {}", exchange.getRequest().getRemoteAddress(), userId, say.getSay());
                     return say.getSay();
                 })
-                .flatMap(say -> gameService.say(userId, gameId, say)))
-            .onErrorResume(GameEngineException.class, throwable -> {
-                gameService.sendUserMessage(new UserMessage().message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.empty();
-            })
-            .onErrorResume(Throwable.class, throwable -> {
-                log.error("", throwable);
-                gameService.sendUserMessage(new UserMessage().message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.empty();
-            })
+                .flatMap(say -> gameService.say(userId, gameId, say))
+                .onErrorResume(GameEngineException.class, throwable -> {
+                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                    return Mono.empty();
+                })
+                .onErrorResume(Throwable.class, throwable -> {
+                    log.error("", throwable);
+                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                    return Mono.empty();
+                }))
             .then(just(ResponseEntity.ok().build()));
     }
 }

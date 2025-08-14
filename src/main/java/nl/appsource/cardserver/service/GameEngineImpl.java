@@ -206,7 +206,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         if (!currentTrick.isEmpty()) {
             final Card leadingCard = currentTrick.getFirst();
             if (leadingCard.getSuit() != card.getSuit() && getHand(userId).stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()))) {
-                userMessages.add(new UserMessage().message("U heeft verzaakt").variant(UserMessage.VariantEnum.WARNING));
+                userMessages.add(new UserMessage().userId(userId).message("U heeft verzaakt").variant(UserMessage.VariantEnum.WARNING));
             }
         }
 

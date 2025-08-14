@@ -293,13 +293,15 @@ public class GameServiceImpl implements GameService {
                 .filter(sse -> {
                     assert sse.event() != null;
                     return switch (sse.event()) {
-                        case "ping" -> true;
-                        case "messageEvent" -> true;
                         case "stateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
-                        default -> {
-                            log.error("Unknown event: {}", sse.event());
-                            yield false;
+                        case "messageEvent" -> {
+                            final MessageEvent messageEvent = (MessageEvent) sse.data();
+                            if (messageEvent == null) {
+                                throw new IllegalArgumentException();
+                            }
+                            yield userId.equals(messageEvent.getMessage().getUserId());
                         }
+                        default -> true;
                     };
                 })
             );

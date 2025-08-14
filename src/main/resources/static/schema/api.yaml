@@ -230,6 +230,8 @@ components:
     UserMessage:
       type: object
       properties:
+        userId:
+          type: string
         message:
           type: string
         variant:
@@ -239,6 +241,7 @@ components:
             - info
             - success
       required:
+        - userId
         - message
         - variant
     whoAmIResponse:
@@ -390,6 +393,8 @@ components:
       properties:
         message:
           $ref: '#/components/schemas/UserMessage'
+      required:
+        - message
   parameters:
     gameId:
       name: gameId
