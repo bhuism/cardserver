@@ -12,13 +12,13 @@ public interface GameEngine {
 
     int calcWhoHasTurn() throws GameEngineException;
 
-    void sayAi() throws GameEngineException;
+    List<UserMessage> sayAi() throws GameEngineException;
 
     List<UserMessage> playCard(String userId, Card card) throws GameEngineException;
 
-    void say(String userId, Boolean say) throws GameEngineException;
+    List<UserMessage> say(String userId, Boolean say) throws GameEngineException;
 
-    void playAiCard() throws GameEngineException;
+    List<UserMessage> playAiCard() throws GameEngineException;
 
     boolean isCompleted();
 

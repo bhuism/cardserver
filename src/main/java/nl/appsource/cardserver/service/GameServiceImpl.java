@@ -143,7 +143,7 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId)
             .flatMap(g -> {
                 try {
-                    new GameEngineImpl(g).say(userId, say);
+                    new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
                     return gameRepository.save(g)
                         .doOnNext(this::sendGameChangedEvent)
                         .doOnNext(game -> finishTrickWithAi(game.getId()))
@@ -175,7 +175,7 @@ public class GameServiceImpl implements GameService {
             final GameEngine gameEngine = new GameEngineImpl(g);
             if (!gameEngine.hasFullTrick() && gameEngine.calcTricksPlayed() == trickNr && gameEngine.isAiTurn()) {
                 try {
-                    gameEngine.playAiCard();
+                    gameEngine.playAiCard().forEach(this::sendUserMessage);
                     return gameRepository.save(g)
                         .doOnNext(this::sendGameChangedEvent)
                         .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
@@ -199,12 +199,12 @@ public class GameServiceImpl implements GameService {
             try {
 
                 if (gameEngine.isAiSay()) {
-                    gameEngine.sayAi();
+                    gameEngine.sayAi().forEach(this::sendUserMessage);
                     return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
                 }
 
                 if (gameEngine.isAiTurn()) {
-                    gameEngine.playAiCard();
+                    gameEngine.playAiCard().forEach(this::sendUserMessage);
                     return gameRepository.save(game).doOnNext(this::sendGameChangedEvent);
                 }
 

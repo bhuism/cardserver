@@ -132,7 +132,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public void playAiCard() throws GameEngineException {
+    public List<UserMessage> playAiCard() throws GameEngineException {
 
         if (isCompleted()) {
             throw new GameCompletedException();
@@ -144,12 +144,12 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         final String userId = game.getPlayers().get(calcWhoHasTurn());
 
-        playCard(userId, calcAiCard(userId));
+        return playCard(userId, calcAiCard(userId));
 
     }
 
     @Override
-    public void sayAi() throws GameEngineException {
+    public List<UserMessage> sayAi() throws GameEngineException {
 
         if (isCompleted()) {
             throw new GameCompletedException();
@@ -163,7 +163,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         final String userId = this.game.getPlayers().get(whoSay);
 
-        say(userId, decideBid(userId));
+        return say(userId, decideBid(userId));
 
     }
 
@@ -221,7 +221,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
 
     @Override
-    public void say(final String userId, final Boolean say) throws GameEngineException {
+    public List<UserMessage> say(final String userId, final Boolean say) throws GameEngineException {
+
+        final List<UserMessage> userMessages = new ArrayList<>();
 
         final int playerNum = this.game.getPlayers().indexOf(userId);
 
@@ -258,7 +260,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         if (niemandIsGegaan()) {
 
-            log.info("Iedereen heeft gepast, roteer troef");
+            log.info("Iedereen heeft gepast, nieuwe troef");
 
             final Suit oldTrump = this.game.getTrump();
 
@@ -269,9 +271,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
             game.getSay().clear();
 
+            userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
+
         }
 
         game.setUpdated(Instant.now());
+
+        return userMessages;
 
     }
 
