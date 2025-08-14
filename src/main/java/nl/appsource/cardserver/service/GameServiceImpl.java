@@ -93,17 +93,17 @@ public class GameServiceImpl implements GameService {
         log.info("Creating a new game with players {}", randomizedOrderPlayers);
 
         return Mono.just(new nl.appsource.cardserver.model.Game()).doOnNext((game) -> {
-            game.setId(idGen(20));
-            game.setCreator(creator);
-            game.setCreated(Instant.now());
-            game.setUpdated(Instant.now());
-            game.setPlayers(randomizedOrderPlayers);
-            game.setDealer(RAND.nextInt(4));
-            game.setSay(new HashMap<>());
-            game.setTurns(new ArrayList<>());
-            game.setPlayerCard(randomCards());
-            game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-        }).flatMap(gameRepository::save)
+                game.setId(idGen(20));
+                game.setCreator(creator);
+                game.setCreated(Instant.now());
+                game.setUpdated(Instant.now());
+                game.setPlayers(randomizedOrderPlayers);
+                game.setDealer(RAND.nextInt(4));
+                game.setSay(new HashMap<>());
+                game.setTurns(new ArrayList<>());
+                game.setPlayerCard(randomCards());
+                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+            }).flatMap(gameRepository::save)
             .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
             .doOnNext(sseEmitterRepository::newGame);
 
@@ -286,18 +286,23 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId) {
-        return Flux.just(createPing(), createPing(), createPing()).concatWith(gameSink.asFlux().doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount())).doOnCancel(() -> log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount())).filter(sse -> {
-            assert sse.event() != null;
-            return switch (sse.event()) {
-                case "gamePing" -> true;
-                case "gameMessageEvent" -> true;
-                case "gameStateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
-                default -> {
-                    log.error("Unknown event: {}", sse.event());
-                    yield false;
-                }
-            };
-        }));
+        return Flux.just(createPing(), createPing(), createPing())
+            .concatWith(gameSink.asFlux()
+                .doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
+                .doOnCancel(() -> log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
+                .filter(sse -> {
+                    assert sse.event() != null;
+                    return switch (sse.event()) {
+                        case "ping" -> true;
+                        case "messageEvent" -> true;
+                        case "stateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
+                        default -> {
+                            log.error("Unknown event: {}", sse.event());
+                            yield false;
+                        }
+                    };
+                })
+            );
     }
 
 }
