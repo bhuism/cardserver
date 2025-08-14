@@ -299,7 +299,8 @@ public class GameServiceImpl implements GameService {
                             if (messageEvent == null) {
                                 throw new IllegalArgumentException();
                             }
-                            yield userId.equals(messageEvent.getMessage().getUserId());
+                            final UserMessage message = messageEvent.getMessage();
+                            yield message.getUserId() == null || userId.equals(message.getUserId());
                         }
                         default -> true;
                     };
