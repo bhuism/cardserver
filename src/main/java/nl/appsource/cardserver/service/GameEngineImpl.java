@@ -258,7 +258,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         game.getSay().put(playerNum, say);
 
-        if (niemandIsGegaan()) {
+        userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
+
+        if (niemandIsGegaanEnIedereenHeeftGezegd()) {
 
             log.info("Iedereen heeft gepast, nieuwe troef");
 
@@ -552,7 +554,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return game.getSay().containsValue(Boolean.TRUE);
     }
 
-    boolean niemandIsGegaan() {
+    boolean niemandIsGegaanEnIedereenHeeftGezegd() {
         return iedereenHeeftGezegd() && !game.getSay().containsValue(Boolean.TRUE);
     }
 
