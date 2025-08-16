@@ -82,7 +82,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
         final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
             .subject(userId)
             .jwtID(UUID.randomUUID().toString())
-            .audience("https://www.klaversjassen.nl")
+            .audience("https://klaversjassen.nl")
             .notBeforeTime(new Date(now - Duration.ofMinutes(5).toSeconds()))
             .issuer("https://api.cardserver.nl")
             .issueTime(new Date(now))
