@@ -35,9 +35,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
-
-        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
-
+//        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -97,9 +95,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final ServerWebExchange exchange) {
-
-        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
-
+//        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -110,9 +106,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Game>> createGame(final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
-
         log.info("{} createGame()", exchange.getRequest().getRemoteAddress());
-
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
