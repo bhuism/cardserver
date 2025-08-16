@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -51,7 +52,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     @SneakyThrows
     @Override
-    public Jwt decode(final String token) {
+    public Mono<Jwt> decode(final String token) {
 
         final SignedJWT signedJWT = SignedJWT.parse(token);
 
@@ -59,7 +60,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
             throw new JwtException("JWT verification failed");
         }
 
-        return createJwt(token, JWTParser.parse(token));
+        return Mono.just(createJwt(token, JWTParser.parse(token)));
 
     }
 

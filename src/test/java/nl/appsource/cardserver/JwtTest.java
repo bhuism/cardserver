@@ -27,7 +27,7 @@ public class JwtTest {
 
         log.info("token: {}", tokenValue);
 
-        final Jwt actual = cardServerJwtModem.decode(tokenValue);
+        final Jwt actual = cardServerJwtModem.decode(tokenValue).block();
 
         log.info("header: {}", actual.getHeaders());
         log.info("claims: {}", actual.getClaims());
