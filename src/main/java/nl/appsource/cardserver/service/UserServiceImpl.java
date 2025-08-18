@@ -133,6 +133,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress) {
-        return sseEmitterRepository.subscribe(userId).doOnNext((_a) -> log.info("{} subscribe() userId={} count={}", remoteAddress, userId, sseEmitterRepository.getCount()));
+        return sseEmitterRepository.subscribe(userId).doOnSubscribe((_a) -> log.info("{} subscribe() userId={} count={}", remoteAddress, userId, sseEmitterRepository.getCount()));
     }
 }
