@@ -286,8 +286,6 @@ components:
         uuid:
           type: string
           format: uuid
-      required:
-        - uuid
     pong:
       type: object
       properties:

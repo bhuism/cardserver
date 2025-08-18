@@ -81,10 +81,18 @@ public class UserController implements UsersApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> ping(final Mono<Ping> ping, final ServerWebExchange exchange) {
-        return ping.map(data -> {
-            sseEmitterRepository.ping(data.getUuid());
-            return ResponseEntity.ok().build();
-        });
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .flatMap((userId) ->
+                ping.map(data -> {
+                    if (data.getUuid().isPresent()) {
+                        sseEmitterRepository.ping(data.getUuid().get());
+                    } else {
+                        log.warn("{} ping() userId={} received ping wihout a uuid", exchange.getRequest().getRemoteAddress(), userId);
+                    }
+                    return ResponseEntity.ok().build();
+                }));
     }
 
     @Override
