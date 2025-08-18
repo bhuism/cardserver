@@ -51,7 +51,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> playCardMono.map(playCard -> {
-                        log.info("{} playCard() user {} plays card {}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
+                        log.info("{} playCard() userI={} plays card={}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
                         return playCard;
                     })
                     .flatMap(playCard -> gameService.playCard(userId, gameId, convertCard(playCard.getCard())))
