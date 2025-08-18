@@ -166,7 +166,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sendOnlineListToFriendsOf(userId);
             })
             .doOnCancel(() -> {
-                log.info("unSubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.size());
+                log.info("{} unSubscribe() userId={}, sseEmitter={} count={}", remoteAddress, userId, mySseEmitter.getUuid(), emitters.size());
                 mySseEmitter.cancel();
                 janitor();
                 try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
