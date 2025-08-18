@@ -30,8 +30,7 @@ public class SubscribeController implements V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .doOnNext(userId -> log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress(), userId))
-            .flatMapMany(userService::subscribe);
+            .flatMapMany(userId -> userService.subscribe(userId, "" + exchange.getRequest().getRemoteAddress()));
     }
 
     @GetMapping(path = "/gamestream/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

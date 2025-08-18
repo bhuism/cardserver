@@ -165,7 +165,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sendOnlineListToFriendsOf(userId);
             })
             .doOnCancel(() -> {
-                log.info("unSubscribe() userId={}, sseEmitter={} ", userId, mySseEmitter.getUuid());
+                log.info("unSubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.size());
                 mySseEmitter.cancel();
                 janitor();
 
@@ -182,6 +182,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 }
             });
 
+    }
+
+
+    @Override
+    public int getCount() {
+        return emitters.size();
     }
 
 }
