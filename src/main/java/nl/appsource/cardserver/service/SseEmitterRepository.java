@@ -15,7 +15,7 @@ public interface SseEmitterRepository {
 
     void broadCastMessage(String userId, String message);
 
-    Flux<ServerSentEvent<Object>> subscribe(String userId);
+    Flux<ServerSentEvent<Object>> subscribe(String userId, String remoteAddress);
 
     void ping(UUID uuid);
 
@@ -33,5 +33,4 @@ public interface SseEmitterRepository {
 
     void newFriend(String userId, String friendId);
 
-    int getCount();
 }

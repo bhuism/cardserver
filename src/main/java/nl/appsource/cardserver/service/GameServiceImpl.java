@@ -285,11 +285,11 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId) {
+    public Flux<ServerSentEvent<Object>> gameStream(final String userId, final String gameId, final String remoteAddress) {
         return Flux.just(createPing(), createPing(), createPing())
             .concatWith(gameSink.asFlux()
-                .doOnSubscribe((a) -> log.info("subscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
-                .doOnCancel(() -> log.info("unSubscribe() userId={} gameId={} count={}", userId, gameId, gameSink.currentSubscriberCount()))
+                .doOnSubscribe((a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
+                .doOnCancel(() -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
                 .filter(sse -> {
                     assert sse.event() != null;
                     return switch (sse.event()) {

@@ -152,7 +152,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Flux<ServerSentEvent<Object>> subscribe(final String userId) {
+    public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress) {
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
@@ -161,6 +161,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return Flux.just(mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent())
             .concatWith(mySseEmitter.subscribe())
             .doOnSubscribe((s) -> {
+                log.info("{} subscribe() userId={} count={}", remoteAddress, userId, emitters.size());
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             })
@@ -168,7 +169,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 log.info("unSubscribe() userId={}, sseEmitter={} count={}", userId, mySseEmitter.getUuid(), emitters.size());
                 mySseEmitter.cancel();
                 janitor();
-
                 try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
                     executor.submit(() -> {
                         try {
@@ -181,13 +181,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                     executor.shutdown();
                 }
             });
-
-    }
-
-
-    @Override
-    public int getCount() {
-        return emitters.size();
     }
 
 }
