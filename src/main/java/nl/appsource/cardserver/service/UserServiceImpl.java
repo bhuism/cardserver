@@ -98,7 +98,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
             .flatMap(
                 (user) -> {
-                    log.info("total before: {}", user.getInvites());
                     return userRepository.searchInvitees(searchString)
                         .map(User::getId)
                         .filter(inviteeId -> !user.getInvites().contains(inviteeId))
