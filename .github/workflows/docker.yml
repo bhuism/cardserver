@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "development" ]
 
-#jobs:
+jobs:
 #  test:
 #    name: Test & Code Quality
 #    runs-on: buildjet-4vcpu-ubuntu-2204-arm
@@ -30,22 +30,7 @@ on:
 ##        run: mvn -ntp -B clean verify org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
 
   build:
-#    strategy:
-#      fail-fast: true
-#      matrix:
-##        platform: [amd64, arm64]
-#        platform: [arm64]
-#        include:
-##          - platform: amd64
-##            runner: ubuntu-latest
-##            javaarch: x64
-#          - platform: arm64
-#            runner: buildjet-4vcpu-ubuntu-2204-arm
-#            javaarch: aarch64
     runs-on: buildjet-4vcpu-ubuntu-2204-arm
-
-#    needs:
-#      - test
 
     permissions:
       contents: read
@@ -76,51 +61,22 @@ on:
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
         with:
           distribution: 'liberica'
-          architecture: linux/arm64
           java-version: '21'
           cache: 'maven'
 
-      - name: Buid image
+      - name: Build image
         run: |
-          mvn -ntp -B -DskipTests clean spring-boot:build-image -Dspring-boot.build-image.imagePlatform=linux/arm64
+          mvn -ntp -B -DskipTests clean spring-boot:build-image
 
       - name: Push
-        if: github.event_name != 'pull_request'
-        run: |
-          docker push ghcr.io/bhuism/cardserver:latest-linux/arm64
-
-  manifest-and-push:
-    name: Manifest and Push
-    runs-on: ubuntu-latest
-    needs: build
-
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
-    steps:
-      - name: Login to GHCR
-        if: success() && github.event_name != 'pull_request'
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3
-        with:
-          registry: ghcr.io/bhuism/cardserver
-          username: bhuism
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: merge containers
-        run: |
-          docker manifest create ghcr.io/bhuism/cardserver:latest ghcr.io/bhuism/cardserver:latest-arm64
-
-      - name: push container
+        id: push
         if: success() && github.event_name != 'pull_request'
         run: |
-          docker manifest push ghcr.io/bhuism/cardserver:latest
+          docker push ghcr.io/bhuism/cardserver:latest
 
   rollout-restart:
-    needs: manifest-and-push
-    runs-on: ubuntu-latest
+    needs: build
+    runs-on: buildjet-4vcpu-ubuntu-2204-arm
     name: Rollout Restart
     steps:
       - name: Kubernetes context
