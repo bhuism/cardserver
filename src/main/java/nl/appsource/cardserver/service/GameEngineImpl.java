@@ -258,7 +258,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         game.getSay().put(playerNum, say);
 
-        userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
+        // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
 
         if (niemandIsGegaanEnIedereenHeeftGezegd()) {
 
