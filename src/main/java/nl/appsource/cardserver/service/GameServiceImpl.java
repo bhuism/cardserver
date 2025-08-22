@@ -92,7 +92,8 @@ public class GameServiceImpl implements GameService {
 
         log.info("Creating a new game with players {}", randomizedOrderPlayers);
 
-        return Mono.just(new nl.appsource.cardserver.model.Game()).doOnNext((game) -> {
+        return Mono.just(new nl.appsource.cardserver.model.Game())
+            .doOnNext((game) -> {
                 game.setId(idGen(20));
                 game.setCreator(creator);
                 game.setCreated(Instant.now());
@@ -103,6 +104,7 @@ public class GameServiceImpl implements GameService {
                 game.setTurns(new ArrayList<>());
                 game.setPlayerCard(randomCards());
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                game.setLastTrickOpen(false);
             }).flatMap(gameRepository::save)
             .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
             .doOnNext(sseEmitterRepository::newGame);
@@ -122,20 +124,21 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<PlayCardResponse> playCard(final String userId, final String gameId, final Card card) {
-        return gameRepository.findById(gameId).flatMap((g) -> {
-            final int cardOwnerIndex = g.getPlayerCard().get(card);
-            final String playerId = g.getPlayers().get(cardOwnerIndex);
-            try {
-                new GameEngineImpl(g).playCard(playerId, card).forEach(this::sendUserMessage);
-                return gameRepository.save(g)
-                    .doOnNext(this::sendGameChangedEvent)
-                    .doOnNext(game -> finishTrickWithAi(game.getId()))
-                    .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
-                    .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
-            } catch (GameEngineException e) {
-                return Mono.error(e);
-            }
-        });
+        return gameRepository.findById(gameId)
+            .flatMap((g) -> {
+                final int cardOwnerIndex = g.getPlayerCard().get(card);
+                final String playerId = g.getPlayers().get(cardOwnerIndex);
+                try {
+                    new GameEngineImpl(g).playCard(playerId, card).forEach(this::sendUserMessage);
+                    return gameRepository.save(g)
+                        .doOnNext(this::sendGameChangedEvent)
+                        .doOnNext(game -> finishTrickWithAi(game.getId()))
+                        .doOnNext(game -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                        .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
+                } catch (GameEngineException e) {
+                    return Mono.error(e);
+                }
+            });
     }
 
     @Override
@@ -308,4 +311,17 @@ public class GameServiceImpl implements GameService {
             );
     }
 
+    @Override
+    public Mono<Void> openLastTrick(final String userId, final String gameId) {
+        return gameRepository.findById(gameId)
+            .flatMap(g -> {
+                if (g.getLastTrickOpen() == null || !g.getLastTrickOpen()) {
+                    g.setLastTrickOpen(true);
+                    return gameRepository.save(g)
+                        .doOnNext(this::sendGameChangedEvent);
+                } else {
+                    return Mono.empty();
+                }
+            }).then(Mono.empty());
+    }
 }

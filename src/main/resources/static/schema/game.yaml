@@ -58,6 +58,8 @@ components:
           type: integer
         whoSay:
           type: integer
+        lastTrickOpen:
+          type: boolean
       required:
         - id
         - trump

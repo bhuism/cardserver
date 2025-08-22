@@ -212,6 +212,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
+        game.setLastTrickOpen(false);
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
 

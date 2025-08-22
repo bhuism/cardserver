@@ -31,4 +31,6 @@ public interface GameService {
     Flux<ServerSentEvent<Object>> gameStream(String userId, String gameId, String remoteAddress);
 
     Mono<Void> say(String userId, String gameId, Boolean say);
+
+    Mono<Void> openLastTrick(String userId, String gameId);
 }

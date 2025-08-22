@@ -30,6 +30,18 @@ paths:
           description: some application error
         "404":
           description: not found
+  /games/{gameId}/openLastTrick:
+    post:
+      operationId: openLastTrick
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      responses:
+        "200":
+          description: ok
+        "422":
+          description: some application error
+        "404":
+          description: not found
   /games/{gameId}/playCard:
     post:
       operationId: playCard

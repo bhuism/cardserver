@@ -62,4 +62,7 @@ public class Game {
     @Field
     private List<Card> turns;
 
+    @Field
+    private Boolean lastTrickOpen;
+
 }
