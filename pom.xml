@@ -259,6 +259,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <image>
+                        <builder>dashaun/builder:tiny</builder>
                         <env>
                             <BP_JVM_VERSION>21</BP_JVM_VERSION>
                         </env>
