@@ -66,7 +66,7 @@ jobs:
 
       - name: Build image
         run: |
-          mvn -ntp -B -DskipTests clean spring-boot:build-image
+          mvn -ntp -B -Dspring-boot.build-image.imageName=ghcr.io/bhuism/cardserver:latest clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image
 
       - name: Push
         id: push
