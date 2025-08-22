@@ -74,15 +74,15 @@ jobs:
         run: |
           docker push ghcr.io/bhuism/cardserver:latest
 
-  rollout-restart:
-    needs: build
-    runs-on: buildjet-4vcpu-ubuntu-2204-arm
-    name: Rollout Restart
-    steps:
-      - name: Kubernetes context
-        uses: Azure/k8s-set-context@212a19233d93f03eceaac31ae5a1d1acf650b6ef # v4
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-      - name: Rollout Restart
-        run: kubectl -n cardserver rollout restart deployment cardserver
+#  rollout-restart:
+#    needs: build
+#    runs-on: buildjet-4vcpu-ubuntu-2204-arm
+#    name: Rollout Restart
+#    steps:
+#      - name: Kubernetes context
+#        uses: Azure/k8s-set-context@212a19233d93f03eceaac31ae5a1d1acf650b6ef # v4
+#        with:
+#          method: kubeconfig
+#          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+#      - name: Rollout Restart
+#        run: kubectl -n cardserver rollout restart deployment cardserver
