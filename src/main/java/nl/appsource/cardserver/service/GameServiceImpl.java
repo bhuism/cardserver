@@ -317,11 +317,11 @@ public class GameServiceImpl implements GameService {
             .flatMap(g -> {
                 if (g.getLastTrickOpen() == null || !g.getLastTrickOpen()) {
                     g.setLastTrickOpen(true);
-                    return gameRepository.save(g)
-                        .doOnNext(this::sendGameChangedEvent);
                 } else {
-                    return Mono.empty();
+                    g.setLastTrickOpen(false);
                 }
+                return gameRepository.save(g)
+                    .doOnNext(this::sendGameChangedEvent);
             }).then(Mono.empty());
     }
 }
