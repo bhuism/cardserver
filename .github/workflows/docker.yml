@@ -7,27 +7,6 @@ on:
     branches: [ "development" ]
 
 jobs:
-#  test:
-#    name: Test & Code Quality
-#    runs-on: buildjet-2vcpu-ubuntu-2204-arm
-##    runs-on: ubuntu-24.04
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Setup  Java
-#        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4
-#        with:
-#          java-version: '21'
-#          distribution: 'liberica'
-#          cache: maven
-#
-#      - name: Test with Maven
-#        run: mvn -ntp -B clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
-##        run: mvn -ntp -B clean verify org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
 
   build:
     runs-on: buildjet-2vcpu-ubuntu-2204-arm
