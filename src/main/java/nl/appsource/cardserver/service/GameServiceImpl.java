@@ -156,18 +156,12 @@ public class GameServiceImpl implements GameService {
     private void finishWithAi(final String gameId, final int skippers) {
 
         Flux.interval(Duration.ofSeconds(2))
-            .doOnNext((nr) -> {
-                log.info("new event: {}", nr);
-            })
             .skip(skippers)
             .flatMap((g) -> gameRepository.findById(gameId))
             .map(GameEngineImpl::new)
             .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted())
             .flatMap(gameEngine -> {
-
                 try {
-
-
                     if (gameEngine.isAiSay()) {
                         log.info("AiSay()");
                         gameEngine.sayAi().forEach(this::sendUserMessage);
@@ -182,7 +176,6 @@ public class GameServiceImpl implements GameService {
                     log.error("Exception during sayAi()", e);
                     return Mono.error(e);
                 }
-
 
             })
             .map(GameEngineImpl::getGame)

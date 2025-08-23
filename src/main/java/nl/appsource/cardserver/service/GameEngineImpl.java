@@ -317,25 +317,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return trick.stream().max(this::compareKlaverjassenCards).orElseThrow();
     }
 
-//    @Override
-//    public void playAiCard() {
-//
-//        final int gotTurn = calcWhoHasTurn();
-//
-//        final String aiUserId = game.getPlayers().get(gotTurn);
-//
-//        if (!AI_USER_ID.contains(aiUserId)) {
-//            throw new GameEngineException("Player who is aan slag is not an AI player");
-//        }
-//
-//        final Card card = calcAiCard(aiUserId);
-//
-//        log.info("Ai {} plays card {}", aiUserId, card);
-//
-//        playCard(aiUserId, card);
-//
-//    }
-
     private List<Card> getHand(final String userId) {
         final int playerNum = this.game.getPlayers().indexOf(userId);
         return game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
@@ -348,7 +329,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
         if (!AI_USER_ID.contains(userId)) {
             throw new GameEngineException("Not an Ai player");
         }
-
 
         final boolean isFirstPlayerInTrick = game.getTurns().size() % 4 == 0;
 
