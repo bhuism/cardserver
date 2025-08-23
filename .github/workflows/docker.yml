@@ -82,7 +82,9 @@ jobs:
     steps:
 
       - name: Install kubectl
-        uses: Azure/k8s-install@de173824c7863972621533b1477a12e3455ea2b0 # v3
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+          chmod +x ./kubectl
 
       - name: Set Kubernetes Context
         uses: Azure/k8s-set-context@212a19233d93f03eceaac31ae5a1d1acf650b6ef # v4
@@ -91,4 +93,4 @@ jobs:
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       - name: Rollout Restart Deployment
-        run: kubectl -n cardserver rollout restart deployment cardserver
+        run: ./kubectl -n cardserver rollout restart deployment cardserver
