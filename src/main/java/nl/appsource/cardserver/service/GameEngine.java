@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.UserMessage;
 
@@ -29,4 +30,7 @@ public interface GameEngine {
     boolean isAiTurn();
 
     boolean isAiSay();
+
+    Game getGame();
+
 }

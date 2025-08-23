@@ -547,6 +547,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     }
 
+    @Override
+    public Game getGame() {
+        return game;
+    }
+
     boolean isAiPlayer(final String userId) {
         return AI_USER_ID.contains(userId);
     }
