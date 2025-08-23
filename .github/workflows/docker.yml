@@ -9,7 +9,7 @@ on:
 jobs:
 #  test:
 #    name: Test & Code Quality
-#    runs-on: buildjet-4vcpu-ubuntu-2204-arm
+#    runs-on: buildjet-2vcpu-ubuntu-2204-arm
 ##    runs-on: ubuntu-24.04
 #
 #    steps:
@@ -30,7 +30,7 @@ jobs:
 ##        run: mvn -ntp -B clean verify org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check
 
   build:
-    runs-on: buildjet-4vcpu-ubuntu-2204-arm
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
 
     permissions:
       contents: read
@@ -78,7 +78,7 @@ jobs:
     name: Rollout Restart
     needs: build
     if: github.event_name == 'push'
-    runs-on: buildjet-4vcpu-ubuntu-2204-arm
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
     steps:
 
       - name: Install kubectl
