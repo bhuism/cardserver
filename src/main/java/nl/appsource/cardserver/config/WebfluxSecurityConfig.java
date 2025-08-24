@@ -100,7 +100,6 @@ public class WebfluxSecurityConfig {
         configuration.setAllowedOrigins(List.of("https://www.klaversjassen.nl", "https://klaversjassen.nl", "http://localhost:4280"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
-        configuration.setExposedHeaders(Collections.singletonList("*"));
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
