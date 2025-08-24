@@ -24,4 +24,4 @@ spring:
           jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
 cardserver:
   auth:
-    jwt-ed25519-secret: eyJrdHkiOiJPS1AiLCJkIjoiSElDLV9YdUpnazJxX2VzWXhzdlloZTFzR3A3ZDZpQTA0TjItSVhVR1BUZyIsInVzZSI6InNpZyIsImNydiI6IkVkMjU1MTkiLCJraWQiOiJjaXRlc3QtOC1rZXktQS03NDU5OTIiLCJ4IjoiNGlUcXR2ZFhzVnM2RmpVVTM5ckRQQ1lWcklocFNPOW9zM01jeWZmQU9IRSIsImFsZyI6IkVkRFNBIn0K
+    jwt-ed25519-secret: '{"kty":"OKP","d":"HIC-_XuJgk2q_esYxsvYhe1sGp7d6iA04N2-IXUGPTg","use":"sig","crv":"Ed25519","kid":"citest-8-key-A-745992","x":"4iTqtvdXsVs6FjUU39rDPCYVrIhpSO9os3McyffAOHE","alg":"EdDSA"}'

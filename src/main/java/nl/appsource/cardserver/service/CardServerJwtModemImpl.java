@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -25,10 +24,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -52,8 +49,8 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
     private OctetKeyPair okp;
 
     @PostConstruct
-    public void init() throws JOSEException, JsonProcessingException, ParseException {
-        okp = OctetKeyPair.parse(new String(Base64.getDecoder().decode(cardServerProperties.getJwtEd25519Secret()), StandardCharsets.UTF_8));
+    public void init() throws JOSEException, ParseException {
+        okp = OctetKeyPair.parse(cardServerProperties.getJwtEd25519Secret());
         verifier = new Ed25519Verifier(okp.toPublicJWK());
         signer = new Ed25519Signer(okp);
     }

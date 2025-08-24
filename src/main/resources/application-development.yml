@@ -31,6 +31,5 @@ cardserver:
     password: killer
     bucket-name: cardserver
   auth:
-    jwt-ed25519-secret: eyJrdHkiOiJPS1AiLCJkIjoiVnhNQ215a0xIVTlrTHdQMDAwbmxUYmhmNnZ2VndJQ1NHZ3o3TFZONVJQTSIsInVzZSI6InNpZyIsImNydiI6IkVkMjU1MTkiLCJraWQiOiJkZXYtOC1rZXktQS03NDU5OTIiLCJ4IjoiZmNZUkNhaEdXY3JFV09PalFIVDRDQTlzQVVqTW00TnZjX18zbjBobXdTNCIsImFsZyI6IkVkRFNBIn0K
-
+    jwt-ed25519-secret: '{"kty":"OKP","d":"VxMCmykLHU9kLwP000nlTbhf6vvVwICSGgz7LVN5RPM","use":"sig","crv":"Ed25519","kid":"dev-8-key-A-745992","x":"fcYRCahGWcrEWOOjQHT4CA9sAUjMm4Nvc__3n0hmwS4","alg":"EdDSA"}'
 
