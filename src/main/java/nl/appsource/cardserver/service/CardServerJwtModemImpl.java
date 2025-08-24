@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -50,17 +51,21 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
         signer = new MACSigner(getHash());
     }
 
-    @SneakyThrows
     @Override
     public Mono<Jwt> decode(final String token) {
 
-        final SignedJWT signedJWT = SignedJWT.parse(token);
+        try {
+            final SignedJWT signedJWT = SignedJWT.parse(token);
 
-        if (!signedJWT.verify(verifier)) {
-            throw new JwtException("JWT verification failed");
+            if (!signedJWT.verify(verifier)) {
+                throw new JwtException("JWT verification failed");
+            }
+
+            return Mono.just(createJwt(token, JWTParser.parse(token)));
+
+        } catch (ParseException | JOSEException e) {
+            throw new JwtException("JWT verification failed", e);
         }
-
-        return Mono.just(createJwt(token, JWTParser.parse(token)));
 
     }
 

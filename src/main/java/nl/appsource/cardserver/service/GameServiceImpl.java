@@ -180,7 +180,10 @@ public class GameServiceImpl implements GameService {
             })
             .map(GameEngineImpl::getGame)
             .flatMap(gameRepository::save)
-            .subscribe(this::sendGameChangedEvent);
+            .doOnNext(this::sendGameChangedEvent)
+            .map(GameEngineImpl::new)
+            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted())
+            .subscribe();
 
     }
 
