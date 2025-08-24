@@ -1,13 +1,19 @@
 package nl.appsource.cardserver.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jose.crypto.Ed25519Signer;
+import com.nimbusds.jose.crypto.Ed25519Verifier;
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.OctetKeyPair;
+import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -22,9 +28,11 @@ import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -37,16 +45,30 @@ import static java.util.Collections.emptyMap;
 @RequiredArgsConstructor
 public class CardServerJwtModemImpl implements CardServerJwtModem {
 
+    public static final String ISSUER = "https://api.klaversjassen.nl";
+
     private final CardServerProperties cardServerProperties;
 
     private JWSVerifier verifier;
 
     private JWSSigner signer;
 
+    private OctetKeyPair okp;
+
     @PostConstruct
-    public void init() throws JOSEException {
-        verifier = new MACVerifier(getHash());
-        signer = new MACSigner(getHash());
+    public void init() throws JOSEException, JsonProcessingException, ParseException {
+        final OctetKeyPair extra = new OctetKeyPairGenerator(Curve.Ed25519).keyUse(KeyUse.SIGNATURE).keyID("citest-8-key-A-745992").algorithm(JWSAlgorithm.EdDSA).generate();
+        log.info("private key: {}", new ObjectMapper().writeValueAsString(extra.toJSONObject()));
+
+        okp = OctetKeyPair.parse(new String(Base64.getDecoder().decode(cardServerProperties.getJwtEd25519Secret()), StandardCharsets.UTF_8));
+        verifier = new Ed25519Verifier(okp.toPublicJWK());
+        signer = new Ed25519Signer(okp);
+
+    }
+
+    @Override
+    public OctetKeyPair getPublicKey() {
+        return okp.toPublicJWK();
     }
 
     @Override
@@ -61,7 +83,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
             return Mono.just(createJwt(token, JWTParser.parse(token)));
 
-        } catch (ParseException | JOSEException e) {
+        } catch (ParseException | JOSEException | IllegalStateException e) {
             throw new JwtException("JWT verification failed", e);
         }
 
@@ -82,20 +104,29 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
     @Override
     public SignedJWT encode(final String userId) throws JOSEException {
 
+        final String jwtId = UUID.randomUUID().toString();
+
+        log.info("Creating a new jwt for user {} with id {}", userId, jwtId);
+
         final long now = new Date().getTime();
 
         final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
             .subject(userId)
-            .jwtID(UUID.randomUUID().toString())
+            .jwtID(jwtId)
             .audience("https://klaversjassen.nl")
             .notBeforeTime(new Date(now - Duration.ofMinutes(5).toSeconds()))
-            .issuer("https://api.cardserver.nl")
+            .issuer(ISSUER)
             .issueTime(new Date(now))
             .expirationTime(new Date(now + Duration.ofDays(356 * 69).toSeconds()))
             .claim("scp", "USER")
             .build();
 
-        final SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.HS256).type(JOSEObjectType.JWT).build(), claimsSet);
+        final SignedJWT signedJWT = new SignedJWT(
+            new JWSHeader.Builder(JWSAlgorithm.EdDSA)
+                .keyID(getPublicKey().getKeyID())
+                .type(JOSEObjectType.JWT)
+                .jwkURL(URI.create("https://api.klaversjassen.nl/.well-known/jwks.json"))
+                .build(), claimsSet);
 
         signedJWT.sign(signer);
 
@@ -103,7 +134,4 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     }
 
-    private byte[] getHash() {
-        return cardServerProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8);
-    }
 }

@@ -17,11 +17,11 @@ import org.springframework.util.StringUtils;
 @Accessors(chain = true)
 public final class CardServerProperties {
 
-    private String jwtSecret;
+    private String jwtEd25519Secret;
 
     @PostConstruct
     public void validate() {
-        if (!StringUtils.hasText(jwtSecret)) {
+        if (!StringUtils.hasText(jwtEd25519Secret)) {
             throw new RuntimeException("Please set a jwtSecret");
         }
     }
