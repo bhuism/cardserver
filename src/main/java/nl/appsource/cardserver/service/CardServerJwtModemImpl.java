@@ -14,7 +14,6 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -44,9 +43,8 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     private JWSSigner signer;
 
-    @SneakyThrows
     @PostConstruct
-    public void init() {
+    public void init() throws JOSEException {
         verifier = new MACVerifier(getHash());
         signer = new MACSigner(getHash());
     }
@@ -81,7 +79,8 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
             .build();
     }
 
-    @SneakyThrows @Override public SignedJWT encode(final String userId) {
+    @Override
+    public SignedJWT encode(final String userId) throws JOSEException {
 
         final long now = new Date().getTime();
 
@@ -104,7 +103,6 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     }
 
-    @SneakyThrows
     private byte[] getHash() {
         return cardServerProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8);
     }

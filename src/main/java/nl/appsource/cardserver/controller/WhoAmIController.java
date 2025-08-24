@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.controller;
 
+import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
@@ -76,7 +77,17 @@ public class WhoAmIController implements WhoamiApi {
                     }))
                     .flatMap(userService::save)
                     .mapNotNull(userToOpenApiConverter::convert)
-                    .map((user) -> new WhoAmIResponse().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()))
+                    .flatMap(
+                        (user) -> {
+                            try {
+                                return Mono.just(new WhoAmIResponse()
+                                    .user(user)
+                                    .jwt(cardServerJwtModem.encode(user.getId()).serialize()));
+                            } catch (JOSEException e) {
+                                return Mono.error(e);
+                            }
+                        }
+                    )
                     .map(ResponseEntity::ok);
 
             });

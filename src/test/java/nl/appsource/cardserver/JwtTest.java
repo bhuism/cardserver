@@ -1,6 +1,7 @@
 package nl.appsource.cardserver;
 
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
@@ -15,7 +16,7 @@ public class JwtTest {
 
 
     @Test
-    public void testJwtEncodeDecode() {
+    public void testJwtEncodeDecode() throws JOSEException {
 
         final CardServerJwtModemImpl cardServerJwtModem = new CardServerJwtModemImpl(new CardServerProperties().setJwtSecret("test123test123test123test123test123test123test123test123"));
 
