@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -10,10 +9,7 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.Ed25519Signer;
 import com.nimbusds.jose.crypto.Ed25519Verifier;
-import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.OctetKeyPair;
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -57,13 +53,9 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     @PostConstruct
     public void init() throws JOSEException, JsonProcessingException, ParseException {
-        final OctetKeyPair extra = new OctetKeyPairGenerator(Curve.Ed25519).keyUse(KeyUse.SIGNATURE).keyID("citest-8-key-A-745992").algorithm(JWSAlgorithm.EdDSA).generate();
-        log.info("private key: {}", new ObjectMapper().writeValueAsString(extra.toJSONObject()));
-
         okp = OctetKeyPair.parse(new String(Base64.getDecoder().decode(cardServerProperties.getJwtEd25519Secret()), StandardCharsets.UTF_8));
         verifier = new Ed25519Verifier(okp.toPublicJWK());
         signer = new Ed25519Signer(okp);
-
     }
 
     @Override
