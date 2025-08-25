@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.info.InfoProperties;
 import org.springframework.http.CacheControl;
@@ -16,19 +15,20 @@ import java.util.stream.StreamSupport;
 
 @CrossOrigin
 @Controller
-@RequiredArgsConstructor
 public class VersionController {
 
-    private final GitProperties gitProperties;
+    private final Map<String, String> gitPropertiesMap;
+
+    public VersionController(final GitProperties gitProperties) {
+        gitPropertiesMap = StreamSupport.stream(gitProperties.spliterator(), false)
+            .collect(Collectors.toMap(InfoProperties.Entry::getKey, InfoProperties.Entry::getValue));
+    }
 
     @GetMapping(value = "/version", produces = "application/json")
     public ResponseEntity<Map<String, String>> getVersion() {
-        final Map<String, String> properties = StreamSupport.stream(gitProperties.spliterator(), false)
-            .collect(Collectors.toMap(InfoProperties.Entry::getKey, InfoProperties.Entry::getValue));
-
         return ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic())
-            .body(properties);
+            .body(gitPropertiesMap);
     }
 
 }
