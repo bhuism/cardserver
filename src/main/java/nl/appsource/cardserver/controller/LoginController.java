@@ -25,7 +25,7 @@ import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-public class WhoAmIController implements LoginApi {
+public class LoginController implements LoginApi {
 
     private final UserService userService;
 

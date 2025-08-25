@@ -39,7 +39,7 @@ public class WebfluxSecurityConfig {
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
-            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/whoami", HttpMethod.OPTIONS)))
+            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.OPTIONS)))
             .authorizeExchange((exchanges) -> exchanges.anyExchange()
                 .authenticated()).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
                 customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://accounts.google.com").build());
