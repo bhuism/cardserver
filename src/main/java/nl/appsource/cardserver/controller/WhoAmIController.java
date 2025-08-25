@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
-import org.openapitools.api.WhoamiApi;
-import org.openapitools.model.WhoAmIResponse;
+import org.openapitools.api.LoginApi;
+import org.openapitools.model.LoginResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -25,7 +25,7 @@ import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-public class WhoAmIController implements WhoamiApi {
+public class WhoAmIController implements LoginApi {
 
     private final UserService userService;
 
@@ -33,7 +33,7 @@ public class WhoAmIController implements WhoamiApi {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    public Mono<ResponseEntity<WhoAmIResponse>> whoami(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<LoginResponse>> login(final ServerWebExchange exchange) {
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -80,7 +80,7 @@ public class WhoAmIController implements WhoamiApi {
                     .flatMap(
                         (user) -> {
                             try {
-                                return Mono.just(new WhoAmIResponse()
+                                return Mono.just(new LoginResponse()
                                     .user(user)
                                     .jwt(cardServerJwtModem.encode(user.getId()).serialize()));
                             } catch (JOSEException e) {

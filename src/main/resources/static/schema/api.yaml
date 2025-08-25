@@ -8,14 +8,14 @@ servers:
     description: Klavers Jassen
 
 paths:
-  /whoami:
+  /login:
     post:
       tags:
-        - whoami
-      operationId: whoami
+        - login
+      operationId: login
       responses:
         "200":
-          $ref: "#/components/responses/WhoAmIResponse"
+          $ref: "#/components/responses/LoginResponse"
   /games/{gameId}/say:
     post:
       operationId: say
@@ -256,7 +256,7 @@ components:
         - userId
         - message
         - variant
-    whoAmIResponse:
+    loginResponse:
       type: object
       properties:
         jwt:
@@ -467,12 +467,12 @@ components:
             type: array
             items:
               $ref: "./user.yaml#/components/schemas/User"
-    WhoAmIResponse:
+    LoginResponse:
       description: login response
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/whoAmIResponse'
+            $ref: '#/components/schemas/loginResponse'
     CreateInvitesResponse:
       description: response for create invites
       content:
