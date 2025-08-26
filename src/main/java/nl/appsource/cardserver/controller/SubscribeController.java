@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 
+import java.io.Serializable;
+
 
 @Slf4j
 @RestController
@@ -34,7 +36,7 @@ public class SubscribeController implements V1Api {
     }
 
     @GetMapping(path = "/gamestream/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<Object>> gameStream(final @PathVariable("gameId") String gameId, final ServerWebExchange exchange) {
+    public Flux<ServerSentEvent<? extends Serializable>> gameStream(final @PathVariable("gameId") String gameId, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)

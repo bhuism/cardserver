@@ -21,6 +21,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 import static reactor.core.publisher.Mono.just;
 
@@ -74,7 +76,7 @@ public class GameController implements GamesApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .doOnNext(userId -> gameService.finishWithAi(gameId, 0))
+            .doOnNext(userId -> gameService.finishWithAi(gameId, Duration.ZERO))
             .then(just(ResponseEntity.ok().build()));
     }
 

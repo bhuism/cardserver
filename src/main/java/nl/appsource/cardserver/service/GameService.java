@@ -8,6 +8,8 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.Serializable;
+import java.time.Duration;
 import java.util.Set;
 
 public interface GameService {
@@ -22,13 +24,13 @@ public interface GameService {
 
     Mono<PlayCardResponse> playCard(String userId, String gameId, Card card);
 
-    void finishWithAi(String gameId, int skippers);
+    void finishWithAi(String gameId, Duration initialDelay);
 
     void sendGameChangedEvent(Game game);
 
     void sendUserMessage(UserMessage userMessage);
 
-    Flux<ServerSentEvent<Object>> gameStream(String userId, String gameId, String remoteAddress);
+    Flux<ServerSentEvent<? extends Serializable>> gameStream(String userId, String gameId, String remoteAddress);
 
     Mono<Void> say(String userId, String gameId, Boolean say);
 
