@@ -11,6 +11,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +31,7 @@ import java.util.stream.StreamSupport;
 @Service
 @Slf4j
 @AllArgsConstructor
+@Profile("!citest")
 public class Migrator {
 
     public static final String TIME = "__time__";
