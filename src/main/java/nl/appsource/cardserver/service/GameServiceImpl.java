@@ -164,10 +164,10 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameEngine -> {
                 try {
                     if (gameEngine.isAiSay()) {
-                        log.info("AiSay()");
+//                        log.info("Auto AiSay()");
                         gameEngine.sayAi().forEach(this::sendUserMessage);
                     } else if (gameEngine.isAiTurn()) {
-                        log.info("AiPlayCard()");
+//                        log.info("Auto AiPlayCard()");
                         gameEngine.playAiCard().forEach(this::sendUserMessage);
                     }
 
