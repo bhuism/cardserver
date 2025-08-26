@@ -66,7 +66,7 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             }
         }
 
-        target.setLastTrickOpen(Optional.ofNullable(source.getLastTrickOpen()));
+        target.setLastTrickOpen(source.getLastTrickOpen());
 
         return target;
 

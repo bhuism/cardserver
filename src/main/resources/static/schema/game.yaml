@@ -71,6 +71,8 @@ components:
         - ended
         - players
         - turns
+        - trump
+        - lastTrickOpen
     Suit:
       type: string
       enum:
