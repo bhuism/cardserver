@@ -63,6 +63,7 @@ public class Game {
     private List<Card> turns;
 
     @Field
+    @NotNull
     private Boolean lastTrickOpen;
 
 }

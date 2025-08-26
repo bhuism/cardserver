@@ -11,8 +11,8 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +30,6 @@ import java.util.stream.StreamSupport;
 @Service
 @Slf4j
 @AllArgsConstructor
-@Profile("never")
 public class Migrator {
 
     public static final String TIME = "__time__";
@@ -45,8 +44,23 @@ public class Migrator {
     @PostConstruct
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() {
+        migrate();
         //loadUser("users.json");
         //loadGames("games.json");
+    }
+
+    private void migrate() {
+        gameRepository.findAll()
+            .flatMap(game -> {
+                if (game.getLastTrickOpen() == null) {
+                    log.info("Migrating game {}", game.getId());
+                    game.setLastTrickOpen(false);
+                    return gameRepository.save(game);
+                } else {
+                    return Mono.just(game);
+                }
+            })
+            .subscribe();
     }
 
     private void loadGames(final String fileName) throws IOException {
