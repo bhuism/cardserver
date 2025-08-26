@@ -48,8 +48,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public boolean hasFullTrick() {
-        return this.game.getTurns().size() >= 4 && this.game.getTurns().size() % 4 == 0;
+    public boolean isFullTrick() {
+        return game.getTurns().size() % 4 == 0;
     }
 
     private List<Card> getTrickCards(final int trickNr) {
@@ -214,7 +214,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
-        game.setLastTrickOpen(game.getTurns().size() % 4 == 0);
+        game.setLastTrickOpen(isFullTrick());
 
         return userMessages;
 
@@ -330,12 +330,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new GameEngineException("Not an Ai player");
         }
 
-        final boolean isFirstPlayerInTrick = game.getTurns().size() % 4 == 0;
-
         final List<Card> hand = getHand(userId);
 
         // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
-        if (isFirstPlayerInTrick) {
+        if (isFullTrick()) {
             // Try to play a low card from a non-trump suit
             for (Card card : hand) {
                 if (card.getSuit() != game.getTrump() && card.getRank() != Rank.SEVEN && card.getRank() != Rank.EIGHT) {
@@ -547,5 +545,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
     boolean iedereenHeeftGezegd() {
         return game.getSay().size() == 4;
     }
+
 
 }

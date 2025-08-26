@@ -25,7 +25,7 @@ public interface GameEngine {
 
     int calcTricksPlayed();
 
-    boolean hasFullTrick();
+    boolean isFullTrick();
 
     boolean isAiTurn();
 

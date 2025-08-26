@@ -74,21 +74,7 @@ public class GameController implements GamesApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .map(userId -> {
-                log.info("{} playAiCard() {}", exchange.getRequest().getRemoteAddress(), userId);
-                return userId;
-            })
-            .flatMap(userId -> gameService.kickAi(userId, gameId).onErrorResume(GameEngineException.class, throwable -> {
-                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                        return Mono.justOrEmpty(true).then();
-                    })
-                    .onErrorResume(Throwable.class, throwable -> {
-                        log.error("", throwable);
-                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                        return Mono.justOrEmpty(true).then();
-                    })
-
-            )
+            .doOnNext(userId -> gameService.finishWithAi(gameId, 0))
             .then(just(ResponseEntity.ok().build()));
     }
 

@@ -153,13 +153,14 @@ public class GameServiceImpl implements GameService {
         }).then(Mono.empty());
     }
 
-    private void finishWithAi(final String gameId, final int skippers) {
+    @Override
+    public void finishWithAi(final String gameId, final int skippers) {
 
         Flux.interval(Duration.ofSeconds(2))
             .skip(skippers)
             .flatMap((g) -> gameRepository.findById(gameId))
             .map(GameEngineImpl::new)
-            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted())
+            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && !gameEngine.getGame().getLastTrickOpen())
             .flatMap(gameEngine -> {
                 try {
                     if (gameEngine.isAiSay()) {
@@ -182,17 +183,10 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::save)
             .doOnNext(this::sendGameChangedEvent)
             .map(GameEngineImpl::new)
-            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted())
+            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && !gameEngine.getGame().getLastTrickOpen())
             .subscribe();
 
     }
-
-    @Override
-    public Mono<Void> kickAi(final String userId, final String gameId) {
-        finishWithAi(gameId, 0);
-        return Mono.empty();
-    }
-
 
     public static Map<Card, Integer> randomCards() {
         final Map<Card, Integer> cards = new HashMap<>();
@@ -284,4 +278,5 @@ public class GameServiceImpl implements GameService {
             return gameRepository.save(g).doOnNext(this::sendGameChangedEvent);
         }).then(Mono.empty());
     }
+
 }
