@@ -160,7 +160,7 @@ public class GameServiceImpl implements GameService {
             .skip(skippers)
             .flatMap((g) -> gameRepository.findById(gameId))
             .map(GameEngineImpl::new)
-            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && !gameEngine.getGame().getLastTrickOpen())
+            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
             .flatMap(gameEngine -> {
                 try {
                     if (gameEngine.isAiSay()) {
@@ -183,7 +183,7 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::save)
             .doOnNext(this::sendGameChangedEvent)
             .map(GameEngineImpl::new)
-            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && !gameEngine.getGame().getLastTrickOpen())
+            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
             .subscribe();
 
     }
