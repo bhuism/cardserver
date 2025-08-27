@@ -279,7 +279,7 @@ public class GameServiceImpl implements GameService {
                                 default -> true;
                             };
                         }));
-        }).share();
+        });
     }
 
 
