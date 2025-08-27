@@ -222,7 +222,7 @@ public class GameServiceImpl implements GameService {
         internalSend(createPing());
     }
 
-    private ServerSentEvent<Serializable> createPing() {
+    private ServerSentEvent<? extends Serializable> createPing() {
         return createServerSentEvent("ping");
     }
 
@@ -257,11 +257,12 @@ public class GameServiceImpl implements GameService {
     @Override
     public Flux<ServerSentEvent<? extends Serializable>> gameStream(final String userId, final String gameId, final String remoteAddress) {
         return userRepository.findById(userId).flatMapMany(user -> {
-            return Flux.just(createPing(), createPing(), createPing(), createUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
+            return Flux.just(createPing(), createPing(), createPing())
                 .concatWith(
                     gameSink.asFlux()
                         .doOnSubscribe((_a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
-                        .doOnCancel(() -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
+                        .doOnSubscribe((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
+                        .doFinally((_s) -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
                         .filter(sse -> {
                             assert sse.event() != null;
                             return switch (sse.event()) {
