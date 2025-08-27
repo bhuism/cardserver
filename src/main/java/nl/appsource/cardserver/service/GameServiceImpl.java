@@ -263,6 +263,7 @@ public class GameServiceImpl implements GameService {
                         .doOnSubscribe((_a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
                         .doOnSubscribe((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
                         .doFinally((_s) -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
+                        .doFinally((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " heeft het spel verlaten")))
                         .filter(sse -> {
                             assert sse.event() != null;
                             return switch (sse.event()) {
