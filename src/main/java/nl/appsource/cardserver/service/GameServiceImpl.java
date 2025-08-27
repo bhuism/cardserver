@@ -260,6 +260,8 @@ public class GameServiceImpl implements GameService {
             return Flux.just(createPing(), createPing(), createPing())
                 .concatWith(
                     gameSink.asFlux()
+                        .publish()
+                        .autoConnect()
                         .doOnSubscribe((_a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
                         .doOnSubscribe((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
                         .doFinally((_s) -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
@@ -286,11 +288,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Void> openLastTrick(final String userId, final String gameId) {
         return gameRepository.findById(gameId).flatMap(g -> {
-            if (g.getLastTrickOpen() == null || !g.getLastTrickOpen()) {
-                g.setLastTrickOpen(true);
-            } else {
-                g.setLastTrickOpen(false);
-            }
+            g.setLastTrickOpen(g.getLastTrickOpen() == null || !g.getLastTrickOpen());
             return gameRepository.save(g).doOnNext(this::sendGameChangedEvent);
         }).then(Mono.empty());
     }

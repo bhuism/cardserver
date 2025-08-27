@@ -144,7 +144,6 @@ public final class MySseEmitter {
                     }
                 }
             })
-            .share()
             .doOnCancel(this::cancel);
     }
 
