@@ -210,7 +210,7 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-    private final Sinks.Many<ServerSentEvent<? extends Serializable>> gameSink = Sinks.many().multicast().onBackpressureBuffer(1, false);
+    private final Sinks.Many<ServerSentEvent<? extends Serializable>> gameSink = Sinks.many().multicast().onBackpressureBuffer();
 
     @Scheduled(fixedDelay = 1000 * 5, initialDelay = 1000 * 5)
     public void pingAll() {
@@ -279,7 +279,7 @@ public class GameServiceImpl implements GameService {
                                 default -> true;
                             };
                         }));
-        });
+        }).share();
     }
 
 
