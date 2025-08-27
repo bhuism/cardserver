@@ -260,7 +260,6 @@ public class GameServiceImpl implements GameService {
             return Flux.just(createPing(), createPing(), createPing())
                 .concatWith(
                     gameSink.asFlux()
-                        .publish()
                         .autoConnect()
                         .doOnSubscribe((_a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
                         .doOnSubscribe((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
