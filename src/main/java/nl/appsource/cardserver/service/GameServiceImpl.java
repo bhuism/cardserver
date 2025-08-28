@@ -259,7 +259,7 @@ public class GameServiceImpl implements GameService {
         return userRepository.findById(userId).flatMapMany(user -> {
             return Flux.just(createPing(), createPing(), createPing())
                 .concatWith(
-                    gameSink.asFlux()
+                    gameSink.asFlux().publish().autoConnect()
                         .doOnSubscribe((_a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
                         .doOnSubscribe((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
                         .doFinally((_s) -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
