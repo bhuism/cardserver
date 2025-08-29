@@ -116,16 +116,16 @@ paths:
   /users/ping:
     post:
       operationId: ping
-      requestBody:
-        $ref: "#/components/requestBodies/ping"
+#      requestBody:
+#        $ref: "#/components/requestBodies/ping"
       responses:
         "200":
           description: ok
   /users/pong:
     post:
       operationId: pong
-      requestBody:
-        $ref: "#/components/requestBodies/pong"
+#      requestBody:
+#        $ref: "#/components/requestBodies/pong"
       responses:
         "200":
           description: ok
@@ -207,18 +207,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
-    ping:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ping"
-    pong:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/pong"
+#    ping:
+#      required: true
+#      content:
+#        application/json:
+#          schema:
+#            $ref: "#/components/schemas/ping"
+#    pong:
+#      required: true
+#      content:
+#        application/json:
+#          schema:
+#            $ref: "#/components/schemas/pong"
     updatePreferences:
       required: true
       content:
@@ -292,20 +292,6 @@ components:
           type: array
           items:
             type: string
-    ping:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-    pong:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-      required:
-        - uuid
     playerSay:
       type: object
       properties:
@@ -355,22 +341,6 @@ components:
             type: string
       required:
         - players
-    PingEvent:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-      required:
-        - uuid
-    PongEvent:
-      type: object
-      properties:
-        uuid:
-          type: string
-          format: uuid
-      required:
-        - uuid
     OnlineListEvent:
       type: object
       properties:

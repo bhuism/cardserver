@@ -9,8 +9,6 @@ import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInviteResponse;
 import org.openapitools.model.InvitesResponse;
-import org.openapitools.model.Ping;
-import org.openapitools.model.Pong;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
@@ -80,32 +78,26 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> ping(final Mono<Ping> ping, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> ping(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .flatMap((userId) ->
-                ping.map(data -> {
-                    if (data.getUuid().isPresent()) {
-                        sseEmitterRepository.ping(data.getUuid().get());
-                    } else {
-                        log.warn("{} ping() userId={} received ping wihout a uuid", exchange.getRequest().getRemoteAddress(), userId);
-                    }
-                    return ResponseEntity.ok().build();
-                }));
+            .doOnNext(sseEmitterRepository::ping)
+            .then(just(ResponseEntity.ok().build()));
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> pong(final Mono<Pong> pong, final ServerWebExchange exchange) {
-        return pong.map(data -> {
-            sseEmitterRepository.pong(data.getUuid());
-            return ResponseEntity.ok().build();
-        });
+    public Mono<ResponseEntity<Void>> pong(final ServerWebExchange exchange) {
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .doOnNext(sseEmitterRepository::pong)
+            .then(just(ResponseEntity.ok().build()));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<User>>> getUsers(final List<String> userIds, final ServerWebExchange exchange) {
-//        log.info("{} getUsers()", exchange.getRequest().getRemoteAddress());
+        log.info("{} getUsers()", exchange.getRequest().getRemoteAddress());
         return just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
     }
 

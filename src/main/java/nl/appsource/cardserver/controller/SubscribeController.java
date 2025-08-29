@@ -10,12 +10,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
-
-import java.io.Serializable;
 
 
 @Slf4j
@@ -33,14 +30,6 @@ public class SubscribeController implements V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMapMany(userId -> userService.subscribe(userId, "" + exchange.getRequest().getRemoteAddress()));
-    }
-
-    @GetMapping(path = "/gamestream/{gameId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<? extends Serializable>> gameStream(final @PathVariable("gameId") String gameId, final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMapMany(userId -> gameService.gameStream(userId, gameId, "" + exchange.getRequest().getRemoteAddress()));
     }
 
 }

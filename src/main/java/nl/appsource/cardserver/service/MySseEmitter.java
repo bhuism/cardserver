@@ -1,30 +1,23 @@
 package nl.appsource.cardserver.service;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Game;
 import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
-import org.openapitools.model.PingEvent;
-import org.openapitools.model.PongEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Slf4j
+@RequiredArgsConstructor
 public final class MySseEmitter {
-
-    @Getter
-    private final String userId;
-
-    @Getter
-    private final UUID uuid = UUID.randomUUID();
 
     @Getter
     private Instant pingReceived;
@@ -39,10 +32,6 @@ public final class MySseEmitter {
     private Instant pongSent;
 
     private final Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
-
-    public MySseEmitter(final String userIdArg) {
-        this.userId = userIdArg;
-    }
 
     public void message(final UserMessage userMessage) {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
@@ -62,13 +51,13 @@ public final class MySseEmitter {
     }
 
     public UserServerSentEvent createPingEvent() {
-        return createServerSentEvent("ping", new PingEvent().uuid(uuid));
+        return createServerSentEvent("ping");
     }
 
     private void sendPong() {
 //        log.info(", sending pong " + uuid);
         this.pongSent = Instant.now();
-        internalSend(createServerSentEvent("pong", new PongEvent().uuid(uuid)));
+        internalSend(createServerSentEvent("pong"));
     }
 
     public void receivePing() {
@@ -101,12 +90,7 @@ public final class MySseEmitter {
     }
 
     public void sendOnlineList(final Flux<String> onlineList) {
-        if (log.isTraceEnabled()) {
-            log.trace("Sending uuid:{}, userId:{} online friends {}", getUuid(), getUserId(), onlineList);
-        }
-        onlineList.collectList().subscribe(list ->
-            internalSend(createServerSentEvent("online", new OnlineListEvent().onlineList(list)))
-        );
+        onlineList.collectList().subscribe(list -> internalSend(createServerSentEvent("online", new OnlineListEvent().onlineList(list))));
     }
 
     public void sendUpdateFriends() {
@@ -125,21 +109,13 @@ public final class MySseEmitter {
         internalSend(createServerSentEvent("newFriend", new NewFriendEvent().newFriendId(newFriendId)));
     }
 
-    public void tryEmitComplete() {
-        unicastSink.tryEmitComplete();
+    public Flux<ServerSentEvent<Object>> subscribe() {
+        return unicastSink.asFlux().map(UserServerSentEvent::serverSentEvent);
     }
 
-    public Flux<ServerSentEvent<Object>> subscribe() {
-        return unicastSink.asFlux()
-            .map(UserServerSentEvent::serverSentEvent)
-            .doOnNext(objectServerSentEvent -> {
-                if ("message".equals(objectServerSentEvent.event())) {
-                    final UserMessage userMessage = (UserMessage) objectServerSentEvent.data();
-                    if (userMessage == null || !userMessage.getUserId().equals(userId)) {
-                        log.warn("Message for wrong user");
-                    }
-                }
-            });
+    public void sendUpdateGameState(final Game game) {
+        log.info("Sending state update for game {}", game.getId());
+        internalSend(createServerSentEvent("stateUpdate", game));
     }
 
 }

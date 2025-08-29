@@ -14,11 +14,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -27,23 +29,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final UserRepository userRepository;
 
-    private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
-    private void doSelectedUserIds(final Flux<String> userIds, final Consumer<MySseEmitter> consumer) {
-        userIds.flatMap(userId -> Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId))).subscribe(consumer);
+    private void doSelectedUserIds(final Collection<String> userIds, final Consumer<MySseEmitter> consumer) {
+        emitters.entrySet().stream().filter(stringMySseEmitterEntry -> userIds.contains(stringMySseEmitterEntry.getKey())).map(Map.Entry::getValue).forEach(consumer);
     }
 
     private void doUserId(final String userId, final Consumer<MySseEmitter> consumer) {
-        Flux.fromIterable(emitters.values()).filter(emitter -> emitter.getUserId().equals(userId)).subscribe(consumer);
+        Optional.ofNullable(emitters.get(userId)).ifPresent(consumer);
     }
-
-    private void doId(final UUID uuid, final Consumer<MySseEmitter> consumer) {
-        Optional.ofNullable(emitters.get(uuid))
-            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for uuid {}", uuid));
-    }
-
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
         Flux.fromIterable(emitters.values()).subscribe(consumer);
@@ -67,11 +63,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void sendOnlineListTo(final String userId) {
-        doUserId(userId, this::_sendOnlineList);
-    }
-
-    private void _sendOnlineList(final MySseEmitter mySseEmitter) {
-        mySseEmitter.sendOnlineList(getFriends(mySseEmitter.getUserId()).filter(this::isUserOnline));
+        doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
     }
 
     @Override
@@ -83,33 +75,39 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void ping(final UUID uuid) {
-        doId(uuid, MySseEmitter::receivePing);
+    public void ping(final String userId) {
+        doUserId(userId, MySseEmitter::receivePing);
     }
 
     @Override
-    public void pong(final UUID uuid) {
-        doId(uuid, MySseEmitter::receivePong);
+    public void pong(final String userId) {
+        doUserId(userId, MySseEmitter::receivePong);
     }
 
     @Override
     public void friendsChanged(final Collection<String> userIds) {
-        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateFriends);
+        doSelectedUserIds(userIds, MySseEmitter::sendUpdateFriends);
     }
 
     @Override
     public void gamesChanged(final Collection<String> userIds) {
-        doSelectedUserIds(Flux.fromIterable(userIds), MySseEmitter::sendUpdateGames);
+        doSelectedUserIds(userIds, MySseEmitter::sendUpdateGames);
+    }
+
+    @Override
+    public void updateGameState(final Game game) {
+        final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
+        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(convertedGame));
     }
 
     @Override
     public void newGame(final Game game) {
-        doSelectedUserIds(Flux.fromIterable(game.getPlayers()).filter(player -> !player.equals(game.getCreator())), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
+        doSelectedUserIds(game.getPlayers().stream().filter(player -> !player.equals(game.getCreator())).collect(Collectors.toSet()), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
     }
 
     @Override
     public boolean isUserOnline(final String userId) {
-        return emitters.values().stream().anyMatch(emitter -> emitter.getUserId().equals(userId));
+        return emitters.containsKey(userId);
     }
 
     @Override
@@ -117,12 +115,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
     }
 
+
+    @Override
+    public void sendUserMessage(List<String> receivers, UserMessage userMessage) {
+        doSelectedUserIds(receivers, mySseEmitter -> mySseEmitter.message(userMessage));
+    }
+
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress) {
 
-        final MySseEmitter mySseEmitter = new MySseEmitter(userId);
+        final MySseEmitter mySseEmitter = new MySseEmitter();
 
-        emitters.put(mySseEmitter.getUuid(), mySseEmitter);
+        emitters.put(userId, mySseEmitter);
 
         return Flux.just(mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent())
             .concatWith(mySseEmitter.subscribe())
@@ -132,8 +136,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sendOnlineListToFriendsOf(userId);
             })
             .doFinally((_s) -> {
-                log.info("{} unSubscribe() userId={}, sseEmitter={} count={}", remoteAddress, userId, mySseEmitter.getUuid(), emitters.size());
-                emitters.remove(mySseEmitter.getUuid(), mySseEmitter);
+                log.info("{} unSubscribe() userId={}, count={}", remoteAddress, userId, emitters.size());
+                emitters.remove(userId);
 //                mySseEmitter.cancel();
 //                janitor();
                 sendOnlineListToFriendsOf(userId);

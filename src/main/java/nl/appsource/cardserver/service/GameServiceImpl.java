@@ -9,19 +9,13 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
-import org.openapitools.model.MessageEvent;
 import org.openapitools.model.PlayCardResponse;
-import org.openapitools.model.UserMessage;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
-import java.io.Serializable;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -131,9 +125,9 @@ public class GameServiceImpl implements GameService {
             final int cardOwnerIndex = g.getPlayerCard().get(card);
             final String playerId = g.getPlayers().get(cardOwnerIndex);
             try {
-                new GameEngineImpl(g).playCard(playerId, card).forEach(this::sendUserMessage);
+                new GameEngineImpl(g).playCard(playerId, card).forEach(message -> this.sseEmitterRepository.sendUserMessage(g.getPlayers(), message));
                 return gameRepository.save(g)
-                    .doOnNext(this::sendGameChangedEvent)
+                    .doOnNext(this::sendGameStateUpdate)
                     .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2)))
                     .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
             } catch (GameEngineException e) {
@@ -146,9 +140,9 @@ public class GameServiceImpl implements GameService {
     public Mono<Void> say(final String userId, final String gameId, final Boolean say) {
         return gameRepository.findById(gameId).flatMap(g -> {
             try {
-                new GameEngineImpl(g).say(userId, say).forEach(this::sendUserMessage);
+                new GameEngineImpl(g).say(userId, say).forEach(message -> this.sseEmitterRepository.sendUserMessage(g.getPlayers(), message));
                 return gameRepository.save(g)
-                    .doOnNext(this::sendGameChangedEvent)
+                    .doOnNext(this::sendGameStateUpdate)
                     .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2)));
             } catch (GameEngineException e) {
                 return Mono.error(e);
@@ -167,10 +161,10 @@ public class GameServiceImpl implements GameService {
                 try {
                     if (gameEngine.isAiSay()) {
 //                        log.info("Auto AiSay()");
-                        gameEngine.sayAi().forEach(this::sendUserMessage);
+                        gameEngine.sayAi().forEach(message -> this.sseEmitterRepository.sendUserMessage(gameEngine.getGame().getPlayers(), message));
                     } else if (gameEngine.isAiTurn()) {
 //                        log.info("Auto AiPlayCard()");
-                        gameEngine.playAiCard().forEach(this::sendUserMessage);
+                        gameEngine.playAiCard().forEach(message -> this.sseEmitterRepository.sendUserMessage(gameEngine.getGame().getPlayers(), message));
                     }
 
                     return Mono.just(gameEngine);
@@ -183,7 +177,7 @@ public class GameServiceImpl implements GameService {
             })
             .map(GameEngineImpl::getGame)
             .flatMap(gameRepository::save)
-            .doOnNext(this::sendGameChangedEvent)
+            .map(this::sendGameStateUpdate)
             .map(GameEngineImpl::new)
             .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
             .subscribe();
@@ -210,85 +204,21 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-    private final Sinks.Many<ServerSentEvent<? extends Serializable>> gameSink = Sinks.many().multicast().onBackpressureBuffer();
-
-    @Scheduled(fixedDelay = 1000 * 5, initialDelay = 1000 * 5)
-    public void pingAll() {
-        this.ping();
-    }
-
-
-    private void ping() {
-        internalSend(createPing());
-    }
-
-    private ServerSentEvent<? extends Serializable> createPing() {
-        return createServerSentEvent("ping");
-    }
-
-    @Override
-    public void sendGameChangedEvent(final Game game) {
-        internalSend(createServerSentEvent("stateUpdate", gameToOpenApiConverter.convert(game)));
-    }
-
-    @Override
-    public void sendUserMessage(final UserMessage userMessage) {
-        internalSend(createUserMessage(userMessage));
-    }
-
-    private ServerSentEvent<MessageEvent> createUserMessage(final UserMessage userMessage) {
-        return createServerSentEvent("messageEvent", new MessageEvent().message(userMessage));
-    }
-
-    private void internalSend(final ServerSentEvent<? extends Serializable> serverSentEvent) {
-        gameSink.tryEmitNext(serverSentEvent);
-    }
-
-    private <T> ServerSentEvent<T> createServerSentEvent(final String event) {
-        return createServerSentEvent(event, null);
-    }
-
-    private <T> ServerSentEvent<T> createServerSentEvent(final String event, final T data) {
-        final Instant now = Instant.now();
-        final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
-        return ServerSentEvent.<T>builder().event(event).id(id).data(data == null ? (T) "{}" : data).build();
-    }
-
-    @Override
-    public Flux<ServerSentEvent<? extends Serializable>> gameStream(final String userId, final String gameId, final String remoteAddress) {
-        return userRepository.findById(userId).flatMapMany(user -> {
-            return Flux.just(createPing(), createPing(), createPing())
-                .concatWith(
-                    gameSink.asFlux()
-                        .doOnSubscribe((_a) -> log.info("{} subscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
-                        .doOnSubscribe((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " speelt mee")))
-                        .doFinally((_s) -> log.info("{} unSubscribe() userId={} gameId={} count={}", remoteAddress, userId, gameId, gameSink.currentSubscriberCount()))
-                        .doFinally((_a) -> sendUserMessage(new UserMessage().message(user.getDisplayName() + " heeft het spel verlaten")))
-                        .filter(sse -> {
-                            assert sse.event() != null;
-                            return switch (sse.event()) {
-                                case "stateUpdate" -> sse.data() != null && gameId.equals(((org.openapitools.model.Game) sse.data()).getId());
-                                case "messageEvent" -> {
-                                    final MessageEvent messageEvent = (MessageEvent) sse.data();
-                                    if (messageEvent == null) {
-                                        throw new IllegalArgumentException();
-                                    }
-                                    final UserMessage message = messageEvent.getMessage();
-                                    yield message.getUserId() == null || userId.equals(message.getUserId());
-                                }
-                                default -> true;
-                            };
-                        })).publish().autoConnect();
-        });
-    }
-
 
     @Override
     public Mono<Void> openLastTrick(final String userId, final String gameId) {
-        return gameRepository.findById(gameId).flatMap(g -> {
-            g.setLastTrickOpen(g.getLastTrickOpen() == null || !g.getLastTrickOpen());
-            return gameRepository.save(g).doOnNext(this::sendGameChangedEvent);
-        }).then(Mono.empty());
+        return gameRepository.findById(gameId)
+            .flatMap(g -> {
+                g.setLastTrickOpen(g.getLastTrickOpen() == null || !g.getLastTrickOpen());
+                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate);
+            })
+
+            .then(Mono.empty());
+    }
+
+    private Game sendGameStateUpdate(final Game game) {
+        sseEmitterRepository.updateGameState(game);
+        return game;
     }
 
 }

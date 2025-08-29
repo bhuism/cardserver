@@ -26,12 +26,6 @@ public interface GameService {
 
     void finishWithAi(String gameId, Duration initialDelay);
 
-    void sendGameChangedEvent(Game game);
-
-    void sendUserMessage(UserMessage userMessage);
-
-    Flux<ServerSentEvent<? extends Serializable>> gameStream(String userId, String gameId, String remoteAddress);
-
     Mono<Void> say(String userId, String gameId, Boolean say);
 
     Mono<Void> openLastTrick(String userId, String gameId);
