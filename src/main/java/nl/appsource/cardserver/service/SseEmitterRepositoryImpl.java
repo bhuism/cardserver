@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
@@ -15,14 +14,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Service
@@ -59,30 +54,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doAll(MySseEmitter::sendPing);
     }
 
-//    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 60)
-//    public void pingUpdateStatusAll() {
-//        doAll(this::pingUpdateStatus);
-//    }
-
-    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 5)
-    public void janitor() {
-        final Set<UUID> removers = new HashSet<>();
-        emitters.forEach((uuid, mySseEmitter) -> {
-            if (mySseEmitter.getCancelled() != null) {
-                try {
-                    mySseEmitter.tryEmitComplete();
-                } catch (final RuntimeException e) {
-                    log.error("", e);
-                } finally {
-                    removers.add(uuid);
-                }
-            }
-        });
-
-        removers.forEach(emitters::remove);
-
-    }
-
     private Flux<String> getFriends(final String userId) {
         return userRepository.findById(userId)
             .map(User::getInvites)
@@ -109,11 +80,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(User::getDisplayName)
             .switchIfEmpty(Mono.just(userId))
             .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().userId(userId).message(fromString + ": " + message))));
-    }
-
-    @PreDestroy
-    public void destroy() {
-        janitor();
     }
 
     @Override
@@ -167,19 +133,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .doFinally((_s) -> {
                 log.info("{} unSubscribe() userId={}, sseEmitter={} count={}", remoteAddress, userId, mySseEmitter.getUuid(), emitters.size());
-                mySseEmitter.cancel();
-                janitor();
-                try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-                    executor.submit(() -> {
-                        try {
-                            Thread.sleep(1000);
-                            sendOnlineListToFriendsOf(userId);
-                        } catch (final InterruptedException e) {
-                            log.error("", e);
-                        }
-                    });
-                    executor.shutdown();
-                }
+                emitters.remove(mySseEmitter.getUuid(), mySseEmitter);
+//                mySseEmitter.cancel();
+//                janitor();
+                sendOnlineListToFriendsOf(userId);
+//                try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+//                    executor.submit(() -> {
+//                        try {
+//                            Thread.sleep(1000);
+//                            sendOnlineListToFriendsOf(userId);
+//                        } catch (final InterruptedException e) {
+//                            log.error("", e);
+//                        }
+//                    });
+//                    executor.shutdown();
+//                }
             });
     }
 

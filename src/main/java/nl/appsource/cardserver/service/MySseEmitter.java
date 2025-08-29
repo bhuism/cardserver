@@ -38,9 +38,6 @@ public final class MySseEmitter {
     @Getter
     private Instant pongSent;
 
-    @Getter
-    private Instant cancelled;
-
     private final Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
 
     public MySseEmitter(final String userIdArg) {
@@ -55,7 +52,6 @@ public final class MySseEmitter {
         final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
         if (emitResult.isFailure()) {
             unicastSink.tryEmitComplete();
-            this.cancelled = Instant.now();
         }
     }
 
@@ -143,12 +139,8 @@ public final class MySseEmitter {
                         log.warn("Message for wrong user");
                     }
                 }
-            })
-            .doOnCancel(this::cancel);
+            });
     }
 
-    public void cancel() {
-        this.cancelled = Instant.now();
-    }
 }
 
