@@ -3,12 +3,9 @@ package nl.appsource.cardserver.service;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import org.openapitools.model.PlayCardResponse;
-import org.openapitools.model.UserMessage;
-import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.util.Set;
 

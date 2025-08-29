@@ -117,7 +117,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 
     @Override
-    public void sendUserMessage(List<String> receivers, UserMessage userMessage) {
+    public void sendUserMessage(final List<String> receivers, final UserMessage userMessage) {
         doSelectedUserIds(receivers, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
