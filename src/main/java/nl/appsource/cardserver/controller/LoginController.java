@@ -18,6 +18,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import static java.util.Collections.emptyList;
 import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
@@ -33,7 +34,7 @@ public class LoginController implements LoginApi {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    public Mono<ResponseEntity<LoginResponse>> login(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<LoginResponse>> login(final UUID appIdentifier, final ServerWebExchange exchange) {
 
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)

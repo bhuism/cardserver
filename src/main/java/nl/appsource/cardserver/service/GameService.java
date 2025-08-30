@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Set;
+import java.util.UUID;
 
 public interface GameService {
 
@@ -19,11 +20,11 @@ public interface GameService {
 
     Mono<Void> deleteGame(String gameId);
 
-    Mono<PlayCardResponse> playCard(String userId, String gameId, Card card);
+    Mono<PlayCardResponse> playCard(UUID appIdentifier, String userId, String gameId, Card card);
 
     void finishWithAi(String gameId, Duration initialDelay);
 
-    Mono<Void> say(String userId, String gameId, Boolean say);
+    Mono<Void> say(UUID appIdentifier, String userId, String gameId, Boolean say);
 
     Mono<Void> openLastTrick(String userId, String gameId);
 }

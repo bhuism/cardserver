@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import static reactor.core.publisher.Mono.just;
 
@@ -38,14 +39,14 @@ public class UserController implements UsersApi, V1Api {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    public Mono<ResponseEntity<User>> getUser(final String userId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userId, final ServerWebExchange exchange) {
 //        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress(), userId);
         return userService.findById(userId).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
     }
 
 
     @Override
-    public Mono<ResponseEntity<InvitesResponse>> getInvites(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<InvitesResponse>> getInvites(final UUID appIdentifier, final ServerWebExchange exchange) {
 //        log.info("{} getIncomingFriends()", exchange.getRequest().getRemoteAddress());
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -66,7 +67,7 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> sendMessage(final Mono<PostMessage> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> sendMessage(final UUID appIdentifier, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -78,31 +79,31 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> ping(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> ping(final UUID appIdentifier, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .doOnNext(sseEmitterRepository::ping)
+            .doOnNext((userId) -> sseEmitterRepository.ping(appIdentifier))
             .then(just(ResponseEntity.ok().build()));
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> pong(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> pong(final UUID appIdentifier, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .doOnNext(sseEmitterRepository::pong)
+            .doOnNext((userId) -> sseEmitterRepository.pong(appIdentifier))
             .then(just(ResponseEntity.ok().build()));
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<User>>> getUsers(final List<String> userIds, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<User>>> getUsers(final UUID appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
         log.info("{} getUsers()", exchange.getRequest().getRemoteAddress());
         return just(ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)));
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> removeInvite(final String friendId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> removeInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
         log.info("{} removeInvite({})", exchange.getRequest().getRemoteAddress(), friendId);
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -113,7 +114,7 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> acceptInvite(final String friendId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> acceptInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
         log.info("{} addInvite({})", exchange.getRequest().getRemoteAddress(), friendId);
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
@@ -123,7 +124,7 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final UUID appIdentifier, final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
@@ -135,7 +136,7 @@ public class UserController implements UsersApi, V1Api {
 
 
     @Override
-    public Mono<ResponseEntity<User>> updatePreferences(final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<User>> updatePreferences(final UUID appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
         log.info("{} updatePreferences()", exchange.getRequest().getRemoteAddress());
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)

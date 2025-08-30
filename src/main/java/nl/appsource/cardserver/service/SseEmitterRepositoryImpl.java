@@ -14,10 +14,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -39,6 +39,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private void doUserId(final String userId, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(userId)).ifPresent(consumer);
+    }
+
+    private void doId(final UUID uuid, final Consumer<MySseEmitter> consumer) {
+        emitters.values()
+            .stream()
+            .filter(sse -> sse.getUuid().equals(uuid))
+            .findAny()
+            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for uuid {}", uuid));
     }
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
@@ -75,13 +83,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void ping(final String userId) {
-        doUserId(userId, MySseEmitter::receivePing);
+    public void ping(final UUID appIdentifier) {
+        doId(appIdentifier, MySseEmitter::receivePing);
     }
 
     @Override
-    public void pong(final String userId) {
-        doUserId(userId, MySseEmitter::receivePong);
+    public void pong(final UUID appIdentifier) {
+        doId(appIdentifier, MySseEmitter::receivePong);
     }
 
     @Override
@@ -117,41 +125,28 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 
     @Override
-    public void sendUserMessage(final List<String> receivers, final UserMessage userMessage) {
-        doSelectedUserIds(receivers, mySseEmitter -> mySseEmitter.message(userMessage));
+    public void sendAppIdentifierMessage(final UUID appIdentifier, final UserMessage userMessage) {
+        doId(appIdentifier, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
     @Override
-    public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress) {
+    public Flux<ServerSentEvent<Object>> subscribe(final String appIdentifier, final String userId, final String remoteAddress) {
 
-        final MySseEmitter mySseEmitter = new MySseEmitter();
+        final MySseEmitter mySseEmitter = new MySseEmitter(UUID.fromString(appIdentifier));
 
         emitters.put(userId, mySseEmitter);
 
         return Flux.just(mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent())
             .concatWith(mySseEmitter.subscribe())
             .doOnSubscribe((s) -> {
-                log.info("{} subscribe() userId={} count={}", remoteAddress, userId, emitters.size());
+                log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             })
             .doFinally((_s) -> {
-                log.info("{} unSubscribe() userId={}, count={}", remoteAddress, userId, emitters.size());
+                log.info("{} unSubscribe() appIdentifier={}  userId={}, count={}", remoteAddress, appIdentifier, userId, emitters.size());
                 emitters.remove(userId);
-//                mySseEmitter.cancel();
-//                janitor();
                 sendOnlineListToFriendsOf(userId);
-//                try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-//                    executor.submit(() -> {
-//                        try {
-//                            Thread.sleep(1000);
-//                            sendOnlineListToFriendsOf(userId);
-//                        } catch (final InterruptedException e) {
-//                            log.error("", e);
-//                        }
-//                    });
-//                    executor.shutdown();
-//                }
             });
     }
 

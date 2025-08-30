@@ -28,7 +28,7 @@ public interface UserService {
 
     Mono<User> updateName(String userId, @NotNull String displayName);
 
-    Flux<ServerSentEvent<Object>> subscribe(String userId, String remoteAddress);
+    Flux<ServerSentEvent<Object>> subscribe(String appIdentifier, String userId, String remoteAddress);
 
 }
 

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
@@ -120,12 +121,12 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<PlayCardResponse> playCard(final String userId, final String gameId, final Card card) {
+    public Mono<PlayCardResponse> playCard(final UUID appIdentifier, final String userId, final String gameId, final Card card) {
         return gameRepository.findById(gameId).flatMap((g) -> {
             final int cardOwnerIndex = g.getPlayerCard().get(card);
             final String playerId = g.getPlayers().get(cardOwnerIndex);
             try {
-                new GameEngineImpl(g).playCard(playerId, card).forEach(message -> this.sseEmitterRepository.sendUserMessage(g.getPlayers(), message));
+                new GameEngineImpl(g).playCard(playerId, card).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
                 return gameRepository.save(g)
                     .doOnNext(this::sendGameStateUpdate)
                     .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2)))
@@ -137,10 +138,10 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> say(final String userId, final String gameId, final Boolean say) {
+    public Mono<Void> say(final UUID appIdentifier, final String userId, final String gameId, final Boolean say) {
         return gameRepository.findById(gameId).flatMap(g -> {
             try {
-                new GameEngineImpl(g).say(userId, say).forEach(message -> this.sseEmitterRepository.sendUserMessage(g.getPlayers(), message));
+                new GameEngineImpl(g).say(userId, say).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
                 return gameRepository.save(g)
                     .doOnNext(this::sendGameStateUpdate)
                     .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2)));
@@ -154,6 +155,7 @@ public class GameServiceImpl implements GameService {
     public void finishWithAi(final String gameId, final Duration initialDelay) {
 
         Flux.interval(initialDelay, java.time.Duration.ofSeconds(2))
+            .takeWhile(count -> count <= 4)
             .flatMap((g) -> gameRepository.findById(gameId))
             .map(GameEngineImpl::new)
             .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
@@ -161,10 +163,10 @@ public class GameServiceImpl implements GameService {
                 try {
                     if (gameEngine.isAiSay()) {
 //                        log.info("Auto AiSay()");
-                        gameEngine.sayAi().forEach(message -> this.sseEmitterRepository.sendUserMessage(gameEngine.getGame().getPlayers(), message));
+                        gameEngine.sayAi().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
                     } else if (gameEngine.isAiTurn()) {
 //                        log.info("Auto AiPlayCard()");
-                        gameEngine.playAiCard().forEach(message -> this.sseEmitterRepository.sendUserMessage(gameEngine.getGame().getPlayers(), message));
+                        gameEngine.playAiCard().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
                     }
 
                     return Mono.just(gameEngine);

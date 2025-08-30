@@ -14,10 +14,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 public final class MySseEmitter {
+
+    @Getter
+    private final UUID uuid;
 
     @Getter
     private Instant pingReceived;
@@ -61,15 +65,12 @@ public final class MySseEmitter {
     }
 
     public void receivePing() {
-//        log.info(", got ping " + uuid);
         pingReceived = Instant.now();
         sendPong();
     }
 
     public void receivePong() {
-//        log.info(", got pong " + uuid);
         pongReceived = Instant.now();
-        // log.trace("Ping/pong speed: " + Duration.between(pingSent, pongReceived).toMillis() + " msec");
     }
 
     private void internalSend(final UserServerSentEvent userServerSentEvent) {

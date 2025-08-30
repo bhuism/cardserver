@@ -9,6 +9,8 @@ servers:
 
 paths:
   /login:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       tags:
         - login
@@ -17,6 +19,8 @@ paths:
         "200":
           $ref: "#/components/responses/LoginResponse"
   /games/{gameId}/say:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: say
       parameters:
@@ -31,6 +35,8 @@ paths:
         "404":
           description: not found
   /games/{gameId}/openLastTrick:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: openLastTrick
       parameters:
@@ -43,6 +49,8 @@ paths:
         "404":
           description: not found
   /games/{gameId}/playCard:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: playCard
       parameters:
@@ -57,6 +65,8 @@ paths:
         "404":
           description: not found
   /games/{gameId}/kickAi:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: kickAi
       parameters:
@@ -69,6 +79,8 @@ paths:
         "404":
           description: not found
   /games:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getGames
       responses:
@@ -89,6 +101,8 @@ paths:
         "404":
           description: not found
   /games/{gameId}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getGame
       parameters:
@@ -106,6 +120,8 @@ paths:
         "200":
           description: ok
   /users/multiple/{userIds}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getUsers
       parameters:
@@ -114,22 +130,24 @@ paths:
         "200":
           $ref: "#/components/responses/UsersResponse"
   /users/ping:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: ping
-#      requestBody:
-#        $ref: "#/components/requestBodies/ping"
       responses:
         "200":
           description: ok
   /users/pong:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: pong
-#      requestBody:
-#        $ref: "#/components/requestBodies/pong"
       responses:
         "200":
           description: ok
   /users/message:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: sendMessage
       requestBody:
@@ -138,6 +156,8 @@ paths:
         "200":
           description: ok
   /users/updatePreferences:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: updatePreferences
       requestBody:
@@ -146,6 +166,8 @@ paths:
         "200":
           $ref: "#/components/responses/UserResponse"
   /users/single/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getUser
       parameters:
@@ -156,6 +178,8 @@ paths:
         "404":
           description: not found
   /users/invites:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getInvites
       responses:
@@ -175,6 +199,8 @@ paths:
         "404":
           description: not found
   /users/invites/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     delete:
       operationId: removeInvite
       parameters:
@@ -207,18 +233,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
-#    ping:
-#      required: true
-#      content:
-#        application/json:
-#          schema:
-#            $ref: "#/components/schemas/ping"
-#    pong:
-#      required: true
-#      content:
-#        application/json:
-#          schema:
-#            $ref: "#/components/schemas/pong"
     updatePreferences:
       required: true
       content:
@@ -376,6 +390,13 @@ components:
       required:
         - message
   parameters:
+    AppIdentifier:
+      name: App-Identifier
+      in: header
+      schema:
+        type: string
+        format: uuid
+      required: true
     gameId:
       name: gameId
       in: path

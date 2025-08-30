@@ -6,7 +6,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.UUID;
 
 public interface SseEmitterRepository {
 
@@ -16,15 +16,13 @@ public interface SseEmitterRepository {
 
     void broadCastMessage(String userId, String message);
 
-    void sendUserMessage(List<String> receivers, UserMessage userMessage);
+    void sendAppIdentifierMessage(UUID appIdentifier, UserMessage userMessage);
 
-    Flux<ServerSentEvent<Object>> subscribe(String userId, String remoteAddress);
+    Flux<ServerSentEvent<Object>> subscribe(String appIdentifier, String userId, String remoteAddress);
 
-    void ping(String userId);
+    void ping(UUID appIdentifier);
 
-    void pong(String userId);
-
-//    Game gameChanged(Game gameState);
+    void pong(UUID appIdentifier);
 
     void friendsChanged(Collection<String> userIds);
 
