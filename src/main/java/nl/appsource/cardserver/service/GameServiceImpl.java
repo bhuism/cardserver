@@ -155,7 +155,7 @@ public class GameServiceImpl implements GameService {
     public void finishWithAi(final String gameId, final Duration initialDelay) {
 
         Flux.interval(initialDelay, java.time.Duration.ofSeconds(2))
-            .takeWhile(count -> count <= 6)
+            .takeWhile(count -> count <= 5)
             .flatMap((g) -> gameRepository.findById(gameId))
             .map(GameEngineImpl::new)
             .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
