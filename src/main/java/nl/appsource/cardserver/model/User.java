@@ -56,7 +56,7 @@ public class User {
     @Field
     private String providerId;
 
-    @NotEmpty
+    @NotNull
     @Field
     private Boolean skipAnimation;
 
