@@ -117,8 +117,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<User> updateName(final String userId, final String displayName) {
-
-        return userRepository.existsByDisplayName(displayName).flatMap((aBoolean -> {
+        return userRepository.existsByDisplayNameAndIdNot(displayName, userId).flatMap((aBoolean -> {
             if (aBoolean) {
                 return Mono.error(new Exception("Username already exists"));
             } else {

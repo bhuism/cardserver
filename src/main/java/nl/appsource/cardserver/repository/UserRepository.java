@@ -19,5 +19,6 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND (email=$searchString OR LOWER(name)=LOWER($searchString) OR LOWER(displayName)=LOWER($searchString)) OR META().id=$searchString")
     Flux<User> searchInvitees(@Param("searchString") String searchString);
 
-    Mono<Boolean> existsByDisplayName(String displayName);
+    Mono<Boolean> existsByDisplayNameAndIdNot(String displayName, String id);
+
 }
