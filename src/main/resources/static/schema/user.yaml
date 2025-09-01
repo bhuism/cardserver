@@ -14,10 +14,13 @@ components:
           type: string
         online:
           type: boolean
+        skipAnimation:
+          type: boolean
       required:
         - id
         - updated
         - displayName
         - photoURL
         - online
+        - skipAnimation
 
