@@ -12,6 +12,7 @@ import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -43,6 +44,8 @@ public class Migrator {
 
     private final ObjectMapper objectMapper;
 
+    private final ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
+
     @PostConstruct
     @SuppressWarnings("AvoidNestedBlocks")
     public void init() {
@@ -52,7 +55,8 @@ public class Migrator {
     }
 
     private void migrate() {
-        gameRepository.findAll().flatMap(game -> {
+
+        reactiveCouchbaseTemplate.findByQuery(Game.class).all().flatMap(game -> {
             if (game.getLastTrickOpen() == null) {
                 log.info("Migrating game {}", game.getId());
                 game.setLastTrickOpen(false);
@@ -62,7 +66,12 @@ public class Migrator {
             }
         }).subscribe();
 
-        userRepository.findAll().flatMap(user -> {
+        reactiveCouchbaseTemplate.findByQuery(User.class).all().flatMap(user -> {
+
+            if (user.getUpdated() == null) {
+                user.setUpdated(user.getCreated());
+            }
+
             if (user.getSkipAnimation() == null) {
                 user.setSkipAnimation(false);
                 return userRepository.save(user);
