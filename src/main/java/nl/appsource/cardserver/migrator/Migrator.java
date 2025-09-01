@@ -52,17 +52,24 @@ public class Migrator {
     }
 
     private void migrate() {
-        gameRepository.findAll()
-            .flatMap(game -> {
-                if (game.getLastTrickOpen() == null) {
-                    log.info("Migrating game {}", game.getId());
-                    game.setLastTrickOpen(false);
-                    return gameRepository.save(game);
-                } else {
-                    return Mono.just(game);
-                }
-            })
-            .subscribe();
+        gameRepository.findAll().flatMap(game -> {
+            if (game.getLastTrickOpen() == null) {
+                log.info("Migrating game {}", game.getId());
+                game.setLastTrickOpen(false);
+                return gameRepository.save(game);
+            } else {
+                return Mono.just(game);
+            }
+        }).subscribe();
+
+        userRepository.findAll().flatMap(user -> {
+            if (user.getSkipAnimation() == null) {
+                user.setSkipAnimation(false);
+                return userRepository.save(user);
+            } else {
+                return Mono.just(user);
+            }
+        }).subscribe();
     }
 
     private void loadGames(final String fileName) throws IOException {

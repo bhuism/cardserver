@@ -56,4 +56,8 @@ public class User {
     @Field
     private String providerId;
 
+    @NotEmpty
+    @Field
+    private Boolean skipAnimation;
+
 }
