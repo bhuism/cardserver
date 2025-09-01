@@ -141,7 +141,7 @@ public class UserController implements UsersApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updateName(userId, updatePreferences.getDisplayName())))
+            .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updatePreferences(userId, updatePreferences)))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
 

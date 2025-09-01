@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.UpdatePreferences;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -117,13 +118,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<User> updateName(final String userId, final String displayName) {
-        return userRepository.existsByDisplayNameAndIdNot(displayName, userId)
+    public Mono<User> updatePreferences(final String userId, final UpdatePreferences updatePreferences) {
+        return userRepository.existsByDisplayNameAndIdNot(updatePreferences.getDisplayName(), userId)
             .filter(exists -> !exists)
             .switchIfEmpty(Mono.error(new Exception("Username already exists")))
             .then(userRepository.findById(userId)
                 .flatMap(user -> {
-                    user.setDisplayName(displayName);
+                    user.setDisplayName(updatePreferences.getDisplayName());
+                    user.setSkipAnimation(updatePreferences.getSkipAnimation());
                     return userRepository.save(user);
                 }));
     }

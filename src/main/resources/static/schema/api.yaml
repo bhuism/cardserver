@@ -341,8 +341,11 @@ components:
       properties:
         displayName:
           type: string
+        skipAnimation:
+          type: boolean
       required:
         - displayName
+        - skipAnimation
     createGame:
       type: object
       properties:
