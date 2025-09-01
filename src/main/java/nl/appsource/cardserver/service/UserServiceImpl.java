@@ -96,37 +96,36 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<Integer> createInvite(final String userId, final String searchString) {
         return userRepository.findById(userId)
-            .flatMap(
-                (user) -> {
-                    return userRepository.searchInvitees(searchString)
-                        .map(User::getId)
-                        .filter(inviteeId -> !user.getInvites().contains(inviteeId))
-                        .collect(Collectors.toSet())
-                        .map((newFriendIds -> {
-                            user.getInvites().addAll(newFriendIds);
-                            userRepository.save(user).subscribe();
+            .flatMap(user -> userRepository.searchInvitees(searchString)
+                .map(User::getId)
+                .filter(inviteeId -> !user.getInvites().contains(inviteeId))
+                .collect(Collectors.toSet())
+                .flatMap(newFriendIds -> {
+                    if (newFriendIds.isEmpty()) {
+                        return Mono.just(0);
+                    }
+                    user.getInvites().addAll(newFriendIds);
+                    return userRepository.save(user)
+                        .doOnSuccess(savedUser -> {
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
                             sseEmitterRepository.sendOnlineListTo(userId);
                             sseEmitterRepository.friendsChanged(newFriendIds);
                             sseEmitterRepository.friendsChanged(singleton(userId));
-                            return newFriendIds.size();
-                        }));
-                }
-            );
+                        })
+                        .thenReturn(newFriendIds.size());
+                }));
     }
 
     @Override
     public Mono<User> updateName(final String userId, final String displayName) {
-        return userRepository.existsByDisplayNameAndIdNot(displayName, userId).flatMap((aBoolean -> {
-            if (aBoolean) {
-                return Mono.error(new Exception("Username already exists"));
-            } else {
-                return Mono.just(userId);
-            }
-        })).flatMap(userRepository::findById).flatMap(user -> {
-            user.setDisplayName(displayName);
-            return userRepository.save(user);
-        });
+        return userRepository.existsByDisplayNameAndIdNot(displayName, userId)
+            .filter(exists -> !exists)
+            .switchIfEmpty(Mono.error(new Exception("Username already exists")))
+            .then(userRepository.findById(userId)
+                .flatMap(user -> {
+                    user.setDisplayName(displayName);
+                    return userRepository.save(user);
+                }));
     }
 
     @Override
