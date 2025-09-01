@@ -2,12 +2,10 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.PlayCardResponse;
 import org.springframework.data.domain.Sort;
@@ -42,10 +40,7 @@ public class GameServiceImpl implements GameService {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-    private final GameToOpenApiConverter gameToOpenApiConverter;
-
     private static final Random RAND = new SecureRandom();
-    private final UserRepository userRepository;
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
@@ -153,37 +148,36 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void finishWithAi(final String gameId, final Duration initialDelay) {
-
-        Flux.interval(initialDelay, java.time.Duration.ofSeconds(2))
-            .takeWhile(count -> count <= 5)
-            .flatMap((g) -> gameRepository.findById(gameId))
+        Mono.just(gameId)
+            .flatMap(gameRepository::findById)
+            .filter(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                return gameEngine.isAiSay() || gameEngine.isAiTurn();
+            })
+            .delayElement(initialDelay)
             .map(GameEngineImpl::new)
-            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
             .flatMap(gameEngine -> {
                 try {
                     if (gameEngine.isAiSay()) {
-//                        log.info("Auto AiSay()");
                         gameEngine.sayAi().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
                     } else if (gameEngine.isAiTurn()) {
-//                        log.info("Auto AiPlayCard()");
                         gameEngine.playAiCard().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
                     }
-
                     return Mono.just(gameEngine);
-
                 } catch (GameEngineException e) {
                     log.error("Exception during sayAi()", e);
                     return Mono.error(e);
                 }
-
             })
             .map(GameEngineImpl::getGame)
             .flatMap(gameRepository::save)
             .map(this::sendGameStateUpdate)
-            .map(GameEngineImpl::new)
-            .takeWhile(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.isCompleted() && (!gameEngine.getGame().getLastTrickOpen() || gameEngine.isFullTrick()))
+            .filter(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                return gameEngine.isAiSay() || gameEngine.isAiTurn();
+            })
+            .doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2)))
             .subscribe();
-
     }
 
     public static Map<Card, Integer> randomCards() {
