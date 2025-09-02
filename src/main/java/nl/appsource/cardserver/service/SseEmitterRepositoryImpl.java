@@ -15,12 +15,13 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 @Service
 @Slf4j
@@ -46,7 +47,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .stream()
             .filter(sse -> sse.getUuid().equals(uuid))
             .findAny()
-            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for uuid {}", uuid));
+            .ifPresentOrElse(consumer, () -> {
+                log.error("SseEmitter not found for uuid {}", uuid, new Throwable());
+            });
     }
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
@@ -105,12 +108,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void updateGameState(final Game game) {
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(convertedGame));
+        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
     }
 
     @Override
     public void newGame(final Game game) {
-        doSelectedUserIds(game.getPlayers().stream().filter(player -> !player.equals(game.getCreator())).collect(Collectors.toSet()), mySseEmitter -> mySseEmitter.newGame(Objects.requireNonNull(gameToOpenApiConverter.convert(game))));
+        doSelectedUserIds(game.getPlayers().stream().filter(player -> !player.equals(game.getCreator())).collect(Collectors.toSet()), mySseEmitter -> mySseEmitter.newGame(requireNonNull(gameToOpenApiConverter.convert(game))));
     }
 
     @Override
