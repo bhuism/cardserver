@@ -380,7 +380,7 @@ components:
     SseConnection:
       type: object
       properties:
-        applicationId:
+        id:
           type: string
         userId:
           type: string
@@ -397,7 +397,7 @@ components:
           type: string
           format: date-time
       required:
-        - applicationId
+        - id
         - userId
     NewGameEvent:
       type: object
