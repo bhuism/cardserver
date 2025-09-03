@@ -177,10 +177,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.put(appIdentifier, mySseEmitter);
 
-        return Flux.<ServerSentEvent<?>>just(
+        return Flux.just(
                 mySseEmitter.createPingEvent(), mySseEmitter.createPingEvent(), mySseEmitter.createPingEvent())
             .concatWith(mySseEmitter.subscribe())
-            .concatWith(isAdmin(userId) ? createSseConnectionsEventFlux() : Flux.empty())
+            .mergeWith(isAdmin(userId) ? createSseConnectionsEventFlux() : Flux.empty())
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
                 sendOnlineListTo(userId);

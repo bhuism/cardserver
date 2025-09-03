@@ -8,7 +8,6 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.PlayCardResponse;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -53,11 +52,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<Game> getGames(final String userId) {
-        if (isAdmin(userId)) {
-            return gameRepository.findAll(Sort.by(Sort.Direction.DESC, "updated"));
-        } else {
-            return gameRepository.findByUserId(userId);
-        }
+        return gameRepository.findByUserId(userId);
     }
 
     @Override

@@ -63,7 +63,7 @@ public final class MySseEmitter {
         internalSend(createPingEvent());
     }
 
-    public <T> ServerSentEvent<T> createPingEvent() {
+    public ServerSentEvent<?> createPingEvent() {
         return createServerSentEvent("ping");
     }
 
@@ -89,18 +89,20 @@ public final class MySseEmitter {
         tryEmitNext(serverSentEvent);
     }
 
-    public static <T> ServerSentEvent<T> createServerSentEvent(final String event) {
+    public static ServerSentEvent<?> createServerSentEvent(final String event) {
         return createServerSentEvent(event, null);
     }
 
-    public static <T> ServerSentEvent<T> createServerSentEvent(final String event, final T data) {
+    public static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
 
-        final ServerSentEvent.Builder<T> builder = ServerSentEvent.<T>builder().event(event).id(id);
+        final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder().event(event).id(id);
 
         if (data != null) {
             builder.data(data);
+        } else {
+            builder.data("{}");
         }
 
         return builder.build();
@@ -131,7 +133,6 @@ public final class MySseEmitter {
     }
 
     public void sendUpdateGameState(final Game game) {
-        log.info("Sending state update for game {}", game.getId());
         internalSend(createServerSentEvent("stateUpdate", game));
     }
 
