@@ -18,11 +18,16 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.singleton;
 import static java.util.Objects.requireNonNull;
 
+/**
+ * The type Sse emitter repository.
+ *
+ * @see <a href="https://www.baeldung.com/spring-server-sent-events">Spring Server-Sent Events</a>
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -34,21 +39,29 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
+    private Predicate<MySseEmitter> forUserId(final String userId) {
+        return emitter -> userId.equals(emitter.getUserId());
+    }
+
+    private Predicate<MySseEmitter> forUserIds(final Collection<String> userIds) {
+        return emitter -> userIds.contains(emitter.getUserId());
+    }
+
     private void doSelectedUserIds(final Collection<String> userIds, final Consumer<MySseEmitter> consumer) {
-        emitters.values().stream().filter(stringMySseEmitterEntry -> userIds.contains(stringMySseEmitterEntry.getUserId())).forEach(consumer);
+        emitters.values().stream().filter(forUserIds(userIds)).forEach(consumer);
     }
 
     private void doUserId(final String userId, final Consumer<MySseEmitter> consumer) {
-        doSelectedUserIds(singleton(userId), consumer);
+        emitters.values().stream().filter(forUserId(userId)).forEach(consumer);
     }
 
-    private void doId(final UUID uuid, final Consumer<MySseEmitter> consumer) {
-        Optional.ofNullable(emitters.get(uuid))
-            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for uuid {}, got: {} size: {}", uuid, emitters.keys(), emitters.size(), new Throwable()));
+    private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
+        Optional.ofNullable(emitters.get(appIdentifier))
+            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, emitters.keys(), emitters.size(), new Throwable()));
     }
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
-        Flux.fromIterable(emitters.values()).subscribe(consumer);
+        emitters.values().forEach(consumer);
     }
 
     @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 30)
@@ -117,7 +130,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public boolean isUserOnline(final String userId) {
-        return emitters.containsKey(userId);
+        return emitters.values().stream().anyMatch(forUserId(userId));
     }
 
     @Override
@@ -147,7 +160,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .doFinally((_s) -> {
                 log.info("{} unSubscribe() appIdentifier={}  userId={}, count={}", remoteAddress, appIdentifier, userId, emitters.size());
-                emitters.remove(userId);
+                emitters.remove(appIdentifier);
                 mySseEmitter.close();
                 sendOnlineListToFriendsOf(userId);
             });
