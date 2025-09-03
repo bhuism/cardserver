@@ -16,6 +16,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -163,6 +164,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                 }).toList();
 
+                sseConnectionsEvent.timeStamp(Instant.now());
                 sseConnectionsEvent.events(events);
 
                 return sseConnectionsEvent;

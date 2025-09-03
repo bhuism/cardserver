@@ -375,6 +375,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SseConnection'
+        timeStamp:
+          type: string
+          format: date-time
       required:
         - events
     SseConnection:
