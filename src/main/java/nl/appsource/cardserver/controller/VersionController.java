@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -27,7 +26,9 @@ public class VersionController {
     @GetMapping(value = "/version", produces = "application/json")
     public ResponseEntity<Map<String, String>> getVersion() {
         return ResponseEntity.ok()
-            .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePublic())
+            .cacheControl(CacheControl.noStore())
+            .header("Pragma", "no-cache")
+            .header("Expires", "0")
             .body(gitPropertiesMap);
     }
 
