@@ -23,7 +23,7 @@ public class VersionController {
             .collect(Collectors.toMap(InfoProperties.Entry::getKey, InfoProperties.Entry::getValue));
     }
 
-    @GetMapping(value = "/version", produces = "application/json")
+    @GetMapping(value = "/version.json", produces = "application/json")
     public ResponseEntity<Map<String, String>> getVersion() {
         return ResponseEntity.ok()
             .cacheControl(CacheControl.noStore())
