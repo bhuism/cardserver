@@ -158,8 +158,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             })
-            .doFinally((_s) -> {
-                log.info("{} unSubscribe() appIdentifier={}  userId={}, count={}", remoteAddress, appIdentifier, userId, emitters.size());
+            .doFinally((s) -> {
+                log.info("{} unSubscribe() appIdentifier={}  userId={}, count={} signal={}", remoteAddress, appIdentifier, userId, emitters.size(), s.toString());
                 emitters.remove(appIdentifier);
                 mySseEmitter.close();
                 sendOnlineListToFriendsOf(userId);
