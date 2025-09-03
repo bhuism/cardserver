@@ -34,13 +34,13 @@ public final class MySseEmitter {
     @Getter
     private Instant pongSent;
 
-    private Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
+    private Sinks.Many<ServerSentEvent<?>> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
 
     public void message(final UserMessage userMessage) {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
     }
 
-    private void tryEmitNext(final UserServerSentEvent userServerSentEvent) {
+    private void tryEmitNext(final ServerSentEvent<?> userServerSentEvent) {
         final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
         if (emitResult.isFailure()) {
             unicastSink.tryEmitComplete();
@@ -63,7 +63,7 @@ public final class MySseEmitter {
         internalSend(createPingEvent());
     }
 
-    public UserServerSentEvent createPingEvent() {
+    public <T> ServerSentEvent<T> createPingEvent() {
         return createServerSentEvent("ping");
     }
 
@@ -82,21 +82,28 @@ public final class MySseEmitter {
         pongReceived = Instant.now();
     }
 
-    private void internalSend(final UserServerSentEvent userServerSentEvent) {
+    private <T> void internalSend(final ServerSentEvent<T> serverSentEvent) {
         if (log.isTraceEnabled()) {
-            log.trace("internalSend() sending event '{}' data: '{}' ", userServerSentEvent.serverSentEvent().event(), userServerSentEvent.serverSentEvent().data());
+            log.trace("internalSend() sending event '{}' data: '{}' ", serverSentEvent.event(), serverSentEvent.data());
         }
-        tryEmitNext(userServerSentEvent);
+        tryEmitNext(serverSentEvent);
     }
 
-    public UserServerSentEvent createServerSentEvent(final String event) {
+    public static <T> ServerSentEvent<T> createServerSentEvent(final String event) {
         return createServerSentEvent(event, null);
     }
 
-    public UserServerSentEvent createServerSentEvent(final String event, final Object data) {
+    public static <T> ServerSentEvent<T> createServerSentEvent(final String event, final T data) {
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
-        return new UserServerSentEvent(ServerSentEvent.builder().event(event).id(id).data(data == null ? "{}" : data).build());
+
+        final ServerSentEvent.Builder<T> builder = ServerSentEvent.<T>builder().event(event).id(id);
+
+        if (data != null) {
+            builder.data(data);
+        }
+
+        return builder.build();
     }
 
     public void sendOnlineList(final Flux<String> onlineList) {
@@ -119,8 +126,8 @@ public final class MySseEmitter {
         internalSend(createServerSentEvent("newFriend", new NewFriendEvent().newFriendId(newFriendId)));
     }
 
-    public Flux<ServerSentEvent<Object>> subscribe() {
-        return unicastSink.asFlux().map(UserServerSentEvent::serverSentEvent);
+    public Flux<ServerSentEvent<?>> subscribe() {
+        return unicastSink.asFlux();
     }
 
     public void sendUpdateGameState(final Game game) {

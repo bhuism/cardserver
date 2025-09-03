@@ -132,7 +132,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Flux<ServerSentEvent<Object>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
+    public Flux<ServerSentEvent<?>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
         return sseEmitterRepository.subscribe(appIdentifier, userId, remoteAddress);
 
     }

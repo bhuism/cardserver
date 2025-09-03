@@ -30,7 +30,7 @@ public interface UserService {
 
     Mono<User> updatePreferences(String userId, @NotNull UpdatePreferences updatePreferences);
 
-    Flux<ServerSentEvent<Object>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
+    Flux<ServerSentEvent<?>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
 
 }
 

@@ -368,6 +368,37 @@ components:
             uniqueItems: true
       required:
         - onlineList
+    SseConnectionsEvent:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SseConnection'
+      required:
+        - events
+    SseConnection:
+      type: object
+      properties:
+        applicationId:
+          type: string
+        userId:
+          type: string
+        pingReceived:
+          type: string
+          format: date-time
+        pongReceived:
+          type: string
+          format: date-time
+        pingSent:
+          type: string
+          format: date-time
+        pongSent:
+          type: string
+          format: date-time
+      required:
+        - applicationId
+        - userId
     NewGameEvent:
       type: object
       properties:

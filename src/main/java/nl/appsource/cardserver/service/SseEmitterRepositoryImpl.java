@@ -6,6 +6,8 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.SseConnection;
+import org.openapitools.model.SseConnectionsEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,7 +15,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,6 +26,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
 /**
  * The type Sse emitter repository.
@@ -56,8 +61,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
-        Optional.ofNullable(emitters.get(appIdentifier))
-            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, emitters.keys(), emitters.size(), new Throwable()));
+        Optional.ofNullable(emitters.get(appIdentifier)).ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, emitters.keys(), emitters.size(), new Throwable()));
     }
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
@@ -70,9 +74,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     private Flux<String> getFriends(final String userId) {
-        return userRepository.findById(userId)
-            .map(User::getInvites)
-            .flatMapMany(list -> userRepository.findIncomingInvites(userId).filter(list::contains));
+        return userRepository.findById(userId).map(User::getInvites).flatMapMany(list -> userRepository.findIncomingInvites(userId).filter(list::contains));
     }
 
     @Override
@@ -87,10 +89,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void broadCastMessage(final String userId, final String message) {
-        userRepository.findById(userId)
-            .map(User::getDisplayName)
-            .switchIfEmpty(Mono.just(userId))
-            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().userId(userId).message(fromString + ": " + message))));
+        userRepository.findById(userId).map(User::getDisplayName).switchIfEmpty(Mono.just(userId)).subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().userId(userId).message(fromString + ": " + message))));
     }
 
     @Override
@@ -144,21 +143,49 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doId(appIdentifier, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
+    private Flux<ServerSentEvent<?>> createSseConnectionsEventFlux() {
+        return Flux.interval(Duration.ofSeconds(1))
+            .map((_counter) -> {
+                final SseConnectionsEvent sseConnectionsEvent = new SseConnectionsEvent();
+
+                final List<SseConnection> events = emitters.entrySet().stream().map(mySseEmitterEntry -> {
+
+                    final SseConnection sseConnection = new SseConnection();
+
+                    sseConnection.applicationId(mySseEmitterEntry.getKey().toString());
+                    sseConnection.userId(mySseEmitterEntry.getValue().getUserId());
+                    sseConnection.pingReceived(mySseEmitterEntry.getValue().getPingReceived());
+                    sseConnection.pingSent(mySseEmitterEntry.getValue().getPingSent());
+                    sseConnection.pongReceived(mySseEmitterEntry.getValue().getPongReceived());
+                    sseConnection.pongSent(mySseEmitterEntry.getValue().getPongSent());
+
+                    return sseConnection;
+
+                }).toList();
+
+                sseConnectionsEvent.events(events);
+
+                return sseConnectionsEvent;
+            })
+            .map(data -> MySseEmitter.createServerSentEvent("sseConnectionsEvent", data));
+    }
+
     @Override
-    public Flux<ServerSentEvent<Object>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
+    public Flux<ServerSentEvent<?>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
         emitters.put(appIdentifier, mySseEmitter);
 
-        return Flux.just(mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent(), mySseEmitter.createPingEvent().serverSentEvent())
+        return Flux.<ServerSentEvent<?>>just(
+                mySseEmitter.createPingEvent(), mySseEmitter.createPingEvent(), mySseEmitter.createPingEvent())
             .concatWith(mySseEmitter.subscribe())
+            .concatWith(isAdmin(userId) ? createSseConnectionsEventFlux() : Flux.empty())
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
-            })
-            .doFinally((s) -> {
+            }).doFinally((s) -> {
                 log.info("{} unSubscribe() appIdentifier={}  userId={}, count={} signal={}", remoteAddress, appIdentifier, userId, emitters.size(), s.toString());
                 emitters.remove(appIdentifier);
                 mySseEmitter.close();

@@ -18,7 +18,7 @@ public interface SseEmitterRepository {
 
     void sendAppIdentifierMessage(UUID appIdentifier, UserMessage userMessage);
 
-    Flux<ServerSentEvent<Object>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
+    Flux<ServerSentEvent<?>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
 
     void ping(UUID appIdentifier);
 
