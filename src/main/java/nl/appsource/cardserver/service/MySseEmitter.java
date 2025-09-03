@@ -34,7 +34,7 @@ public final class MySseEmitter {
     @Getter
     private Instant pongSent;
 
-    private final Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
+    private Sinks.Many<UserServerSentEvent> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
 
     public void message(final UserMessage userMessage) {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
@@ -48,7 +48,13 @@ public final class MySseEmitter {
     }
 
     public void close() {
-        this.unicastSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+        try {
+            this.unicastSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+        } catch (Throwable t) {
+            log.error("", t);
+        } finally {
+            unicastSink = null;
+        }
     }
 
     public void sendPing() {
