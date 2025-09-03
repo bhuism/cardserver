@@ -14,14 +14,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 public final class MySseEmitter {
 
     @Getter
-    private final UUID uuid;
+    private final String userId;
 
     @Getter
     private Instant pingReceived;
@@ -46,6 +45,10 @@ public final class MySseEmitter {
         if (emitResult.isFailure()) {
             unicastSink.tryEmitComplete();
         }
+    }
+
+    public void close() {
+        this.unicastSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
     }
 
     public void sendPing() {
@@ -120,4 +123,3 @@ public final class MySseEmitter {
     }
 
 }
-

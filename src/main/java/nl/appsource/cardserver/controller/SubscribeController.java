@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 
+import java.util.UUID;
+
 
 @Slf4j
 @RestController
@@ -29,7 +31,7 @@ public class SubscribeController implements V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .flatMapMany(userId -> userService.subscribe(appIdentifier, userId, "" + exchange.getRequest().getRemoteAddress()));
+            .flatMapMany(userId -> userService.subscribe(UUID.fromString(appIdentifier), userId, "" + exchange.getRequest().getRemoteAddress()));
     }
 
 }

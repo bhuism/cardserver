@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singleton;
@@ -131,7 +132,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Flux<ServerSentEvent<Object>> subscribe(final String appIdentifier, final String userId, final String remoteAddress) {
+    public Flux<ServerSentEvent<Object>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
         return sseEmitterRepository.subscribe(appIdentifier, userId, remoteAddress);
 
     }

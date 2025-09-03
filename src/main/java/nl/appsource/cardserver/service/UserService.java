@@ -8,6 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserService {
 
@@ -29,7 +30,7 @@ public interface UserService {
 
     Mono<User> updatePreferences(String userId, @NotNull UpdatePreferences updatePreferences);
 
-    Flux<ServerSentEvent<Object>> subscribe(String appIdentifier, String userId, String remoteAddress);
+    Flux<ServerSentEvent<Object>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
 
 }
 
