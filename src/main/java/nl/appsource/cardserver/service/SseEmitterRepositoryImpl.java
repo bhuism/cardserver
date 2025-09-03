@@ -48,7 +48,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .filter(sse -> sse.getUuid().equals(uuid))
             .findAny()
             .ifPresentOrElse(consumer, () -> {
-                log.error("SseEmitter not found for uuid {}", uuid, new Throwable());
+                log.error("SseEmitter not found for uuid {}, got: {} size: {}", uuid, emitters.keys(), emitters.size(), new Throwable());
             });
     }
 
