@@ -8,6 +8,7 @@ import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
+import org.openapitools.model.SseConnectionsEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
@@ -36,6 +37,10 @@ public final class MySseEmitter {
     private Instant pongSent;
 
     private Sinks.Many<ServerSentEvent<?>> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
+
+    public ServerSentEvent<?> createSseConnectionsEvent(final SseConnectionsEvent data) {
+        return createServerSentEvent("sseConnectionsEvent", data);
+    }
 
     public void message(final UserMessage userMessage) {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
@@ -90,11 +95,12 @@ public final class MySseEmitter {
         tryEmitNext(serverSentEvent);
     }
 
-    public static ServerSentEvent<?> createServerSentEvent(final String event) {
+    private ServerSentEvent<?> createServerSentEvent(final String event) {
         return createServerSentEvent(event, null);
     }
 
     public static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
+
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
 

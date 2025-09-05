@@ -138,7 +138,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doId(appIdentifier, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
-    private Flux<ServerSentEvent<?>> createSseConnectionsEventFlux() {
+    private Flux<SseConnectionsEvent> createSseConnectionsEventFlux() {
         return Flux.interval(Duration.ofSeconds(1))
             .map((_counter) -> {
                 final SseConnectionsEvent sseConnectionsEvent = new SseConnectionsEvent();
@@ -162,8 +162,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sseConnectionsEvent.events(events);
 
                 return sseConnectionsEvent;
-            })
-            .map(data -> MySseEmitter.createServerSentEvent("sseConnectionsEvent", data));
+            });
     }
 
     @Override
@@ -174,7 +173,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         emitters.put(appIdentifier, mySseEmitter);
 
         return mySseEmitter.subscribe()
-            .mergeWith(isAdmin(userId) ? createSseConnectionsEventFlux() : Flux.empty())
+            .mergeWith(isAdmin(userId) ? createSseConnectionsEventFlux().map(mySseEmitter::createSseConnectionsEvent) : Flux.empty())
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
                 sendOnlineListTo(userId);
