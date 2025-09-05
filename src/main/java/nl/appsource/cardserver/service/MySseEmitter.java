@@ -13,6 +13,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.time.Duration;
 import java.time.Instant;
 
 @Slf4j
@@ -63,7 +64,7 @@ public final class MySseEmitter {
         internalSend(createPingEvent());
     }
 
-    public ServerSentEvent<?> createPingEvent() {
+    private ServerSentEvent<?> createPingEvent() {
         return createServerSentEvent("ping");
     }
 
@@ -129,7 +130,9 @@ public final class MySseEmitter {
     }
 
     public Flux<ServerSentEvent<?>> subscribe() {
-        return unicastSink.asFlux();
+        return Flux.just(createPingEvent(), createPingEvent(), createPingEvent())
+            .concatWith(unicastSink.asFlux())
+            .mergeWith(Flux.interval(Duration.ofSeconds(15)).map(aLong -> createPingEvent()));
     }
 
     public void sendUpdateGameState(final Game game) {

@@ -10,7 +10,6 @@ import org.openapitools.model.SseConnection;
 import org.openapitools.model.SseConnectionsEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -67,11 +66,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
         emitters.values().forEach(consumer);
-    }
-
-    @Scheduled(fixedDelay = 1000 * 15, initialDelay = 1000 * 30)
-    public void pingAll() {
-        doAll(MySseEmitter::sendPing);
     }
 
     private Flux<String> getFriends(final String userId) {
@@ -179,9 +173,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         emitters.put(appIdentifier, mySseEmitter);
 
-        return Flux.just(
-                mySseEmitter.createPingEvent(), mySseEmitter.createPingEvent(), mySseEmitter.createPingEvent())
-            .concatWith(mySseEmitter.subscribe())
+        return mySseEmitter.subscribe()
             .mergeWith(isAdmin(userId) ? createSseConnectionsEventFlux() : Flux.empty())
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
