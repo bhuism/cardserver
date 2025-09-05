@@ -37,13 +37,17 @@ public class GameController implements GamesApi, V1Api {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-    @Override
-    public Mono<ResponseEntity<Game>> getGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
+    private Mono<String> authorize(final UUID appIdentifier) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
+            .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Game>> getGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
+        return authorize(appIdentifier)
             .flatMap(userId -> gameService.getGame(userId, gameId))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
@@ -52,9 +56,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<PlayCardResponse>> playCard(final UUID appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .flatMap(userId -> playCardMono.map(playCard -> {
                         log.info("{} playCard() userI={} plays card={}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
                         return playCard;
@@ -78,9 +80,7 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> kickAi(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .doOnNext(userId -> gameService.finishWithAi(gameId, Duration.ZERO))
             .then(just(ResponseEntity.ok().build()));
     }
@@ -88,9 +88,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
 //        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .mapNotNull(userId -> gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert))
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
@@ -100,9 +98,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> createGame(final UUID appIdentifier, final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
         log.info("{} createGame()", exchange.getRequest().getRemoteAddress());
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .flatMap(userId -> createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers())))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
@@ -113,7 +109,8 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         log.info("{} deleteGame({})", gameId, exchange.getRequest().getRemoteAddress());
-        return gameService.deleteGame(gameId)
+        return authorize(appIdentifier)
+            .flatMap(userId -> gameService.deleteGame(userId, gameId))
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
