@@ -37,18 +37,17 @@ public class GameController implements GamesApi, V1Api {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-
     @Override
     public Mono<ResponseEntity<Game>> getGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-//        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
+        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> gameService.getGame(userId, gameId))
-            .mapNotNull(gameToOpenApiConverter::convert)
-            .map(ResponseEntity::ok);
+            .map(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
-
 
     @Override
     public Mono<ResponseEntity<PlayCardResponse>> playCard(final UUID appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
