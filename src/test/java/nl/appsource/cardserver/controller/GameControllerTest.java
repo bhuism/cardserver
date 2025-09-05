@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
@@ -56,6 +57,7 @@ public class GameControllerTest {
     void getGame_whenGameNotFound_shouldReturnNotFound() {
 
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.empty());
+        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
         webTestClient
             // Set up a mock authenticated user for the request
@@ -75,18 +77,19 @@ public class GameControllerTest {
         mockGame.setId("myid");
         mockGame.setPlayerCard(Map.of(Card.As, 0));
         mockGame.setTurns(Collections.emptyList());
-        mockGame.setPlayers(List.of("a","b","c","d"));
+        mockGame.setPlayers(List.of("a", "b", "c", "d"));
         mockGame.setDealer(0);
 
         final org.openapitools.model.Game expectedGame = new org.openapitools.model.Game();
         expectedGame.setId("myid");
         expectedGame.setPlayerCard(List.of(new GamePlayerCardInner(org.openapitools.model.Card.AS, 0)));
         expectedGame.setTurns(Collections.emptyList());
-        expectedGame.setPlayers(List.of("a","b","c","d"));
+        expectedGame.setPlayers(List.of("a", "b", "c", "d"));
         expectedGame.setDealer(0);
         expectedGame.setWhoSay(Optional.of(1));
 
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
+        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
         webTestClient
             // Set up a mock authenticated user for the request

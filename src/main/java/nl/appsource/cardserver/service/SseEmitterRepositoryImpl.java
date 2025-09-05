@@ -196,7 +196,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public boolean validate(UUID appIdentifier, String userId) {
+    public boolean validate(final UUID appIdentifier, final String userId) {
         return Optional.ofNullable(emitters.get(appIdentifier)).map(mySseEmitter -> mySseEmitter.getUserId().equals(userId)).orElse(false);
     }
 
