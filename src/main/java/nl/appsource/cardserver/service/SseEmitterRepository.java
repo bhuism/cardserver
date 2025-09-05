@@ -36,4 +36,5 @@ public interface SseEmitterRepository {
 
     void newFriend(String userId, String friendId);
 
+    boolean validate(UUID appIdentifier, String userId);
 }

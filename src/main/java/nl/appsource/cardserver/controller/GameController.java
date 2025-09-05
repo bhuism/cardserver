@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
@@ -35,7 +34,7 @@ public class GameController implements GamesApi, V1Api {
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
-    private final SseEmitterRepository sseEmitterRepository;
+//    private final SseEmitterRepository sseEmitterRepository;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
@@ -43,8 +42,9 @@ public class GameController implements GamesApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
+//            .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
             .flatMap(userId -> gameService.getGame(userId, gameId))
-            .map(gameToOpenApiConverter::convert)
+            .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
@@ -71,7 +71,8 @@ public class GameController implements GamesApi, V1Api {
 //                    })
             )
 
-            .map(ResponseEntity::ok);
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -83,7 +84,6 @@ public class GameController implements GamesApi, V1Api {
             .then(just(ResponseEntity.ok().build()));
     }
 
-
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
 //        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
@@ -91,7 +91,8 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .mapNotNull(userId -> gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert))
-            .map(ResponseEntity::ok);
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
 
     }
 
@@ -103,7 +104,8 @@ public class GameController implements GamesApi, V1Api {
             .map(Authentication::getName)
             .flatMap(userId -> createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers())))
             .mapNotNull(gameToOpenApiConverter::convert)
-            .map(ResponseEntity::ok);
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
 
     }
 
@@ -111,7 +113,8 @@ public class GameController implements GamesApi, V1Api {
     public Mono<ResponseEntity<Void>> deleteGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         log.info("{} deleteGame({})", gameId, exchange.getRequest().getRemoteAddress());
         return gameService.deleteGame(gameId)
-            .then(just(ResponseEntity.ok().build()));
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -135,7 +138,8 @@ public class GameController implements GamesApi, V1Api {
 //                    return Mono.empty();
 //                })
             )
-            .then(just(ResponseEntity.ok().build()));
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -154,7 +158,8 @@ public class GameController implements GamesApi, V1Api {
 //                    return Mono.empty();
 //                })
             )
-            .then(just(ResponseEntity.ok().build()));
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 }
 
