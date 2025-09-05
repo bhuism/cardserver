@@ -108,10 +108,10 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        log.info("{} deleteGame({})", gameId, exchange.getRequest().getRemoteAddress());
+        log.info("{} deleteGame({})", exchange.getRequest().getRemoteAddress(), gameId);
         return authorize(appIdentifier)
             .flatMap(userId -> gameService.deleteGame(userId, gameId))
-            .map(ResponseEntity::ok)
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
@@ -136,7 +136,7 @@ public class GameController implements GamesApi, V1Api {
 //                    return Mono.empty();
 //                })
             )
-            .map(ResponseEntity::ok)
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
@@ -156,8 +156,7 @@ public class GameController implements GamesApi, V1Api {
 //                    return Mono.empty();
 //                })
             )
-            .map(ResponseEntity::ok)
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 }
-
