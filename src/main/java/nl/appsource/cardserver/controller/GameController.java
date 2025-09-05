@@ -110,9 +110,11 @@ public class GameController implements GamesApi, V1Api {
     public Mono<ResponseEntity<Void>> deleteGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         log.info("{} deleteGame({})", exchange.getRequest().getRemoteAddress(), gameId);
         return authorize(appIdentifier)
-            .flatMap(userId -> gameService.deleteGame(userId, gameId))
-            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .flatMap(userId -> gameService.deleteGame(userId, gameId).defaultIfEmpty(false))
+            .map(deleted -> deleted
+                ? ResponseEntity.noContent().<Void>build()
+                : ResponseEntity.notFound().<Void>build())
+            .defaultIfEmpty(ResponseEntity.status(401).build());
     }
 
     @Override

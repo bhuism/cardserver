@@ -100,11 +100,12 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> deleteGame(final String userId, final String gameId) {
+    public Mono<Boolean> deleteGame(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .filter(game -> game.getCreator().equals(userId))
-            .doOnNext(gameRepository::delete)
-            .flatMap(game -> Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())));
+            .flatMap(game -> gameRepository.delete(game)
+                .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
+                .thenReturn(true));
     }
 
     @Override

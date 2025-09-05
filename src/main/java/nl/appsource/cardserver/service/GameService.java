@@ -18,7 +18,7 @@ public interface GameService {
 
     Mono<Game> createGame(String creator, Set<String> players);
 
-    Mono<Void> deleteGame(String userId, String gameId);
+    Mono<Boolean> deleteGame(String userId, String gameId);
 
     Mono<PlayCardResponse> playCard(UUID appIdentifier, String userId, String gameId, Card card);
 
