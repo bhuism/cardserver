@@ -63,12 +63,6 @@ public final class MySseEmitter {
         }
     }
 
-    public void sendPing() {
-//        log.info(", sendPing " + uuid);
-        this.pingSent = Instant.now();
-        internalSend(createPingEvent());
-    }
-
     private ServerSentEvent<?> createPingEvent() {
         return createServerSentEvent("ping");
     }
@@ -138,7 +132,7 @@ public final class MySseEmitter {
     public Flux<ServerSentEvent<?>> subscribe() {
         return Flux.just(createPingEvent(), createPingEvent(), createPingEvent())
             .concatWith(unicastSink.asFlux())
-            .mergeWith(Flux.interval(Duration.ofSeconds(15)).map(aLong -> createPingEvent()));
+            .mergeWith(Flux.interval(Duration.ofSeconds(15)).map(aLong -> createPingEvent()).doOnNext((_a) -> this.pingSent = Instant.now()));
     }
 
     public void sendUpdateGameState(final Game game) {
