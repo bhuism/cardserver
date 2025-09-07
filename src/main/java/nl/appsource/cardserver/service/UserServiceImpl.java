@@ -127,6 +127,7 @@ public class UserServiceImpl implements UserService {
                 .flatMap(user -> {
                     user.setDisplayName(updatePreferences.getDisplayName());
                     user.setSkipAnimation(updatePreferences.getSkipAnimation());
+                    user.setGameVariant(updatePreferences.getGameVariant());
                     return userRepository.save(user);
                 }));
     }

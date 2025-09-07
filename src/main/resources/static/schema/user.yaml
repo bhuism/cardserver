@@ -16,6 +16,8 @@ components:
           type: boolean
         skipAnimation:
           type: boolean
+        gameVariant:
+          $ref: "./api.yaml#/components/schemas/GameVariant"
       required:
         - id
         - updated
@@ -23,4 +25,5 @@ components:
         - photoURL
         - online
         - skipAnimation
+        - gameVariant
 

@@ -11,6 +11,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.GameVariant;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
@@ -68,16 +69,29 @@ public class Migrator {
 
         reactiveCouchbaseTemplate.findByQuery(User.class).all().flatMap(user -> {
 
+            boolean changed = false;
+
             if (user.getUpdated() == null) {
                 user.setUpdated(user.getCreated());
+                changed = true;
             }
 
             if (user.getSkipAnimation() == null) {
                 user.setSkipAnimation(false);
+                changed = true;
+            }
+
+            if (user.getGameVariant() == null) {
+                user.setGameVariant(GameVariant.ROTTERDAMS);
+                changed = true;
+            }
+
+            if (changed) {
                 return userRepository.save(user);
             } else {
                 return Mono.just(user);
             }
+
         }).subscribe();
     }
 

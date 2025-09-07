@@ -23,6 +23,7 @@ public class UserToOpenApiConverter implements Converter<User, org.openapitools.
         target.setPhotoURL(source.getPhotoURL());
         target.setOnline(sseEmitterRepository.isUserOnline(source.getId()));
         target.setSkipAnimation(Boolean.TRUE.equals(source.getSkipAnimation()));
+        target.setGameVariant(source.getGameVariant());
 
         return target;
     }

@@ -343,9 +343,12 @@ components:
           type: string
         skipAnimation:
           type: boolean
+        gameVariant:
+          $ref: '#/components/schemas/GameVariant'
       required:
         - displayName
         - skipAnimation
+        - gameVariant
     createGame:
       type: object
       properties:
@@ -426,6 +429,11 @@ components:
           $ref: '#/components/schemas/UserMessage'
       required:
         - message
+    GameVariant:
+      enum:
+        - amsterdams
+        - rotterdams
+        - haags
   parameters:
     AppIdentifier:
       name: App-Identifier
