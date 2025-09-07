@@ -19,7 +19,7 @@
         <maven.build.timestamp>${maven.build.timestamp}</maven.build.timestamp>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-        <spotbugs.version>4.9.4.0</spotbugs.version>
+        <spotbugs.version>4.9.4.1</spotbugs.version>
         <checkstyle.version>3.6.0</checkstyle.version>
     </properties>
 
