@@ -7,6 +7,7 @@ import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.LoginApi;
+import org.openapitools.model.GameVariant;
 import org.openapitools.model.LoginResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -73,6 +74,8 @@ public class LoginController implements LoginApi {
                         user.setLastLogin(now);
                         user.setPhotoURL(principal.getClaims().get("picture") != null ? principal.getClaims().get("picture").toString() : null);
                         user.setProviderId("google");
+                        user.setSkipAnimation(false);
+                        user.setGameVariant(GameVariant.ROTTERDAMS);
 
                         return Mono.just(user);
                     }))
