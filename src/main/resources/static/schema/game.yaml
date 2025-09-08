@@ -32,10 +32,10 @@ components:
             required:
               - card
               - player
-#        elder:
-#          type: integer
-#          minimum: 0
-#          maximum: 3
+        #        elder:
+        #          type: integer
+        #          minimum: 0
+        #          maximum: 3
         says:
           type: object
           additionalProperties:
@@ -60,6 +60,8 @@ components:
           type: integer
         lastTrickOpen:
           type: boolean
+        gameVariant:
+          $ref: './api.yaml#/components/schemas/GameVariant'
       required:
         - id
         - trump
@@ -73,6 +75,7 @@ components:
         - turns
         - trump
         - lastTrickOpen
+        - gameVariant
     Suit:
       type: string
       enum:
