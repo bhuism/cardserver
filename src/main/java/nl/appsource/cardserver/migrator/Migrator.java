@@ -58,12 +58,21 @@ public class Migrator {
     private void migrate() {
 
         reactiveCouchbaseTemplate.findByQuery(Game.class).all().flatMap(game -> {
+            boolean changed = false;
             if (game.getLastTrickOpen() == null) {
-                log.info("Migrating game {}", game.getId());
                 game.setLastTrickOpen(false);
+                changed = true;
+            }
+
+            if (game.getGameVariant() == null) {
+                game.setGameVariant(GameVariant.HAAGS);
+                changed = true;
+            }
+
+            if (changed) {
                 return gameRepository.save(game);
             } else {
-                return Mono.just(game);
+                return Mono.empty();
             }
         }).subscribe();
 
@@ -89,7 +98,7 @@ public class Migrator {
             if (changed) {
                 return userRepository.save(user);
             } else {
-                return Mono.just(user);
+                return Mono.empty();
             }
 
         }).subscribe();

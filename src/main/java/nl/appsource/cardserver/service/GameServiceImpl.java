@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.PlayCardResponse;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class GameServiceImpl implements GameService {
     private final SseEmitterRepository sseEmitterRepository;
 
     private static final Random RAND = new SecureRandom();
+    private final UserRepository userRepository;
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
@@ -80,22 +82,24 @@ public class GameServiceImpl implements GameService {
 
         log.info("Creating a new game with players {}", randomizedOrderPlayers);
 
-        return Mono.just(new nl.appsource.cardserver.model.Game()).doOnNext((game) -> {
-                game.setId(idGen(20));
-                game.setCreator(creator);
-                game.setCreated(Instant.now());
-                game.setUpdated(Instant.now());
-                game.setPlayers(randomizedOrderPlayers);
-                game.setDealer(RAND.nextInt(4));
-                game.setSay(new HashMap<>());
-                game.setTurns(new ArrayList<>());
-                game.setPlayerCard(randomCards());
-                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-                game.setLastTrickOpen(false);
-            }).flatMap(gameRepository::save)
-            .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
-            .doOnNext(sseEmitterRepository::newGame)
-            .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(13)));
+        return userRepository.findById(creator)
+            .flatMap((user) -> Mono.just(new Game()).doOnNext((game) -> {
+                    game.setId(idGen(20));
+                    game.setCreator(creator);
+                    game.setCreated(Instant.now());
+                    game.setUpdated(Instant.now());
+                    game.setPlayers(randomizedOrderPlayers);
+                    game.setDealer(RAND.nextInt(4));
+                    game.setSay(new HashMap<>());
+                    game.setTurns(new ArrayList<>());
+                    game.setPlayerCard(randomCards());
+                    game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                    game.setLastTrickOpen(false);
+                    game.setGameVariant(user.getGameVariant());
+                }).flatMap(gameRepository::save)
+                .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                .doOnNext(sseEmitterRepository::newGame)
+                .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(13))));
 
     }
 

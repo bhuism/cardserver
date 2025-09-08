@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.openapitools.model.GameVariant;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
@@ -65,5 +66,9 @@ public class Game {
     @Field
     @NotNull
     private Boolean lastTrickOpen;
+
+    @Field
+    @NotNull
+    private GameVariant gameVariant;
 
 }

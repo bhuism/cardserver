@@ -175,11 +175,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return mySseEmitter.subscribe()
             .mergeWith(isAdmin(userId) ? createSseConnectionsEventFlux().map(mySseEmitter::createSseConnectionsEvent) : Flux.empty())
             .doOnSubscribe((s) -> {
-                log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
+                log.info("{} subscribe() appIdentifier={} userId={} signal={}", remoteAddress, appIdentifier, userId, s.toString());
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             }).doFinally((s) -> {
-                log.info("{} unSubscribe() appIdentifier={}  userId={}, count={} signal={}", remoteAddress, appIdentifier, userId, emitters.size(), s.toString());
+                log.info("{} unSubscribe() appIdentifier={}  userId={}, signal={}", remoteAddress, appIdentifier, userId, s.toString());
                 emitters.remove(appIdentifier);
                 mySseEmitter.close();
                 sendOnlineListToFriendsOf(userId);
