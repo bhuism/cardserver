@@ -13,6 +13,7 @@ import nl.appsource.cardserver.service.exception.NeedNewSayRound;
 import nl.appsource.cardserver.service.exception.NoElderException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
+import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
 
 import java.security.SecureRandom;
@@ -205,8 +206,18 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         if (!currentTrick.isEmpty()) {
             final Card leadingCard = currentTrick.getFirst();
-            if (leadingCard.getSuit() != card.getSuit() && getHand(userId).stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()))) {
-                userMessages.add(new UserMessage().userId(userId).message("U heeft verzaakt").variant(UserMessage.VariantEnum.WARNING));
+            final List<Card> hand = getHand(userId);
+            final boolean canFollowSuit = hand.stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()));
+
+            // Check for reneging (verzaak)
+            if (canFollowSuit && card.getSuit() != leadingCard.getSuit()) {
+                userMessages.add(new UserMessage().userId(userId).message("Verzaakt! U moet kleur bekennen.").variant(UserMessage.VariantEnum.WARNING));
+                // In a real game, this might be a penalty. For now, we just warn.
+            } else if (!canFollowSuit && card.getSuit() != game.getTrump() && mustTrump(hand, currentTrick)) {
+                // Check for failure to trump when required
+                final String message = game.getGameVariant() == GameVariant.AMSTERDAMS
+                    ? "Verzaakt! U moet introeven (Amsterdams)." : "Verzaakt! U moet overtroeven (Rotterdams).";
+                userMessages.add(new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.WARNING));
             }
         }
 
@@ -220,6 +231,25 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     }
 
+    private boolean mustTrump(final List<Card> hand, final List<Card> currentTrick) {
+        final Card leadingCard = currentTrick.getFirst();
+        final Suit leadingSuit = leadingCard.getSuit();
+
+        if (leadingSuit == game.getTrump() || !hasSuit(hand, game.getTrump())) {
+            return false;
+        }
+
+        if (game.getGameVariant() == GameVariant.AMSTERDAMS) {
+            return true; // Amsterdam: always trump if you can't follow suit
+        } else { // Rotterdams (and others as default)
+            final Card highestCardInTrick = getHighestCardInTrick(currentTrick);
+            if (highestCardInTrick.getSuit() != game.getTrump()) {
+                return true; // If no trump is on the table, you must trump.
+            }
+            // You only have to trump if you can play a higher trump.
+            return hand.stream().anyMatch(c -> c.getSuit() == game.getTrump() && compareKlaverjassenCards(c, highestCardInTrick) > 0);
+        }
+    }
 
     @Override
     public List<UserMessage> say(final String userId, final Boolean say) throws GameEngineException {
