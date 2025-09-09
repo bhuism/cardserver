@@ -341,9 +341,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
 
     public Card getHighestCardInTrick(final List<Card> trick) {
-        if (trick.isEmpty()) {
-            return null;
-        }
         return trick.stream().max(this::compareKlaverjassenCards).orElseThrow();
     }
 
