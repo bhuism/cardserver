@@ -16,6 +16,7 @@ import reactor.core.publisher.Sinks;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -100,11 +101,7 @@ public final class MySseEmitter {
 
         final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder().event(event).id(id);
 
-        if (data != null) {
-            builder.data(data);
-        } else {
-            builder.data("{}");
-        }
+        builder.data(Objects.requireNonNullElse(data, "{}"));
 
         return builder.build();
     }
@@ -130,6 +127,7 @@ public final class MySseEmitter {
     }
 
     public Flux<ServerSentEvent<?>> subscribe() {
+        this.pingSent = Instant.now();
         return Flux.just(createPingEvent(), createPingEvent(), createPingEvent())
             .concatWith(unicastSink.asFlux())
             .mergeWith(Flux.interval(Duration.ofSeconds(15)).map(aLong -> createPingEvent()).doOnNext((_a) -> this.pingSent = Instant.now()));
