@@ -127,7 +127,7 @@ public class GameServiceImpl implements GameService {
             } catch (GameEngineException e) {
                 return Mono.error(e);
             }
-        }).then(Mono.empty());
+        }).then();
     }
 
     @Override
@@ -180,8 +180,7 @@ public class GameServiceImpl implements GameService {
                 g.setLastTrickOpen(g.getLastTrickOpen() == null || !g.getLastTrickOpen());
                 return gameRepository.save(g).doOnNext(this::sendGameStateUpdate);
             })
-
-            .then(Mono.empty());
+            .then();
     }
 
     private Game sendGameStateUpdate(final Game game) {
