@@ -167,7 +167,7 @@ public class GameController implements GamesApi, V1Api {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .map(userId -> gameService.reload(appIdentifier, userId, gameId))
+            .flatMap(userId -> gameService.reload(appIdentifier, userId, gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }

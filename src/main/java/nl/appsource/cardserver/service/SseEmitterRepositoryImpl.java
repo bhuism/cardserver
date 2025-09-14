@@ -118,7 +118,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     public void updateGameStateForId(final UUID appIdentifier, final Game game) {
-        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(gameToOpenApiConverter.convert(game))));
+        final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
+        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
     }
 
     @Override
