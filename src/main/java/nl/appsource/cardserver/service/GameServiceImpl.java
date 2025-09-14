@@ -190,7 +190,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> reload(UUID appIdentifier, String userId, String gameId) {
+    public Mono<Void> reload(final UUID appIdentifier, final String userId, final String gameId) {
         return gameRepository.findByUserIdAndGameId(userId, gameId).doOnNext(game -> {
             sseEmitterRepository.updateGameStateForId(appIdentifier, game);
         }).then();
