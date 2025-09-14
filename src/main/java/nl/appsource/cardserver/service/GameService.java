@@ -27,4 +27,6 @@ public interface GameService {
     Mono<Void> say(UUID appIdentifier, String userId, String gameId, Boolean say);
 
     Mono<Void> openLastTrick(String userId, String gameId);
+
+    Mono<Void> reload(UUID appIdentifier, String userId, String gameId);
 }

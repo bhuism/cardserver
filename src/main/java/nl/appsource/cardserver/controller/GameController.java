@@ -161,4 +161,14 @@ public class GameController implements GamesApi, V1Api {
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
+
+    @Override
+    public Mono<ResponseEntity<Void>> reload(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .map(userId -> gameService.reload(appIdentifier, userId, gameId))
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+    }
 }

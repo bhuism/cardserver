@@ -28,7 +28,9 @@ public interface SseEmitterRepository {
 
     void gamesChanged(Collection<String> userIds);
 
-    void updateGameState(Game game);
+    void updateGameStateAllPlayers(Game game);
+
+    void updateGameStateForId(UUID appIdentifier, Game game);
 
     void newGame(Game game);
 
