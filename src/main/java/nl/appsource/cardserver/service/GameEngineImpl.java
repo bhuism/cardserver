@@ -33,13 +33,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9");
 
-    //    private static final Map<Rank, Integer> RANK_REGULAR = Map.of(Rank.Ace, 8, Rank.King, 6, Rank.Queen, 5, Rank.Jack, 4, Rank.Ten, 7, Rank.Nine, 3, Rank.Eight, 2, Rank.Seven, 1);
-//
-//    private static final Map<Rank, Integer> RANK_TRUMP = Map.of(Rank.Ace, 14, Rank.King, 12, Rank.Queen, 11, Rank.Jack, 16, Rank.Ten, 13, Rank.Nine, 15, Rank.Eight, 10, Rank.Seven, 9);
+    private static final Comparator<? super Card> TRUMP_SORTER = comparing((Card o) -> o.rank.trumpValue).thenComparing(o -> -o.rank.ordinal());
 
-    private static final Comparator<? super Card> TRUMP_SORTER = comparing(o -> o.rank.trumpValue);
-
-    private static final Comparator<? super Card> REGULAR_SORTER = comparing(o -> o.rank.standardValue);
+    private static final Comparator<? super Card> REGULAR_SORTER = comparing((Card o) -> o.rank.standardValue).thenComparing(o -> -o.rank.ordinal());
 
     private static final Random RAND = new SecureRandom();
 
