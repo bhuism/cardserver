@@ -77,9 +77,10 @@ paths:
   /games/{gameId}/kickAi:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
-      - $ref: "#/components/parameters/gameId"
     post:
       operationId: kickAi
+      parameters:
+        - $ref: "#/components/parameters/gameId"
       responses:
         "200":
           description: ok
