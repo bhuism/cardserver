@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayCardResponse;
 import org.openapitools.model.PlayerSay;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -71,6 +73,18 @@ public class GameController implements GamesApi, V1Api {
                     })
                     .flatMap(playCard -> gameService.playCard(appIdentifier, userId, gameId, convertCard(playCard.getCard())))
             )
+
+
+//            .onErrorResume(GameEngineException.class, throwable -> {
+//                gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+//                return just(new PlayCardResponse().cardWasPlayed(false));
+//            })
+//            .onErrorResume(Throwable.class, throwable -> {
+//                log.error("", throwable);
+//                gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+//                return just(new PlayCardResponse().cardWasPlayed(false));
+//            })
+
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }

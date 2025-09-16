@@ -9,6 +9,7 @@ import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.PlayCardResponse;
+import org.openapitools.model.UserMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -112,8 +113,12 @@ public class GameServiceImpl implements GameService {
             try {
                 new GameEngineImpl(g).playCard(playerId, card).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
                 return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2))).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
-            } catch (GameEngineException e) {
-                return Mono.error(e);
+            } catch (GameEngineException gameEngineException) {
+                sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message(gameEngineException.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                return Mono.error(gameEngineException);
+            } catch (Throwable throwable) {
+                sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
+                return Mono.error(throwable);
             }
         });
     }
