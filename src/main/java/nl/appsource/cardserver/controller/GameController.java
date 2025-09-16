@@ -51,7 +51,8 @@ public class GameController implements GamesApi, V1Api {
             .flatMap(userId -> gameService.getGame(userId, gameId))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
+            .doOnNext(r -> log.warn("Game {} not found", gameId));
     }
 
     @Override
