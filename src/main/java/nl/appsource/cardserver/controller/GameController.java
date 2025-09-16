@@ -37,10 +37,14 @@ public class GameController implements GamesApi, V1Api {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-    private Mono<String> authorize(final UUID appIdentifier) {
+    private Mono<String> getUserId() {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+            .map(Authentication::getName);
+    }
+
+    private Mono<String> authorize(final UUID appIdentifier) {
+        return getUserId()
             .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId));
     }
 
@@ -51,8 +55,11 @@ public class GameController implements GamesApi, V1Api {
             .flatMap(userId -> gameService.getGame(userId, gameId))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()))
-            .doOnNext(r -> log.warn("Game {} not found", gameId));
+            .switchIfEmpty(Mono.defer(() -> {
+                log.warn("{} getGame({}), game not found", exchange.getRequest().getRemoteAddress(), gameId);
+                return Mono.empty();
+            }))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
@@ -63,20 +70,9 @@ public class GameController implements GamesApi, V1Api {
                         return playCard;
                     })
                     .flatMap(playCard -> gameService.playCard(appIdentifier, userId, gameId, convertCard(playCard.getCard())))
-//                    .onErrorResume(GameEngineException.class, throwable -> {
-//                        sseEmitterRepository.sendUserMessage();
-//                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                        return just(new PlayCardResponse().cardWasPlayed(false));
-//                    })
-//                    .onErrorResume(Throwable.class, throwable -> {
-//                        log.error("", throwable);
-//                        gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                        return just(new PlayCardResponse().cardWasPlayed(false));
-//                    })
             )
-
             .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
@@ -92,7 +88,7 @@ public class GameController implements GamesApi, V1Api {
         return authorize(appIdentifier)
             .mapNotNull(userId -> gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert))
             .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
 
     }
 
@@ -103,7 +99,7 @@ public class GameController implements GamesApi, V1Api {
             .flatMap(userId -> createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers())))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
 
     }
 
@@ -121,9 +117,7 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> say(final UUID appIdentifier, final String gameId, final Mono<PlayerSay> playerSay, final ServerWebExchange exchange) {
 
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .flatMap(userId -> playerSay.map(say -> {
                         log.info("{} say() user {} says {}", exchange.getRequest().getRemoteAddress(), userId, say.getSay());
                         return say.getSay();
@@ -140,14 +134,12 @@ public class GameController implements GamesApi, V1Api {
 //                })
             )
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> openLastTrick(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .flatMap(userId -> gameService.openLastTrick(userId, gameId)
 //                .onErrorResume(GameEngineException.class, throwable -> {
 //                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
@@ -160,16 +152,14 @@ public class GameController implements GamesApi, V1Api {
 //                })
             )
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> reload(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
+        return authorize(appIdentifier)
             .flatMap(userId -> gameService.reload(appIdentifier, userId, gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }
