@@ -41,7 +41,9 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userId, final ServerWebExchange exchange) {
 //        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress(), userId);
-        return userService.findById(userId).mapNotNull(userToOpenApiConverter::convert).map(ResponseEntity::ok);
+        return userService.findById(userId).mapNotNull(userToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
     }
 
 

@@ -132,25 +132,30 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void finishWithAi(final String gameId, final Duration initialDelay) {
-        Mono.just(gameId).flatMap(gameRepository::findById).filter(game -> {
-            final GameEngine gameEngine = new GameEngineImpl(game);
-            return gameEngine.isAiSay() || gameEngine.isAiTurn();
-        }).delayElement(initialDelay).map(GameEngineImpl::new).flatMap(gameEngine -> {
-            try {
-                if (gameEngine.isAiSay()) {
-                    gameEngine.sayAi().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
-                } else if (gameEngine.isAiTurn()) {
-                    gameEngine.playAiCard().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+        Mono.just(gameId)
+            .flatMap(gameRepository::findById)
+            .filter(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                return gameEngine.isAiSay() || gameEngine.isAiTurn();
+            })
+            .delayElement(initialDelay)
+            .map(GameEngineImpl::new)
+            .flatMap(gameEngine -> {
+                try {
+                    if (gameEngine.isAiSay()) {
+                        gameEngine.sayAi().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+                    } else if (gameEngine.isAiTurn()) {
+                        gameEngine.playAiCard().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+                    }
+                    return Mono.just(gameEngine);
+                } catch (GameEngineException e) {
+                    log.error("Exception during sayAi()", e);
+                    return Mono.error(e);
                 }
-                return Mono.just(gameEngine);
-            } catch (GameEngineException e) {
-                log.error("Exception during sayAi()", e);
-                return Mono.error(e);
-            }
-        }).map(GameEngineImpl::getGame).flatMap(gameRepository::save).map(this::sendGameStateUpdate).filter(game -> {
-            final GameEngine gameEngine = new GameEngineImpl(game);
-            return gameEngine.isAiSay() || gameEngine.isAiTurn();
-        }).doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2))).subscribe();
+            }).map(GameEngineImpl::getGame).flatMap(gameRepository::save).map(this::sendGameStateUpdate).filter(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                return gameEngine.isAiSay() || gameEngine.isAiTurn();
+            }).doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2))).subscribe();
     }
 
     public static Map<Card, Integer> randomCards() {
