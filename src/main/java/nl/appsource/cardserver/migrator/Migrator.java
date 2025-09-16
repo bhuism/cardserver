@@ -12,6 +12,7 @@ import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.GameVariant;
+import org.openapitools.model.ScreenOrientation;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
@@ -92,6 +93,11 @@ public class Migrator {
 
             if (user.getGameVariant() == null) {
                 user.setGameVariant(GameVariant.ROTTERDAMS);
+                changed = true;
+            }
+
+            if (user.getScreenOrientation() == null) {
+                user.setScreenOrientation(ScreenOrientation.AUTO);
                 changed = true;
             }
 

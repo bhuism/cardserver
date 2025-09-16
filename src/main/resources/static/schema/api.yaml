@@ -355,10 +355,13 @@ components:
           type: boolean
         gameVariant:
           $ref: '#/components/schemas/GameVariant'
+        screenOrientation:
+          $ref: '#/components/schemas/ScreenOrientation'
       required:
         - displayName
         - skipAnimation
         - gameVariant
+        - screenOrientation
     createGame:
       type: object
       properties:
@@ -444,6 +447,11 @@ components:
         - amsterdams
         - rotterdams
         - haags
+    ScreenOrientation:
+      enum:
+        - auto
+        - portrait
+        - landscape
   parameters:
     AppIdentifier:
       name: App-Identifier

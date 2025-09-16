@@ -18,6 +18,8 @@ components:
           type: boolean
         gameVariant:
           $ref: "./api.yaml#/components/schemas/GameVariant"
+        screenOrientation:
+          $ref: "./api.yaml#/components/schemas/ScreenOrientation"
       required:
         - id
         - updated
@@ -26,4 +28,4 @@ components:
         - online
         - skipAnimation
         - gameVariant
-
+        - screenOrientation
