@@ -64,7 +64,9 @@ public class UserController implements UsersApi, V1Api {
 
                 return Mono.zip(arr -> new InvitesResponse().incoming((List<String>) arr[0]).friends((List<String>) arr[1]).outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
 
-            }).map(ResponseEntity::ok);
+            }).map(ResponseEntity::ok)
+            .switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+
 
     }
 
@@ -76,8 +78,9 @@ public class UserController implements UsersApi, V1Api {
             .flatMap(userId -> arg.map(postMessage -> {
                 log.info("{} sendMessage() userId={}", exchange.getRequest().getRemoteAddress(), userId);
                 sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
-                return ResponseEntity.ok().build();
-            }));
+                return ResponseEntity.ok().<Void>build();
+            }))
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -86,7 +89,8 @@ public class UserController implements UsersApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .doOnNext((userId) -> sseEmitterRepository.ping(appIdentifier))
-            .then(just(ResponseEntity.ok().build()));
+            .then(just(ResponseEntity.ok().<Void>build()))
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -95,7 +99,8 @@ public class UserController implements UsersApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .doOnNext((userId) -> sseEmitterRepository.pong(appIdentifier))
-            .then(just(ResponseEntity.ok().build()));
+            .then(just(ResponseEntity.ok().<Void>build()))
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -111,7 +116,8 @@ public class UserController implements UsersApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> userService.removeInvite(userId, friendId))
-            .then(just(ResponseEntity.ok().build()));
+            .then(just(ResponseEntity.ok().<Void>build()))
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
 
     }
 
@@ -122,7 +128,8 @@ public class UserController implements UsersApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> userService.acceptInvite(userId, friendId))
-            .then(just(ResponseEntity.ok().build()));
+            .then(just(ResponseEntity.ok().<Void>build()))
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
     }
 
     @Override
@@ -133,7 +140,8 @@ public class UserController implements UsersApi, V1Api {
             .flatMap(userId -> arg.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString())))
             .map(BigDecimal::new)
             .map(count -> new CreateInviteResponse().count(count))
-            .map(ResponseEntity::ok);
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
     }
 
 
@@ -145,7 +153,8 @@ public class UserController implements UsersApi, V1Api {
             .map(Authentication::getName)
             .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updatePreferences(userId, updatePreferences)))
             .mapNotNull(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok);
+            .map(ResponseEntity::ok)
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
 
     }
 }
