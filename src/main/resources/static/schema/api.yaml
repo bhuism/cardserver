@@ -9,8 +9,6 @@ servers:
 
 paths:
   /login:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
     post:
       tags:
         - login
