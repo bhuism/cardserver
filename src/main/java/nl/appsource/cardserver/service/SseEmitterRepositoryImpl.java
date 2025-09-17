@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.list;
 import static java.util.Objects.requireNonNull;
 import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
@@ -61,7 +62,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
-        Optional.ofNullable(emitters.get(appIdentifier)).ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, emitters.keys(), emitters.size(), new Throwable()));
+        Optional.ofNullable(emitters.get(appIdentifier)).ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, list(emitters.keys()), emitters.size(), new Throwable()));
     }
 
     private void doAll(final Consumer<MySseEmitter> consumer) {
