@@ -97,7 +97,9 @@ public class GameServiceImpl implements GameService {
             game.setLastTrickOpen(false);
             game.setGameVariant(user.getGameVariant());
             game.setDealCounter(0);
-        }).flatMap(gameRepository::save).doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers())).doOnNext(sseEmitterRepository::newGame).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(13))));
+        }).flatMap(gameRepository::save)
+            .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers())).doOnNext(sseEmitterRepository::newGame)
+            .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(13), game.getTurns().size())));
 
     }
 
@@ -113,7 +115,7 @@ public class GameServiceImpl implements GameService {
             final String playerId = g.getPlayers().get(cardOwnerIndex);
             try {
                 new GameEngineImpl(g).playCard(playerId, card).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
-                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2))).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
+                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size())).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
             } catch (GameEngineException gameEngineException) {
                 sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message(gameEngineException.getMessage()).variant(UserMessage.VariantEnum.ERROR));
                 return Mono.error(gameEngineException);
@@ -129,7 +131,7 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId).flatMap(g -> {
             try {
                 new GameEngineImpl(g).say(userId, say).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
-                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2)));
+                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size()));
             } catch (GameEngineException e) {
                 return Mono.error(e);
             }
@@ -137,7 +139,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public void finishWithAi(final String gameId, final Duration initialDelay) {
+    public void finishWithAi(final String gameId, final Duration initialDelay, final int turnCount) {
         Mono.just(gameId)
             .flatMap(gameRepository::findById)
             .filter(game -> {
@@ -145,6 +147,7 @@ public class GameServiceImpl implements GameService {
                 return gameEngine.isAiSay() || gameEngine.isAiTurn();
             })
             .delayElement(initialDelay)
+            .filter(game -> game.getTurns().size() == turnCount)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
                 try {
@@ -158,10 +161,15 @@ public class GameServiceImpl implements GameService {
                     log.error("Exception during sayAi()", e);
                     return Mono.error(e);
                 }
-            }).map(GameEngineImpl::getGame).flatMap(gameRepository::save).map(this::sendGameStateUpdate).filter(game -> {
+            }).map(GameEngineImpl::getGame)
+            .flatMap(gameRepository::save)
+            .map(this::sendGameStateUpdate)
+            .filter(game -> {
                 final GameEngine gameEngine = new GameEngineImpl(game);
                 return gameEngine.isAiSay() || gameEngine.isAiTurn();
-            }).doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2))).subscribe();
+            })
+            .doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2), game.getTurns().size()))
+            .subscribe();
     }
 
     public static Map<Card, Integer> randomCards() {

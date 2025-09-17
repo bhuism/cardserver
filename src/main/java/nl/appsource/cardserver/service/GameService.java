@@ -22,7 +22,7 @@ public interface GameService {
 
     Mono<PlayCardResponse> playCard(UUID appIdentifier, String userId, String gameId, Card card);
 
-    void finishWithAi(String gameId, Duration initialDelay);
+    void finishWithAi(String gameId, Duration initialDelay, int turnCount);
 
     Mono<Void> say(UUID appIdentifier, String userId, String gameId, Boolean say);
 

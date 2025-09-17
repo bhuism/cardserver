@@ -3,6 +3,7 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.GamesApi;
@@ -36,6 +37,7 @@ public class GameController implements GamesApi, V1Api {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private final SseEmitterRepository sseEmitterRepository;
+    private final GameRepository gameRepository;
 
     private Mono<String> getUserId() {
         return ReactiveSecurityContextHolder.getContext()
@@ -90,7 +92,8 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> kickAi(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier)
-            .doOnNext(userId -> gameService.finishWithAi(gameId, Duration.ZERO))
+            .flatMap((userId) -> gameRepository.findByUserIdAndGameId(userId, gameId))
+            .doOnNext(game -> gameService.finishWithAi(game.getId(), Duration.ZERO, game.getTurns().size()))
             .then(just(ResponseEntity.ok().build()));
     }
 
