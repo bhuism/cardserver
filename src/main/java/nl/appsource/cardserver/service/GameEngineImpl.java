@@ -27,6 +27,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
+import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
 
 @Slf4j
 public record GameEngineImpl(Game game) implements GameEngine {
@@ -289,19 +290,29 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         if (niemandIsGegaanEnIedereenHeeftGezegd()) {
 
-            log.info("Iedereen heeft gepast, nieuwe troef");
+            if (game.getDealCounter() == 0) {
 
-            final Suit oldTrump = this.game.getTrump();
+                final Suit oldTrump = this.game.getTrump();
 
-            do {
-                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                do {
+                    game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                }
+                while (oldTrump == game.getTrump());
+
+                game.getSay().clear();
+                game.setDealCounter(1);
+
+                userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
             }
-            while (oldTrump == game.getTrump());
 
+        } else {
+
+            game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
             game.getSay().clear();
+            game.setDealCounter(0);
+            game.setPlayerCard(randomCards());
 
-            userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
-
+            userMessages.add(new UserMessage().message("Iedereen heeft weer gepast, nieuwe kaarten").variant(UserMessage.VariantEnum.INFO));
         }
 
         game.setUpdated(Instant.now());
