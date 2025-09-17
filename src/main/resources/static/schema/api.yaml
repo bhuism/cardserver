@@ -174,8 +174,6 @@ paths:
         "200":
           $ref: "#/components/responses/UserResponse"
   /users/single/{userId}:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getUser
       parameters:
