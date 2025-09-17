@@ -89,11 +89,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void ping(final UUID appIdentifier) {
-        if (this.emitters.containsKey(appIdentifier)) {
-            doId(appIdentifier, MySseEmitter::receivePing);
-        } else {
-            log.warn("ping() AppIdentifier {} not found", appIdentifier);
-        }
+        doId(appIdentifier, MySseEmitter::receivePing);
     }
 
     @Override
