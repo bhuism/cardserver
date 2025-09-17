@@ -62,6 +62,8 @@ components:
           type: boolean
         gameVariant:
           $ref: './api.yaml#/components/schemas/GameVariant'
+        dealCounter:
+          type: integer
       required:
         - id
         - trump
@@ -76,6 +78,7 @@ components:
         - trump
         - lastTrickOpen
         - gameVariant
+        - dealCounter
     Suit:
       type: string
       enum:

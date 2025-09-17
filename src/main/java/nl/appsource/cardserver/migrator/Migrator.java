@@ -70,6 +70,11 @@ public class Migrator {
                 changed = true;
             }
 
+            if (game.getDealCounter() == null) {
+                game.setDealCounter(0);
+                changed = true;
+            }
+
             if (changed) {
                 return gameRepository.save(game);
             } else {

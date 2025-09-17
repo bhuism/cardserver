@@ -71,4 +71,7 @@ public class Game {
     @NotNull
     private GameVariant gameVariant;
 
+    @Field
+    @NotNull
+    private Integer dealCounter;
 }

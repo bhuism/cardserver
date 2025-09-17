@@ -96,6 +96,7 @@ public class GameServiceImpl implements GameService {
             game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
             game.setLastTrickOpen(false);
             game.setGameVariant(user.getGameVariant());
+            game.setDealCounter(0);
         }).flatMap(gameRepository::save).doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers())).doOnNext(sseEmitterRepository::newGame).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(13))));
 
     }
