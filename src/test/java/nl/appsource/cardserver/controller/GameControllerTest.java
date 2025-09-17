@@ -2,6 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -52,6 +53,9 @@ public class GameControllerTest {
 
     @MockitoBean
     private GameService gameService;
+
+    @MockitoBean
+    private GameRepository gameRepository;
 
     @Test
     void getGame_whenGameNotFound_shouldReturnNotFound() {
