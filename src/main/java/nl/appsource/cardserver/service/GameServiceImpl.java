@@ -131,7 +131,9 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId).flatMap(g -> {
             try {
                 new GameEngineImpl(g).say(userId, say).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
-                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size()));
+                return gameRepository.save(g)
+                    .doOnNext(this::sendGameStateUpdate)
+                    .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size()));
             } catch (GameEngineException e) {
                 return Mono.error(e);
             }
