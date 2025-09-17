@@ -48,19 +48,25 @@ public final class MySseEmitter {
     }
 
     private void tryEmitNext(final ServerSentEvent<?> userServerSentEvent) {
-        final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
-        if (emitResult.isFailure()) {
-            unicastSink.tryEmitComplete();
+        if (unicastSink != null) {
+            final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
+            if (emitResult.isFailure()) {
+                unicastSink.tryEmitComplete();
+            }
+        } else {
+            log.warn("unicastSink == null");
         }
     }
 
     public void close() {
-        try {
-            this.unicastSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
-        } catch (Throwable t) {
-            log.error("", t);
-        } finally {
-            unicastSink = null;
+        if (unicastSink != null) {
+            try {
+                this.unicastSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+            } catch (Throwable t) {
+                log.error("", t);
+            } finally {
+                unicastSink = null;
+            }
         }
     }
 
