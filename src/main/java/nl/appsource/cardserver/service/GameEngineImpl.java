@@ -290,7 +290,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         if (niemandIsGegaanEnIedereenHeeftGezegd()) {
 
-            if (game.getDealCounter() == 0) {
+            if (game.getDealCounter() % 2 == 0) {
 
                 final Suit oldTrump = this.game.getTrump();
 
@@ -300,18 +300,19 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 while (oldTrump == game.getTrump());
 
                 game.getSay().clear();
-                game.setDealCounter(1);
 
                 userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
             } else {
 
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
                 game.getSay().clear();
-                game.setDealCounter(0);
                 game.setPlayerCard(randomCards());
 
                 userMessages.add(new UserMessage().message("Iedereen heeft weer gepast, nieuwe kaarten").variant(UserMessage.VariantEnum.INFO));
             }
+
+            game.setDealCounter(game.getDealCounter() + 1);
+
         }
 
         game.setUpdated(Instant.now());
