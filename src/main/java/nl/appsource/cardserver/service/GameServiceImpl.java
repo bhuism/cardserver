@@ -173,49 +173,44 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void finishWithAi(final String gameId, final Duration initialDelay, final int turnCount) {
-        if (atomicArray.add(gameId)) {
-            gameRepository.findById(gameId)
-                .filter(game -> {
-                    final GameEngine gameEngine = new GameEngineImpl(game);
-                    return (gameEngine.isAiSay() || gameEngine.isAiTurn()) && game.getTurns()
-                        .size() == turnCount;
-                })
-                .delayElement(initialDelay)
-                .map(GameEngineImpl::new)
-                .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
-                .flatMap(gameEngine -> {
-                    try {
-                        if (gameEngine.isAiSay()) {
-                            gameEngine.sayAi()
-                                .forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
-                            return Mono.just(gameEngine);
-                        } else if (gameEngine.isAiTurn()) {
-                            gameEngine.playAiCard()
-                                .forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
-                            return Mono.just(gameEngine);
-                        } else {
-                            return Mono.empty();
-                        }
-                    } catch (GameEngineException e) {
-                        log.error("Exception during sayAi()", e);
-                        return Mono.error(e);
+        Mono.just(gameId)
+            .delayElement(initialDelay)
+            .filter(atomicArray::add)
+            .flatMap(gameRepository::findById)
+            .map(GameEngineImpl::new)
+            .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
+            .flatMap(gameEngine -> {
+                try {
+                    if (gameEngine.isAiSay()) {
+                        gameEngine.sayAi()
+                            .forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+                        return Mono.just(gameEngine);
+                    } else if (gameEngine.isAiTurn()) {
+                        gameEngine.playAiCard()
+                            .forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+                        return Mono.just(gameEngine);
+                    } else {
+                        return Mono.empty();
                     }
-                })
-                .map(GameEngineImpl::getGame)
-                .flatMap(gameRepository::save)
-                .map(this::sendGameStateUpdate)
-                .filter(game -> {
-                    final GameEngine gameEngine = new GameEngineImpl(game);
-                    return gameEngine.isAiSay() || gameEngine.isAiTurn();
-                })
-                .doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2), game.getTurns().size()))
-                .doFinally(signalType -> {
-                    atomicArray.remove(gameId);
-                })
-                .subscribe();
-        } else {
-            log.warn("Game {} already has a stream running", gameId);
-        }
+                } catch (GameEngineException e) {
+                    log.error("Exception during sayAi()", e);
+                    return Mono.error(e);
+                }
+            })
+            .map(GameEngineImpl::getGame)
+            .flatMap(gameRepository::save)
+            .map(this::sendGameStateUpdate)
+            .filter(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                return gameEngine.isAiSay() || gameEngine.isAiTurn();
+            })
+            .doFinally(signalType -> {
+                atomicArray.remove(gameId);
+            })
+            .subscribe(game -> {
+                this.finishWithAi(gameId, Duration.ofSeconds(2), game.getTurns()
+                    .size());
+            });
     }
 
 //    @Override
