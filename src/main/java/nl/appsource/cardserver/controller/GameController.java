@@ -44,7 +44,8 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} no authentication", exchange.getRequest().getRemoteAddress());
+                log.warn("{} no authentication", exchange.getRequest()
+                    .getRemoteAddress());
                 return Mono.empty();
             }));
     }
@@ -53,136 +54,135 @@ public class GameController implements GamesApi, V1Api {
         return getUserId(exchange)
             .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} sseEmitterRepository validation failed", exchange.getRequest().getRemoteAddress());
+                log.warn("{} sseEmitterRepository validation failed", exchange.getRequest()
+                    .getRemoteAddress());
                 return Mono.empty();
             }));
     }
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        log.info("{} getGame({})", exchange.getRequest().getRemoteAddress(), gameId);
         return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} getGame()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
             .flatMap(userId -> gameService.getGame(userId, gameId))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} getGame({}), game not found", exchange.getRequest().getRemoteAddress(), gameId);
+                log.warn("{} getGame({}), game not found", exchange.getRequest()
+                    .getRemoteAddress(), gameId);
                 return Mono.empty();
             }))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 
     @Override
     public Mono<ResponseEntity<PlayCardResponse>> playCard(final UUID appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .flatMap(userId -> playCardMono.map(playCard -> {
-                        log.info("{} playCard() userI={} plays card={}", exchange.getRequest().getRemoteAddress(), userId, playCard.getCard());
-                        return playCard;
-                    })
-                    .flatMap(playCard -> gameService.playCard(appIdentifier, userId, gameId, convertCard(playCard.getCard())))
-            )
-
-
-//            .onErrorResume(GameEngineException.class, throwable -> {
-//                gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                return just(new PlayCardResponse().cardWasPlayed(false));
-//            })
-//            .onErrorResume(Throwable.class, throwable -> {
-//                log.error("", throwable);
-//                gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                return just(new PlayCardResponse().cardWasPlayed(false));
-//            })
-
+            .doOnNext((userId) -> log.info("{} playCard()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> playCardMono.flatMap(playCard -> gameService.playCard(appIdentifier, userId, gameId, convertCard(playCard.getCard()))))
             .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> kickAi(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} kickAi()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
             .flatMap((userId) -> gameRepository.findByUserIdAndGameId(userId, gameId))
-            .doOnNext(game -> gameService.finishWithAi(game.getId(), Duration.ZERO, game.getTurns().size()))
-            .then(just(ResponseEntity.ok().build()));
+            .doOnNext(game -> gameService.finishWithAi(game.getId(), Duration.ZERO, game.getTurns()
+                .size()))
+            .then(just(ResponseEntity.ok()
+                .build()));
     }
 
     @Override
     public Mono<ResponseEntity<Flux<Game>>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
-//        log.info("{} getGames()", exchange.getRequest().getRemoteAddress());
         return authorize(appIdentifier, exchange)
-            .mapNotNull(userId -> gameService.getGames(userId).mapNotNull(gameToOpenApiConverter::convert))
+            .doOnNext((userId) -> log.info("{} getGames()  userId={}", exchange.getRequest()
+                .getRemoteAddress(), userId))
+            .mapNotNull(userId -> gameService.getGames(userId)
+                .mapNotNull(gameToOpenApiConverter::convert))
             .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
 
     }
 
     @Override
     public Mono<ResponseEntity<Game>> createGame(final UUID appIdentifier, final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
-        log.info("{} createGame()", exchange.getRequest().getRemoteAddress());
         return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} createGame()  userId={}", exchange.getRequest()
+                .getRemoteAddress(), userId))
             .flatMap(userId -> createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers())))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
 
     }
 
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        log.info("{} deleteGame({})", exchange.getRequest().getRemoteAddress(), gameId);
         return authorize(appIdentifier, exchange)
-            .flatMap(userId -> gameService.deleteGame(userId, gameId).defaultIfEmpty(false))
+            .doOnNext((userId) -> log.info("{} deleteGame()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> gameService.deleteGame(userId, gameId)
+                .defaultIfEmpty(false))
             .map(deleted -> deleted
-                ? ResponseEntity.noContent().<Void>build()
-                : ResponseEntity.notFound().<Void>build())
-            .defaultIfEmpty(ResponseEntity.status(401).build());
+                ? ResponseEntity.noContent()
+                .<Void>build()
+                : ResponseEntity.notFound()
+                .<Void>build())
+            .defaultIfEmpty(ResponseEntity.status(401)
+                .build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> say(final UUID appIdentifier, final String gameId, final Mono<PlayerSay> playerSay, final ServerWebExchange exchange) {
 
         return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} deleteGame()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
             .flatMap(userId -> playerSay.map(say -> {
-                        log.info("{} say() user {} says {}", exchange.getRequest().getRemoteAddress(), userId, say.getSay());
+                        log.info("{} say() user {} says {}", exchange.getRequest()
+                            .getRemoteAddress(), userId, say.getSay());
                         return say.getSay();
                     })
                     .flatMap(say -> gameService.say(appIdentifier, userId, gameId, say))
-//                .onErrorResume(GameEngineException.class, throwable -> {
-//                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                    return Mono.empty();
-//                })
-//                .onErrorResume(Throwable.class, throwable -> {
-//                    log.error("", throwable);
-//                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                    return Mono.empty();
-//                })
             )
-            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
+                .build()))
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> openLastTrick(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} openLastTrick()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
             .flatMap(userId -> gameService.openLastTrick(userId, gameId)
-//                .onErrorResume(GameEngineException.class, throwable -> {
-//                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                    return Mono.empty();
-//                })
-//                .onErrorResume(Throwable.class, throwable -> {
-//                    log.error("", throwable);
-//                    gameService.sendUserMessage(new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-//                    return Mono.empty();
-//                })
             )
-            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
+                .build()))
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> reload(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} reload()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
             .flatMap(userId -> gameService.reload(appIdentifier, userId, gameId))
-            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
+                .build()))
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 }
