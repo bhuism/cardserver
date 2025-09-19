@@ -44,8 +44,7 @@ public class GameController implements GamesApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} no authentication", exchange.getRequest()
-                    .getRemoteAddress());
+                log.warn("{} {} no authentication", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath());
                 return Mono.empty();
             }));
     }
@@ -54,8 +53,7 @@ public class GameController implements GamesApi, V1Api {
         return getUserId(exchange)
             .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} sseEmitterRepository validation failed", exchange.getRequest()
-                    .getRemoteAddress());
+                log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath());
                 return Mono.empty();
             }));
     }
@@ -91,13 +89,10 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> kickAi(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} kickAi()  userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), userId, gameId))
+            .doOnNext((userId) -> log.info("{} kickAi()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
             .flatMap((userId) -> gameRepository.findByUserIdAndGameId(userId, gameId))
-            .doOnNext(game -> gameService.finishWithAi(game.getId(), Duration.ZERO, game.getTurns()
-                .size()))
-            .then(just(ResponseEntity.ok()
-                .build()));
+            .doOnNext(game -> gameService.finishWithAi(game.getId(), Duration.ZERO, game.getTurns().size()))
+            .then(just(ResponseEntity.ok().build()));
     }
 
     @Override

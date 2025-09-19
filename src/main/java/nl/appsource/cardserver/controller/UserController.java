@@ -43,8 +43,8 @@ public class UserController implements UsersApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} no authentication", exchange.getRequest()
-                    .getRemoteAddress());
+                log.warn("{} {} no authentication", exchange.getRequest()
+                    .getRemoteAddress(), exchange.getRequest().getPath());
                 return Mono.empty();
             }));
     }
@@ -53,8 +53,8 @@ public class UserController implements UsersApi, V1Api {
         return getUserId(exchange)
             .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} sseEmitterRepository validation failed", exchange.getRequest()
-                    .getRemoteAddress());
+                log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest()
+                    .getRemoteAddress(), exchange.getRequest().getPath());
                 return Mono.empty();
             }));
     }

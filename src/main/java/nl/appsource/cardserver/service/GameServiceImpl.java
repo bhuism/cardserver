@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
@@ -83,102 +84,170 @@ public class GameServiceImpl implements GameService {
 
         log.info("Creating a new game with players {}", randomizedOrderPlayers);
 
-        return userRepository.findById(creator).flatMap((user) -> Mono.just(new Game()).doOnNext((game) -> {
-            game.setId(idGen(20));
-            game.setCreator(creator);
-            game.setCreated(Instant.now());
-            game.setUpdated(Instant.now());
-            game.setPlayers(randomizedOrderPlayers);
-            game.setDealer(RAND.nextInt(4));
-            game.setSay(new HashMap<>());
-            game.setTurns(new ArrayList<>());
-            game.setPlayerCard(randomCards());
-            game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-            game.setLastTrickOpen(false);
-            game.setGameVariant(user.getGameVariant());
-            game.setDealCounter(0);
-        }).flatMap(gameRepository::save)
-            .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers())).doOnNext(sseEmitterRepository::newGame)
-            .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(13), game.getTurns().size())));
+        return userRepository.findById(creator)
+            .flatMap((user) -> Mono.just(new Game())
+                    .doOnNext((game) -> {
+                        game.setId(idGen(20));
+                        game.setCreator(creator);
+                        game.setCreated(Instant.now());
+                        game.setUpdated(Instant.now());
+                        game.setPlayers(randomizedOrderPlayers);
+                        game.setDealer(RAND.nextInt(4));
+                        game.setSay(new HashMap<>());
+                        game.setTurns(new ArrayList<>());
+                        game.setPlayerCard(randomCards());
+                        game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                        game.setLastTrickOpen(false);
+                        game.setGameVariant(user.getGameVariant());
+                        game.setDealCounter(0);
+                    })
+                    .flatMap(gameRepository::save)
+                    .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                    .doOnNext(sseEmitterRepository::newGame)
+                //.doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(1), game.getTurns().size()))
+            );
 
     }
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
-        return gameRepository.findById(gameId).filter(game -> game.getCreator().equals(userId)).flatMap(game -> gameRepository.delete(game).then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers()))).thenReturn(true));
+        return gameRepository.findById(gameId)
+            .filter(game -> game.getCreator()
+                .equals(userId))
+            .flatMap(game -> gameRepository.delete(game)
+                .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
+                .thenReturn(true));
     }
 
     @Override
     public Mono<PlayCardResponse> playCard(final UUID appIdentifier, final String userId, final String gameId, final Card card) {
-        return gameRepository.findById(gameId).flatMap((g) -> {
-            final int cardOwnerIndex = g.getPlayerCard().get(card);
-            final String playerId = g.getPlayers().get(cardOwnerIndex);
-            try {
-                new GameEngineImpl(g).playCard(playerId, card).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
-                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate).doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size())).map((_g) -> new PlayCardResponse().cardWasPlayed(true));
-            } catch (GameEngineException gameEngineException) {
-                sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message(gameEngineException.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.error(gameEngineException);
-            } catch (Throwable throwable) {
-                sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message(throwable.getClass().getName() + ":" + throwable.getMessage()).variant(UserMessage.VariantEnum.ERROR));
-                return Mono.error(throwable);
-            }
-        });
+        return gameRepository.findById(gameId)
+            .flatMap((g) -> {
+                final int cardOwnerIndex = g.getPlayerCard()
+                    .get(card);
+                final String playerId = g.getPlayers()
+                    .get(cardOwnerIndex);
+                try {
+                    new GameEngineImpl(g).playCard(playerId, card)
+                        .forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
+                    return gameRepository.save(g)
+                        .doOnNext(this::sendGameStateUpdate)
+                        .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns()
+                            .size()))
+                        .map((_g) -> new PlayCardResponse().cardWasPlayed(true));
+                } catch (GameEngineException gameEngineException) {
+                    sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                        .message(gameEngineException.getMessage())
+                        .variant(UserMessage.VariantEnum.ERROR));
+                    return Mono.error(gameEngineException);
+                } catch (Throwable throwable) {
+                    sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                        .message(throwable.getClass()
+                            .getName() + ":" + throwable.getMessage())
+                        .variant(UserMessage.VariantEnum.ERROR));
+                    return Mono.error(throwable);
+                }
+            });
     }
 
     @Override
     public Mono<Void> say(final UUID appIdentifier, final String userId, final String gameId, final Boolean say) {
-        return gameRepository.findById(gameId).flatMap(g -> {
-            try {
-                new GameEngineImpl(g).say(userId, say).forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
-                return gameRepository.save(g)
-                    .doOnNext(this::sendGameStateUpdate)
-                    .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size()));
-            } catch (GameEngineException e) {
-                return Mono.error(e);
-            }
-        }).then();
+        return gameRepository.findById(gameId)
+            .flatMap(g -> {
+                try {
+                    new GameEngineImpl(g).say(userId, say)
+                        .forEach(message -> this.sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, message));
+                    return gameRepository.save(g)
+                        .doOnNext(this::sendGameStateUpdate)
+                        .doOnNext(game -> finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns()
+                            .size()));
+                } catch (GameEngineException e) {
+                    return Mono.error(e);
+                }
+            })
+            .then();
     }
+
+    final Set<String> atomicArray = ConcurrentHashMap.newKeySet();
+
 
     @Override
     public void finishWithAi(final String gameId, final Duration initialDelay, final int turnCount) {
-        Mono.just(gameId)
-            .flatMap(gameRepository::findById)
-            .filter(game -> {
-                final GameEngine gameEngine = new GameEngineImpl(game);
-                return gameEngine.isAiSay() || gameEngine.isAiTurn();
-            })
-            .delayElement(initialDelay)
-            .filter(game -> game.getTurns().size() == turnCount)
-            .map(GameEngineImpl::new)
-            .flatMap(gameEngine -> {
-                try {
-                    if (gameEngine.isAiSay()) {
-                        gameEngine.sayAi().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
-                    } else if (gameEngine.isAiTurn()) {
-                        gameEngine.playAiCard().forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+        if (atomicArray.add(gameId)) {
+            gameRepository.findById(gameId)
+                .filter(game -> {
+                    final GameEngine gameEngine = new GameEngineImpl(game);
+                    return (gameEngine.isAiSay() || gameEngine.isAiTurn()) && game.getTurns()
+                        .size() == turnCount;
+                })
+                .delayElement(initialDelay)
+                .map(GameEngineImpl::new)
+                .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
+                .flatMap(gameEngine -> {
+                    try {
+                        if (gameEngine.isAiSay()) {
+                            gameEngine.sayAi()
+                                .forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+                            return Mono.just(gameEngine);
+                        } else if (gameEngine.isAiTurn()) {
+                            gameEngine.playAiCard()
+                                .forEach(message -> log.warn("{}:{}", message.getVariant(), message.getMessage()));
+                            return Mono.just(gameEngine);
+                        } else {
+                            return Mono.empty();
+                        }
+                    } catch (GameEngineException e) {
+                        log.error("Exception during sayAi()", e);
+                        return Mono.error(e);
                     }
-                    return Mono.just(gameEngine);
-                } catch (GameEngineException e) {
-                    log.error("Exception during sayAi()", e);
-                    return Mono.error(e);
-                }
-            }).map(GameEngineImpl::getGame)
-            .flatMap(gameRepository::save)
-            .map(this::sendGameStateUpdate)
-            .filter(game -> {
-                final GameEngine gameEngine = new GameEngineImpl(game);
-                return gameEngine.isAiSay() || gameEngine.isAiTurn();
-            })
-            .doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2), game.getTurns().size()))
-            .subscribe();
+                })
+                .map(GameEngineImpl::getGame)
+                .flatMap(gameRepository::save)
+                .map(this::sendGameStateUpdate)
+                .filter(game -> {
+                    final GameEngine gameEngine = new GameEngineImpl(game);
+                    return gameEngine.isAiSay() || gameEngine.isAiTurn();
+                })
+                .doOnNext(game -> this.finishWithAi(gameId, Duration.ofSeconds(2), game.getTurns().size()))
+                .doFinally(signalType -> {
+                    atomicArray.remove(gameId);
+                })
+                .subscribe();
+        } else {
+            log.warn("Game {} already has a stream running", gameId);
+        }
     }
+
+//    @Override
+//    public Mono<Game> deal(final String userId, final String gameId) {
+//        return Mono.defer(() -> {
+//            synchronized (gameProcessingMonos) {
+//                return gameProcessingMonos.computeIfAbsent(gameId, k ->
+//                    gameRepository.findById(gameId)
+//                        .filter(game -> game.getCreator().equals(userId))
+//                        .flatMap(game -> {
+//                            final GameEngine gameEngine = new GameEngineImpl(game);
+//                            gameEngine.deal();
+//                            return gameRepository.save(game)
+//                                .doOnNext(this::sendGameStateUpdate)
+//                                .doOnNext(g -> finishWithAi(g.getId(), Duration.ofSeconds(1), g.getTurns().size()))
+//                                .doFinally(signalType -> {
+//                                    synchronized (gameProcessingMonos) {
+//                                        gameProcessingMonos.remove(gameId);
+//                                    }
+//                                });
+//                        })
+//                );
+//            }
+//        });
+//    }
 
     public static Map<Card, Integer> randomCards() {
         final Map<Card, Integer> cards = new HashMap<>();
         final List<Card> deck = Arrays.asList(Card.values());
         shuffle(deck, RAND);
-        IntStream.range(0, deck.size()).forEach(index -> cards.put(deck.get(index), index % 4));
+        IntStream.range(0, deck.size())
+            .forEach(index -> cards.put(deck.get(index), index % 4));
         return cards;
     }
 
@@ -197,9 +266,11 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> openLastTrick(final String userId, final String gameId) {
-        return gameRepository.findById(gameId).flatMap(g -> {
+        return gameRepository.findById(gameId)
+            .flatMap(g -> {
                 g.setLastTrickOpen(g.getLastTrickOpen() == null || !g.getLastTrickOpen());
-                return gameRepository.save(g).doOnNext(this::sendGameStateUpdate);
+                return gameRepository.save(g)
+                    .doOnNext(this::sendGameStateUpdate);
             })
             .then();
     }
@@ -211,8 +282,10 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> reload(final UUID appIdentifier, final String userId, final String gameId) {
-        return gameRepository.findByUserIdAndGameId(userId, gameId).doOnNext(game -> {
-            sseEmitterRepository.updateGameStateForId(appIdentifier, game);
-        }).then();
+        return gameRepository.findByUserIdAndGameId(userId, gameId)
+            .doOnNext(game -> {
+                sseEmitterRepository.updateGameStateForId(appIdentifier, game);
+            })
+            .then();
     }
 }

@@ -42,16 +42,16 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     @Override
     public int calcTricksPlayed() {
-        return this.game.getTurns().size() / 4;
+        return getTurnCount() / 4;
     }
 
     @Override
     public boolean isFullTrick() {
-        return game.getTurns().size() % 4 == 0;
+        return getTurnCount() % 4 == 0;
     }
 
     private List<Card> getTrickCards(final int trickNr) {
-        return game.getTurns().subList(trickNr * 4, Math.min(game.getTurns().size(), trickNr * 4 + 4));
+        return game.getTurns().subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
     }
 
     private Card determineTrickWinningCard(final int trickNr) throws GameEngineException {
@@ -115,7 +115,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new NoElderException(null);
         }
 
-        final int laatsteKaart = game.getTurns().size() % 4;
+        final int laatsteKaart = getTurnCount() % 4;
 
         if (laatsteKaart != 0) {
             return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
@@ -124,7 +124,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 return (game.getDealer() + 1) % 4;
             } else {
                 final int tricksPlayedCount = calcTricksPlayed();
-                return determineTrickWinner(tricksPlayedCount - 1) + game.getTurns().size() % 4;
+                return determineTrickWinner(tricksPlayedCount - 1) + getTurnCount() % 4;
             }
         }
     }
@@ -323,7 +323,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     @Override
     public boolean isCompleted() {
-        return game.getTurns().size() >= 32;
+        return getTurnCount() >= 32;
     }
 
     private int whoHasCard(final Card card) {
@@ -581,4 +581,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
 
+    public int getTurnCount() {
+        return game.getTurns().size();
+    }
 }
