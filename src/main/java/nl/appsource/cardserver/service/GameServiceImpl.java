@@ -174,13 +174,13 @@ public class GameServiceImpl implements GameService {
     @Override
     public void finishWithAi(final String gameId, final Duration initialDelay, final int turnCount) {
         Mono.just(gameId)
-            .filter(atomicArray::add)
             .flatMap(gameRepository::findById)
             .map(GameEngineImpl::new)
             .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
             .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
             .delayElement(initialDelay)
             .map(gameEngine -> gameEngine.getGame().getId())
+            .filter(atomicArray::add)
             .flatMap(gameRepository::findById)
             .map(GameEngineImpl::new)
             .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
