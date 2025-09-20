@@ -58,7 +58,7 @@ jobs:
     name: Rollout Restart
     needs: build
     if: github.event_name == 'push'
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-22.04-arm
     steps:
 
       - name: Install kubectl
