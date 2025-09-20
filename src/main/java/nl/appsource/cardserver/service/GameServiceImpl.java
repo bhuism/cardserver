@@ -174,11 +174,17 @@ public class GameServiceImpl implements GameService {
     @Override
     public void finishWithAi(final String gameId, final Duration initialDelay, final int turnCount) {
         Mono.just(gameId)
-            .delayElement(initialDelay)
             .filter(atomicArray::add)
             .flatMap(gameRepository::findById)
             .map(GameEngineImpl::new)
             .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
+            .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
+            .delayElement(initialDelay)
+            .map(gameEngine -> gameEngine.getGame().getId())
+            .flatMap(gameRepository::findById)
+            .map(GameEngineImpl::new)
+            .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
+            .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
             .flatMap(gameEngine -> {
                 try {
                     if (gameEngine.isAiSay()) {
@@ -200,15 +206,13 @@ public class GameServiceImpl implements GameService {
             .map(GameEngineImpl::getGame)
             .flatMap(gameRepository::save)
             .map(this::sendGameStateUpdate)
-            .filter(game -> {
-                final GameEngine gameEngine = new GameEngineImpl(game);
-                return gameEngine.isAiSay() || gameEngine.isAiTurn();
-            })
+            .map(GameEngineImpl::new)
+            .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
             .doFinally(signalType -> {
                 atomicArray.remove(gameId);
             })
-            .subscribe(game -> {
-                this.finishWithAi(gameId, Duration.ofSeconds(2), game.getTurns()
+            .subscribe(gameEngine -> {
+                this.finishWithAi(gameId, Duration.ofSeconds(2), gameEngine.getGame().getTurns()
                     .size());
             });
     }
@@ -258,7 +262,6 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-
     @Override
     public Mono<Void> openLastTrick(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
@@ -266,6 +269,9 @@ public class GameServiceImpl implements GameService {
                 g.setLastTrickOpen(g.getLastTrickOpen() == null || !g.getLastTrickOpen());
                 return gameRepository.save(g)
                     .doOnNext(this::sendGameStateUpdate);
+            })
+            .doOnNext(game -> {
+                finishWithAi(game.getId(), Duration.ofSeconds(2), game.getTurns().size());
             })
             .then();
     }
