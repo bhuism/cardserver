@@ -10,12 +10,16 @@ servers:
 paths:
   /login:
     post:
-      tags:
-        - login
       operationId: login
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
+  /loadUser:
+    post:
+      operationId: loadUser
+      responses:
+        "200":
+          $ref: "#/components/responses/LoadUserResponse"
   /games/{gameId}/say:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
@@ -174,6 +178,8 @@ paths:
         "200":
           $ref: "#/components/responses/UserResponse"
   /users/single/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getUser
       parameters:
@@ -523,6 +529,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/loginResponse'
+    LoadUserResponse:
+      description: load user response
+      content:
+        application/json:
+          schema:
+            $ref: "./user.yaml#/components/schemas/User"
     CreateInvitesResponse:
       description: response for create invites
       content:

@@ -44,7 +44,8 @@ public class UserController implements UsersApi, V1Api {
             .map(Authentication::getName)
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} {} no authentication", exchange.getRequest()
-                    .getRemoteAddress(), exchange.getRequest().getPath());
+                    .getRemoteAddress(), exchange.getRequest()
+                    .getPath());
                 return Mono.empty();
             }));
     }
@@ -54,19 +55,22 @@ public class UserController implements UsersApi, V1Api {
             .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest()
-                    .getRemoteAddress(), exchange.getRequest().getPath());
+                    .getRemoteAddress(), exchange.getRequest()
+                    .getPath());
                 return Mono.empty();
             }));
     }
     // FIXME: unauthorized
 
     @Override
-    public Mono<ResponseEntity<User>> getUser(final String userId, final ServerWebExchange exchange) {
-        return userService.findById(userId)
+    public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
+
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} getUser({})  userId={}", exchange.getRequest().getRemoteAddress(), userIdParam, userId))
+            .flatMap((userId) -> userService.findById(userIdParam))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
