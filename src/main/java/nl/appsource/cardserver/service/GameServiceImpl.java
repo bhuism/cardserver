@@ -177,14 +177,14 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::findById)
             .map(GameEngineImpl::new)
             .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
-            .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
+            .filter(gameEngine -> gameEngine.isAiSay() || gameEngine.isAiTurn())
             .delayElement(initialDelay)
             .map(gameEngine -> gameEngine.getGame().getId())
             .filter(atomicArray::add)
             .flatMap(gameRepository::findById)
             .map(GameEngineImpl::new)
             .filter(gameEngine -> gameEngine.getTurnCount() == turnCount)
-            .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
+            .filter(gameEngine -> gameEngine.isAiSay() || gameEngine.isAiTurn())
             .flatMap(gameEngine -> {
                 try {
                     if (gameEngine.isAiSay()) {
@@ -207,7 +207,7 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::save)
             .map(this::sendGameStateUpdate)
             .map(GameEngineImpl::new)
-            .filter(gameEngine -> (gameEngine.isAiSay() || gameEngine.isAiTurn()) && !gameEngine.getGame().getLastTrickOpen())
+            .filter(gameEngine -> gameEngine.isAiSay() || gameEngine.isAiTurn())
             .doFinally(signalType -> {
                 atomicArray.remove(gameId);
             })
