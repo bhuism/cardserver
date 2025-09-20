@@ -10,12 +10,16 @@ servers:
 paths:
   /login:
     post:
+      tags:
+        - login
       operationId: login
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
   /loadUser:
     post:
+      tags:
+        - login
       operationId: loadUser
       responses:
         "200":
