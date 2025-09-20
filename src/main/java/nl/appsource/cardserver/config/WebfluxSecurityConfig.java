@@ -41,8 +41,10 @@ public class WebfluxSecurityConfig {
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.OPTIONS)))
             .authorizeExchange((exchanges) -> exchanges.anyExchange()
-                .authenticated()).oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
-                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://accounts.google.com").build());
+                .authenticated())
+            .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
+                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://accounts.google.com")
+                    .build());
                 customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter());
             }));
         return http.build();
@@ -62,9 +64,9 @@ public class WebfluxSecurityConfig {
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
-            .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**"))
-            .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/loadUser"))
-            .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
+            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**"), new PathPatternParserServerWebExchangeMatcher("/loadUser")))
+            .authorizeExchange((exchanges) -> exchanges.anyExchange()
+                .authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwtDecoder(cardServerJwtModem)));
         return http.build();
     }
@@ -77,8 +79,10 @@ public class WebfluxSecurityConfig {
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
-                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json").permitAll()
-                    .anyExchange().denyAll()
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json")
+                    .permitAll()
+                    .anyExchange()
+                    .denyAll()
             );
 
         return http.build();
