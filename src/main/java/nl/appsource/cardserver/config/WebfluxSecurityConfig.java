@@ -65,8 +65,7 @@ public class WebfluxSecurityConfig {
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**"), new PathPatternParserServerWebExchangeMatcher("/loadUser")))
-            .authorizeExchange((exchanges) -> exchanges.anyExchange()
-                .authenticated())
+            .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwtDecoder(cardServerJwtModem)));
         return http.build();
     }

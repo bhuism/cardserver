@@ -221,12 +221,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public Boolean validate(final UUID appIdentifier, final String userId) {
-        return Mono.just(emitters.get(appIdentifier))
-            .map(mySseEmitter -> mySseEmitter.getUserId().equals(userId))
-            .filter(aBoolean -> aBoolean)
-            .flatMap(aBoolean -> userRepository.existsById(userId))
-            .switchIfEmpty(Mono.just(false))
-            .block();
+        return Optional.ofNullable(emitters.get(appIdentifier))
+            .map(mySseEmitter -> mySseEmitter.getUserId()
+                .equals(userId))
+            .orElse(false);
     }
 
 }
