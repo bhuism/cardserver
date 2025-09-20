@@ -9,7 +9,8 @@ on:
 jobs:
 
   build:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    #runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-22.04-arm
 
     permissions:
       contents: read
