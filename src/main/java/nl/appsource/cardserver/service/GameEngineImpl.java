@@ -194,7 +194,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new NotPlayersTurnException();
         }
 
-        final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
+//        final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
 
 //        if (!currentTrick.isEmpty()) {
 //            final Card leadingCard = currentTrick.getFirst();
