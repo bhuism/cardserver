@@ -3,7 +3,6 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
-import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -36,7 +35,6 @@ public class GameController implements GamesApi, V1Api {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private final SseEmitterRepository sseEmitterRepository;
-    private final GameRepository gameRepository;
 
     private Mono<String> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
