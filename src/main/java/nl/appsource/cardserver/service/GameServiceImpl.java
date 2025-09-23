@@ -248,9 +248,9 @@ public class GameServiceImpl implements GameService {
                     }
 
                     if (gameEngine.isAiSay()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000), gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame().getId()));
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame().getId()));
                     } else if (gameEngine.isAiTurn()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame().getId()));
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000), gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame().getId()));
                     }
 
                 } catch (GameEngineException e) {
