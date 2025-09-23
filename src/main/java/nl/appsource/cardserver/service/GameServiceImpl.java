@@ -128,7 +128,7 @@ public class GameServiceImpl implements GameService {
 
     private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
 
     boolean stop = false;
 
@@ -264,7 +264,6 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void scheduleGameEvent(final ScheduledGameEvent scheduledGameEvent) {
-        log.info("Scheduling: {}", scheduledGameEvent);
         eventQueue.add(scheduledGameEvent);
         if (scheduledGameEvent.getExecutionTime() <= System.currentTimeMillis()) {
             this.processDueEvents();
