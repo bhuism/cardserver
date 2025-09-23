@@ -11,6 +11,8 @@ import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -46,6 +48,8 @@ import static nl.appsource.cardserver.utils.Utils.isAdmin;
 public class GameServiceImpl implements GameService {
 
     private final GameRepository gameRepository;
+
+    private final Environment environment;
 
     private final SseEmitterRepository sseEmitterRepository;
 
@@ -132,43 +136,45 @@ public class GameServiceImpl implements GameService {
     public void init() {
         scheduler.schedule(gameThread, 1, TimeUnit.SECONDS);
 
-        gameRepository.findAll()
-            .map(GameEngineImpl::new)
-            .flatMap(gameEngine -> {
+        if (environment.acceptsProfiles(Profiles.of("production"))) {
+            gameRepository.findAll()
+                .map(GameEngineImpl::new)
+                .flatMap(gameEngine -> {
 
-                if (gameEngine.isCompleted()) {
+                    if (gameEngine.isCompleted()) {
+                        return Mono.empty();
+                    }
+
+                    if (gameEngine.getGame().getLastTrickOpen()) {
+                        gameEngine.getGame().setLastTrickOpen(false);
+                    }
+                    return Mono.just(gameEngine.game());
+                })
+                .flatMap(gameRepository::save)
+                .map(GameEngineImpl::new)
+                .flatMap(gameEngine -> {
+
+                    if (gameEngine.isAiSay()) {
+                        try {
+                            final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
+                            this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame().getId(), null, null);
+                            return Mono.just(gameEngine.getGame());
+                        } catch (GameEngineException e) {
+                            log.warn("Can not ai say game {}", gameEngine.getGame().getId(), e);
+                        }
+                    } else if (gameEngine.isAiTurn()) {
+                        try {
+                            final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
+                            this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame().getId(), null, null);
+                            return Mono.just(gameEngine.getGame());
+                        } catch (GameEngineException e) {
+                            log.warn("Can not ai say game {}", gameEngine.getGame().getId(), e);
+                        }
+                    }
+
                     return Mono.empty();
-                }
-
-                if (gameEngine.getGame().getLastTrickOpen()) {
-                    gameEngine.getGame().setLastTrickOpen(false);
-                }
-                return Mono.just(gameEngine.game());
-            })
-            .flatMap(gameRepository::save)
-            .map(GameEngineImpl::new)
-            .flatMap(gameEngine -> {
-
-                if (gameEngine.isAiSay()) {
-                    try {
-                        final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
-                        this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame().getId(), null, null);
-                        return Mono.just(gameEngine.getGame());
-                    } catch (GameEngineException e) {
-                        log.warn("Can not ai say game {}", gameEngine.getGame().getId(), e);
-                    }
-                } else if (gameEngine.isAiTurn()) {
-                    try {
-                        final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
-                        this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame().getId(), null, null);
-                        return Mono.just(gameEngine.getGame());
-                    } catch (GameEngineException e) {
-                        log.warn("Can not ai say game {}", gameEngine.getGame().getId(), e);
-                    }
-                }
-
-                return Mono.empty();
-            }).subscribe(gameRepository::save);
+                }).subscribe(gameRepository::save);
+        }
     }
 
     @PreDestroy
