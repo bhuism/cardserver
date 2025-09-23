@@ -19,7 +19,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +31,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -124,17 +124,19 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId).filter(game -> game.getCreator().equals(userId)).flatMap(game -> gameRepository.delete(game).then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers()))).thenReturn(true));
     }
 
-    final Set<String> atomicArray = ConcurrentHashMap.newKeySet();
+    private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     boolean stop = false;
 
     @PostConstruct
     public void init() {
-        scheduler.schedule(gameThread, 1, TimeUnit.SECONDS);
+
+        scheduler.scheduleWithFixedDelay(this::processDueEvents, 1000, 250, TimeUnit.MILLISECONDS);
+//        scheduler.schedule(gameThread, 1, TimeUnit.SECONDS);
 
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
@@ -188,24 +190,7 @@ public class GameServiceImpl implements GameService {
         Mono<GameEngine> run() throws GameEngineException;
     }
 
-    private final Runnable gameThread = () -> {
-        log.info("GameTread started");
-
-        while (!scheduler.isTerminated() && !stop) {
-
-            processDueEvents();
-
-            try {
-                Thread.sleep(Duration.ofMillis(250));
-            } catch (InterruptedException e) {
-                stop = true;
-            }
-
-        }
-
-    };
-
-    public synchronized void processDueEvents() {
+    public void processDueEvents() {
         long currentTime = System.currentTimeMillis();
         while (!eventQueue.isEmpty() && eventQueue.peek().getExecutionTime() <= currentTime) {
             final ScheduledGameEvent eventToExecute = eventQueue.poll();
@@ -239,35 +224,41 @@ public class GameServiceImpl implements GameService {
     }
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
-        log.info("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
-        Mono.just(gameId).flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid)).map(GameEngineImpl::new).filter(gameEngine -> !gameEngine.isCompleted()).flatMap(gameEngine -> switch (gameEventType) {
-            case AI_SAY -> catchException(gameEngine::sayAi);
-            case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
-            case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
-            case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
-            case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
-            case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
-        }).doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now())).flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine))).doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).subscribe(gameEngine -> {
-            try {
 
-                if (gameEngine.isCompleted()) {
-                    return;
+        final Object lock = lockMap.computeIfAbsent(gameId, k -> new Object());
+
+        synchronized (lock) {
+            log.info("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
+            Mono.just(gameId).flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid)).map(GameEngineImpl::new).filter(gameEngine -> !gameEngine.isCompleted()).flatMap(gameEngine -> switch (gameEventType) {
+                case AI_SAY -> catchException(gameEngine::sayAi);
+                case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
+                case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
+                case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
+                case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
+                case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+            }).doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now())).flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine))).doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).subscribe(gameEngine -> {
+                try {
+
+                    if (gameEngine.isCompleted()) {
+                        return;
+                    }
+
+                    if (gameEngine.getGame().getLastTrickOpen()) {
+                        return;
+                    }
+
+                    if (gameEngine.isAiSay()) {
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame().getId()));
+                    } else if (gameEngine.isAiTurn()) {
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame().getId()));
+                    }
+
+                } catch (GameEngineException e) {
+                    log.error("", e);
                 }
+            });
 
-                if (gameEngine.getGame().getLastTrickOpen()) {
-                    return;
-                }
-
-                if (gameEngine.isAiSay()) {
-                    scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame().getId()));
-                } else if (gameEngine.isAiTurn()) {
-                    scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame().getId()));
-                }
-
-            } catch (GameEngineException e) {
-                log.error("", e);
-            }
-        });
+        }
     }
 
 
