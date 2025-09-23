@@ -14,7 +14,6 @@ import nl.appsource.cardserver.service.exception.NeedNewSayRound;
 import nl.appsource.cardserver.service.exception.NoElderException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
-import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
@@ -48,6 +47,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     @Override
     public boolean isFullTrick() {
+        return getTurnCount() % 4 == 0 && this.getTurnCount() >= 4;
+    }
+
+    public boolean isFirstTrickCard() {
         return getTurnCount() % 4 == 0;
     }
 
@@ -224,25 +227,25 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     }
 
-    private boolean mustTrump(final List<Card> hand, final List<Card> currentTrick) {
-        final Card leadingCard = currentTrick.getFirst();
-        final Suit leadingSuit = leadingCard.getSuit();
-
-        if (leadingSuit == game.getTrump() || !hasSuit(hand, game.getTrump())) {
-            return false;
-        }
-
-        if (game.getGameVariant() == GameVariant.AMSTERDAMS) {
-            return true; // Amsterdam: always trump if you can't follow suit
-        } else { // Rotterdams (and others as default)
-            final Card highestCardInTrick = getHighestCardInTrick(currentTrick);
-            if (highestCardInTrick.getSuit() != game.getTrump()) {
-                return true; // If no trump is on the table, you must trump.
-            }
-            // You only have to trump if you can play a higher trump.
-            return hand.stream().anyMatch(c -> c.getSuit() == game.getTrump() && compareKlaverjassenCards(c, highestCardInTrick) > 0);
-        }
-    }
+//    private boolean mustTrump(final List<Card> hand, final List<Card> currentTrick) {
+//        final Card leadingCard = currentTrick.getFirst();
+//        final Suit leadingSuit = leadingCard.getSuit();
+//
+//        if (leadingSuit == game.getTrump() || !hasSuit(hand, game.getTrump())) {
+//            return false;
+//        }
+//
+//        if (game.getGameVariant() == GameVariant.AMSTERDAMS) {
+//            return true; // Amsterdam: always trump if you can't follow suit
+//        } else { // Rotterdams (and others as default)
+//            final Card highestCardInTrick = getHighestCardInTrick(currentTrick);
+//            if (highestCardInTrick.getSuit() != game.getTrump()) {
+//                return true; // If no trump is on the table, you must trump.
+//            }
+//            // You only have to trump if you can play a higher trump.
+//            return hand.stream().anyMatch(c -> c.getSuit() == game.getTrump() && compareKlaverjassenCards(c, highestCardInTrick) > 0);
+//        }
+//    }
 
     @Override
     public Mono<GameEngine> say(final String userId, final Boolean say) throws GameEngineException {
@@ -368,7 +371,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final List<Card> hand = getHand(userId);
 
         // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
-        if (isFullTrick()) {
+        if (isFirstTrickCard()) {
             // Try to play a low card from a non-trump suit
             for (Card card : hand) {
                 if (card.getSuit() != game.getTrump() && card.getRank() != Rank.SEVEN && card.getRank() != Rank.EIGHT) {
