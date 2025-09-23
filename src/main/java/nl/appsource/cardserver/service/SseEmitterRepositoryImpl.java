@@ -100,8 +100,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userRepository.findById(userId)
             .map(User::getDisplayName)
             .switchIfEmpty(Mono.just(userId))
-            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().userId(userId)
-                .message(fromString + ": " + message))));
+            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().userId(userId).message(fromString + ": " + message))));
     }
 
     @Override

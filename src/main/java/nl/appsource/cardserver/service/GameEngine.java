@@ -3,9 +3,7 @@ package nl.appsource.cardserver.service;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.exception.GameEngineException;
-import org.openapitools.model.UserMessage;
-
-import java.util.List;
+import reactor.core.publisher.Mono;
 
 public interface GameEngine {
 
@@ -13,13 +11,13 @@ public interface GameEngine {
 
     int calcWhoHasTurn() throws GameEngineException;
 
-    List<UserMessage> sayAi() throws GameEngineException;
+    Mono<GameEngine> sayAi() throws GameEngineException;
 
-    List<UserMessage> playCard(String userId, Card card) throws GameEngineException;
+    Mono<GameEngine> playCard(String userId, Card card) throws GameEngineException;
 
-    List<UserMessage> say(String userId, Boolean say) throws GameEngineException;
+    Mono<GameEngine> say(String userId, Boolean say) throws GameEngineException;
 
-    List<UserMessage> playAiCard() throws GameEngineException;
+    Mono<GameEngine> playAiCard() throws GameEngineException;
 
     boolean isCompleted();
 
@@ -33,4 +31,7 @@ public interface GameEngine {
 
     Game getGame();
 
+    Mono<GameEngine> openLastTrick();
+
+    Mono<GameEngine> closeLastTrick();
 }

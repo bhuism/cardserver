@@ -4,13 +4,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
-import org.openapitools.model.PlayCardResponse;
 import org.openapitools.model.PlayerSay;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,10 +22,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.UUID;
 
-import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 import static reactor.core.publisher.Mono.just;
 
 @RestController
@@ -76,22 +75,22 @@ public class GameController implements GamesApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<PlayCardResponse>> playCard(final UUID appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> playCard(final UUID appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} playCard()  userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), userId, gameId))
-            .flatMap(userId -> playCardMono.flatMap(playCard -> gameService.playCard(appIdentifier, userId, gameId, convertCard(playCard.getCard()))))
-            .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .doOnNext((userId) -> log.info("{} playCard()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> playCardMono.map(PlayCard::getCard)
+                .map(GameToOpenApiConverter::convertCard)
+                .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_PLAY_CARD, gameId).setCard(playCard)))
+            )
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> kickAi(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} kickAi()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
-            .flatMap((userId) -> gameRepository.findByUserIdAndGameId(userId, gameId))
-            .doOnNext(game -> gameService.finishWithAi(game.getId(), Duration.ZERO, game.getTurns().size()))
+            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.AI_PLAY_CARD, gameId)))
             .then(just(ResponseEntity.ok().build()));
     }
 
@@ -105,7 +104,6 @@ public class GameController implements GamesApi, V1Api {
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
-
     }
 
     @Override
@@ -148,8 +146,17 @@ public class GameController implements GamesApi, V1Api {
                             .getRemoteAddress(), userId, say.getSay());
                         return say.getSay();
                     })
-                    .flatMap(say -> gameService.say(appIdentifier, userId, gameId, say))
+                    .doOnNext(say -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_SAY, gameId).setSay(say)))
             )
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> openLastTrick(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} openLastTrick()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.OPEN_LAST_TRICK, gameId)))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
                 .build()))
             .defaultIfEmpty(ResponseEntity.notFound()
@@ -157,17 +164,16 @@ public class GameController implements GamesApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> openLastTrick(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> closeLastTrick(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} openLastTrick()  userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), userId, gameId))
-            .flatMap(userId -> gameService.openLastTrick(userId, gameId)
-            )
+            .doOnNext((userId) -> log.info("{} closeLastTrick()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLOSE_LAST_TRICK, gameId)))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
                 .build()))
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
     }
+
 
     @Override
     public Mono<ResponseEntity<Void>> reload(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {

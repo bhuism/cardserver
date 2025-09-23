@@ -74,4 +74,5 @@ public class Game {
     @Field
     @NotNull
     private Integer dealCounter;
+
 }

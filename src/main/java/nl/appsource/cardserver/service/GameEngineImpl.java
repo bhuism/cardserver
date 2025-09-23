@@ -9,12 +9,13 @@ import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.ElderException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import nl.appsource.cardserver.service.exception.LastTrickOpenException;
 import nl.appsource.cardserver.service.exception.NeedNewSayRound;
 import nl.appsource.cardserver.service.exception.NoElderException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 import org.openapitools.model.GameVariant;
-import org.openapitools.model.UserMessage;
+import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -130,14 +131,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public List<UserMessage> playAiCard() throws GameEngineException {
-
-        if (isCompleted()) {
-            throw new GameCompletedException();
-        }
+    public Mono<GameEngine> playAiCard() throws GameEngineException {
 
         if (!isAiTurn()) {
-            throw new IllegalStateException("Not ai's turn to play a card");
+            return Mono.empty();
         }
 
         final String userId = game.getPlayers().get(calcWhoHasTurn());
@@ -147,14 +144,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public List<UserMessage> sayAi() throws GameEngineException {
-
-        if (isCompleted()) {
-            throw new GameCompletedException();
-        }
+    public Mono<GameEngine> sayAi() throws GameEngineException {
 
         if (!isAiSay()) {
-            throw new IllegalStateException("Not ai's turn to say");
+            return Mono.empty();
         }
 
         final int whoSay = calcWhoSay();
@@ -166,9 +159,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public List<UserMessage> playCard(final String userId, final Card card) throws GameEngineException {
-
-        final List<UserMessage> userMessages = new ArrayList<>();
+    public Mono<GameEngine> playCard(final String userId, final Card card) throws GameEngineException {
 
         final int playerNum = this.game.getPlayers().indexOf(userId);
 
@@ -192,6 +183,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new CardAlreadyPlayerException(card);
         }
 
+        if (game.getLastTrickOpen()) {
+            return Mono.empty();
+        }
+
         final int gotTurn = calcWhoHasTurn();
 
         if (gotTurn != playerNum) {
@@ -201,30 +196,31 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
 
-        if (!currentTrick.isEmpty()) {
-            final Card leadingCard = currentTrick.getFirst();
-            final List<Card> hand = getHand(userId);
-            final boolean canFollowSuit = hand.stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()));
+//        if (!currentTrick.isEmpty()) {
+//            final Card leadingCard = currentTrick.getFirst();
+//            final List<Card> hand = getHand(userId);
+//            final boolean canFollowSuit = hand.stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()));
 
-            // Check for reneging (verzaak)
-            if (canFollowSuit && card.getSuit() != leadingCard.getSuit()) {
-                userMessages.add(new UserMessage().userId(userId).message("Verzaakt! U moet kleur bekennen.").variant(UserMessage.VariantEnum.WARNING));
-                // In a real game, this might be a penalty. For now, we just warn.
-            } else if (!canFollowSuit && card.getSuit() != game.getTrump() && mustTrump(hand, currentTrick)) {
-                // Check for failure to trump when required
-                final String message = game.getGameVariant() == GameVariant.AMSTERDAMS
-                    ? "Verzaakt! U moet introeven (Amsterdams)." : "Verzaakt! U moet overtroeven (Rotterdams).";
-                userMessages.add(new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.WARNING));
-            }
-        }
+        // Check for reneging (verzaak)
+//            if (canFollowSuit && card.getSuit() != leadingCard.getSuit()) {
+//                userMessages.add(new UserMessage().userId(userId).message("Verzaakt! U moet kleur bekennen.").variant(UserMessage.VariantEnum.WARNING));
+//                // In a real game, this might be a penalty. For now, we just warn.
+//            } else if (!canFollowSuit && card.getSuit() != game.getTrump() && mustTrump(hand, currentTrick)) {
+//                // Check for failure to trump when required
+//                final String message = game.getGameVariant() == GameVariant.AMSTERDAMS
+//                    ? "Verzaakt! U moet introeven (Amsterdams)." : "Verzaakt! U moet overtroeven (Rotterdams).";
+//                userMessages.add(new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.WARNING));
+//            }
+//        }
 
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
         game.setUpdated(Instant.now());
         game.getTurns().add(card);
-        game.setLastTrickOpen(isFullTrick());
+        game.setLastTrickOpen(false);
 
-        return userMessages;
+        return Mono.just(this);
+//        return userMessages;
 
     }
 
@@ -249,9 +245,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public List<UserMessage> say(final String userId, final Boolean say) throws GameEngineException {
+    public Mono<GameEngine> say(final String userId, final Boolean say) throws GameEngineException {
 
-        final List<UserMessage> userMessages = new ArrayList<>();
+//        final List<UserMessage> userMessages = new ArrayList<>();
 
         final int playerNum = this.game.getPlayers().indexOf(userId);
 
@@ -276,6 +272,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new ElderException("Je hebt al gezegd");
         }
 
+        if (game.getLastTrickOpen()) {
+            throw new LastTrickOpenException();
+        }
 
         final int whoSay = calcWhoSay();
 
@@ -301,14 +300,14 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
                 game.getSay().clear();
 
-                userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
+//                userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
             } else {
 
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
                 game.getSay().clear();
                 game.setPlayerCard(randomCards());
 
-                userMessages.add(new UserMessage().message("Iedereen heeft weer gepast, nieuwe kaarten").variant(UserMessage.VariantEnum.INFO));
+//                userMessages.add(new UserMessage().message("Iedereen heeft weer gepast, nieuwe kaarten").variant(UserMessage.VariantEnum.INFO));
             }
 
             game.setDealCounter(game.getDealCounter() + 1);
@@ -317,7 +316,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         game.setUpdated(Instant.now());
 
-        return userMessages;
+//        return userMessages;
+
+        return Mono.just(this);
 
     }
 
@@ -524,6 +525,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return false;
         }
 
+        if (getGame().getLastTrickOpen()) {
+            return false;
+        }
+
         try {
             return isAiPlayer(game.getPlayers().get(calcWhoHasTurn()));
         } catch (GameEngineException e) {
@@ -551,6 +556,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return false;
         }
 
+        if (getGame().getLastTrickOpen()) {
+            return false;
+        }
+
         try {
             return isAiPlayer(game.getPlayers().get(calcWhoSay()));
         } catch (GameEngineException e) {
@@ -564,7 +573,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return game;
     }
 
-    boolean isAiPlayer(final String userId) {
+    public static boolean isAiPlayer(final String userId) {
         return AI_USER_ID.contains(userId);
     }
 
@@ -580,8 +589,29 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return game.getSay().size() == 4;
     }
 
-
     public int getTurnCount() {
         return game.getTurns().size();
     }
+
+    @Override
+    public Mono<GameEngine> openLastTrick() {
+        if (!this.getGame().getLastTrickOpen()) {
+            this.getGame().setLastTrickOpen(true);
+            return Mono.just(this);
+        } else {
+            return Mono.empty();
+        }
+    }
+
+    @Override
+    public Mono<GameEngine> closeLastTrick() {
+        if (this.getGame().getLastTrickOpen()) {
+            this.getGame().setLastTrickOpen(false);
+            return Mono.just(this);
+        } else {
+            return Mono.empty();
+        }
+    }
+
+
 }

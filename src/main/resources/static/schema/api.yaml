@@ -54,6 +54,20 @@ paths:
           description: some application error
         "404":
           description: not found
+  /games/{gameId}/closeLastTrick:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: closeLastTrick
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      responses:
+        "200":
+          description: ok
+        "422":
+          description: some application error
+        "404":
+          description: not found
   /games/{gameId}/playCard:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
@@ -65,7 +79,7 @@ paths:
         $ref: "#/components/requestBodies/playCard"
       responses:
         "200":
-          $ref: "#/components/responses/PlayCardResponse"
+          description: ok
         "422":
           description: some application error
         "404":
@@ -262,13 +276,6 @@ components:
           schema:
             $ref: "#/components/schemas/postMessage"
   schemas:
-    PlayCardResponse:
-      type: object
-      properties:
-        cardWasPlayed:
-          type: boolean
-      required:
-        - cardWasPlayed
     UserMessage:
       type: object
       properties:
@@ -493,12 +500,6 @@ components:
       bearerFormat: JWT
       openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
   responses:
-    PlayCardResponse:
-      description: a game
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/PlayCardResponse"
     GameResponse:
       description: a game
       content:
