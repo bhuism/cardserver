@@ -95,33 +95,45 @@ public class GameServiceImpl implements GameService {
 
         log.info("Creating a new game with players {}", randomizedOrderPlayers);
 
-        return userRepository.findById(creator).flatMap((user) -> Mono.just(new Game()).doOnNext((game) -> {
-                game.setId(idGen(20));
-                game.setCreator(creator);
-                game.setCreated(Instant.now());
-                game.setUpdated(Instant.now());
-                game.setPlayers(randomizedOrderPlayers);
-                game.setDealer(RAND.nextInt(4));
-                game.setSay(new HashMap<>());
-                game.setTurns(new ArrayList<>());
-                game.setPlayerCard(randomCards());
-                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-                game.setLastTrickOpen(false);
-                game.setGameVariant(user.getGameVariant());
-                game.setDealCounter(0);
-            }).flatMap(gameRepository::save).doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers())).doOnNext(sseEmitterRepository::newGame).doOnNext(game -> {
-                if (new GameEngineImpl(game).isAiSay()) {
-                    scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 3000, null, GameEventType.AI_SAY, game.getId()));
-                }
-            })
+        return userRepository.findById(creator)
+            .flatMap((user) -> Mono.just(new Game())
+                .doOnNext((game) -> {
+                    game.setId(idGen(20));
+                    game.setCreator(creator);
+                    game.setCreated(Instant.now());
+                    game.setUpdated(Instant.now());
+                    game.setPlayers(randomizedOrderPlayers);
+                    game.setDealer(RAND.nextInt(4));
+                    game.setSay(new HashMap<>());
+                    game.setTurns(new ArrayList<>());
+                    game.setPlayerCard(randomCards());
+                    game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                    game.setLastTrickOpen(false);
+                    game.setGameVariant(user.getGameVariant());
+                    game.setDealCounter(0);
+                })
+                .flatMap(gameRepository::save)
+                .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+                .doOnNext(sseEmitterRepository::newGame)
+                .doOnNext(game -> {
+                    if (new GameEngineImpl(game).isAiSay()) {
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 3000, null, GameEventType.AI_SAY, game.getId()));
+                    }
+                })
 
-        );
+            );
 
     }
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
-        return gameRepository.findById(gameId).filter(game -> game.getCreator().equals(userId)).flatMap(game -> gameRepository.delete(game).then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers()))).thenReturn(true));
+        return gameRepository.findById(gameId)
+            .filter(game -> game.getCreator()
+                .equals(userId))
+            .flatMap(game -> gameRepository.delete(game)
+                .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
+                .thenReturn(true)
+            );
     }
 
     private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
@@ -147,8 +159,10 @@ public class GameServiceImpl implements GameService {
                         return Mono.empty();
                     }
 
-                    if (gameEngine.getGame().getLastTrickOpen()) {
-                        gameEngine.getGame().setLastTrickOpen(false);
+                    if (gameEngine.getGame()
+                        .getLastTrickOpen()) {
+                        gameEngine.getGame()
+                            .setLastTrickOpen(false);
                     }
                     return Mono.just(gameEngine.game());
                 })
@@ -158,24 +172,33 @@ public class GameServiceImpl implements GameService {
 
                     if (gameEngine.isAiSay()) {
                         try {
-                            final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
-                            this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame().getId(), null, null);
+                            final String userId = gameEngine.getGame()
+                                .getPlayers()
+                                .get(gameEngine.calcWhoSay());
+                            this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame()
+                                .getId(), null, null);
                             return Mono.just(gameEngine.getGame());
                         } catch (GameEngineException e) {
-                            log.warn("Can not ai say game {}", gameEngine.getGame().getId(), e);
+                            log.warn("Can not ai say game {}", gameEngine.getGame()
+                                .getId(), e);
                         }
                     } else if (gameEngine.isAiTurn()) {
                         try {
-                            final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
-                            this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame().getId(), null, null);
+                            final String userId = gameEngine.getGame()
+                                .getPlayers()
+                                .get(gameEngine.calcWhoHasTurn());
+                            this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame()
+                                .getId(), null, null);
                             return Mono.just(gameEngine.getGame());
                         } catch (GameEngineException e) {
-                            log.warn("Can not ai say game {}", gameEngine.getGame().getId(), e);
+                            log.warn("Can not ai say game {}", gameEngine.getGame()
+                                .getId(), e);
                         }
                     }
 
                     return Mono.empty();
-                }).subscribe(gameRepository::save);
+                })
+                .subscribe(gameRepository::save);
         }
     }
 
@@ -192,7 +215,8 @@ public class GameServiceImpl implements GameService {
 
     public void processDueEvents() {
         long currentTime = System.currentTimeMillis();
-        while (!eventQueue.isEmpty() && eventQueue.peek().getExecutionTime() <= currentTime) {
+        while (!eventQueue.isEmpty() && eventQueue.peek()
+            .getExecutionTime() <= currentTime) {
             final ScheduledGameEvent eventToExecute = eventQueue.poll();
             if (eventToExecute != null) {
                 try {
@@ -229,34 +253,51 @@ public class GameServiceImpl implements GameService {
 
         synchronized (lock) {
             log.info("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
-            Mono.just(gameId).flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid)).map(GameEngineImpl::new).filter(gameEngine -> !gameEngine.isCompleted()).flatMap(gameEngine -> switch (gameEventType) {
-                case AI_SAY -> catchException(gameEngine::sayAi);
-                case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
-                case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
-                case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
-                case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
-                case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
-            }).doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now())).flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine))).doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).subscribe(gameEngine -> {
-                try {
+            Mono.just(gameId)
+                .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
+                .map(GameEngineImpl::new)
+                .filter(gameEngine -> !gameEngine.isCompleted())
+                .flatMap(gameEngine -> switch (gameEventType) {
+                    case AI_SAY -> catchException(gameEngine::sayAi);
+                    case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
+                    case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
+                    case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
+                    case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
+                    case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+                })
+                .doOnNext(gameEngine -> gameEngine.getGame()
+                    .setUpdated(Instant.now()))
+                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame())
+                    .then(Mono.just(gameEngine)))
+                .doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
+                .subscribe(gameEngine -> {
+                    try {
 
-                    if (gameEngine.isCompleted()) {
-                        return;
+                        if (gameEngine.isCompleted()) {
+                            return;
+                        }
+
+                        if (gameEngine.getGame()
+                            .getLastTrickOpen()) {
+                            return;
+                        }
+
+                        if (gameEngine.isAiSay()) {
+                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame()
+                                .getPlayers()
+                                .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
+                                .getId()));
+                        } else if (gameEngine.isAiTurn()) {
+                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000), gameEngine.getGame()
+                                .getPlayers()
+                                .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
+                                .getId()));
+                        }
+
+                    } catch (GameEngineException e) {
+                        log.error("", e);
                     }
-
-                    if (gameEngine.getGame().getLastTrickOpen()) {
-                        return;
-                    }
-
-                    if (gameEngine.isAiSay()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame().getId()));
-                    } else if (gameEngine.isAiTurn()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000), gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame().getId()));
-                    }
-
-                } catch (GameEngineException e) {
-                    log.error("", e);
-                }
-            });
+                });
 
         }
     }
@@ -274,7 +315,8 @@ public class GameServiceImpl implements GameService {
         final Map<Card, Integer> cards = new HashMap<>();
         final List<Card> deck = Arrays.asList(Card.values());
         shuffle(deck, RAND);
-        IntStream.range(0, deck.size()).forEach(index -> cards.put(deck.get(index), index % 4));
+        IntStream.range(0, deck.size())
+            .forEach(index -> cards.put(deck.get(index), index % 4));
         return cards;
     }
 
@@ -293,6 +335,8 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> reload(final UUID appIdentifier, final String userId, final String gameId) {
-        return gameRepository.findByUserIdAndGameId(userId, gameId).doOnNext(game -> sseEmitterRepository.updateGameStateForId(appIdentifier, game)).then();
+        return gameRepository.findByUserIdAndGameId(userId, gameId)
+            .doOnNext(game -> sseEmitterRepository.updateGameStateForId(appIdentifier, game))
+            .then();
     }
 }

@@ -66,11 +66,13 @@ public class UserController implements UsersApi, V1Api {
     public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
 
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getUser({})  userId={}", exchange.getRequest().getRemoteAddress(), userIdParam, userId))
+            .doOnNext((userId) -> log.info("{} getUser({})  userId={}", exchange.getRequest()
+                .getRemoteAddress(), userIdParam, userId))
             .flatMap((userId) -> userService.findById(userIdParam))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 
     @Override
@@ -182,8 +184,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<User>> updatePreferences(final UUID appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} updatePreferences()  userId={}", exchange.getRequest()
-                .getRemoteAddress(), userId))
+            .doOnNext((userId) -> log.info("{} updatePreferences()  userId={}", exchange.getRequest().getRemoteAddress(), userId))
             .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updatePreferences(userId, updatePreferences)))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
