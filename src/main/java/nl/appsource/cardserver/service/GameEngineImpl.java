@@ -55,7 +55,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     private List<Card> getTrickCards(final int trickNr) {
-        return game.getTurns().subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
+        return game.getTurns()
+            .subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
     }
 
     private Card determineTrickWinningCard(final int trickNr) throws GameEngineException {
@@ -70,12 +71,16 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new GameEngineException("Not 5 trick cards in tick " + trickNr);
         }
 
-        final boolean troefAanwezig = trick.stream().anyMatch(c -> c.getSuit().equals(game.getTrump()));
+        final boolean troefAanwezig = trick.stream()
+            .anyMatch(c -> c.getSuit()
+                .equals(game.getTrump()));
 
-        final Suit requestedSuit = trick.getFirst().getSuit();
+        final Suit requestedSuit = trick.getFirst()
+            .getSuit();
 
         return trick.stream()
-            .filter(c -> c.getSuit().equals(troefAanwezig ? game.getTrump() : requestedSuit))
+            .filter(c -> c.getSuit()
+                .equals(troefAanwezig ? game.getTrump() : requestedSuit))
             .max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER)
             .orElseThrow(() -> new GameEngineException("determineTrickWinningCard() No card found"));
 
@@ -100,8 +105,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new ElderException(null);
         }
 
-        if (game.getSay().size() <= 3) {
-            return (game.getDealer() + 1 + game.getSay().size()) % 4;
+        if (game.getSay()
+            .size() <= 3) {
+            return (game.getDealer() + 1 + game.getSay()
+                .size()) % 4;
         }
 
         throw new NeedNewSayRound(null);
@@ -122,9 +129,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final int laatsteKaart = getTurnCount() % 4;
 
         if (laatsteKaart != 0) {
-            return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
+            return (whoHasCard(game.getTurns()
+                .getLast()) + 1) % 4;
         } else {
-            if (game.getTurns().isEmpty()) {
+            if (game.getTurns()
+                .isEmpty()) {
                 return (game.getDealer() + 1) % 4;
             } else {
                 final int tricksPlayedCount = calcTricksPlayed();
@@ -140,7 +149,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return Mono.empty();
         }
 
-        final String userId = game.getPlayers().get(calcWhoHasTurn());
+        final String userId = game.getPlayers()
+            .get(calcWhoHasTurn());
 
         return playCard(userId, calcAiCard(userId));
 
@@ -155,7 +165,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         final int whoSay = calcWhoSay();
 
-        final String userId = this.game.getPlayers().get(whoSay);
+        final String userId = this.game.getPlayers()
+            .get(whoSay);
 
         return say(userId, decideBid(userId));
 
@@ -164,14 +175,16 @@ public record GameEngineImpl(Game game) implements GameEngine {
     @Override
     public Mono<GameEngine> playCard(final String userId, final Card card) throws GameEngineException {
 
-        final int playerNum = this.game.getPlayers().indexOf(userId);
+        final int playerNum = this.game.getPlayers()
+            .indexOf(userId);
 
         if (isCompleted()) {
             log.warn("Game {} allready completed", game.getId());
             throw new GameCompletedException();
         }
 
-        if (!game.getPlayers().contains(userId)) {
+        if (!game.getPlayers()
+            .contains(userId)) {
             throw new NotAPlayerException();
         }
 
@@ -181,7 +194,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
             log.warn("Player does not have card {}", card);
         }
 
-        if (game.getTurns().stream().anyMatch((c) -> c == card)) {
+        if (game.getTurns()
+            .stream()
+            .anyMatch((c) -> c == card)) {
             log.warn("Card {} allready played", card);
             throw new CardAlreadyPlayerException(card);
         }
@@ -193,7 +208,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final int gotTurn = calcWhoHasTurn();
 
         if (gotTurn != playerNum) {
-            log.warn("playCard({}) It's player {} turn", card, game.getPlayers().get(gotTurn));
+            log.warn("playCard({}) It's player {} turn", card, game.getPlayers()
+                .get(gotTurn));
             throw new NotPlayersTurnException();
         }
 
@@ -219,7 +235,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
         game.setUpdated(Instant.now());
-        game.getTurns().add(card);
+        game.getTurns()
+            .add(card);
         game.setLastTrickOpen(false);
 
         return Mono.just(this);
@@ -252,14 +269,16 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
 //        final List<UserMessage> userMessages = new ArrayList<>();
 
-        final int playerNum = this.game.getPlayers().indexOf(userId);
+        final int playerNum = this.game.getPlayers()
+            .indexOf(userId);
 
         if (isCompleted()) {
             log.warn("Game {} allready completed", game.getId());
             throw new GameCompletedException();
         }
 
-        if (!game.getPlayers().contains(userId)) {
+        if (!game.getPlayers()
+            .contains(userId)) {
             throw new NotAPlayerException();
         }
 
@@ -271,7 +290,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
             throw new ElderException("Er is al iemand gegaan");
         }
 
-        if (game.getSay().containsKey(playerNum)) {
+        if (game.getSay()
+            .containsKey(playerNum)) {
             throw new ElderException("Je hebt al gezegd");
         }
 
@@ -282,11 +302,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final int whoSay = calcWhoSay();
 
         if (whoSay != playerNum) {
-            log.warn("say() It's player {} turn to say", game.getPlayers().get(whoSay));
+            log.warn("say() It's player {} turn to say", game.getPlayers()
+                .get(whoSay));
             throw new NotPlayersTurnException();
         }
 
-        game.getSay().put(playerNum, say);
+        game.getSay()
+            .put(playerNum, say);
 
         // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
 
@@ -301,13 +323,15 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 }
                 while (oldTrump == game.getTrump());
 
-                game.getSay().clear();
+                game.getSay()
+                    .clear();
 
 //                userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
             } else {
 
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-                game.getSay().clear();
+                game.getSay()
+                    .clear();
                 game.setPlayerCard(randomCards());
 
 //                userMessages.add(new UserMessage().message("Iedereen heeft weer gepast, nieuwe kaarten").variant(UserMessage.VariantEnum.INFO));
@@ -331,19 +355,26 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     private int whoHasCard(final Card card) {
-        return game.getPlayerCard().get(card);
+        return game.getPlayerCard()
+            .get(card);
     }
 
     private static boolean hasSuit(final List<Card> hand, final Suit suit) {
-        return hand.stream().map(Card::getSuit).anyMatch(handCardSuit -> handCardSuit.equals(suit));
+        return hand.stream()
+            .map(Card::getSuit)
+            .anyMatch(handCardSuit -> handCardSuit.equals(suit));
     }
 
     private static List<Card> getCardsOfSuit(final List<Card> hand, final Suit suit) {
-        return hand.stream().filter(card -> card.getSuit().equals(suit)).collect(Collectors.toList());
+        return hand.stream()
+            .filter(card -> card.getSuit()
+                .equals(suit))
+            .collect(Collectors.toList());
     }
 
     private Integer getKlaverjassenValue(final Card c1) {
-        return c1.getSuit().equals(game.getTrump()) ? c1.getRank().trumpValue : c1.getRank().standardValue;
+        return c1.getSuit()
+            .equals(game.getTrump()) ? c1.getRank().trumpValue : c1.getRank().standardValue;
     }
 
     private int compareKlaverjassenCards(final Card card1, final Card card2) {
@@ -352,12 +383,23 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
 
     public Card getHighestCardInTrick(final List<Card> trick) {
-        return trick.stream().max(this::compareKlaverjassenCards).orElseThrow();
+        return trick.stream()
+            .max(this::compareKlaverjassenCards)
+            .orElseThrow();
     }
 
     private List<Card> getHand(final String userId) {
-        final int playerNum = this.game.getPlayers().indexOf(userId);
-        return game.getPlayerCard().entrySet().stream().filter(cardIntegerEntry -> cardIntegerEntry.getValue().equals(playerNum)).map(Map.Entry::getKey).filter(card -> !game.getTurns().contains(card)).toList();
+        final int playerNum = this.game.getPlayers()
+            .indexOf(userId);
+        return game.getPlayerCard()
+            .entrySet()
+            .stream()
+            .filter(cardIntegerEntry -> cardIntegerEntry.getValue()
+                .equals(playerNum))
+            .map(Map.Entry::getKey)
+            .filter(card -> !game.getTurns()
+                .contains(card))
+            .toList();
     }
 
     public Card calcAiCard(final String userId) throws GameEngineException {
@@ -481,8 +523,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         int currentScore = 0;
 
-        final List<Card> trumpCards = hand.stream().filter(c -> c.suit == game.getTrump()).toList();
-        final Map<Rank, Long> trumpRanks = trumpCards.stream().collect(Collectors.groupingBy(c -> c.rank, Collectors.counting()));
+        final List<Card> trumpCards = hand.stream()
+            .filter(c -> c.suit == game.getTrump())
+            .toList();
+        final Map<Rank, Long> trumpRanks = trumpCards.stream()
+            .collect(Collectors.groupingBy(c -> c.rank, Collectors.counting()));
 
         // Points for high trumps
         if (trumpRanks.containsKey(Rank.JACK)) {
@@ -533,7 +578,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         try {
-            return isAiPlayer(game.getPlayers().get(calcWhoHasTurn()));
+            return isAiPlayer(game.getPlayers()
+                .get(calcWhoHasTurn()));
         } catch (GameEngineException e) {
             return false;
         }
@@ -564,7 +610,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         try {
-            return isAiPlayer(game.getPlayers().get(calcWhoSay()));
+            return isAiPlayer(game.getPlayers()
+                .get(calcWhoSay()));
         } catch (GameEngineException e) {
             return false;
         }
@@ -581,35 +628,44 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     boolean isErGegaan() {
-        return game.getSay().containsValue(Boolean.TRUE);
+        return game.getSay()
+            .containsValue(Boolean.TRUE);
     }
 
     boolean niemandIsGegaanEnIedereenHeeftGezegd() {
-        return iedereenHeeftGezegd() && !game.getSay().containsValue(Boolean.TRUE);
+        return iedereenHeeftGezegd() && !game.getSay()
+            .containsValue(Boolean.TRUE);
     }
 
     boolean iedereenHeeftGezegd() {
-        return game.getSay().size() == 4;
+        return game.getSay()
+            .size() == 4;
     }
 
     public int getTurnCount() {
-        return game.getTurns().size();
+        return game.getTurns()
+            .size();
     }
 
     @Override
     public Mono<GameEngine> openLastTrick() {
-        if (!this.getGame().getLastTrickOpen()) {
-            this.getGame().setLastTrickOpen(true);
-            return Mono.just(this);
-        } else {
-            return Mono.empty();
+        if (!isCompleted() && getTurnCount() > 4) {
+            if (!this.getGame()
+                .getLastTrickOpen()) {
+                this.getGame()
+                    .setLastTrickOpen(true);
+                return Mono.just(this);
+            }
         }
+        return Mono.empty();
     }
 
     @Override
     public Mono<GameEngine> closeLastTrick() {
-        if (this.getGame().getLastTrickOpen()) {
-            this.getGame().setLastTrickOpen(false);
+        if (this.getGame()
+            .getLastTrickOpen()) {
+            this.getGame()
+                .setLastTrickOpen(false);
             return Mono.just(this);
         } else {
             return Mono.empty();
