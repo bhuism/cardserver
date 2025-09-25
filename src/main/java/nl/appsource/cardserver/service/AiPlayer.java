@@ -13,207 +13,305 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.openapitools.model.GameVariant.ROTTERDAMS;
+
 @Slf4j
 @RequiredArgsConstructor
 public class AiPlayer {
+
+    private record Hand(List<Card> cards, Map<Suit, List<Card>> bySuit) {
+        static Hand from(final List<Card> cards) {
+            return new Hand(cards, cards.stream()
+                .collect(Collectors.groupingBy(Card::getSuit)));
+        }
+
+        List<Card> ofSuit(final Suit suit) {
+            return bySuit.getOrDefault(suit, List.of());
+        }
+
+        boolean hasSuit(final Suit suit) {
+            return bySuit.containsKey(suit);
+        }
+    }
 
     private final GameEngine gameEngine;
 
     // Main entry point for the AI's decision
     public Card calcAiCard(final String userId) throws GameEngineException {
-        final List<Card> hand = getHand(userId);
+        final Hand hand = Hand.from(getHand(userId));
         final List<Card> currentTrick = gameEngine.getTrickCards(gameEngine.calcTricksPlayed());
 
         if (currentTrick.isEmpty()) {
             return playAsLeader(hand);
         } else {
-            return playAsFollower(userId, hand, currentTrick);
+            return playAsFollower(userId, hand, currentTrick, getHighestCardInTrick(currentTrick));
         }
     }
 
     /**
      * Logic for when the AI is the first to play in a trick.
      */
-    private Card playAsLeader(final List<Card> hand) {
-        final Suit trumpSuit = gameEngine.getGame().getTrump();
-        final Map<Suit, List<Card>> cardsBySuit = hand.stream().collect(Collectors.groupingBy(Card::getSuit));
-        final List<Card> trumpCards = cardsBySuit.getOrDefault(trumpSuit, List.of());
+    private Card playAsLeader(final Hand hand) {
+        final Suit trumpSuit = gameEngine.getGame()
+            .getTrump();
+        final List<Card> trumpCards = hand.ofSuit(trumpSuit);
 
         // Strategy 1: "Trump hunting". If you have a strong trump suit, lead a high trump
         // to exhaust the opponents' trumps.
-        boolean hasTrumpJack = trumpCards.stream().anyMatch(c -> c.getRank() == Rank.JACK);
-        if (trumpCards.size() >= 4 && hasTrumpJack) {
+        boolean hasTrumpJack = trumpCards.stream()
+            .anyMatch(c -> c.getRank() == Rank.JACK);
+        if (trumpCards.size() >= 5 && hasTrumpJack) { // Be more conservative: only hunt with 5+ trumps including the Jack
             // Lead with the highest trump you have.
-            return trumpCards.stream().max(this::compareKlaverjassenCards).orElseThrow();
+            return trumpCards.stream()
+                .max(this::compareKlaverjassenCards)
+                .orElseThrow();
         }
 
         // Strategy 2: Lead with a safe, high-value non-trump card.
         // e.g., an Ace from a suit where we also have the 10.
-        for (Map.Entry<Suit, List<Card>> entry : cardsBySuit.entrySet()) {
+        for (Map.Entry<Suit, List<Card>> entry : hand.bySuit()
+            .entrySet()) {
             if (entry.getKey() != trumpSuit) {
-                boolean hasAce = entry.getValue().stream().anyMatch(c -> c.getRank() == Rank.ACE);
-                boolean hasTen = entry.getValue().stream().anyMatch(c -> c.getRank() == Rank.TEN);
+                boolean hasAce = entry.getValue()
+                    .stream()
+                    .anyMatch(c -> c.getRank() == Rank.ACE);
+                boolean hasTen = entry.getValue()
+                    .stream()
+                    .anyMatch(c -> c.getRank() == Rank.TEN);
                 if (hasAce && hasTen) {
-                    return entry.getValue().stream().filter(c -> c.getRank() == Rank.ACE).findFirst().orElseThrow();
+                    return entry.getValue()
+                        .stream()
+                        .filter(c -> c.getRank() == Rank.ACE)
+                        .findFirst()
+                        .orElseThrow(); // This is safe because we've already confirmed hasAce
                 }
             }
         }
 
         // Strategy 3: Lead a singleton non-trump card to create a void.
-        Optional<Card> singletonPlay = cardsBySuit.entrySet().stream()
+        Optional<Card> singletonPlay = hand.bySuit()
+            .entrySet()
+            .stream()
             .filter(entry -> entry.getKey() != trumpSuit)
-            .filter(entry -> entry.getValue().size() == 1)
-            .map(entry -> entry.getValue().get(0))
+            .map(Map.Entry::getValue)
+            .filter(list -> list.size() == 1)
+            .map(List::getFirst)
             .findFirst();
         if (singletonPlay.isPresent()) {
             return singletonPlay.get();
         }
 
-        // Strategy 4: Play the lowest card of the shortest non-trump suit.
-        // This is a safe play to get rid of a suit and allow trumping sooner.
-        Optional<Card> safePlay = hand.stream()
-            .filter(c -> c.getSuit() != trumpSuit)
-            .min(Comparator.<Card>comparingInt(c -> getCardsOfSuit(hand, c.getSuit()).size()) // Prefer shorter suits
-                .thenComparing(this::getKlaverjassenValue)); // Then play lowest card of that suit
-        if (safePlay.isPresent()) {
-            return safePlay.get();
+        // Strategy 4: Lead from a long non-trump suit to establish it.
+        Optional<Card> longSuitPlay = hand.bySuit()
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getKey() != trumpSuit)
+            .filter(entry -> entry.getValue()
+                .size() >= 4) // Find long suits
+            .map(entry -> entry.getValue()
+                .stream()
+                .min(this::compareKlaverjassenCards)) // Get the lowest card
+            .flatMap(Optional::stream)
+            .findFirst();
+        if (longSuitPlay.isPresent()) {
+            return longSuitPlay.get();
         }
 
-        // Strategy 5: Only trumps are left, must lead with a trump.
+
+        // Strategy 5: Play the lowest card of the shortest non-trump suit.
+        // This is a safe play, but we should avoid leading an unsupported honor if possible.
+        Optional<Card> safePlay = hand.cards()
+            .stream()
+            .filter(c -> c.getSuit() != trumpSuit)
+            .min(Comparator.<Card>comparingInt(c -> {
+                    int suitSize = hand.ofSuit(c.getSuit())
+                        .size();
+                    boolean isUnsupportedHonor = (c.getRank() == Rank.KING || c.getRank() == Rank.QUEEN);
+                    // Add a penalty for leading an unsupported King/Queen from a short suit (2 or 3 cards)
+                    if (isUnsupportedHonor && suitSize <= 3) {
+                        // If the lowest card of this suit is still an honor, it's a very risky lead.
+                        if (hand.ofSuit(c.getSuit())
+                            .stream()
+                            .min(this::compareKlaverjassenCards)
+                            .filter(low -> low.getRank() == c.getRank())
+                            .isPresent()) {
+                            return suitSize + 10; // High penalty to strongly discourage this lead.
+                        }
+                        return suitSize + 5; // Moderate penalty
+                    }
+                    return suitSize;
+                }) // Prefer shorter suits
+                .thenComparing(this::getKlaverjassenValue)); // Then play lowest card of that suit
+
+        // Strategy 6: Only trumps are left, must lead with a trump.
         // Lead with the highest trump to try and win the trick.
-        return hand.stream()
+        return safePlay.orElseGet(() -> hand.cards()
+            .stream()
             .max(this::compareKlaverjassenCards)
-            .orElseThrow();
+            .orElseThrow()); // Fallback to highest trump
     }
 
     /**
      * Logic for when the AI is following another player.
      */
-    private Card playAsFollower(final String userId, final List<Card> hand, final List<Card> currentTrick) {
+    private Card playAsFollower(final String userId, final Hand hand, final List<Card> currentTrick, final Card highestCardInTrick) {
         final String partnerId = gameEngine.getPartner(userId); // Assumed method
         final String currentWinnerId = gameEngine.getTrickWinnerId(currentTrick); // Assumed method
 
         // Key strategic decision: Is my partner winning?
         // If it's the last trick, always try to win for the +10 points.
         if (currentWinnerId.equals(partnerId) && !gameEngine.isLastTrick()) {
-            return playToSupportPartner(hand, currentTrick.getFirst().getSuit());
+            return playToSupportPartner(hand, currentTrick.getFirst()
+                .getSuit(), highestCardInTrick);
         } else {
-            return playToWin(hand, currentTrick);
+            return playToWin(hand, currentTrick, highestCardInTrick);
         }
     }
 
     /**
      * Play to win the trick because the opponent or the AI itself is currently winning.
      */
-    private Card playToWin(final List<Card> hand, final List<Card> currentTrick) {
+    private Card playToWin(final Hand hand, final List<Card> currentTrick, final Card highestCardInTrick) {
         final Suit leadingSuit = currentTrick.getFirst()
             .getSuit();
         final Suit trumpSuit = gameEngine.getGame()
             .getTrump();
-        final Card highestCardInTrick = getHighestCardInTrick(currentTrick);
 
         // Rule 1: Must follow suit if possible.
-        if (hasSuit(hand, leadingSuit)) {
-            final List<Card> playableCards = getCardsOfSuit(hand, leadingSuit);
+        if (hand.hasSuit(leadingSuit)) {
+            final List<Card> playableCards = hand.ofSuit(leadingSuit);
             // Must try to win if possible ("overkennen")
             Optional<Card> winningCard = playableCards.stream()
                 .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
                 .min(this::compareKlaverjassenCards); // Play the LOWEST card that still wins
 
             // If a winning card is available, play it. Otherwise, play the lowest card of the suit.
-            return winningCard.orElse(playableCards.stream()
+            return winningCard.orElseGet(() -> playableCards.stream()
                 .min(this::compareKlaverjassenCards)
                 .orElseThrow());
         }
 
         // Rule 2: Cannot follow suit, must trump if possible (and lead is not trump).
-        if (leadingSuit != trumpSuit && hasSuit(hand, trumpSuit)) {
-            final List<Card> trumpCards = getCardsOfSuit(hand, trumpSuit);
+        if (leadingSuit != trumpSuit && hand.hasSuit(trumpSuit)) {
+            final List<Card> trumpCards = hand.ofSuit(trumpSuit);
             // Must try to over-trump if possible.
             Optional<Card> overTrumpCard = trumpCards.stream()
                 .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
                 .min(this::compareKlaverjassenCards); // Play the LOWEST trump that wins
 
             // If you can over-trump, you must. Otherwise, you must under-trump.
-            return overTrumpCard.orElse(trumpCards.stream()
-                .min(this::compareKlaverjassenCards)
-                .orElseThrow());
+            // This rule differs between Amsterdam and Rotterdam variants.
+            if (gameEngine.getGame()
+                .getGameVariant() == ROTTERDAMS) {
+                // Rotterdam: If you can't over-trump, you can discard.
+                return overTrumpCard.orElseGet(() -> discardCardWithSignal(hand.cards(), hand.bySuit()));
+            } else {
+                // Amsterdam: If you can't over-trump, you MUST under-trump.
+                return overTrumpCard.orElseGet(() -> trumpCards.stream()
+                    .min(this::compareKlaverjassenCards)
+                    .orElseThrow());
+            }
         }
 
         // Rule 3: Cannot follow suit and cannot trump. Discard a card.
         // Use signaling to inform the partner about a strong suit.
-        return discardCardWithSignal(hand);
+        return discardCardWithSignal(hand.cards(), hand.bySuit());
     }
 
     /**
      * Play to support a partner who is already winning the trick.
      * Rules for "Amsterdam" Klaverjassen are followed here.
      */
-    private Card playToSupportPartner(final List<Card> hand, final Suit leadingSuit) {
-        final Suit trumpSuit = gameEngine.getGame().getTrump();
+    private Card playToSupportPartner(final Hand hand, final Suit leadingSuit, final Card highestCardInTrick) {
+        final Suit trumpSuit = gameEngine.getGame()
+            .getTrump();
 
         // Rule 1: Must follow suit if possible.
-        if (hasSuit(hand, leadingSuit)) {
+        if (hand.hasSuit(leadingSuit)) {
             // Strategy: Play the card with the HIGHEST point value to "grease" the trick for your partner.
-            return getCardsOfSuit(hand, leadingSuit).stream()
+            return hand.ofSuit(leadingSuit)
+                .stream()
                 .max(Comparator.comparingInt(this::getStandardPointValue))
                 .orElseThrow();
         }
 
-        // Rule 2: Cannot follow suit. Must trump if you can.
-        if (hasSuit(hand, trumpSuit)) {
-            // When partner is winning, the goal is to not waste a high trump.
-            // Play the lowest trump card you have. This is called "onder-trumpen".
-            return getCardsOfSuit(hand, trumpSuit).stream()
-                .min(this::compareKlaverjassenCards)
-                .orElseThrow();
+        // Rule 2: Cannot follow suit. The rules now depend on the game variant.
+        if (gameEngine.getGame()
+            .getGameVariant() == ROTTERDAMS && hand.hasSuit(trumpSuit)) {
+            // Rotterdam: You MUST over-trump if you can. You cannot under-trump.
+            final Optional<Card> overTrumpCard = hand.ofSuit(trumpSuit)
+                .stream()
+                .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
+                .min(this::compareKlaverjassenCards);
+
+            if (overTrumpCard.isPresent()) {
+                return overTrumpCard.get();
+            }
+            // If you cannot over-trump, you can discard.
         }
 
-        // Rule 3: Cannot follow suit and cannot trump. Discard a card.
-        // Use signaling to inform the partner about a strong suit.
-        return discardCardWithSignal(hand);
+        // Amsterdam OR Rotterdam (when you can't over-trump):
+        // You are not obligated to trump. The best strategy is to "smeren" (grease) with points.
+        // Discard the highest-point non-trump card to maximize points for the trick.
+        return hand.cards()
+            .stream()
+            .filter(c -> c.getSuit() != trumpSuit)
+            .max(Comparator.comparingInt(this::getStandardPointValue))
+            // Fallback: If only non-trumps are left, must discard the lowest trump to save high trumps.
+            .orElseGet(() -> hand.cards()
+                .stream()
+                .min(this::compareKlaverjassenCards)
+                .orElseThrow());
     }
 
     /**
      * Discards a card, attempting to signal a strong suit to the partner.
      * A signal is made by discarding a low-value card from a suit where the AI holds an Ace or Ten.
      */
-    private Card discardCardWithSignal(final List<Card> hand) {
-        final Suit trumpSuit = gameEngine.getGame().getTrump();
-        final Map<Suit, List<Card>> nonTrumpCardsBySuit = hand.stream()
-            .filter(c -> c.getSuit() != trumpSuit)
-            .collect(Collectors.groupingBy(Card::getSuit));
+    private Card discardCardWithSignal(final List<Card> hand, final Map<Suit, List<Card>> cardsBySuit) {
+        final Suit trumpSuit = gameEngine.getGame()
+            .getTrump();
 
         // Strategy 1: Signal a strong suit.
         // Find a suit where we have an Ace or Ten, and discard a low card from it.
-        Optional<Card> signalCard = nonTrumpCardsBySuit.entrySet().stream()
+        List<Card> signalCards = cardsBySuit.entrySet()
+            .stream()
             .filter(entry -> {
                 // A suit is "strong" if we have a high card (Ace or Ten) in it.
-                boolean hasAce = entry.getValue().stream().anyMatch(c -> c.getRank() == Rank.ACE);
-                boolean hasTen = entry.getValue().stream().anyMatch(c -> c.getRank() == Rank.TEN);
+                if (entry.getKey() == trumpSuit) {
+                    return false;
+                }
+                boolean hasAce = entry.getValue()
+                    .stream()
+                    .anyMatch(c -> c.getRank() == Rank.ACE);
+                boolean hasTen = entry.getValue()
+                    .stream()
+                    .anyMatch(c -> c.getRank() == Rank.TEN);
                 return hasAce || hasTen;
             })
-            .map(entry -> entry.getValue().stream().min(this::compareKlaverjassenCards).orElse(null)) // Get the lowest card of that strong suit
-            .filter(java.util.Objects::nonNull)
-            .min(this::compareKlaverjassenCards); // From the possible signal cards, pick the lowest one overall.
+            .map(entry -> entry.getValue()
+                .stream()
+                .min(this::compareKlaverjassenCards)) // Get the lowest card of that strong suit
+            .flatMap(Optional::stream)
+            .sorted(this::compareKlaverjassenCards) // Sorts the signal cards from lowest to highest
+            .toList();
 
-        if (signalCard.isPresent()) {
-            return signalCard.get();
+        // Strategy 1: If we can signal, do it.
+        // If we have multiple suits to signal, discard the lowest card of the second-best suit (the highest of the low cards).
+        // This saves the signal for our best suit. If only one, discard from it.
+        if (!signalCards.isEmpty()) {
+            return signalCards.getLast();
         }
 
-        // Strategy 2: No strong suit to signal. Discard the lowest-value non-trump card.
-        Optional<Card> lowestNonTrump = hand.stream()
+        // Strategy 2: No signal possible. Discard the lowest-value non-trump card.
+        Optional<Card> lowestCardToDiscard = hand.stream()
             .filter(c -> c.getSuit() != trumpSuit)
             .min(this::compareKlaverjassenCards);
 
-        if (lowestNonTrump.isPresent()) {
-            return lowestNonTrump.get();
-        }
-
-        // Strategy 3: Only trumps are left. Must discard the lowest trump.
-        return hand.stream()
+        // Strategy 3: Only trumps are left or no other option. Must discard the lowest card overall.
+        return lowestCardToDiscard.orElseGet(() -> hand.stream()
             .min(this::compareKlaverjassenCards)
-            .orElseThrow();
+            .orElseThrow());
     }
 
 
@@ -243,17 +341,6 @@ public class AiPlayer {
             .collect(Collectors.toList());
     }
 
-    private boolean hasSuit(final List<Card> hand, final Suit suit) {
-        return hand.stream()
-            .anyMatch(card -> card.getSuit() == suit);
-    }
-
-    private List<Card> getCardsOfSuit(final List<Card> hand, final Suit suit) {
-        return hand.stream()
-            .filter(card -> card.getSuit() == suit)
-            .collect(Collectors.toList());
-    }
-
     /**
      * Compares cards based on their game-winning value (trump > non-trump).
      */
@@ -265,17 +352,20 @@ public class AiPlayer {
      * Gets the Klaverjassen power-value of a card (e.g., Trump Jack is highest).
      */
     private int getKlaverjassenValue(final Card card) {
-        boolean isTrump = card.getSuit()
+        return card.getSuit()
             .equals(gameEngine.getGame()
-                .getTrump());
-        return isTrump ? card.getRank().getTrumpValue() : card.getRank().getStandardValue();
+                .getTrump())
+            ? card.getRank()
+            .getTrumpValue()
+            : card.getRank()
+            .getStandardValue();
     }
 
     /**
      * Gets the standard point value of a card for scoring and "smeren" (Ace=11, 10=10, etc.).
      */
     private int getStandardPointValue(final Card card) {
-        return card.getRank().getStandardValue();
+        return getKlaverjassenValue(card); // Standard value is the same as non-trump Klaverjassen value
     }
 
     // The bidding threshold is an estimate of how many points the AI thinks it can make with its partner.
@@ -286,7 +376,8 @@ public class AiPlayer {
 
     public boolean decideBid(final String userId) {
         final List<Card> hand = getHand(userId);
-        final Suit trumpSuit = gameEngine.getGame().getTrump();
+        final Suit trumpSuit = gameEngine.getGame()
+            .getTrump();
         int handStrength = 0;
 
         final Map<Suit, List<Card>> cardsBySuit = hand.stream()
@@ -294,14 +385,29 @@ public class AiPlayer {
 
         // 1. Evaluate trump suit strength
         final List<Card> trumpCards = cardsBySuit.getOrDefault(trumpSuit, List.of());
-        final boolean hasTrumpJack = trumpCards.stream().anyMatch(c -> c.getRank() == Rank.JACK);
-        final boolean hasTrumpNine = trumpCards.stream().anyMatch(c -> c.getRank() == Rank.NINE);
+        final boolean hasTrumpJack = trumpCards.stream()
+            .anyMatch(c -> c.getRank() == Rank.JACK);
 
-        if (hasTrumpJack) handStrength += 12; // The highest trump is a massive advantage.
-        if (hasTrumpNine) handStrength += 8;  // The second highest trump is also key.
+        if (trumpCards.isEmpty()) {
+            handStrength -= 20; // Massive penalty for being void in the trump suit.
+        }
+
+        final boolean hasTrumpNine = trumpCards.stream()
+            .anyMatch(c -> c.getRank() == Rank.NINE);
+
+        if (hasTrumpJack) {
+            handStrength += 12; // The highest trump is a massive advantage.
+        }
+
+        if (hasTrumpNine) {
+            handStrength += 8; // The second highest trump is also key.
+        }
+
 
         // Bonus for having multiple high trumps
-        if (hasTrumpJack && hasTrumpNine) handStrength += 5;
+        if (hasTrumpJack && hasTrumpNine) {
+            handStrength += 5;
+        }
 
         // Bonus for length of the trump suit. Control of the game.
         if (trumpCards.size() >= 4) {
@@ -309,29 +415,85 @@ public class AiPlayer {
         }
 
         // Check for "Stuk" (King and Queen of trump)
-        final boolean hasTrumpKing = trumpCards.stream().anyMatch(c -> c.getRank() == Rank.KING);
-        final boolean hasTrumpQueen = trumpCards.stream().anyMatch(c -> c.getRank() == Rank.QUEEN);
+        final boolean hasTrumpKing = trumpCards.stream()
+            .anyMatch(c -> c.getRank() == Rank.KING);
+        final boolean hasTrumpQueen = trumpCards.stream()
+            .anyMatch(c -> c.getRank() == Rank.QUEEN);
         if (hasTrumpKing && hasTrumpQueen) {
             handStrength += 5; // This is worth 20 points if declared, but also indicates trump strength.
         }
 
+        // Bonus for having a sequence (roem) in trump, indicates strong control.
+        List<Integer> trumpRanks = trumpCards.stream()
+            .map(c -> c.getRank()
+                .getTrumpValue())
+            .sorted()
+            .collect(Collectors.toList());
+
+        if (hasSequence(trumpRanks, 3)) {
+            handStrength += 4;
+        }
+        if (hasSequence(trumpRanks, 4)) {
+            handStrength += 6;
+        }
+
+
         // 2. Evaluate non-trump suits for point-making potential
         for (Map.Entry<Suit, List<Card>> entry : cardsBySuit.entrySet()) {
-            if (entry.getKey() == trumpSuit) continue;
+            if (entry.getKey() == trumpSuit) {
+                continue;
+            }
 
             List<Card> suitCards = entry.getValue();
-            boolean hasAce = suitCards.stream().anyMatch(c -> c.getRank() == Rank.ACE);
-            boolean hasTen = suitCards.stream().anyMatch(c -> c.getRank() == Rank.TEN);
+            boolean hasAce = suitCards.stream()
+                .anyMatch(c -> c.getRank() == Rank.ACE);
+            boolean hasTen = suitCards.stream()
+                .anyMatch(c -> c.getRank() == Rank.TEN);
+            boolean hasKing = suitCards.stream()
+                .anyMatch(c -> c.getRank() == Rank.KING);
+            boolean hasQueen = suitCards.stream()
+                .anyMatch(c -> c.getRank() == Rank.QUEEN);
 
-            if (hasAce) handStrength += 7; // A non-trump Ace is often a guaranteed trick.
-            if (hasTen) handStrength += 4; // A non-trump Ten is a likely point winner.
-            if (hasAce && hasTen) handStrength += 3; // Ace-Ten combo is very strong.
+            if (hasAce) {
+                handStrength += 7; // A non-trump Ace is often a guaranteed trick.
+            }
+
+            if (hasTen) {
+                handStrength += 4; // A non-trump Ten is a likely point winner
+            }
+
+            // Add points for "defensive" honors that are not naked.
+            if (hasKing && suitCards.size() > 1) {
+                handStrength += 2;
+            }
+            if (hasQueen && suitCards.size() > 1) {
+                handStrength += 1;
+            }
+            // Penalty for "naked" honors.
+            if (hasAce && suitCards.size() == 1) {
+                handStrength += 2; // A naked Ace is still good, just not as good as a supported one. Reverts penalty.
+            }
+            if (hasTen && suitCards.size() == 1) {
+                handStrength -= 2;
+            }
+            if (hasKing && suitCards.size() == 1) {
+                handStrength -= 2; // A naked King is a liability.
+            }
+            if (hasQueen && suitCards.size() == 1) {
+                handStrength -= 1; // A naked Queen is a small liability.
+            }
+            if (hasAce && hasTen) {
+                handStrength += 3;  // Ace-Ten combo is very strong.
+            }
         }
 
         // 3. Evaluate distribution for voiding/trumping potential
         for (Suit s : Suit.values()) {
-            if (s == trumpSuit) continue;
-            int suitSize = cardsBySuit.getOrDefault(s, List.of()).size();
+            if (s == trumpSuit) {
+                continue;
+            }
+            int suitSize = cardsBySuit.getOrDefault(s, List.of())
+                .size();
             if (suitSize == 1) {
                 handStrength += 3; // Singleton allows for trumping after one round.
             } else if (suitSize == 0) {
@@ -342,5 +504,17 @@ public class AiPlayer {
         final boolean decision = handStrength >= BIDDING_THRESHOLD;
         log.info("{}: evaluates their hand for trump: {}, with strength: {}, decision={}", userId, trumpSuit, handStrength, decision);
         return decision;
+    }
+
+    private boolean hasSequence(final List<Integer> sortedRanks, final int length) {
+        if (sortedRanks.size() < length) {
+            return false;
+        }
+        for (int i = 0; i <= sortedRanks.size() - length; i++) {
+            if (sortedRanks.get(i + length - 1) - sortedRanks.get(i) == length - 1) {
+                return true;
+            }
+        }
+        return false;
     }
 }
