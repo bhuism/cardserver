@@ -1,8 +1,10 @@
 package nl.appsource.cardserver.model;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
+@Getter
 public enum Rank {
 
     ACE("A", 11, 11),

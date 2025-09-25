@@ -5,7 +5,11 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 public interface GameEngine {
+
+    List<Card> getTrickCards(int trickNr);
 
     int calcWhoSay() throws GameEngineException;
 
@@ -31,7 +35,15 @@ public interface GameEngine {
 
     Game getGame();
 
+    int getTurnCount();
+
     Mono<GameEngine> openLastTrick();
 
     Mono<GameEngine> closeLastTrick();
+
+    boolean isLastTrick();
+
+    String getPartner(String userId);
+
+    String getTrickWinnerId(List<Card> currentTrick);
 }
