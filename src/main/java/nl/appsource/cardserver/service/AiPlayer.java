@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Rank;
@@ -16,8 +15,7 @@ import java.util.stream.Collectors;
 import static org.openapitools.model.GameVariant.ROTTERDAMS;
 
 @Slf4j
-@RequiredArgsConstructor
-public class AiPlayer {
+public record AiPlayer(GameEngine gameEngine) {
 
     private record Hand(List<Card> cards, Map<Suit, List<Card>> bySuit) {
         static Hand from(final List<Card> cards) {
@@ -33,8 +31,6 @@ public class AiPlayer {
             return bySuit.containsKey(suit);
         }
     }
-
-    private final GameEngine gameEngine;
 
     // Main entry point for the AI's decision
     public Card calcAiCard(final String userId) throws GameEngineException {
