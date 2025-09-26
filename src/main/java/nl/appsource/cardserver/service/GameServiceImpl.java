@@ -283,7 +283,7 @@ public class GameServiceImpl implements GameService {
                         }
 
                         if (gameEngine.isAiSay()) {
-                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000, gameEngine.getGame()
+                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 1000, gameEngine.getGame()
                                 .getPlayers()
                                 .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
                                 .getId()));
