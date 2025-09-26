@@ -20,6 +20,8 @@ components:
           $ref: "./api.yaml#/components/schemas/GameVariant"
         screenOrientation:
           $ref: "./api.yaml#/components/schemas/ScreenOrientation"
+        theme:
+          $ref: "./api.yaml#/components/schemas/Theme"
       required:
         - id
         - updated
@@ -29,3 +31,4 @@ components:
         - skipAnimation
         - gameVariant
         - screenOrientation
+        - theme

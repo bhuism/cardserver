@@ -370,11 +370,14 @@ components:
           $ref: '#/components/schemas/GameVariant'
         screenOrientation:
           $ref: '#/components/schemas/ScreenOrientation'
+        theme:
+          $ref: '#/components/schemas/Theme'
       required:
         - displayName
         - skipAnimation
         - gameVariant
         - screenOrientation
+        - theme
     createGame:
       type: object
       properties:
@@ -465,6 +468,11 @@ components:
         - auto
         - portrait
         - landscape
+    Theme:
+      enum:
+        - auto
+        - light
+        - dark
   parameters:
     AppIdentifier:
       name: App-Identifier

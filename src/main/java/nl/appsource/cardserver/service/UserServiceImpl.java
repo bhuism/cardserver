@@ -45,17 +45,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<InvitesResponse> getInvites(final String userId) {
 
-        return userRepository.findById(userId).flatMap(user -> {
+        return userRepository.findById(userId)
+            .flatMap(user -> {
 
-            final Flux<String> incomingFlux = userRepository.findIncomingInvites(userId).cache();
-            final Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites()).cache();
-            final Flux<String> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).cache();
-            final Flux<String> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).cache();
-            final Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2)));
-            final InvitesResponse invitesResponse = new InvitesResponse(onlyIncoming, onlyOutgoing, friends);
-            return Mono.just(invitesResponse);
+                final Flux<String> incomingFlux = userRepository.findIncomingInvites(userId)
+                    .cache();
+                final Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites())
+                    .cache();
+                final Flux<String> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2)))
+                    .cache();
+                final Flux<String> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2)))
+                    .cache();
+                final Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2)));
+                final InvitesResponse invitesResponse = new InvitesResponse(onlyIncoming, onlyOutgoing, friends);
+                return Mono.just(invitesResponse);
 
-        });
+            });
 
     }
 
@@ -66,33 +71,41 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Void> removeInvite(final String userId, final String friendId) {
-        return userRepository.findById(userId).flatMap(user -> {
-            if (user.getInvites().remove(friendId)) {
-                return Mono.just(user);
-            } else {
-                return Mono.empty();
-            }
+        return userRepository.findById(userId)
+            .flatMap(user -> {
+                if (user.getInvites()
+                    .remove(friendId)) {
+                    return Mono.just(user);
+                } else {
+                    return Mono.empty();
+                }
 
-        }).flatMap(userRepository::save).flatMap((user) -> {
-            sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
-            sseEmitterRepository.sendOnlineListTo(userId);
-            sseEmitterRepository.sendOnlineListTo(friendId);
-            return Mono.empty();
-        });
+            })
+            .flatMap(userRepository::save)
+            .flatMap((user) -> {
+                sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
+                sseEmitterRepository.sendOnlineListTo(userId);
+                sseEmitterRepository.sendOnlineListTo(friendId);
+                return Mono.empty();
+            });
     }
 
     @Override
     public Mono<Void> acceptInvite(final String userId, final String friendId) {
-        return userRepository.findById(userId).map(user -> {
-            user.getInvites().add(friendId);
-            return user;
-        }).flatMap(userRepository::save).flatMap((user) -> {
-            sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
-            sseEmitterRepository.newFriend(friendId, userId);
-            sseEmitterRepository.sendOnlineListTo(userId);
-            sseEmitterRepository.sendOnlineListTo(friendId);
-            return Mono.empty();
-        });
+        return userRepository.findById(userId)
+            .map(user -> {
+                user.getInvites()
+                    .add(friendId);
+                return user;
+            })
+            .flatMap(userRepository::save)
+            .flatMap((user) -> {
+                sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
+                sseEmitterRepository.newFriend(friendId, userId);
+                sseEmitterRepository.sendOnlineListTo(userId);
+                sseEmitterRepository.sendOnlineListTo(friendId);
+                return Mono.empty();
+            });
     }
 
     @Override
@@ -100,13 +113,15 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
             .flatMap(user -> userRepository.searchInvitees(searchString)
                 .map(User::getId)
-                .filter(inviteeId -> !user.getInvites().contains(inviteeId))
+                .filter(inviteeId -> !user.getInvites()
+                    .contains(inviteeId))
                 .collect(Collectors.toSet())
                 .flatMap(newFriendIds -> {
                     if (newFriendIds.isEmpty()) {
                         return Mono.just(0);
                     }
-                    user.getInvites().addAll(newFriendIds);
+                    user.getInvites()
+                        .addAll(newFriendIds);
                     return userRepository.save(user)
                         .doOnSuccess(savedUser -> {
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
@@ -129,6 +144,7 @@ public class UserServiceImpl implements UserService {
                     user.setSkipAnimation(updatePreferences.getSkipAnimation());
                     user.setGameVariant(updatePreferences.getGameVariant());
                     user.setScreenOrientation(updatePreferences.getScreenOrientation());
+                    user.setTheme(updatePreferences.getTheme());
                     return userRepository.save(user);
                 }));
     }

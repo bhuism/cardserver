@@ -25,6 +25,7 @@ public class UserToOpenApiConverter implements Converter<User, org.openapitools.
         target.setSkipAnimation(Boolean.TRUE.equals(source.getSkipAnimation()));
         target.setGameVariant(source.getGameVariant());
         target.setScreenOrientation(source.getScreenOrientation());
+        target.setTheme(source.getTheme());
 
         return target;
     }

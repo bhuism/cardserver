@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.ScreenOrientation;
+import org.openapitools.model.Theme;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
@@ -69,5 +70,9 @@ public class User {
     @NotNull
     @Field
     private ScreenOrientation screenOrientation;
+
+    @NotNull
+    @Field
+    private Theme theme;
 
 }
