@@ -60,7 +60,7 @@ components:
           type: integer
         lastTrickOpen:
           type: boolean
-        gameVariant:
+        variant:
           $ref: './api.yaml#/components/schemas/GameVariant'
         dealCounter:
           type: integer
@@ -77,7 +77,7 @@ components:
         - turns
         - trump
         - lastTrickOpen
-        - gameVariant
+        - variant
         - dealCounter
     Suit:
       type: string
