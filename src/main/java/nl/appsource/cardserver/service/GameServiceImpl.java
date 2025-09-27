@@ -213,7 +213,7 @@ public class GameServiceImpl implements GameService {
         Mono<GameEngine> run() throws GameEngineException;
     }
 
-    public void processDueEvents() {
+    public synchronized void processDueEvents() {
         long currentTime = System.currentTimeMillis();
         while (!eventQueue.isEmpty() && eventQueue.peek()
             .getExecutionTime() <= currentTime) {
@@ -283,12 +283,12 @@ public class GameServiceImpl implements GameService {
                         }
 
                         if (gameEngine.isAiSay()) {
-                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 1000, gameEngine.getGame()
+                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 1000 + RAND.nextInt(500), gameEngine.getGame()
                                 .getPlayers()
                                 .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
                                 .getId()));
                         } else if (gameEngine.isAiTurn()) {
-                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000), gameEngine.getGame()
+                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + RAND.nextInt(500), gameEngine.getGame()
                                 .getPlayers()
                                 .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
                                 .getId()));
@@ -306,9 +306,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public void scheduleGameEvent(final ScheduledGameEvent scheduledGameEvent) {
         eventQueue.add(scheduledGameEvent);
-        if (scheduledGameEvent.getExecutionTime() <= System.currentTimeMillis()) {
-            this.processDueEvents();
-        }
+        this.processDueEvents();
     }
 
     public static Map<Card, Integer> randomCards() {
