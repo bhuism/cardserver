@@ -183,17 +183,12 @@ public class GameServiceImpl implements GameService {
                                 .getId(), e);
                         }
                     } else if (gameEngine.isAiTurn()) {
-                        try {
-                            final String userId = gameEngine.getGame()
-                                .getPlayers()
-                                .get(gameEngine.calcWhoHasTurn());
-                            this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame()
-                                .getId(), null, null);
-                            return Mono.just(gameEngine.getGame());
-                        } catch (GameEngineException e) {
-                            log.warn("Can not ai say game {}", gameEngine.getGame()
-                                .getId(), e);
-                        }
+                        final String userId = gameEngine.getGame()
+                            .getPlayers()
+                            .get(gameEngine.calcWhoHasTurn());
+                        this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame()
+                            .getId(), null, null);
+                        return Mono.just(gameEngine.getGame());
                     }
 
                     return Mono.empty();

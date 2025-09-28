@@ -64,6 +64,46 @@ components:
           $ref: './api.yaml#/components/schemas/GameVariant'
         dealCounter:
           type: integer
+        numberOfTurns:
+          type: integer
+        isCompleted:
+          type: boolean
+        hasFullTrick:
+          type: boolean
+        tricksPlayed:
+          type: integer
+        isErGegaan:
+          type: boolean
+        iedereenPast:
+          type: boolean
+        niemandGezegd:
+          type: boolean
+        geenKaartGespeeld:
+          type: boolean
+        huidigeTafelKaarten:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+        trickPoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/NorthSouthNumber"
+        allPoints:
+          $ref: "#/components/schemas/NorthSouthNumber"
+        trickRoem:
+          type: array
+          items:
+            $ref: "#/components/schemas/NorthSouthNumber"
+        allRoem:
+          $ref: "#/components/schemas/NorthSouthNumber"
+        winner:
+          $ref: "#/components/schemas/Teams"
+        erIsGegaan:
+          type: boolean
+        elder:
+          type: integer
+        elderTeam:
+          $ref: "#/components/schemas/Teams"
       required:
         - id
         - trump
@@ -79,6 +119,20 @@ components:
         - lastTrickOpen
         - variant
         - dealCounter
+        - numberOfTurns
+        - isCompleted
+        - hasFullTrick
+        - tricksPlayed
+        - isErGegaan
+        - iedereenPast
+        - niemandGezegd
+        - geenKaartGespeeld
+        - huidigeTafelKaarten
+        - trickPoints
+        - allPoints
+        - trickRoem
+        - allRoem
+        - erIsGegaan
     Suit:
       type: string
       enum:
@@ -86,6 +140,23 @@ components:
         - Diamonds
         - Hearts
         - Spades
+    Teams:
+      type: string
+      enum:
+        - NothSouth
+        - EastWest
+    NorthSouthNumber:
+      type: object
+      properties:
+        northSouth:
+          type: integer
+          default: 0
+        eastWest:
+          type: integer
+          default: 0
+      required:
+        - northSouth
+        - eastWest
     Card:
       type: string
       enum:

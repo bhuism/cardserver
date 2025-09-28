@@ -8,6 +8,8 @@ import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
+import org.openapitools.model.NorthSouthNumber;
+import org.openapitools.model.Teams;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +34,16 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         target.setUpdated(source.getUpdated());
         target.setCreator(source.getCreator());
         target.setDealer(source.getDealer());
-        target.setPlayerCard(source.getPlayerCard().entrySet().stream().map(cardIntegerEntry -> {
-            final GamePlayerCardInner gamePlayerCardInner = new GamePlayerCardInner();
-            gamePlayerCardInner.setCard(GameToOpenApiConverter.convertCard(cardIntegerEntry.getKey()));
-            gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
-            return gamePlayerCardInner;
-        }).collect(Collectors.toCollection(ArrayList::new)));
+        target.setPlayerCard(source.getPlayerCard()
+            .entrySet()
+            .stream()
+            .map(cardIntegerEntry -> {
+                final GamePlayerCardInner gamePlayerCardInner = new GamePlayerCardInner();
+                gamePlayerCardInner.setCard(GameToOpenApiConverter.convertCard(cardIntegerEntry.getKey()));
+                gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
+                return gamePlayerCardInner;
+            })
+            .collect(Collectors.toCollection(ArrayList::new)));
         target.setPlayers(source.getPlayers());
         target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
         target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
@@ -45,7 +51,8 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         final Map<String, Boolean> says = new HashMap<>();
 
         if (source.getSay() != null) {
-            source.getSay().forEach((integer, aBoolean) -> says.put("" + integer, aBoolean));
+            source.getSay()
+                .forEach((integer, aBoolean) -> says.put("" + integer, aBoolean));
         }
 
         target.setSays(says);
@@ -70,12 +77,109 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         target.setVariant(source.getGameVariant());
         target.setDealCounter(source.getDealCounter());
 
+        target.setNumberOfTurns(gameEngine.getTurnCount());
+        target.setIsCompleted(source.getTurns()
+            .size() == 32);
+        target.setHasFullTrick(gameEngine.isFullTrick());
+        target.setTricksPlayed(gameEngine.calcTricksPlayed());
+        target.setIsErGegaan(source
+            .getSay()
+            .containsValue(Boolean.TRUE));
+        target.setIedereenPast(source
+            .getSay()
+            .values()
+            .stream()
+            .filter(aBoolean -> aBoolean.equals(Boolean.FALSE))
+            .count() == 4);
+        target.setNiemandGezegd(source
+            .getSay()
+            .isEmpty());
+        target.setGeenKaartGespeeld(gameEngine.getTurnCount() == 0);
+        target.setHuidigeTafelKaarten(source.getTurns()
+            .subList((gameEngine.calcTricksPlayed() - (gameEngine.getTurnCount() % 4 == 0 ? 1 : 0)) * 4, gameEngine.getTurnCount())
+            .stream()
+            .map(GameToOpenApiConverter::convertCard)
+            .collect(Collectors.toList()));
+
+        target.setTrickPoints(new ArrayList<>());
+        target.setAllPoints(new NorthSouthNumber());
+
+        target.setTrickRoem(new ArrayList<>());
+        target.setAllRoem(new NorthSouthNumber());
+
+        target.setErIsGegaan(gameEngine.getErIsGegaan());
+
+        for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
+
+            final int trickWinner = gameEngine.determineTrickWinner(trickNr);
+
+            final NorthSouthNumber northSouthNumber = new NorthSouthNumber();
+            final NorthSouthNumber roemNorthSouthNumber = new NorthSouthNumber();
+
+            final int points = gameEngine.calculateTrickPoints(trickNr);
+            final int roemPoints = gameEngine.calculateTrickRoem(trickNr);
+
+            if (trickWinner % 2 == 0) {
+                northSouthNumber.setNorthSouth(points);
+                northSouthNumber.setEastWest(0);
+
+                roemNorthSouthNumber.setNorthSouth(roemPoints);
+                roemNorthSouthNumber.setEastWest(0);
+
+                target.getAllPoints().setNorthSouth(target.getAllPoints().getNorthSouth() + points);
+                target.getAllRoem().setNorthSouth(target.getAllRoem().getNorthSouth() + roemPoints);
+
+            } else {
+                northSouthNumber.setNorthSouth(0);
+                northSouthNumber.setEastWest(points);
+
+
+                roemNorthSouthNumber.setNorthSouth(0);
+                roemNorthSouthNumber.setEastWest(roemPoints);
+
+                target.getAllPoints().setEastWest(target.getAllPoints().getEastWest() + points);
+                target.getAllRoem().setEastWest(target.getAllRoem().getEastWest() + roemPoints);
+            }
+
+            target.getTrickPoints().add(northSouthNumber);
+            target.getTrickRoem().add(roemNorthSouthNumber);
+
+        }
+
+        if (gameEngine.getErIsGegaan()) {
+
+            final int elder = source.getSay().entrySet().stream().filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true)).map(Map.Entry::getKey).findFirst().get();
+
+            target.setElder(Optional.of(elder));
+            target.setElderTeam(Optional.of(elder % 2 == 0 ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
+
+            if (gameEngine.isCompleted()) {
+
+                if (target.getAllPoints()
+                    .getNorthSouth() + target.getAllRoem()
+                    .getNorthSouth() == target.getAllPoints()
+                    .getEastWest() + target.getAllRoem()
+                    .getEastWest()) {
+                    target.setWinner(Optional.of(elder == 1 || elder == 3 ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
+                } else {
+                    target.setWinner(Optional.of(target.getAllPoints()
+                        .getNorthSouth() + target.getAllRoem()
+                        .getNorthSouth() > target.getAllPoints()
+                        .getEastWest() + target.getAllRoem()
+                        .getEastWest() ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
+                }
+
+            }
+        }
+
         return target;
 
     }
 
     private static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.model.Card> source) {
-        return source.stream().map(GameToOpenApiConverter::convertCard).collect(Collectors.toCollection(ArrayList::new));
+        return source.stream()
+            .map(GameToOpenApiConverter::convertCard)
+            .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static org.openapitools.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
@@ -93,7 +197,9 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         Suit.Diamonds, org.openapitools.model.Suit.DIAMONDS);
 
     private static org.openapitools.model.Suit convertSuit(final Suit trump) {
-        return Optional.ofNullable(trump).map(SUITCONVERTER::get).orElse(null);
+        return Optional.ofNullable(trump)
+            .map(SUITCONVERTER::get)
+            .orElse(null);
     }
 
 }

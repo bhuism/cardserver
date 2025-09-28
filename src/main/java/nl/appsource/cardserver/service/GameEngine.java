@@ -11,6 +11,8 @@ public interface GameEngine {
 
     List<Card> getTrickCards(int trickNr);
 
+    int determineTrickWinner(int trickNr);
+
     int calcWhoSay() throws GameEngineException;
 
     int calcWhoHasTurn() throws GameEngineException;
@@ -46,4 +48,10 @@ public interface GameEngine {
     String getPartner(String userId);
 
     String getTrickWinnerId(List<Card> currentTrick);
+
+    int calculateTrickPoints(int trickNr);
+
+    int calculateTrickRoem(int trickNr);
+
+    Boolean getErIsGegaan();
 }

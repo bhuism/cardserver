@@ -11,14 +11,12 @@ import nl.appsource.cardserver.service.exception.GameCompletedException;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.cardserver.service.exception.LastTrickOpenException;
 import nl.appsource.cardserver.service.exception.NeedNewSayRound;
-import nl.appsource.cardserver.service.exception.NoElderException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -81,10 +79,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     }
 
-    int determineTrickWinner(final int trickNr) throws GameEngineException {
+    @Override
+    public int determineTrickWinner(final int trickNr) {
 
         if (trickNr >= calcTricksPlayed() || trickNr < 0) {
-            throw new GameEngineException("no such trick " + trickNr);
+            throw new RuntimeException("no such trick " + trickNr);
         }
 
         final List<Card> trick = getTrickCards(trickNr);
@@ -118,21 +117,20 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public int calcWhoHasTurn() throws GameEngineException {
+    public int calcWhoHasTurn() {
 
         if (isCompleted()) {
-            throw new GameCompletedException();
+            throw new RuntimeException();
         }
 
         if (game.getSay() == null || !isErGegaan()) {
-            throw new NoElderException(null);
+            throw new RuntimeException("Nobody went");
         }
 
         final int laatsteKaart = getTurnCount() % 4;
 
         if (laatsteKaart != 0) {
-            return (whoHasCard(game.getTurns()
-                .getLast()) + 1) % 4;
+            return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
         } else {
             if (game.getTurns()
                 .isEmpty()) {
@@ -408,165 +406,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .toList();
     }
 
-    public Card calcAiCard(final String userId) throws GameEngineException {
-
-//        log.info("calcAiCard() userId={}", userId);
-
-        if (!AI_USER_ID.contains(userId)) {
-            throw new GameEngineException("Not an Ai player");
-        }
-
-        final List<Card> hand = getHand(userId);
-
-        // If leading the trick, play the lowest card of a non-trump suit, or lowest trump if only trumps.
-        if (isFirstTrickCard()) {
-            // Try to play a low card from a non-trump suit
-            for (Card card : hand) {
-                if (card.getSuit() != game.getTrump() && card.getRank() != Rank.SEVEN && card.getRank() != Rank.EIGHT) {
-                    return card;
-                }
-            }
-            // If only trumps or high cards, play the lowest card
-            return hand.getFirst();
-        } else {
-
-            final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
-
-
-            // Not the first player, must follow suit if possible
-            Card leadingCard = currentTrick.getFirst();
-            Suit leadingSuit = leadingCard.getSuit();
-
-            List<Card> playableCards = new ArrayList<>();
-
-            // Rule 1: Must follow suit if possible
-            if (hasSuit(hand, leadingSuit)) {
-                List<Card> cardsOfLeadingSuit = getCardsOfSuit(hand, leadingSuit);
-                // Try to beat the current highest card in the trick if possible and not trump
-                Card highestInTrick = getHighestCardInTrick(currentTrick);
-
-                for (Card card : cardsOfLeadingSuit) {
-                    // If leading suit is trump, or if card can beat the highest non-trump card
-                    if (leadingSuit == game.getTrump() || compareKlaverjassenCards(card, highestInTrick) > 0) {
-                        playableCards.add(card);
-                    }
-                }
-
-                if (!playableCards.isEmpty()) {
-                    // Play the lowest card that can beat the current highest, or lowest if none can beat
-                    playableCards.sort((c1, c2) -> {
-                        int val1 = getKlaverjassenValue(c1);
-                        int val2 = getKlaverjassenValue(c2);
-                        return Integer.compare(val1, val2);
-                    });
-                    // Prioritize beating the card if possible, otherwise play lowest of suit
-                    for (Card card : playableCards) {
-                        if (compareKlaverjassenCards(card, highestInTrick) > 0) {
-                            return card; // Play a card that beats
-                        }
-                    }
-                    return playableCards.getFirst(); // Play lowest if cannot beat
-                } else {
-                    // If has suit but no card can beat, play the lowest of the leading suit
-                    cardsOfLeadingSuit.sort((c1, c2) -> {
-                        int val1 = getKlaverjassenValue(c1);
-                        int val2 = getKlaverjassenValue(c2);
-                        return Integer.compare(val1, val2);
-                    });
-                    return cardsOfLeadingSuit.getFirst();
-                }
-            } else {
-                // Cannot follow suit
-                // Rule 2: If leading suit is not trump, and player has trump, must trump if possible
-                if (leadingSuit != game.getTrump() && hasSuit(hand, game.getTrump())) {
-                    List<Card> trumpCards = getCardsOfSuit(hand, game.getTrump());
-                    Card highestInTrick = getHighestCardInTrick(currentTrick);
-
-                    // Try to play a trump that can beat the current highest card in the trick
-                    for (Card trumpCard : trumpCards) {
-                        if (compareKlaverjassenCards(trumpCard, highestInTrick) > 0) {
-                            playableCards.add(trumpCard);
-                        }
-                    }
-
-                    if (!playableCards.isEmpty()) {
-                        // Play the lowest trump that can beat
-                        playableCards.sort((c1, c2) -> {
-                            int val1 = getKlaverjassenValue(c1);
-                            int val2 = getKlaverjassenValue(c2);
-                            return Integer.compare(val1, val2);
-                        });
-                        return playableCards.getFirst();
-                    } else {
-                        // If has trump but cannot beat, play the lowest trump
-                        trumpCards.sort((c1, c2) -> {
-                            int val1 = getKlaverjassenValue(c1);
-                            int val2 = getKlaverjassenValue(c2);
-                            return Integer.compare(val1, val2);
-                        });
-                        return trumpCards.getFirst();
-                    }
-                } else {
-                    // Cannot follow suit and cannot trump (or leading suit is trump and cannot follow)
-                    // Rule 3: Discard a low card (preferably from a non-trump suit)
-                    for (Card card : hand) {
-                        if (card.getSuit() != game.getTrump()) {
-                            return card; // Play a non-trump card
-                        }
-                    }
-                    // If only trumps left, play the lowest trump
-                    return hand.getFirst();
-                }
-            }
-        }
-    }
-
-    private static final int BIDDING_THRESHOLD = 24; // 25
-
-    public boolean decideBid(final String userId) {
-
-        final List<Card> hand = getHand(userId);
-
-        int currentScore = 0;
-
-        final List<Card> trumpCards = hand.stream()
-            .filter(c -> c.suit == game.getTrump())
-            .toList();
-        final Map<Rank, Long> trumpRanks = trumpCards.stream()
-            .collect(Collectors.groupingBy(c -> c.rank, Collectors.counting()));
-
-        // Points for high trumps
-        if (trumpRanks.containsKey(Rank.JACK)) {
-            currentScore += 10;
-        }
-        if (trumpRanks.containsKey(Rank.NINE)) {
-            currentScore += 8;
-        }
-
-        // Points for length (more than 3 trumps is good)
-        if (trumpCards.size() > 3) {
-            currentScore += (trumpCards.size() - 3) * 3;
-        }
-
-        // Points for a "marriage" (King & Queen of trump)
-        if (trumpRanks.containsKey(Rank.KING) && trumpRanks.containsKey(Rank.QUEEN)) {
-            currentScore += 5;
-        }
-
-        // Points for Aces in side suits
-        for (Card card : hand) {
-            if (card.suit != game.getTrump() && card.rank == Rank.ACE) {
-                currentScore += 6;
-            }
-        }
-
-        final boolean decision = currentScore >= BIDDING_THRESHOLD;
-
-        log.info("{}: evaluates their hand for trump: {}, with score: {}, decision={}", userId, game.getTrump(), currentScore, decision);
-
-        return decision;
-
-    }
 
     @Override
     public boolean isAiTurn() {
@@ -583,12 +422,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return false;
         }
 
-        try {
-            return isAiPlayer(game.getPlayers()
-                .get(calcWhoHasTurn()));
-        } catch (GameEngineException e) {
-            return false;
-        }
+        return isAiPlayer(game.getPlayers()
+            .get(calcWhoHasTurn()));
 
     }
 
@@ -702,4 +537,83 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .getPlayers()
             .get(whoHasCard(determineTrickWinningCard(currentTrick)));
     }
+
+    @Override
+    public int calculateTrickPoints(final int trickNr) {
+        return
+            this.getTrickCards(trickNr)
+                .stream()
+                .map((c) -> (c.suit == this.game.getTrump() ? c.rank.trumpValue : c.rank.standardValue))
+                .reduce(0, (sum, current) -> sum + current + (trickNr == 7 ? 10 : 0));
+
+    }
+
+    @SuppressWarnings("InnerAssignment")
+    @Override
+    public int calculateTrickRoem(final int trickNr) {
+        final List<Card> trick = this.getTrickCards(trickNr);
+
+        int roem = 0;
+
+        // Check for four of a kind
+        final Map<Rank, Long> countsByRank = trick.stream()
+            .collect(Collectors.groupingBy(Card::getRank, Collectors.counting()));
+
+        for (Map.Entry<Rank, Long> entry : countsByRank.entrySet()) {
+            if (entry.getValue() == 4) {
+                switch (entry.getKey()) {
+                    case ACE, KING, QUEEN -> roem += 100;
+                    case JACK -> roem += 200;
+                    default -> { }
+                }
+            }
+        }
+
+        // Check for sequences
+        final Map<Suit, List<Card>> cardsBySuit = trick.stream()
+            .collect(Collectors.groupingBy(Card::getSuit));
+
+        for (List<Card> suitCards : cardsBySuit.values()) {
+            if (suitCards.size() < 3) {
+                continue;
+            }
+
+            suitCards.sort(Comparator.comparing(card -> card.getRank().ordinal()));
+
+            boolean isFourInARow = false;
+            if (suitCards.size() == 4) {
+                if (suitCards.get(0).getRank().ordinal() + 1 == suitCards.get(1).getRank().ordinal()
+                    && suitCards.get(1).getRank().ordinal() + 1 == suitCards.get(2).getRank().ordinal()
+                    && suitCards.get(2).getRank().ordinal() + 1 == suitCards.get(3).getRank().ordinal()) {
+                    roem += 50;
+                    isFourInARow = true;
+                }
+            }
+
+            if (!isFourInARow && suitCards.size() >= 3) {
+                for (int i = 0; i <= suitCards.size() - 3; i++) {
+                    if (suitCards.get(i).getRank().ordinal() + 1 == suitCards.get(i + 1).getRank().ordinal()
+                        && suitCards.get(i + 1).getRank().ordinal() + 1 == suitCards.get(i + 2).getRank().ordinal()) {
+                        roem += 20;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Check for Stuk (King and Queen of trump)
+        final Suit trumpSuit = game.getTrump();
+        if (trick.stream().anyMatch(c -> c.getSuit() == trumpSuit && c.getRank() == Rank.KING)
+            && trick.stream().anyMatch(c -> c.getSuit() == trumpSuit && c.getRank() == Rank.QUEEN)) {
+            roem += 20;
+        }
+
+        return roem;
+    }
+
+    @Override
+    public Boolean getErIsGegaan() {
+        return this.game.getSay().containsValue(true);
+    }
+
 }
