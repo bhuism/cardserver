@@ -171,17 +171,12 @@ public class GameServiceImpl implements GameService {
                 .flatMap(gameEngine -> {
 
                     if (gameEngine.isAiSay()) {
-                        try {
-                            final String userId = gameEngine.getGame()
-                                .getPlayers()
-                                .get(gameEngine.calcWhoSay());
-                            this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame()
-                                .getId(), null, null);
-                            return Mono.just(gameEngine.getGame());
-                        } catch (GameEngineException e) {
-                            log.warn("Can not ai say game {}", gameEngine.getGame()
-                                .getId(), e);
-                        }
+                        final String userId = gameEngine.getGame()
+                            .getPlayers()
+                            .get(gameEngine.calcWhoSay());
+                        this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame()
+                            .getId(), null, null);
+                        return Mono.just(gameEngine.getGame());
                     } else if (gameEngine.isAiTurn()) {
                         final String userId = gameEngine.getGame()
                             .getPlayers()
@@ -266,32 +261,28 @@ public class GameServiceImpl implements GameService {
                     .then(Mono.just(gameEngine)))
                 .doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
                 .subscribe(gameEngine -> {
-                    try {
 
-                        if (gameEngine.isCompleted()) {
-                            return;
-                        }
-
-                        if (gameEngine.getGame()
-                            .getLastTrickOpen()) {
-                            return;
-                        }
-
-                        if (gameEngine.isAiSay()) {
-                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 1000 + RAND.nextInt(500), gameEngine.getGame()
-                                .getPlayers()
-                                .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
-                                .getId()));
-                        } else if (gameEngine.isAiTurn()) {
-                            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + RAND.nextInt(500), gameEngine.getGame()
-                                .getPlayers()
-                                .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
-                                .getId()));
-                        }
-
-                    } catch (GameEngineException e) {
-                        log.error("", e);
+                    if (gameEngine.isCompleted()) {
+                        return;
                     }
+
+                    if (gameEngine.getGame()
+                        .getLastTrickOpen()) {
+                        return;
+                    }
+
+                    if (gameEngine.isAiSay()) {
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 1000 + RAND.nextInt(500), gameEngine.getGame()
+                            .getPlayers()
+                            .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
+                            .getId()));
+                    } else if (gameEngine.isAiTurn()) {
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + RAND.nextInt(500), gameEngine.getGame()
+                            .getPlayers()
+                            .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
+                            .getId()));
+                    }
+
                 });
 
         }

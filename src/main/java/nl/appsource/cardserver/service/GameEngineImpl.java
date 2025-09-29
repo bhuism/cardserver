@@ -10,7 +10,6 @@ import nl.appsource.cardserver.service.exception.ElderException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.cardserver.service.exception.LastTrickOpenException;
-import nl.appsource.cardserver.service.exception.NeedNewSayRound;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 import reactor.core.publisher.Mono;
@@ -48,14 +47,16 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return getTurnCount() % 4 == 0 && this.getTurnCount() >= 4;
     }
 
-    public boolean isFirstTrickCard() {
-        return getTurnCount() % 4 == 0;
-    }
+//    public boolean isFirstTrickCard() {
+//        return getTurnCount() % 4 == 0;
+//    }
 
     @Override
     public List<Card> getTrickCards(final int trickNr) {
-        return game.getTurns()
-            .subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
+        if (trickNr < 0 || trickNr > 7) {
+            throw new RuntimeException("Invalid trick nr " + trickNr);
+        }
+        return game.getTurns().subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
     }
 
     private Card determineTrickWinningCard(final List<Card> trick) {
@@ -92,10 +93,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return whoHasCard(winningCard);
     }
 
-    public int calcWhoSay() throws GameEngineException {
+    public int calcWhoSay() {
 
         if (isCompleted()) {
-            throw new GameCompletedException();
+            throw new RuntimeException();
         }
 
         if (game.getSay() == null) {
@@ -103,7 +104,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         if (isErGegaan()) {
-            throw new ElderException(null);
+            throw new RuntimeException("Er is al gegaan");
         }
 
         if (game.getSay()
@@ -112,7 +113,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 .size()) % 4;
         }
 
-        throw new NeedNewSayRound(null);
+        throw new RuntimeException("Draaien");
 
     }
 
@@ -363,19 +364,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .get(card);
     }
 
-    private static boolean hasSuit(final List<Card> hand, final Suit suit) {
-        return hand.stream()
-            .map(Card::getSuit)
-            .anyMatch(handCardSuit -> handCardSuit.equals(suit));
-    }
-
-    private static List<Card> getCardsOfSuit(final List<Card> hand, final Suit suit) {
-        return hand.stream()
-            .filter(card -> card.getSuit()
-                .equals(suit))
-            .collect(Collectors.toList());
-    }
-
     private Integer getKlaverjassenValue(final Card c1) {
         return c1.getSuit()
             .equals(game.getTrump()) ? c1.getRank().trumpValue : c1.getRank().standardValue;
@@ -384,28 +372,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
     private int compareKlaverjassenCards(final Card card1, final Card card2) {
         return Integer.compare(getKlaverjassenValue(card1), getKlaverjassenValue(card2));
     }
-
-
-    public Card getHighestCardInTrick(final List<Card> trick) {
-        return trick.stream()
-            .max(this::compareKlaverjassenCards)
-            .orElseThrow();
-    }
-
-    private List<Card> getHand(final String userId) {
-        final int playerNum = this.game.getPlayers()
-            .indexOf(userId);
-        return game.getPlayerCard()
-            .entrySet()
-            .stream()
-            .filter(cardIntegerEntry -> cardIntegerEntry.getValue()
-                .equals(playerNum))
-            .map(Map.Entry::getKey)
-            .filter(card -> !game.getTurns()
-                .contains(card))
-            .toList();
-    }
-
 
     @Override
     public boolean isAiTurn() {
@@ -450,12 +416,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return false;
         }
 
-        try {
-            return isAiPlayer(game.getPlayers()
-                .get(calcWhoSay()));
-        } catch (GameEngineException e) {
-            return false;
-        }
+        return isAiPlayer(game.getPlayers().get(calcWhoSay()));
 
     }
 
@@ -564,7 +525,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 switch (entry.getKey()) {
                     case ACE, KING, QUEEN -> roem += 100;
                     case JACK -> roem += 200;
-                    default -> { }
+                    default -> {
+                    }
                 }
             }
         }
@@ -616,4 +578,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return this.game.getSay().containsValue(true);
     }
 
+
+    @Override
+    public List<Card> getHuidigeTableCards() {
+        return getTrickCards(calcTricksPlayed() == 0 ? 0 : calcTricksPlayed() - (getTurnCount() % 4 == 0 ? 1 : 0));
+    }
 }

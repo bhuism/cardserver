@@ -13,9 +13,9 @@ public interface GameEngine {
 
     int determineTrickWinner(int trickNr);
 
-    int calcWhoSay() throws GameEngineException;
+    int calcWhoSay();
 
-    int calcWhoHasTurn() throws GameEngineException;
+    int calcWhoHasTurn();
 
     Mono<GameEngine> sayAi() throws GameEngineException;
 
@@ -54,4 +54,6 @@ public interface GameEngine {
     int calculateTrickRoem(int trickNr);
 
     Boolean getErIsGegaan();
+
+    List<Card> getHuidigeTableCards();
 }

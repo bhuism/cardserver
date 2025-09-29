@@ -5,7 +5,6 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.GameEngine;
 import nl.appsource.cardserver.service.GameEngineImpl;
-import nl.appsource.cardserver.service.exception.GameEngineException;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
 import org.openapitools.model.NorthSouthNumber;
@@ -60,16 +59,13 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         final GameEngine gameEngine = new GameEngineImpl(source);
 
         if (!gameEngine.isCompleted()) {
-            try {
-                target.setWhoSay(Optional.of(gameEngine.calcWhoSay()));
-            } catch (GameEngineException e) {
-                target.setWhoSay(Optional.empty());
-            }
 
-            try {
-                target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
-            } catch (GameEngineException e) {
+            if (!gameEngine.getErIsGegaan()) {
+                target.setWhoSay(Optional.of(gameEngine.calcWhoSay()));
                 target.setWhosTurn(Optional.empty());
+            } else {
+                target.setWhoSay(Optional.empty());
+                target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
             }
         }
 
@@ -95,11 +91,7 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             .getSay()
             .isEmpty());
         target.setGeenKaartGespeeld(gameEngine.getTurnCount() == 0);
-        target.setHuidigeTafelKaarten(source.getTurns()
-            .subList((gameEngine.calcTricksPlayed() - (gameEngine.getTurnCount() % 4 == 0 ? 1 : 0)) * 4, gameEngine.getTurnCount())
-            .stream()
-            .map(GameToOpenApiConverter::convertCard)
-            .collect(Collectors.toList()));
+        target.setHuidigeTafelKaarten(gameEngine.getHuidigeTableCards().stream().map(GameToOpenApiConverter::convertCard).toList());
 
         target.setTrickPoints(new ArrayList<>());
         target.setAllPoints(new NorthSouthNumber());
