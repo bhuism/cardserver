@@ -505,7 +505,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             this.getTrickCards(trickNr)
                 .stream()
                 .map((c) -> (c.suit == this.game.getTrump() ? c.rank.trumpValue : c.rank.standardValue))
-                .reduce(0, (sum, current) -> sum + current + (trickNr == 7 ? 10 : 0));
+                .reduce(0, Integer::sum) + (trickNr == 7 ? 10 : 0);
 
     }
 
