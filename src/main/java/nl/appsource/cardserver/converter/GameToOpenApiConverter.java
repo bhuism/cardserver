@@ -78,9 +78,6 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             .size() == 32);
         target.setHasFullTrick(gameEngine.isFullTrick());
         target.setTricksPlayed(gameEngine.calcTricksPlayed());
-        target.setIsErGegaan(source
-            .getSay()
-            .containsValue(Boolean.TRUE));
         target.setIedereenPast(source
             .getSay()
             .values()

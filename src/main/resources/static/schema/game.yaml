@@ -72,8 +72,6 @@ components:
           type: boolean
         tricksPlayed:
           type: integer
-        isErGegaan:
-          type: boolean
         iedereenPast:
           type: boolean
         niemandGezegd:
@@ -139,7 +137,6 @@ components:
         - isCompleted
         - hasFullTrick
         - tricksPlayed
-        - isErGegaan
         - iedereenPast
         - niemandGezegd
         - geenKaartGespeeld
