@@ -78,6 +78,12 @@ public class Migrator {
                     changed = true;
                 }
 
+                if (game.getSay() == null) {
+                    log.warn("Say == null {}", game.getId());
+                    game.setSay(new HashMap<>());
+                    changed = true;
+                }
+
                 if (changed) {
                     return gameRepository.save(game);
                 } else {
