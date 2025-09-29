@@ -79,8 +79,12 @@ public class Migrator {
                 }
 
                 if (game.getSay() == null) {
-                    log.warn("Say == null {}", game.getId());
                     game.setSay(new HashMap<>());
+                    changed = true;
+                }
+
+                if (game.getTurns() == null) {
+                    game.setTurns(new ArrayList<>());
                     changed = true;
                 }
 

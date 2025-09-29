@@ -46,6 +46,7 @@ public class Game {
     private Integer dealer;
 
     @Field
+    @NotNull
     private Map<Integer, Boolean> say;
 
     @NotNull
@@ -61,6 +62,7 @@ public class Game {
     private List<String> players;
 
     @Field
+    @NotNull
     private List<Card> turns;
 
     @Field
