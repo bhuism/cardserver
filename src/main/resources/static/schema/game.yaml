@@ -104,6 +104,22 @@ components:
           type: integer
         elderTeam:
           $ref: "#/components/schemas/Teams"
+        trickWinnerPlayer:
+          type: array
+          items:
+            type: integer
+        trickWinnerCard:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+        playerPoints:
+          type: array
+          items:
+            type: integer
+        heeftGepast:
+          type: array
+          items:
+            type: integer
       required:
         - id
         - trump
@@ -133,6 +149,10 @@ components:
         - trickRoem
         - allRoem
         - erIsGegaan
+        - trickWinnerPlayer
+        - trickWinnerCard
+        - playerPoints
+        - heeftGepast
     Suit:
       type: string
       enum:

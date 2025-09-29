@@ -11,7 +11,9 @@ public interface GameEngine {
 
     List<Card> getTrickCards(int trickNr);
 
-    int determineTrickWinner(int trickNr);
+    Card determineTrickWinningCard(List<Card> trick);
+
+    int determineTrickWinningPlayer(int trickNr);
 
     int calcWhoSay();
 

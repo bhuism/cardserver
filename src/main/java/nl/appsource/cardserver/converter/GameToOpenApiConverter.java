@@ -93,52 +93,67 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         target.setGeenKaartGespeeld(gameEngine.getTurnCount() == 0);
         target.setHuidigeTafelKaarten(gameEngine.getHuidigeTableCards().stream().map(GameToOpenApiConverter::convertCard).toList());
 
-        target.setTrickPoints(new ArrayList<>());
+//        target.setTrickPoints(new ArrayList<>());
         target.setAllPoints(new NorthSouthNumber());
 
-        target.setTrickRoem(new ArrayList<>());
+        //      target.setTrickRoem(new ArrayList<>());
         target.setAllRoem(new NorthSouthNumber());
 
         target.setErIsGegaan(gameEngine.getErIsGegaan());
 
-        for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
+        target.setPlayerPoints(new ArrayList<>(List.of(0, 0, 0, 0)));
 
-            final int trickWinner = gameEngine.determineTrickWinner(trickNr);
-
-            final NorthSouthNumber northSouthNumber = new NorthSouthNumber();
-            final NorthSouthNumber roemNorthSouthNumber = new NorthSouthNumber();
-
-            final int points = gameEngine.calculateTrickPoints(trickNr);
-            final int roemPoints = gameEngine.calculateTrickRoem(trickNr);
-
-            if (trickWinner % 2 == 0) {
-                northSouthNumber.setNorthSouth(points);
-                northSouthNumber.setEastWest(0);
-
-                roemNorthSouthNumber.setNorthSouth(roemPoints);
-                roemNorthSouthNumber.setEastWest(0);
-
-                target.getAllPoints().setNorthSouth(target.getAllPoints().getNorthSouth() + points);
-                target.getAllRoem().setNorthSouth(target.getAllRoem().getNorthSouth() + roemPoints);
-
-            } else {
-                northSouthNumber.setNorthSouth(0);
-                northSouthNumber.setEastWest(points);
-
-
-                roemNorthSouthNumber.setNorthSouth(0);
-                roemNorthSouthNumber.setEastWest(roemPoints);
-
-                target.getAllPoints().setEastWest(target.getAllPoints().getEastWest() + points);
-                target.getAllRoem().setEastWest(target.getAllRoem().getEastWest() + roemPoints);
+        gameEngine.getGame().getSay().forEach((playerIndex, gegaan) -> {
+            if (Boolean.FALSE.equals(gegaan)) {
+                target.getHeeftGepast().add(playerIndex);
             }
-
-            target.getTrickPoints().add(northSouthNumber);
-            target.getTrickRoem().add(roemNorthSouthNumber);
-
-        }
+        });
 
         if (gameEngine.getErIsGegaan()) {
+
+            for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
+
+                final int trickWinner = gameEngine.determineTrickWinningPlayer(trickNr);
+
+                target.getTrickWinnerPlayer().add(trickNr, trickWinner);
+
+                target.getTrickWinnerCard().add(trickNr, GameToOpenApiConverter.convertCard(gameEngine.determineTrickWinningCard(gameEngine.getTrickCards(trickNr))));
+
+                final NorthSouthNumber northSouthNumber = new NorthSouthNumber();
+                final NorthSouthNumber roemNorthSouthNumber = new NorthSouthNumber();
+
+                final int points = gameEngine.calculateTrickPoints(trickNr);
+
+                target.getPlayerPoints().set(trickWinner, target.getPlayerPoints().get(trickWinner) + points);
+
+                final int roemPoints = gameEngine.calculateTrickRoem(trickNr);
+
+                if (trickWinner % 2 == 0) {
+                    northSouthNumber.setNorthSouth(points);
+                    northSouthNumber.setEastWest(0);
+
+                    roemNorthSouthNumber.setNorthSouth(roemPoints);
+                    roemNorthSouthNumber.setEastWest(0);
+
+                    target.getAllPoints().setNorthSouth(target.getAllPoints().getNorthSouth() + points);
+                    target.getAllRoem().setNorthSouth(target.getAllRoem().getNorthSouth() + roemPoints);
+
+                } else {
+                    northSouthNumber.setNorthSouth(0);
+                    northSouthNumber.setEastWest(points);
+
+
+                    roemNorthSouthNumber.setNorthSouth(0);
+                    roemNorthSouthNumber.setEastWest(roemPoints);
+
+                    target.getAllPoints().setEastWest(target.getAllPoints().getEastWest() + points);
+                    target.getAllRoem().setEastWest(target.getAllRoem().getEastWest() + roemPoints);
+                }
+
+                target.getTrickPoints().add(northSouthNumber);
+                target.getTrickRoem().add(roemNorthSouthNumber);
+
+            }
 
             final int elder = source.getSay().entrySet().stream().filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true)).map(Map.Entry::getKey).findFirst().get();
 

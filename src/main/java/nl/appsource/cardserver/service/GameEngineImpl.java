@@ -59,7 +59,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return game.getTurns().subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
     }
 
-    private Card determineTrickWinningCard(final List<Card> trick) {
+    @Override
+    public Card determineTrickWinningCard(final List<Card> trick) {
 
         if (trick.isEmpty()) {
             throw new RuntimeException("Empty trick");
@@ -81,14 +82,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public int determineTrickWinner(final int trickNr) {
+    public int determineTrickWinningPlayer(final int trickNr) {
 
         if (trickNr >= calcTricksPlayed() || trickNr < 0) {
             throw new RuntimeException("no such trick " + trickNr);
         }
 
         final List<Card> trick = getTrickCards(trickNr);
-
         final Card winningCard = determineTrickWinningCard(trick);
         return whoHasCard(winningCard);
     }
@@ -138,7 +138,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 return (game.getDealer() + 1) % 4;
             } else {
                 final int tricksPlayedCount = calcTricksPlayed();
-                return determineTrickWinner(tricksPlayedCount - 1) + getTurnCount() % 4;
+                return determineTrickWinningPlayer(tricksPlayedCount - 1) + getTurnCount() % 4;
             }
         }
     }
