@@ -15,6 +15,7 @@ import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Document
@@ -44,7 +45,7 @@ public class User {
     @NotEmpty
     private String email;
 
-    private List<String> invites;
+    private List<String> invites = new ArrayList<>();
 
     private Instant lastLogin;
 
@@ -61,18 +62,18 @@ public class User {
 
     @NotNull
     @Field
-    private Boolean skipAnimation;
+    private Boolean skipAnimation = false;
 
     @NotNull
     @Field
-    private GameVariant gameVariant;
+    private GameVariant gameVariant = GameVariant.ROTTERDAMS;
 
     @NotNull
     @Field
-    private ScreenOrientation screenOrientation;
+    private ScreenOrientation screenOrientation = ScreenOrientation.AUTO;
 
     @NotNull
     @Field
-    private Theme theme;
+    private Theme theme = Theme.AUTO;
 
 }

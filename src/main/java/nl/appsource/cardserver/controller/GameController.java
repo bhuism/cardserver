@@ -184,4 +184,10 @@ public class GameController implements GamesApi, V1Api {
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
     }
+
+
+    @Override
+    public Mono<ResponseEntity<Void>> roem(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        return null;
+    }
 }
