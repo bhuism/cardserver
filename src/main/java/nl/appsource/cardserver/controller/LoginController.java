@@ -9,7 +9,6 @@ import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.LoadUserApi;
 import org.openapitools.api.LoginApi;
-import org.openapitools.model.GameVariant;
 import org.openapitools.model.LoginResponse;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-import static java.util.Collections.emptyList;
 import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
 
 @RestController
@@ -81,15 +79,12 @@ public class LoginController implements LoginApi, LoadUserApi {
                         user.setDisplayName(principal.getClaims()
                             .get("name")
                             .toString());
-                        user.setInvites(emptyList());
                         user.setLastLogin(now);
                         user.setPhotoURL(principal.getClaims()
                             .get("picture") != null ? principal.getClaims()
                             .get("picture")
                             .toString() : null);
                         user.setProviderId("google");
-                        user.setSkipAnimation(false);
-                        user.setGameVariant(GameVariant.ROTTERDAMS);
 
                         return Mono.just(user);
                     }))
