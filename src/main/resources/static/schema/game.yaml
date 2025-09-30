@@ -118,6 +118,11 @@ components:
           type: array
           items:
             type: integer
+        roemGeklopt:
+          type: array
+          items:
+            type: integer
+            uniqueItems: true
       required:
         - id
         - trump
@@ -150,6 +155,7 @@ components:
         - trickWinnerCard
         - playerPoints
         - heeftGepast
+        - roemGeklopt
     Suit:
       type: string
       enum:

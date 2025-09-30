@@ -106,6 +106,8 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             }
         });
 
+        target.setRoemGeklopt(source.getRoemGeklopt().stream().toList());
+
         if (gameEngine.getErIsGegaan()) {
 
             for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {

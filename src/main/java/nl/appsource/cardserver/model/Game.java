@@ -14,8 +14,12 @@ import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Document
 @Getter
@@ -47,7 +51,7 @@ public class Game {
 
     @Field
     @NotNull
-    private Map<Integer, Boolean> say;
+    private Map<Integer, Boolean> say = new HashMap<>();
 
     @NotNull
     @Field
@@ -55,19 +59,19 @@ public class Game {
 
     @Field
     @NotNull
-    private Map<Card, Integer> playerCard;
+    private Map<Card, Integer> playerCard = new HashMap<>();
 
     @Field
     @NotNull
-    private List<String> players;
+    private List<String> players = new ArrayList<>();
 
     @Field
     @NotNull
-    private List<Card> turns;
+    private List<Card> turns = new ArrayList<>();
 
     @Field
     @NotNull
-    private Boolean lastTrickOpen;
+    private Boolean lastTrickOpen = false;
 
     @Field
     @NotNull
@@ -75,6 +79,10 @@ public class Game {
 
     @Field
     @NotNull
-    private Integer dealCounter;
+    private Integer dealCounter = 0;
+
+    @Field
+    @NotNull
+    private Set<Integer> roemGeklopt = new HashSet<>();
 
 }
