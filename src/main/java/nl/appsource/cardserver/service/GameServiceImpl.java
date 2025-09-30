@@ -117,7 +117,7 @@ public class GameServiceImpl implements GameService {
                 .doOnNext(sseEmitterRepository::newGame)
                 .doOnNext(game -> {
                     if (new GameEngineImpl(game).isAiSay()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 3000, null, GameEventType.AI_SAY, game.getId()));
+                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
                     }
                 })
 
