@@ -320,9 +320,18 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameEngine -> {
                 final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
                 if (result) {
-                    return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()));
+                    return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(a -> gameEngine);
                 } else {
                     return Mono.empty();
+                }
+            })
+            .doOnNext(gameEngine -> {
+                final int slagNr = gameEngine.calcTricksPlayed();
+                final int roem = gameEngine.calculateTrickRoem(slagNr);
+                if (roem > 0) {
+                    sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " geklopt in slag " + (slagNr + 1)).variant(UserMessage.VariantEnum.INFO));
+                } else {
+                    sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message("Er is geen roem in slag " + (slagNr + 1)).variant(UserMessage.VariantEnum.WARNING));
                 }
             })
             .then();
