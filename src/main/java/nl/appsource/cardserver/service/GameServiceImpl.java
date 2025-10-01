@@ -128,13 +128,15 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
-        return gameRepository.findById(gameId)
-            .filter(game -> game.getCreator()
-                .equals(userId))
-            .flatMap(game -> gameRepository.delete(game)
-                .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
-                .thenReturn(true)
-            );
+        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+            return gameRepository.findById(gameId)
+                .filter(game -> game.getCreator()
+                    .equals(userId))
+                .flatMap(game -> gameRepository.delete(game)
+                    .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
+                    .thenReturn(true)
+                );
+        }
     }
 
     private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
@@ -229,9 +231,7 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        final Object lock = lockMap.computeIfAbsent(gameId, k -> new Object());
-
-        synchronized (lock) {
+        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
             log.info("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
@@ -315,27 +315,27 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
-        return gameRepository.findById(gameId)
-            .map(GameEngineImpl::new)
-            .flatMap(gameEngine -> {
-                final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
-                if (result) {
-                    return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(a -> gameEngine);
-                } else {
-                    return Mono.empty();
-                }
-            })
-            .doOnNext(gameEngine -> {
-                final int slagNr = gameEngine.calcTricksPlayed();
-                final int roem = gameEngine.calculateTrickRoem(slagNr);
-                if (roem > 0) {
-                    sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " geklopt in slag " + (slagNr + 1)).variant(UserMessage.VariantEnum.INFO));
-                } else {
-                    sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message("Er is geen roem in slag " + (slagNr + 1)).variant(UserMessage.VariantEnum.WARNING));
-                }
-            })
-            .then();
-
+        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+            return gameRepository.findById(gameId)
+                .map(GameEngineImpl::new)
+                .flatMap(gameEngine -> {
+                    final int slagNr = gameEngine.calcTricksPlayed();
+                    final int roem = gameEngine.calculateTrickRoem(slagNr);
+                    if (roem > 0) {
+                        final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
+                        if (result) {
+                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " geklopt in slag " + (slagNr + 1)).variant(UserMessage.VariantEnum.INFO));
+                            return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(a -> gameEngine);
+                        } else {
+                            return Mono.empty();
+                        }
+                    } else {
+                        sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message("Er is geen roem in slag " + (slagNr + 1)).variant(UserMessage.VariantEnum.WARNING));
+                        return Mono.empty();
+                    }
+                })
+                .then();
+        }
     }
 
     @Override

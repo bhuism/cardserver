@@ -200,8 +200,6 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> gameMessage(final UUID appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
-        log.info("Test5");
-        log.info("Test4");
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} gameMessage()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
             .flatMap(userId -> arg.flatMap((message -> gameService.gameMessage(userId, gameId, message.getMessage()))))
