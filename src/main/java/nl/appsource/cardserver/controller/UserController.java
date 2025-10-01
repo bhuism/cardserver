@@ -105,7 +105,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> gameMessage(final UUID appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} sendMessage()  userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .doOnNext((userId) -> log.info("{} gameMessage()  userId={}", exchange.getRequest().getRemoteAddress(), userId))
             .map(userId -> arg.map(postMessage -> gameRepository.findByUserIdAndGameId(userId, gameId)
                 .map(Game::getPlayers)
                 .doOnNext(userIds -> sseEmitterRepository.sendMessage(userIds, new UserMessage().userId(userId).message(postMessage.getMessage()).variant(UserMessage.VariantEnum.INFO)))))
