@@ -40,11 +40,11 @@ paths:
           description: some application error
         "404":
           description: not found
-  /games/{gameId}/roem:
+  /games/{gameId}/claimRoem:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     post:
-      operationId: roem
+      operationId: claimRoem
       parameters:
         - $ref: "#/components/parameters/gameId"
       responses:

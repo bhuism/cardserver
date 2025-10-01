@@ -187,7 +187,7 @@ public class GameController implements GamesApi, V1Api {
 
 
     @Override
-    public Mono<ResponseEntity<Void>> roem(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return null;
+    public Mono<ResponseEntity<Void>> claimRoem(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        return Mono.empty();
     }
 }
