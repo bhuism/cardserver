@@ -189,11 +189,13 @@ paths:
       responses:
         "200":
           description: ok
-  /users/message:
+  /users/{gameId}/message:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     post:
-      operationId: sendMessage
+      operationId: gameMessage
+      parameters:
+        - $ref: "#/components/parameters/gameId"
       requestBody:
         $ref: "#/components/requestBodies/postMessage"
       responses:

@@ -14,7 +14,7 @@ public interface SseEmitterRepository {
 
     void sendOnlineListTo(String userId);
 
-    void broadCastMessage(String userId, String message);
+    void sendMessage(Collection<String> userIds, UserMessage userMessage);
 
     void sendAppIdentifierMessage(UUID appIdentifier, UserMessage userMessage);
 

@@ -188,6 +188,13 @@ public class GameController implements GamesApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<Void>> claimRoem(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return Mono.empty();
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} claimRoem()  userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
+            .map(userId -> gameService.claimRoem(appIdentifier, userId, gameId))
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
+                .build()))
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 }

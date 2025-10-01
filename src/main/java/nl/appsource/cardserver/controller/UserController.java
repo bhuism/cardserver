@@ -3,6 +3,8 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.UsersApi;
@@ -12,6 +14,7 @@ import org.openapitools.model.InvitesResponse;
 import org.openapitools.model.PostMessage;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
+import org.openapitools.model.UserMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -37,6 +40,7 @@ public class UserController implements UsersApi, V1Api {
     private final SseEmitterRepository sseEmitterRepository;
 
     private final UserToOpenApiConverter userToOpenApiConverter;
+    private final GameRepository gameRepository;
 
     private Mono<String> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
@@ -99,17 +103,14 @@ public class UserController implements UsersApi, V1Api {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> sendMessage(final UUID appIdentifier, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> gameMessage(final UUID appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} sendMessage()  userId={}", exchange.getRequest()
-                .getRemoteAddress(), userId))
-            .flatMap(userId -> arg.map(postMessage -> {
-                sseEmitterRepository.broadCastMessage(userId, postMessage.getMessage());
-                return ResponseEntity.ok()
-                    .<Void>build();
-            }))
-            .switchIfEmpty(just(ResponseEntity.notFound()
-                .build()));
+            .doOnNext((userId) -> log.info("{} sendMessage()  userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .map(userId -> arg.map(postMessage -> gameRepository.findByUserIdAndGameId(userId, gameId)
+                .map(Game::getPlayers)
+                .doOnNext(userIds -> sseEmitterRepository.sendMessage(userIds, new UserMessage().userId(userId).message(postMessage.getMessage()).variant(UserMessage.VariantEnum.INFO)))))
+            .then(just(ResponseEntity.ok().<Void>build()))
+            .switchIfEmpty(just(ResponseEntity.notFound().build()));
     }
 
     @Override

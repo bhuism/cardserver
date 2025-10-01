@@ -27,4 +27,6 @@ public interface GameService {
     void scheduleGameEvent(ScheduledGameEvent scheduledGameEvent);
 
     Mono<Void> reload(UUID appIdentifier, String userId, String gameId);
+
+    Mono<Void> claimRoem(UUID appIdentifier, String userId, String gameId);
 }

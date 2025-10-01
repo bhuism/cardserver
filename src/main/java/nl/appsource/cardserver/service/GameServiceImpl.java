@@ -10,7 +10,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
-import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.openapitools.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
+import static java.util.Collections.singleton;
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.Utils.isAdmin;
@@ -148,7 +149,6 @@ public class GameServiceImpl implements GameService {
     public void init() {
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 1000, 250, TimeUnit.MILLISECONDS);
-//        scheduler.schedule(gameThread, 1, TimeUnit.SECONDS);
 
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
@@ -200,7 +200,7 @@ public class GameServiceImpl implements GameService {
 
     @FunctionalInterface
     public interface GameEngineExecutor {
-        Mono<GameEngine> run() throws GameEngineException;
+        Mono<GameEngine> run();
     }
 
     public synchronized void processDueEvents() {
@@ -221,17 +221,7 @@ public class GameServiceImpl implements GameService {
     public Mono<GameEngine> catchException(final GameEngineExecutor gameEngineExecutor) {
         try {
             return gameEngineExecutor.run();
-
-        } catch (GameEngineException gameEngineException) {
-//            sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage()
-//                .message(gameEngineException.getMessage())
-//                .variant(UserMessage.VariantEnum.ERROR));
-            return Mono.error(gameEngineException);
         } catch (Throwable throwable) {
-//            sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage()
-//                .message(throwable.getClass()
-//                    .getName() + ":" + throwable.getMessage())
-//                .variant(UserMessage.VariantEnum.ERROR));
             return Mono.error(throwable);
         }
 
@@ -255,10 +245,8 @@ public class GameServiceImpl implements GameService {
                     case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                     case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
                 })
-                .doOnNext(gameEngine -> gameEngine.getGame()
-                    .setUpdated(Instant.now()))
-                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame())
-                    .then(Mono.just(gameEngine)))
+                .doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now()))
+                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
                 .doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
                 .subscribe(gameEngine -> {
 
@@ -283,6 +271,8 @@ public class GameServiceImpl implements GameService {
                             .getId()));
                     }
 
+                }, throwable -> {
+                    sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message(throwable.getClass().getName() + ":" + throwable.getMessage()));
                 });
 
         }
@@ -316,11 +306,23 @@ public class GameServiceImpl implements GameService {
         return result.toString();
     }
 
-
     @Override
     public Mono<Void> reload(final UUID appIdentifier, final String userId, final String gameId) {
         return gameRepository.findByUserIdAndGameId(userId, gameId)
             .doOnNext(game -> sseEmitterRepository.updateGameStateForId(appIdentifier, game))
             .then();
     }
+
+    @Override
+    public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
+        return gameRepository.findById(gameId)
+            .map(GameEngineImpl::new)
+            .doOnNext(gameEngine -> {
+                gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
+            })
+            .map(GameEngine::getGame)
+            .doOnNext(gameRepository::save)
+            .then(Mono.empty());
+    }
+
 }

@@ -12,7 +12,6 @@ import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -67,14 +66,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .forEach(consumer);
     }
 
+    private void doUserIds(final Collection<String> userIds, final Consumer<MySseEmitter> consumer) {
+        emitters.values()
+            .stream()
+            .filter(forUserIds(userIds))
+            .forEach(consumer);
+    }
+
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(appIdentifier))
             .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, list(emitters.keys()), emitters.size(), new Throwable()));
-    }
-
-    private void doAll(final Consumer<MySseEmitter> consumer) {
-        emitters.values()
-            .forEach(consumer);
     }
 
     private Flux<String> getFriends(final String userId) {
@@ -96,13 +97,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
     }
 
+
     @Override
-    public void broadCastMessage(final String userId, final String message) {
-        userRepository.findById(userId)
-            .map(User::getDisplayName)
-            .switchIfEmpty(Mono.just(userId))
-            .subscribe(fromString -> doAll(mySseEmitter -> mySseEmitter.message(new UserMessage().userId(userId)
-                .message(fromString + ": " + message))));
+    public void sendMessage(final Collection<String> userIds, final UserMessage userMessage) {
+        doUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
     @Override

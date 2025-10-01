@@ -144,7 +144,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public Mono<GameEngine> playAiCard() throws GameEngineException {
+    public Mono<GameEngine> playAiCard() {
 
         if (!isAiTurn()) {
             return Mono.empty();
@@ -162,7 +162,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public Mono<GameEngine> sayAi() throws GameEngineException {
+    public Mono<GameEngine> sayAi() {
 
         if (!isAiSay()) {
             return Mono.empty();
@@ -178,7 +178,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public Mono<GameEngine> playCard(final String userId, final Card card) throws GameEngineException {
+    public Mono<GameEngine> playCard(final String userId, final Card card) {
 
         final int playerNum = this.game.getPlayers()
             .indexOf(userId);
@@ -190,7 +190,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         if (!game.getPlayers()
             .contains(userId)) {
-            throw new NotAPlayerException();
+            throw new RuntimeException("Not a player");
         }
 
         final int cardOwner = whoHasCard(card);
@@ -245,32 +245,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
         game.setLastTrickOpen(false);
 
         return Mono.just(this);
-//        return userMessages;
 
     }
 
-//    private boolean mustTrump(final List<Card> hand, final List<Card> currentTrick) {
-//        final Card leadingCard = currentTrick.getFirst();
-//        final Suit leadingSuit = leadingCard.getSuit();
-//
-//        if (leadingSuit == game.getTrump() || !hasSuit(hand, game.getTrump())) {
-//            return false;
-//        }
-//
-//        if (game.getGameVariant() == GameVariant.AMSTERDAMS) {
-//            return true; // Amsterdam: always trump if you can't follow suit
-//        } else { // Rotterdams (and others as default)
-//            final Card highestCardInTrick = getHighestCardInTrick(currentTrick);
-//            if (highestCardInTrick.getSuit() != game.getTrump()) {
-//                return true; // If no trump is on the table, you must trump.
-//            }
-//            // You only have to trump if you can play a higher trump.
-//            return hand.stream().anyMatch(c -> c.getSuit() == game.getTrump() && compareKlaverjassenCards(c, highestCardInTrick) > 0);
-//        }
-//    }
-
     @Override
-    public Mono<GameEngine> say(final String userId, final Boolean say) throws GameEngineException {
+    public Mono<GameEngine> say(final String userId, final Boolean say) {
 
 //        final List<UserMessage> userMessages = new ArrayList<>();
 
@@ -367,10 +346,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
     private Integer getKlaverjassenValue(final Card c1) {
         return c1.getSuit()
             .equals(game.getTrump()) ? c1.getRank().trumpValue : c1.getRank().standardValue;
-    }
-
-    private int compareKlaverjassenCards(final Card card1, final Card card2) {
-        return Integer.compare(getKlaverjassenValue(card1), getKlaverjassenValue(card2));
     }
 
     @Override
