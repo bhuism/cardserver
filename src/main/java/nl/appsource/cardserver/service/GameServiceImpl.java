@@ -327,7 +327,7 @@ public class GameServiceImpl implements GameService {
                     if (roem > 0) {
                         final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
                         if (result) {
-                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " geklopt in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.INFO));
+                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.INFO));
                             return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(a -> gameEngine);
                         } else {
                             return Mono.empty();
