@@ -320,7 +320,10 @@ public class GameServiceImpl implements GameService {
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
                     final int slagNr = gameEngine.calcTricksPlayed();
-                    final int roem = gameEngine.calculateTrickRoem(slagNr);
+
+                    final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
+
+                    final int roem = gameEngine.calculateTrickRoem(correctedSlagNr);
                     if (roem > 0) {
                         final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
                         if (result) {
