@@ -12,6 +12,7 @@ import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayerSay;
+import org.openapitools.model.PostMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -189,12 +190,22 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> claimRoem(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} claimRoem()  userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), userId, gameId))
-            .map(userId -> gameService.claimRoem(appIdentifier, userId, gameId))
+            .doOnNext((userId) -> log.info("{} claimRoem()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> gameService.claimRoem(appIdentifier, userId, gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
                 .build()))
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> gameMessage(final UUID appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
+        log.info("Test5");
+        log.info("Test4");
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} gameMessage()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> arg.flatMap((message -> gameService.gameMessage(userId, gameId, message.getMessage()))))
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 }

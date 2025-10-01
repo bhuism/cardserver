@@ -122,6 +122,18 @@ paths:
           description: some application error
         "404":
           description: not found
+  /games/{gameId}/message:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: gameMessage
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      requestBody:
+        $ref: "#/components/requestBodies/postMessage"
+      responses:
+        "200":
+          description: ok
   /games:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
@@ -186,18 +198,6 @@ paths:
       - $ref: "#/components/parameters/AppIdentifier"
     post:
       operationId: pong
-      responses:
-        "200":
-          description: ok
-  /users/{gameId}/message:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      operationId: gameMessage
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      requestBody:
-        $ref: "#/components/requestBodies/postMessage"
       responses:
         "200":
           description: ok

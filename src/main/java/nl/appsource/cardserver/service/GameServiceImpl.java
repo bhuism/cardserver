@@ -317,10 +317,22 @@ public class GameServiceImpl implements GameService {
     public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
-            .doOnNext(gameEngine -> gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed()))
-            .map(GameEngine::getGame)
-            .doOnNext(gameRepository::save)
-            .then(Mono.empty());
+            .flatMap(gameEngine -> {
+                final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
+                if (result) {
+                    return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()));
+                } else {
+                    return Mono.empty();
+                }
+            })
+            .then();
+
     }
 
+    @Override
+    public Mono<Void> gameMessage(final String userId, final String gameId, final String message) {
+        return gameRepository.findByUserIdAndGameId(userId, gameId)
+            .doOnNext(game -> sseEmitterRepository.sendMessage(game.getPlayers(), new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.INFO)))
+            .then();
+    }
 }

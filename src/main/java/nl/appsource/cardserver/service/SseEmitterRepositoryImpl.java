@@ -220,10 +220,20 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public Boolean validate(final UUID appIdentifier, final String userId) {
-        return Optional.ofNullable(emitters.get(appIdentifier))
-            .map(mySseEmitter -> mySseEmitter.getUserId()
-                .equals(userId))
-            .orElse(false);
+
+        final MySseEmitter mySseEmitter = emitters.get(appIdentifier);
+
+        if (mySseEmitter == null) {
+            log.error("Emitter not found for " + appIdentifier + ", got: " + this.emitters.keys());
+            return false;
+        }
+
+        if (!mySseEmitter.getUserId().equals(userId)) {
+            log.error("Emitter has wrong userId");
+            return false;
+        }
+
+        return true;
     }
 
 }

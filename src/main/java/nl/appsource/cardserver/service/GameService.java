@@ -29,4 +29,6 @@ public interface GameService {
     Mono<Void> reload(UUID appIdentifier, String userId, String gameId);
 
     Mono<Void> claimRoem(UUID appIdentifier, String userId, String gameId);
+
+    Mono<Void> gameMessage(String userId, String gameId, String message);
 }
