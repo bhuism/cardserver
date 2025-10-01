@@ -317,9 +317,7 @@ public class GameServiceImpl implements GameService {
     public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
-            .doOnNext(gameEngine -> {
-                gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
-            })
+            .doOnNext(gameEngine -> gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed()))
             .map(GameEngine::getGame)
             .doOnNext(gameRepository::save)
             .then(Mono.empty());

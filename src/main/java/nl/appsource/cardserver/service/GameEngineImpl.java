@@ -343,11 +343,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .get(card);
     }
 
-    private Integer getKlaverjassenValue(final Card c1) {
-        return c1.getSuit()
-            .equals(game.getTrump()) ? c1.getRank().trumpValue : c1.getRank().standardValue;
-    }
-
     @Override
     public boolean isAiTurn() {
 
