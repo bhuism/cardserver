@@ -199,6 +199,17 @@ public class GameController implements GamesApi, V1Api {
     }
 
     @Override
+    public Mono<ResponseEntity<Void>> claimVerzaken(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} claimRoem()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> gameService.claimVerzaken(appIdentifier, userId, gameId))
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
+                .build()))
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
+    }
+
+    @Override
     public Mono<ResponseEntity<Void>> gameMessage(final UUID appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} gameMessage()  userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))

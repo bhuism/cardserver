@@ -347,4 +347,30 @@ public class GameServiceImpl implements GameService {
             .doOnNext(game -> sseEmitterRepository.sendMessage(game.getPlayers(), new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.INFO)))
             .then();
     }
+
+    @Override
+    public Mono<Void> claimVerzaken(final UUID appIdentifier, final String userId, final String gameId) {
+        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+            return gameRepository.findById(gameId)
+                .map(GameEngineImpl::new)
+                .flatMap(gameEngine -> {
+                    final int slagNr = gameEngine.calcTricksPlayed();
+
+                    final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
+
+//                    final Integer playerIndexVerzaakt = gameEngine.verzaakt(correctedSlagNr);
+//                    if (playerIndexVerzaakt != null) {
+//
+//                    } else {
+//
+//                    }
+
+                    return Mono.just(gameEngine);
+
+                })
+                .then();
+        }
+    }
+
+
 }
