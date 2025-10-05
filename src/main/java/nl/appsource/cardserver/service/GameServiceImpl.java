@@ -358,12 +358,12 @@ public class GameServiceImpl implements GameService {
 
                     final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
-//                    final Integer playerIndexVerzaakt = gameEngine.verzaakt(correctedSlagNr);
-//                    if (playerIndexVerzaakt != null) {
-//
-//                    } else {
-//
-//                    }
+                    List.of(0, 1, 2, 3).forEach(playerNr -> {
+                        final Boolean verzaakt = gameEngine.verzaakt(correctedSlagNr, playerNr);
+                        if (verzaakt) {
+                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message("Er is verzaakt in slag " + correctedSlagNr + " door speler " + playerNr));
+                        }
+                    });
 
                     return Mono.just(gameEngine);
 
