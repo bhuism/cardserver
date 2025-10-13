@@ -129,7 +129,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
             return gameRepository.findById(gameId)
                 .filter(game -> game.getCreator()
                     .equals(userId))
@@ -232,7 +232,7 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
             log.info("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
@@ -316,7 +316,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
@@ -329,7 +329,7 @@ public class GameServiceImpl implements GameService {
                         final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
                         if (result) {
                             sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.INFO));
-                            return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(a -> gameEngine);
+                            return gameRepository.save(gameEngine.getGame()).doOnNext(_ -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(_ -> gameEngine);
                         } else {
                             return Mono.empty();
                         }
@@ -351,7 +351,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimVerzaken(final UUID appIdentifier, final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
@@ -370,7 +370,7 @@ public class GameServiceImpl implements GameService {
                     });
 
                     if (!atLeastOne.get()) {
-                        sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message("Er is niet verzaakt in slag " + correctedSlagNr));
+                        sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.INFO).message("Er is niet verzaakt in slag " + correctedSlagNr));
                     }
 
                     return Mono.just(gameEngine);
