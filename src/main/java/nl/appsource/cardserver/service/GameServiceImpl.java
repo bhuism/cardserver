@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
@@ -358,12 +359,19 @@ public class GameServiceImpl implements GameService {
 
                     final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
+                    final AtomicBoolean atLeastOne = new AtomicBoolean(false);
+
                     List.of(0, 1, 2, 3).forEach(playerNr -> {
                         final Boolean verzaakt = gameEngine.verzaakt(correctedSlagNr, playerNr);
                         if (verzaakt) {
                             sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message("Er is verzaakt in slag " + correctedSlagNr + " door speler " + playerNr));
+                            atLeastOne.set(true);
                         }
                     });
+
+                    if (!atLeastOne.get()) {
+                        sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message("Er is niet verzaakt in slag " + correctedSlagNr));
+                    }
 
                     return Mono.just(gameEngine);
 
