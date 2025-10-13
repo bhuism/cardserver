@@ -266,7 +266,7 @@
                 <configuration>
                     <image>
                         <env>
-                            <BP_JVM_VERSION>21</BP_JVM_VERSION>
+                            <BP_JVM_VERSION>25</BP_JVM_VERSION>
                         </env>
                     </image>
                     <excludes>
