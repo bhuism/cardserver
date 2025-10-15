@@ -586,6 +586,7 @@ components:
                 format: date-time
             required:
               - events
+              - timeStamp
     LoginResponse:
       description: login response
       content:
