@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
+// CardAlreadyPlayerException, ElderException, GameCompletedException, GameEngineException, LastTrickOpenException, NotAPlayerException, NotPlayersTurnException
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.ElderException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;
@@ -678,9 +679,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
                         .filter(c -> c.getSuit() == game.getTrump())
                         .anyMatch(c -> TRUMP_SORTER.compare(c, highestTrumpOnTable) > 0);
 
-                    if (couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0) {
-                        return true; // Verzaakt: Did not over-trump when possible
-                    }
+                    return couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0; // Verzaakt: Did not over-trump when possible
                 }
             }
         }

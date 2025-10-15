@@ -18,13 +18,13 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.list;
 import static java.util.Objects.requireNonNull;
 import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
@@ -75,7 +75,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(appIdentifier))
-            .ifPresentOrElse(consumer, () -> log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, list(emitters.keys()), emitters.size(), new Throwable()));
+            .ifPresentOrElse(consumer, () -> {
+
+                final StringJoiner joiner = new StringJoiner(",");
+                this.emitters.keys()
+                    .asIterator()
+                    .forEachRemaining(uuid -> {
+                        joiner.add(uuid.toString());
+                    });
+
+                log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, joiner.toString(), emitters.size(), new Throwable());
+            });
     }
 
     private Flux<String> getFriends(final String userId) {
@@ -224,11 +234,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final MySseEmitter mySseEmitter = emitters.get(appIdentifier);
 
         if (mySseEmitter == null) {
-            log.error("Emitter not found for " + appIdentifier + ", got: " + this.emitters.keys());
+            final StringJoiner joiner = new StringJoiner(",");
+            this.emitters.keys()
+                .asIterator()
+                .forEachRemaining(uuid -> {
+                    joiner.add(uuid.toString());
+                });
+            log.error("Emitter not found for " + appIdentifier + ", got: " + joiner.toString());
             return false;
         }
 
-        if (!mySseEmitter.getUserId().equals(userId)) {
+        if (!mySseEmitter.getUserId()
+            .equals(userId)) {
             log.error("Emitter has wrong userId");
             return false;
         }
