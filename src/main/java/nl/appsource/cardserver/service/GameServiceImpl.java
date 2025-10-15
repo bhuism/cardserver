@@ -154,6 +154,7 @@ public class GameServiceImpl implements GameService {
             gameRepository.findAll()
                 .subscribe(game -> {
                     if (new GameEngineImpl(game).checkNieuweTroefAndNieuweKaarten()) {
+                        log.info("checkNieuweTroefAndNieuweKaarten() success for {}", game.getId());
                         gameRepository.save(game)
                             .block();
                     }
