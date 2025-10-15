@@ -14,16 +14,17 @@ public class CardServerApplication {
 
     public CardServerApplication() {
         log.info("Hi!");
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                log.info("Bye!");
-            }
-        });
+        Runtime.getRuntime()
+            .addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    log.info("Bye!");
+                }
+            });
     }
 
-    static void main(final String[] args) {
+    public static void main(final String[] args) {
         SpringApplication.run(CardServerApplication.class, args);
     }
 
