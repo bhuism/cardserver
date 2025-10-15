@@ -8,6 +8,14 @@ servers:
     description: Klavers Jassen
 
 paths:
+  /debug/sseconnections/get:
+    get:
+      tags:
+        - debug
+      operationId: getDebugSseConnections
+      responses:
+        "200":
+          $ref: "#/components/responses/SseConnectionsResponse"
   /login:
     post:
       tags:
@@ -430,18 +438,6 @@ components:
             uniqueItems: true
       required:
         - onlineList
-    SseConnectionsEvent:
-      type: object
-      properties:
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/SseConnection'
-        timeStamp:
-          type: string
-          format: date-time
-      required:
-        - events
     SseConnection:
       type: object
       properties:
@@ -452,15 +448,23 @@ components:
         pingReceived:
           type: string
           format: date-time
+        pingReceivedCount:
+          type: integer
         pongReceived:
           type: string
           format: date-time
+        pongReceivedCount:
+          type: integer
         pingSent:
           type: string
           format: date-time
+        pingSentCount:
+          type: integer
         pongSent:
           type: string
           format: date-time
+        pongSentCount:
+          type: integer
       required:
         - id
         - userId
@@ -566,6 +570,22 @@ components:
             type: array
             items:
               $ref: "./user.yaml#/components/schemas/User"
+    SseConnectionsResponse:
+      description: sse connnection response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              events:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SseConnection'
+              timeStamp:
+                type: string
+                format: date-time
+            required:
+              - events
     LoginResponse:
       description: login response
       content:

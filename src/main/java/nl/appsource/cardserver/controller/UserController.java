@@ -65,7 +65,7 @@ public class UserController implements UsersApi, V1Api {
     public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
 
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getUser({})  userId={}", exchange.getRequest()
+            .doOnNext((userId) -> log.info("{} getUser({}) userId={}", exchange.getRequest()
                 .getRemoteAddress(), userIdParam, userId))
             .flatMap((userId) -> userService.findById(userIdParam))
             .mapNotNull(userToOpenApiConverter::convert)
@@ -78,7 +78,7 @@ public class UserController implements UsersApi, V1Api {
     public Mono<ResponseEntity<InvitesResponse>> getInvites(final UUID appIdentifier, final ServerWebExchange exchange) {
 //        log.info("{} getIncomingFriends()", exchange.getRequest().getRemoteAddress());
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getInvites()  userId={}", exchange.getRequest()
+            .doOnNext((userId) -> log.info("{} getInvites() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
             .flatMap(userService::getInvites)
             .flatMap(invites -> {
@@ -119,7 +119,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Flux<User>>> getUsers(final UUID appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getUsers()  userId={}", exchange.getRequest()
+            .doOnNext((userId) -> log.info("{} getUsers() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
             .map((_userId) -> ResponseEntity.ok(userService.getUsers(userIds)
                 .mapNotNull(userToOpenApiConverter::convert)))
@@ -130,7 +130,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> removeInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} removeInvites()  userId={}", exchange.getRequest()
+            .doOnNext((userId) -> log.info("{} removeInvites() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
             .flatMap(userId -> userService.removeInvite(userId, friendId))
             .then(just(ResponseEntity.ok()
@@ -143,7 +143,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<Void>> acceptInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} acceptInvite()  userId={}", exchange.getRequest()
+            .doOnNext((userId) -> log.info("{} acceptInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
             .flatMap(userId -> userService.acceptInvite(userId, friendId))
             .then(just(ResponseEntity.ok()
@@ -155,7 +155,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final UUID appIdentifier, final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} createInvite()  userId={}", exchange.getRequest()
+            .doOnNext((userId) -> log.info("{} createInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
             .flatMap(userId -> arg.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString())))
             .map(BigDecimal::new)
@@ -169,7 +169,7 @@ public class UserController implements UsersApi, V1Api {
     @Override
     public Mono<ResponseEntity<User>> updatePreferences(final UUID appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} updatePreferences()  userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .doOnNext((userId) -> log.info("{} updatePreferences() userId={}", exchange.getRequest().getRemoteAddress(), userId))
             .flatMap(userId -> arg.flatMap(updatePreferences -> userService.updatePreferences(userId, updatePreferences)))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)

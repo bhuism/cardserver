@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Game;
+import org.openapitools.model.GetDebugSseConnections200Response;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
@@ -39,4 +40,6 @@ public interface SseEmitterRepository {
     void newFriend(String userId, String friendId);
 
     Boolean validate(UUID appIdentifier, String userId);
+
+    GetDebugSseConnections200Response getDebugSseConnections();
 }
