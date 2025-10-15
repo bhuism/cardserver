@@ -3,9 +3,13 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.utils.Utils;
 import org.openapitools.api.DebugApi;
 import org.openapitools.model.GetDebugSseConnections200Response;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -18,7 +22,11 @@ public class DebugController implements DebugApi, V1Api {
     private final SseEmitterRepository sseEmitterRepository;
 
     @Override
-    public Mono<ResponseEntity<GetDebugSseConnections200Response>> getDebugSseConnections(ServerWebExchange exchange) {
-        return Mono.just(ResponseEntity.ok(sseEmitterRepository.getDebugSseConnections()));
+    public Mono<ResponseEntity<GetDebugSseConnections200Response>> getDebugSseConnections(final ServerWebExchange exchange) {
+        return ReactiveSecurityContextHolder.getContext()
+            .map(SecurityContext::getAuthentication)
+            .map(Authentication::getName)
+            .filter(Utils::isAdmin)
+            .map(s -> ResponseEntity.ok(sseEmitterRepository.getDebugSseConnections()));
     }
 }
