@@ -6,6 +6,7 @@ import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.utils.Utils;
 import org.openapitools.api.DebugApi;
 import org.openapitools.model.GetDebugSseConnections200Response;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -27,6 +28,11 @@ public class DebugController implements DebugApi, V1Api {
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .filter(Utils::isAdmin)
-            .map(s -> ResponseEntity.ok(sseEmitterRepository.getDebugSseConnections()));
+            .map(s -> sseEmitterRepository.getDebugSseConnections())
+            .map(ResponseEntity::ok)
+            .defaultIfEmpty(
+                ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .build()
+            );
     }
 }
