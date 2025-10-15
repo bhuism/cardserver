@@ -57,4 +57,6 @@ public interface GameEngine {
     Boolean getErIsGegaan();
 
     List<Card> getHuidigeTableCards();
+
+    Boolean verzaakt(int correctedSlagNr, int speler);
 }

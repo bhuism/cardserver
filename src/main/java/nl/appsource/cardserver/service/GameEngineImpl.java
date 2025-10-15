@@ -12,10 +12,12 @@ import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.cardserver.service.exception.LastTrickOpenException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
+import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -217,25 +219,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 .get(gotTurn));
             throw new NotPlayersTurnException();
         }
-
-//        final List<Card> currentTrick = getTrickCards(calcTricksPlayed());
-
-//        if (!currentTrick.isEmpty()) {
-//            final Card leadingCard = currentTrick.getFirst();
-//            final List<Card> hand = getHand(userId);
-//            final boolean canFollowSuit = hand.stream().anyMatch(c -> c.getSuit().equals(leadingCard.getSuit()));
-
-        // Check for reneging (verzaak)
-//            if (canFollowSuit && card.getSuit() != leadingCard.getSuit()) {
-//                userMessages.add(new UserMessage().userId(userId).message("Verzaakt! U moet kleur bekennen.").variant(UserMessage.VariantEnum.WARNING));
-//                // In a real game, this might be a penalty. For now, we just warn.
-//            } else if (!canFollowSuit && card.getSuit() != game.getTrump() && mustTrump(hand, currentTrick)) {
-//                // Check for failure to trump when required
-//                final String message = game.getGameVariant() == GameVariant.AMSTERDAMS
-//                    ? "Verzaakt! U moet introeven (Amsterdams)." : "Verzaakt! U moet overtroeven (Rotterdams).";
-//                userMessages.add(new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.WARNING));
-//            }
-//        }
 
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
@@ -552,5 +535,116 @@ public record GameEngineImpl(Game game) implements GameEngine {
     @Override
     public List<Card> getHuidigeTableCards() {
         return getTrickCards(calcTricksPlayed() == 0 ? 0 : calcTricksPlayed() - (getTurnCount() % 4 == 0 ? 1 : 0));
+    }
+
+    private List<Card> getHand(final String userId) {
+
+        final int playerNum = game
+            .getPlayers()
+            .indexOf(userId);
+
+        return game
+            .getPlayerCard()
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue()
+                .equals(playerNum))
+            .map(Map.Entry::getKey)
+            .filter(card -> !game
+                .getTurns()
+                .contains(card))
+            .collect(Collectors.toList());
+    }
+
+    private boolean mustTrump(final List<Card> hand, final List<Card> currentTrick) {
+        if (currentTrick.isEmpty()) {
+            return false;
+        }
+        final Card leadingCard = currentTrick.getFirst();
+        final Suit leadingSuit = leadingCard.getSuit();
+
+        // If player can follow suit, they are not forced to trump.
+        final boolean canFollowSuit = hand.stream().anyMatch(c -> c.getSuit().equals(leadingSuit));
+        if (canFollowSuit) {
+            return false;
+        }
+
+        // Player cannot follow suit. They must trump if they have a trump card.
+        return hand.stream().anyMatch(c -> c.getSuit().equals(game.getTrump()));
+    }
+
+    @Override
+    public Boolean verzaakt(final int correctedSlagNr, final int speler) {
+
+        final List<Card> trick = getTrickCards(correctedSlagNr);
+
+        final Card playedCard = trick.stream()
+            .filter(c -> whoHasCard(c) == speler)
+            .findFirst()
+            .orElse(null);
+
+        if (playedCard == null) {
+            // Player did not play in this trick, so cannot have reneged in it.
+            return false;
+        }
+
+        final int playerTurnInTrick = trick.indexOf(playedCard);
+
+        // The leader of the trick cannot renege
+        if (playerTurnInTrick == 0) {
+            return false;
+        }
+
+        final Card leadingCard = trick.getFirst();
+        final Suit leadingSuit = leadingCard.getSuit();
+
+        // Reconstruct hand at time of play
+        final List<Card> initialHand = game.getPlayerCard().entrySet().stream()
+                .filter(entry -> entry.getValue().equals(speler))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        final int turnIndexOfPlayedCard = game.getTurns().indexOf(playedCard);
+
+        final List<Card> playedByPlayerBefore = game.getTurns().subList(0, turnIndexOfPlayedCard).stream()
+                .filter(c -> whoHasCard(c) == speler)
+                .collect(Collectors.toList());
+
+        final List<Card> handAtTimeOfPlay = new ArrayList<>(initialHand);
+        handAtTimeOfPlay.removeAll(playedByPlayerBefore);
+
+        // Check for not following suit
+        final boolean couldFollowSuit = handAtTimeOfPlay.stream().anyMatch(c -> c.getSuit().equals(leadingSuit));
+        if (couldFollowSuit && playedCard.getSuit() != leadingSuit) {
+            return true; // Verzaakt: Did not follow suit when possible
+        }
+
+        // Check for not trumping when required
+        if (!couldFollowSuit) {
+            final List<Card> trickBeforePlay = trick.subList(0, playerTurnInTrick);
+            if (mustTrump(handAtTimeOfPlay, trickBeforePlay) && playedCard.getSuit() != game.getTrump()) {
+                return true; // Verzaakt: Did not trump when required
+            }
+
+            // Rotterdam variant: check for over-trumping
+            if (game.getGameVariant() == GameVariant.ROTTERDAMS && playedCard.getSuit() == game.getTrump()) {
+                final Card highestTrumpOnTable = trickBeforePlay.stream()
+                    .filter(c -> c.getSuit() == game.getTrump())
+                    .max(TRUMP_SORTER)
+                    .orElse(null);
+
+                if (highestTrumpOnTable != null) {
+                    final boolean couldOverTrump = handAtTimeOfPlay.stream()
+                        .filter(c -> c.getSuit() == game.getTrump())
+                        .anyMatch(c -> TRUMP_SORTER.compare(c, highestTrumpOnTable) > 0);
+
+                    if (couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0) {
+                        return true; // Verzaakt: Did not over-trump when possible
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
