@@ -26,7 +26,7 @@ public interface GameEngine {
 
     Mono<GameEngine> playAiCard();
 
-    boolean checkNieuweTroefAndNieuweKaarten();
+    Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd();
 
     boolean isCompleted();
 
@@ -39,6 +39,12 @@ public interface GameEngine {
     boolean isAiSay();
 
     Game getGame();
+
+    boolean isErGegaan();
+
+    boolean niemandIsGegaanEnIedereenHeeftGezegd();
+
+    boolean iedereenHeeftGezegd();
 
     int getTurnCount();
 

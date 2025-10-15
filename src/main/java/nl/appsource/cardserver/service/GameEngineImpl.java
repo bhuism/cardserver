@@ -49,10 +49,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return getTurnCount() % 4 == 0 && this.getTurnCount() >= 4;
     }
 
-//    public boolean isFirstTrickCard() {
-//        return getTurnCount() % 4 == 0;
-//    }
-
     @Override
     public List<Card> getTrickCards(final int trickNr) {
         if (trickNr < 0 || trickNr > 7) {
@@ -281,7 +277,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
 
-        checkNieuweTroefAndNieuweKaarten();
+        checkNiemandIsGegaanEnIedereenHeeftGezegd();
 
         game.setUpdated(Instant.now());
 
@@ -292,10 +288,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public boolean checkNieuweTroefAndNieuweKaarten() {
-
+    public Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd() {
         if (niemandIsGegaanEnIedereenHeeftGezegd()) {
-
             if (game.getDealCounter() % 2 == 0) {
 
                 final Suit oldTrump = this.game.getTrump();
@@ -304,29 +298,22 @@ public record GameEngineImpl(Game game) implements GameEngine {
                     game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
                 }
                 while (oldTrump == game.getTrump());
-
-                game.getSay()
-                    .clear();
-
-//                userMessages.add(new UserMessage().message("Iedereen heeft gepast, nieuwe troef is: " + game.getTrump().symbol).variant(UserMessage.VariantEnum.INFO));
             } else {
-
                 game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-                game.getSay()
-                    .clear();
                 game.setPlayerCard(randomCards());
-
-//                userMessages.add(new UserMessage().message("Iedereen heeft weer gepast, nieuwe kaarten").variant(UserMessage.VariantEnum.INFO));
             }
+
+            game.getSay()
+                .clear();
 
             game.setDealCounter(game.getDealCounter() + 1);
             game.setUpdated(Instant.now());
 
-            return true;
-
+            return Mono.just(this);
         } else {
-            return false;
+            return Mono.empty();
         }
+
     }
 
     @Override
@@ -396,17 +383,20 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return AI_USER_ID.contains(userId);
     }
 
-    boolean isErGegaan() {
+    @Override
+    public boolean isErGegaan() {
         return game.getSay()
             .containsValue(Boolean.TRUE);
     }
 
-    boolean niemandIsGegaanEnIedereenHeeftGezegd() {
+    @Override
+    public boolean niemandIsGegaanEnIedereenHeeftGezegd() {
         return iedereenHeeftGezegd() && !game.getSay()
             .containsValue(Boolean.TRUE);
     }
 
-    boolean iedereenHeeftGezegd() {
+    @Override
+    public boolean iedereenHeeftGezegd() {
         return game.getSay()
             .size() == 4;
     }

@@ -152,12 +152,10 @@ public class GameServiceImpl implements GameService {
     public void init() {
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
-                .subscribe(game -> {
-                    if (new GameEngineImpl(game).checkNieuweTroefAndNieuweKaarten()) {
-                        log.info("checkNieuweTroefAndNieuweKaarten() success for {}", game.getId());
-                        gameRepository.save(game)
-                            .block();
-                    }
+                .map(Game::getId)
+                .subscribe(gameId -> {
+                    executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
+                    executeSynchronious(GameEventType.CHECK_ROTATE, null, gameId, null, null);
                 });
         }
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
@@ -208,6 +206,7 @@ public class GameServiceImpl implements GameService {
                     case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
                     case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                     case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+                    case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
                 })
                 .doOnNext(gameEngine -> gameEngine.getGame()
                     .setUpdated(Instant.now()))
