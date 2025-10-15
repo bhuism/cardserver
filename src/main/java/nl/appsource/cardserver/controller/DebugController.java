@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.utils.Utils;
 import org.openapitools.api.DebugApi;
-import org.openapitools.model.GetDebugSseConnections200Response;
+import org.openapitools.model.SseConnections;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,7 +23,7 @@ public class DebugController implements DebugApi, V1Api {
     private final SseEmitterRepository sseEmitterRepository;
 
     @Override
-    public Mono<ResponseEntity<GetDebugSseConnections200Response>> getDebugSseConnections(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)

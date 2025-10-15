@@ -6,8 +6,8 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
-import org.openapitools.model.GetDebugSseConnections200Response;
 import org.openapitools.model.SseConnection;
+import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
@@ -169,9 +169,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public GetDebugSseConnections200Response getDebugSseConnections() {
+    public SseConnections getDebugSseConnections() {
 
-        final GetDebugSseConnections200Response getDebugSseConnections200Response = new GetDebugSseConnections200Response();
+        final SseConnections getDebugSseConnections200Response = new SseConnections();
 
         final List<SseConnection> events = emitters.entrySet()
             .stream()

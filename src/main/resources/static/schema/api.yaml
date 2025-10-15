@@ -331,6 +331,19 @@ components:
         - userId
         - message
         - variant
+    sseConnections:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SseConnection'
+        timeStamp:
+          type: string
+          format: date-time
+      required:
+        - events
+        - timeStamp
     loginResponse:
       type: object
       properties:
@@ -575,18 +588,7 @@ components:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              events:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SseConnection'
-              timeStamp:
-                type: string
-                format: date-time
-            required:
-              - events
-              - timeStamp
+            $ref: "#/components/schemas/sseConnections"
     LoginResponse:
       description: login response
       content:
