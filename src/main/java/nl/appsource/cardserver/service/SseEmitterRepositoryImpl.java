@@ -181,6 +181,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                 sseConnection.id(mySseEmitterEntry.getKey().toString());
                 sseConnection.userId(mySseEmitterEntry.getValue().getUserId());
+                sseConnection.appId(mySseEmitterEntry.getKey().toString());
                 sseConnection.pingReceived(mySseEmitterEntry.getValue().getPingReceived());
                 sseConnection.pingReceivedCount(mySseEmitterEntry.getValue().getPingReceivedCount());
                 sseConnection.pingSent(mySseEmitterEntry.getValue().getPingSent());
