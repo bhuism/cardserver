@@ -152,7 +152,12 @@ public class GameServiceImpl implements GameService {
     public void init() {
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
-                .subscribe(game -> executeSynchronious(GameEventType.NOP_RESCHEDULE, null, game.getId(), null, null));
+                .subscribe(game -> {
+                    if (new GameEngineImpl(game).checkNieuweTroefAndNieuweKaarten()) {
+                        gameRepository.save(game)
+                            .block();
+                    }
+                });
         }
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
     }
@@ -202,10 +207,11 @@ public class GameServiceImpl implements GameService {
                     case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
                     case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                     case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
-                    case NOP_RESCHEDULE -> Mono.just(gameEngine);
                 })
-                .doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now()))
-                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
+                .doOnNext(gameEngine -> gameEngine.getGame()
+                    .setUpdated(Instant.now()))
+                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame())
+                    .then(Mono.just(gameEngine)))
                 .doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
                 .subscribe(gameEngine -> {
 
@@ -231,7 +237,10 @@ public class GameServiceImpl implements GameService {
                     }
 
                 }, throwable -> {
-                    sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message(throwable.getClass().getName() + ":" + throwable.getMessage()));
+                    sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
+                        .variant(UserMessage.VariantEnum.ERROR)
+                        .message(throwable.getClass()
+                            .getName() + ":" + throwable.getMessage()));
                 });
 
         }
@@ -284,15 +293,24 @@ public class GameServiceImpl implements GameService {
 
                     final int roem = gameEngine.calculateTrickRoem(correctedSlagNr);
                     if (roem > 0) {
-                        final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
+                        final boolean result = gameEngine.getGame()
+                            .getRoemGeklopt()
+                            .add(gameEngine.calcTricksPlayed());
                         if (result) {
-                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.INFO));
-                            return gameRepository.save(gameEngine.getGame()).doOnNext(_ -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(_ -> gameEngine);
+                            sseEmitterRepository.sendMessage(gameEngine.getGame()
+                                .getPlayers(), new UserMessage().userId(userId)
+                                .message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
+                                .variant(UserMessage.VariantEnum.INFO));
+                            return gameRepository.save(gameEngine.getGame())
+                                .doOnNext(_ -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
+                                .map(_ -> gameEngine);
                         } else {
                             return Mono.empty();
                         }
                     } else {
-                        sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message("Er is geen roem in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.WARNING));
+                        sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                            .message("Er is geen roem in slag " + (correctedSlagNr + 1))
+                            .variant(UserMessage.VariantEnum.WARNING));
                         return Mono.empty();
                     }
                 })
@@ -303,7 +321,9 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Void> gameMessage(final String userId, final String gameId, final String message) {
         return gameRepository.findByUserIdAndGameId(userId, gameId)
-            .doOnNext(game -> sseEmitterRepository.sendMessage(game.getPlayers(), new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.INFO)))
+            .doOnNext(game -> sseEmitterRepository.sendMessage(game.getPlayers(), new UserMessage().userId(userId)
+                .message(message)
+                .variant(UserMessage.VariantEnum.INFO)))
             .then();
     }
 
@@ -319,16 +339,23 @@ public class GameServiceImpl implements GameService {
 
                     final AtomicBoolean atLeastOne = new AtomicBoolean(false);
 
-                    List.of(0, 1, 2, 3).forEach(playerNr -> {
-                        final Boolean verzaakt = gameEngine.verzaakt(correctedSlagNr, playerNr);
-                        if (verzaakt) {
-                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message("Er is verzaakt in slag " + correctedSlagNr + " door speler " + playerNr));
-                            atLeastOne.set(true);
-                        }
-                    });
+                    List.of(0, 1, 2, 3)
+                        .forEach(playerNr -> {
+                            final Boolean verzaakt = gameEngine.verzaakt(correctedSlagNr, playerNr);
+                            if (verzaakt) {
+                                sseEmitterRepository.sendMessage(gameEngine.getGame()
+                                    .getPlayers(), new UserMessage().userId(userId)
+                                    .variant(UserMessage.VariantEnum.ERROR)
+                                    .message("Er is verzaakt in slag " + correctedSlagNr + " door speler " + playerNr));
+                                atLeastOne.set(true);
+                            }
+                        });
 
                     if (!atLeastOne.get()) {
-                        sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.INFO).message("Er is niet verzaakt in slag " + correctedSlagNr));
+                        sseEmitterRepository.sendMessage(gameEngine.getGame()
+                            .getPlayers(), new UserMessage().userId(userId)
+                            .variant(UserMessage.VariantEnum.INFO)
+                            .message("Er is niet verzaakt in slag " + correctedSlagNr));
                     }
 
                     return Mono.just(gameEngine);

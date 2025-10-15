@@ -58,7 +58,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         if (trickNr < 0 || trickNr > 7) {
             throw new RuntimeException("Invalid trick nr " + trickNr);
         }
-        return game.getTurns().subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
+        return game.getTurns()
+            .subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
     }
 
     @Override
@@ -133,7 +134,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final int laatsteKaart = getTurnCount() % 4;
 
         if (laatsteKaart != 0) {
-            return (whoHasCard(game.getTurns().getLast()) + 1) % 4;
+            return (whoHasCard(game.getTurns()
+                .getLast()) + 1) % 4;
         } else {
             if (game.getTurns()
                 .isEmpty()) {
@@ -279,6 +281,19 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
 
+        checkNieuweTroefAndNieuweKaarten();
+
+        game.setUpdated(Instant.now());
+
+//        return userMessages;
+
+        return Mono.just(this);
+
+    }
+
+    @Override
+    public boolean checkNieuweTroefAndNieuweKaarten() {
+
         if (niemandIsGegaanEnIedereenHeeftGezegd()) {
 
             if (game.getDealCounter() % 2 == 0) {
@@ -305,15 +320,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
             }
 
             game.setDealCounter(game.getDealCounter() + 1);
+            game.setUpdated(Instant.now());
 
+            return true;
+
+        } else {
+            return false;
         }
-
-        game.setUpdated(Instant.now());
-
-//        return userMessages;
-
-        return Mono.just(this);
-
     }
 
     @Override
@@ -369,7 +382,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return false;
         }
 
-        return isAiPlayer(game.getPlayers().get(calcWhoSay()));
+        return isAiPlayer(game.getPlayers()
+            .get(calcWhoSay()));
 
     }
 
@@ -493,13 +507,26 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 continue;
             }
 
-            suitCards.sort(Comparator.comparing(card -> card.getRank().ordinal()));
+            suitCards.sort(Comparator.comparing(card -> card.getRank()
+                .ordinal()));
 
             boolean isFourInARow = false;
             if (suitCards.size() == 4) {
-                if (suitCards.get(0).getRank().ordinal() + 1 == suitCards.get(1).getRank().ordinal()
-                    && suitCards.get(1).getRank().ordinal() + 1 == suitCards.get(2).getRank().ordinal()
-                    && suitCards.get(2).getRank().ordinal() + 1 == suitCards.get(3).getRank().ordinal()) {
+                if (suitCards.get(0)
+                    .getRank()
+                    .ordinal() + 1 == suitCards.get(1)
+                    .getRank()
+                    .ordinal()
+                    && suitCards.get(1)
+                    .getRank()
+                    .ordinal() + 1 == suitCards.get(2)
+                    .getRank()
+                    .ordinal()
+                    && suitCards.get(2)
+                    .getRank()
+                    .ordinal() + 1 == suitCards.get(3)
+                    .getRank()
+                    .ordinal()) {
                     roem += 50;
                     isFourInARow = true;
                 }
@@ -507,8 +534,16 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
             if (!isFourInARow && suitCards.size() >= 3) {
                 for (int i = 0; i <= suitCards.size() - 3; i++) {
-                    if (suitCards.get(i).getRank().ordinal() + 1 == suitCards.get(i + 1).getRank().ordinal()
-                        && suitCards.get(i + 1).getRank().ordinal() + 1 == suitCards.get(i + 2).getRank().ordinal()) {
+                    if (suitCards.get(i)
+                        .getRank()
+                        .ordinal() + 1 == suitCards.get(i + 1)
+                        .getRank()
+                        .ordinal()
+                        && suitCards.get(i + 1)
+                        .getRank()
+                        .ordinal() + 1 == suitCards.get(i + 2)
+                        .getRank()
+                        .ordinal()) {
                         roem += 20;
                         break;
                     }
@@ -518,8 +553,10 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         // Check for Stuk (King and Queen of trump)
         final Suit trumpSuit = game.getTrump();
-        if (trick.stream().anyMatch(c -> c.getSuit() == trumpSuit && c.getRank() == Rank.KING)
-            && trick.stream().anyMatch(c -> c.getSuit() == trumpSuit && c.getRank() == Rank.QUEEN)) {
+        if (trick.stream()
+            .anyMatch(c -> c.getSuit() == trumpSuit && c.getRank() == Rank.KING)
+            && trick.stream()
+            .anyMatch(c -> c.getSuit() == trumpSuit && c.getRank() == Rank.QUEEN)) {
             roem += 20;
         }
 
@@ -528,7 +565,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     @Override
     public Boolean getErIsGegaan() {
-        return this.game.getSay().containsValue(true);
+        return this.game.getSay()
+            .containsValue(true);
     }
 
 
@@ -564,13 +602,17 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final Suit leadingSuit = leadingCard.getSuit();
 
         // If player can follow suit, they are not forced to trump.
-        final boolean canFollowSuit = hand.stream().anyMatch(c -> c.getSuit().equals(leadingSuit));
+        final boolean canFollowSuit = hand.stream()
+            .anyMatch(c -> c.getSuit()
+                .equals(leadingSuit));
         if (canFollowSuit) {
             return false;
         }
 
         // Player cannot follow suit. They must trump if they have a trump card.
-        return hand.stream().anyMatch(c -> c.getSuit().equals(game.getTrump()));
+        return hand.stream()
+            .anyMatch(c -> c.getSuit()
+                .equals(game.getTrump()));
     }
 
     @Override
@@ -599,22 +641,30 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final Suit leadingSuit = leadingCard.getSuit();
 
         // Reconstruct hand at time of play
-        final List<Card> initialHand = game.getPlayerCard().entrySet().stream()
-                .filter(entry -> entry.getValue().equals(speler))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        final List<Card> initialHand = game.getPlayerCard()
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue()
+                .equals(speler))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
 
-        final int turnIndexOfPlayedCard = game.getTurns().indexOf(playedCard);
+        final int turnIndexOfPlayedCard = game.getTurns()
+            .indexOf(playedCard);
 
-        final List<Card> playedByPlayerBefore = game.getTurns().subList(0, turnIndexOfPlayedCard).stream()
-                .filter(c -> whoHasCard(c) == speler)
-                .collect(Collectors.toList());
+        final List<Card> playedByPlayerBefore = game.getTurns()
+            .subList(0, turnIndexOfPlayedCard)
+            .stream()
+            .filter(c -> whoHasCard(c) == speler)
+            .collect(Collectors.toList());
 
         final List<Card> handAtTimeOfPlay = new ArrayList<>(initialHand);
         handAtTimeOfPlay.removeAll(playedByPlayerBefore);
 
         // Check for not following suit
-        final boolean couldFollowSuit = handAtTimeOfPlay.stream().anyMatch(c -> c.getSuit().equals(leadingSuit));
+        final boolean couldFollowSuit = handAtTimeOfPlay.stream()
+            .anyMatch(c -> c.getSuit()
+                .equals(leadingSuit));
         if (couldFollowSuit && playedCard.getSuit() != leadingSuit) {
             return true; // Verzaakt: Did not follow suit when possible
         }

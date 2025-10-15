@@ -26,6 +26,8 @@ public interface GameEngine {
 
     Mono<GameEngine> playAiCard();
 
+    boolean checkNieuweTroefAndNieuweKaarten();
+
     boolean isCompleted();
 
     int calcTricksPlayed();
