@@ -6,5 +6,6 @@ public enum GameEventType {
     AI_PLAY_CARD,
     AI_SAY,
     OPEN_LAST_TRICK,
-    CLOSE_LAST_TRICK
+    CLOSE_LAST_TRICK,
+    NOP_RESCHEDULE,
 }

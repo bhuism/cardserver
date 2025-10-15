@@ -149,49 +149,11 @@ public class GameServiceImpl implements GameService {
 
     @PostConstruct
     public void init() {
-
-        scheduler.scheduleWithFixedDelay(this::processDueEvents, 1000, 250, TimeUnit.MILLISECONDS);
-
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
-                .map(GameEngineImpl::new)
-                .flatMap(gameEngine -> {
-
-                    if (gameEngine.isCompleted()) {
-                        return Mono.empty();
-                    }
-
-                    if (gameEngine.getGame()
-                        .getLastTrickOpen()) {
-                        gameEngine.getGame()
-                            .setLastTrickOpen(false);
-                    }
-                    return Mono.just(gameEngine.game());
-                })
-                .flatMap(gameRepository::save)
-                .map(GameEngineImpl::new)
-                .flatMap(gameEngine -> {
-
-                    if (gameEngine.isAiSay()) {
-                        final String userId = gameEngine.getGame()
-                            .getPlayers()
-                            .get(gameEngine.calcWhoSay());
-                        this.executeSynchronious(GameEventType.AI_SAY, userId, gameEngine.getGame()
-                            .getId(), null, null);
-                        return Mono.just(gameEngine.getGame());
-                    } else if (gameEngine.isAiTurn()) {
-                        final String userId = gameEngine.getGame()
-                            .getPlayers()
-                            .get(gameEngine.calcWhoHasTurn());
-                        this.executeSynchronious(GameEventType.AI_PLAY_CARD, userId, gameEngine.getGame()
-                            .getId(), null, null);
-                        return Mono.just(gameEngine.getGame());
-                    }
-
-                    return Mono.empty();
-                })
-                .subscribe(gameRepository::save);
+                .subscribe(game -> executeSynchronious(GameEventType.NOP_RESCHEDULE, null, game.getId(), null, null));
         }
+        scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
@@ -221,18 +183,13 @@ public class GameServiceImpl implements GameService {
     }
 
     public Mono<GameEngine> catchException(final GameEngineExecutor gameEngineExecutor) {
-        try {
-            return gameEngineExecutor.run();
-        } catch (Throwable throwable) {
-            return Mono.error(throwable);
-        }
-
+        return gameEngineExecutor.run();
     }
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
         synchronized (lockMap.computeIfAbsent(gameId, k -> new Object())) {
-            log.info("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
+            log.debug("Executing: {} for game {} userId: {}", gameEventType, gameId, userId);
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
                 .map(GameEngineImpl::new)
@@ -244,9 +201,12 @@ public class GameServiceImpl implements GameService {
                     case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
                     case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                     case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+                    case NOP_RESCHEDULE -> Mono.just(gameEngine);
                 })
-                .doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now()))
-                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
+                .doOnNext(gameEngine -> gameEngine.getGame()
+                    .setUpdated(Instant.now()))
+                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame())
+                    .then(Mono.just(gameEngine)))
                 .doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
                 .subscribe(gameEngine -> {
 
@@ -272,7 +232,10 @@ public class GameServiceImpl implements GameService {
                     }
 
                 }, throwable -> {
-                    sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId).variant(UserMessage.VariantEnum.ERROR).message(throwable.getClass().getName() + ":" + throwable.getMessage()));
+                    sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
+                        .variant(UserMessage.VariantEnum.ERROR)
+                        .message(throwable.getClass()
+                            .getName() + ":" + throwable.getMessage()));
                 });
 
         }
@@ -325,15 +288,24 @@ public class GameServiceImpl implements GameService {
 
                     final int roem = gameEngine.calculateTrickRoem(correctedSlagNr);
                     if (roem > 0) {
-                        final boolean result = gameEngine.getGame().getRoemGeklopt().add(gameEngine.calcTricksPlayed());
+                        final boolean result = gameEngine.getGame()
+                            .getRoemGeklopt()
+                            .add(gameEngine.calcTricksPlayed());
                         if (result) {
-                            sseEmitterRepository.sendMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId).message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.INFO));
-                            return gameRepository.save(gameEngine.getGame()).doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame())).map(a -> gameEngine);
+                            sseEmitterRepository.sendMessage(gameEngine.getGame()
+                                .getPlayers(), new UserMessage().userId(userId)
+                                .message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
+                                .variant(UserMessage.VariantEnum.INFO));
+                            return gameRepository.save(gameEngine.getGame())
+                                .doOnNext(game -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
+                                .map(a -> gameEngine);
                         } else {
                             return Mono.empty();
                         }
                     } else {
-                        sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId).message("Er is geen roem in slag " + (correctedSlagNr + 1)).variant(UserMessage.VariantEnum.WARNING));
+                        sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                            .message("Er is geen roem in slag " + (correctedSlagNr + 1))
+                            .variant(UserMessage.VariantEnum.WARNING));
                         return Mono.empty();
                     }
                 })
@@ -344,7 +316,9 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Void> gameMessage(final String userId, final String gameId, final String message) {
         return gameRepository.findByUserIdAndGameId(userId, gameId)
-            .doOnNext(game -> sseEmitterRepository.sendMessage(game.getPlayers(), new UserMessage().userId(userId).message(message).variant(UserMessage.VariantEnum.INFO)))
+            .doOnNext(game -> sseEmitterRepository.sendMessage(game.getPlayers(), new UserMessage().userId(userId)
+                .message(message)
+                .variant(UserMessage.VariantEnum.INFO)))
             .then();
     }
 }
