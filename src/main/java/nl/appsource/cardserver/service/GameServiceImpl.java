@@ -155,6 +155,7 @@ public class GameServiceImpl implements GameService {
             gameRepository.findAll()
                 .map(Game::getId)
                 .subscribe(gameId -> {
+                    log.info("Init for game {}", gameId);
                     executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
                     executeSynchronious(GameEventType.CHECK_ROTATE, null, gameId, null, null);
                 });
