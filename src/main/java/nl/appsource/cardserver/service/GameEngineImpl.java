@@ -5,7 +5,6 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
-// CardAlreadyPlayerException, ElderException, GameCompletedException, GameEngineException, LastTrickOpenException, NotAPlayerException, NotPlayersTurnException
 import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.service.exception.ElderException;
 import nl.appsource.cardserver.service.exception.GameCompletedException;

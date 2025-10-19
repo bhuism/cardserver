@@ -155,7 +155,6 @@ public class GameServiceImpl implements GameService {
             gameRepository.findAll()
                 .map(Game::getId)
                 .subscribe(gameId -> {
-                    log.info("Init for game {}", gameId);
                     executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
                     executeSynchronious(GameEventType.CHECK_ROTATE, null, gameId, null, null);
                 });
@@ -195,10 +194,10 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        log.info("Executing: before lock : {} for game {} userId: {}", gameEventType, gameId, userId);
-
         synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
-            log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
+            eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId()
+                .equals(gameId));
+            log.debug("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
                 .map(GameEngineImpl::new)
@@ -217,36 +216,36 @@ public class GameServiceImpl implements GameService {
                 .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame())
                     .then(Mono.just(gameEngine)))
                 .doOnNext(gameEngine -> sseEmitterRepository.updateGameStateAllPlayers(gameEngine.getGame()))
-                .subscribe(gameEngine -> {
-
-                    if (gameEngine.isCompleted()) {
-                        return;
-                    }
-
-                    if (gameEngine.getGame()
-                        .getLastTrickOpen()) {
-                        return;
-                    }
-
-                    if (gameEngine.isAiSay()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000 + RAND.nextInt(1000), gameEngine.getGame()
-                            .getPlayers()
-                            .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
-                            .getId()));
-                    } else if (gameEngine.isAiTurn()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + RAND.nextInt(500), gameEngine.getGame()
-                            .getPlayers()
-                            .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
-                            .getId()));
-                    }
-
-                }, throwable -> {
+                .subscribe(this::scheduleNext, throwable -> {
                     sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
                         .variant(UserMessage.VariantEnum.ERROR)
                         .message(throwable.getClass()
                             .getName() + ":" + throwable.getMessage()));
                 });
 
+        }
+    }
+
+    private void scheduleNext(final GameEngine gameEngine) {
+        if (gameEngine.isCompleted()) {
+            return;
+        }
+
+        if (gameEngine.getGame()
+            .getLastTrickOpen()) {
+            return;
+        }
+
+        if (gameEngine.isAiSay()) {
+            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000 + RAND.nextInt(1000), gameEngine.getGame()
+                .getPlayers()
+                .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
+                .getId()));
+        } else if (gameEngine.isAiTurn()) {
+            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + RAND.nextInt(500), gameEngine.getGame()
+                .getPlayers()
+                .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
+                .getId()));
         }
     }
 
