@@ -200,7 +200,7 @@ public class GameServiceImpl implements GameService {
         synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
             eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId()
                 .equals(gameId));
-            log.debug("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
+            log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
                 .map(GameEngineImpl::new)
