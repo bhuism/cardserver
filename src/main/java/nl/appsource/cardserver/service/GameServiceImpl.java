@@ -157,6 +157,9 @@ public class GameServiceImpl implements GameService {
                 .subscribe(gameId -> {
                     executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
                     executeSynchronious(GameEventType.CHECK_ROTATE, null, gameId, null, null);
+                    gameRepository.findById(gameId)
+                        .map(GameEngineImpl::new)
+                        .subscribe(this::scheduleNext);
                 });
         }
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
