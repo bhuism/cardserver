@@ -195,10 +195,10 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        log.debug("Executing: before lock : {} for game {} userId: {}", gameEventType, gameId, userId);
+        log.info("Executing: before lock : {} for game {} userId: {}", gameEventType, gameId, userId);
 
         synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
-            log.debug("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
+            log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
                 .map(GameEngineImpl::new)
