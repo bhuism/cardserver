@@ -150,6 +150,7 @@ public class GameServiceImpl implements GameService {
 
     @PostConstruct
     public void init() {
+        log.info("init()");
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
                 .map(Game::getId)
