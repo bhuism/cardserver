@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -40,7 +39,6 @@ import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
 import static java.util.Collections.singleton;
-import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
@@ -73,10 +71,10 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Game> createGame(final String creator, final Set<String> players) {
+    public Mono<Game> createGame(final String creator, final List<String> players) {
 
-        if (players.isEmpty()) {
-            throw new IllegalArgumentException("need at least one player");
+        if (players.size() != 4) {
+            throw new IllegalArgumentException("need 4 players");
         }
 
         if (!StringUtils.hasText(creator)) {
@@ -86,13 +84,6 @@ public class GameServiceImpl implements GameService {
         if (!players.contains(creator)) {
             throw new IllegalArgumentException("creator needs to be a player");
         }
-
-        while (players.size() < 4) {
-            players.add(AI_USER_ID.get(players.size() - 1));
-        }
-
-//        final List<String> randomizedOrderPlayers = new ArrayList<>(players);
-//        shuffle(randomizedOrderPlayers, RAND);
 
         log.info("Creating a new game with players {}", players);
 

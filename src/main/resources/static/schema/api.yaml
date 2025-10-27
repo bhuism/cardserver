@@ -434,7 +434,6 @@ components:
       properties:
         players:
           type: array
-          uniqueItems: true
           minItems: 4
           maxItems: 4
           items:

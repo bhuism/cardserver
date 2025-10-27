@@ -5,7 +5,7 @@ import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 public interface GameService {
@@ -14,7 +14,7 @@ public interface GameService {
 
     Flux<Game> getGames(String userId);
 
-    Mono<Game> createGame(String creator, Set<String> players);
+    Mono<Game> createGame(String creator, List<String> players);
 
     Mono<Boolean> deleteGame(String userId, String gameId);
 
