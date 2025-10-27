@@ -91,11 +91,10 @@ public class GameServiceImpl implements GameService {
             players.add(AI_USER_ID.get(players.size() - 1));
         }
 
-        final List<String> randomizedOrderPlayers = new ArrayList<>(players);
+//        final List<String> randomizedOrderPlayers = new ArrayList<>(players);
+//        shuffle(randomizedOrderPlayers, RAND);
 
-        shuffle(randomizedOrderPlayers, RAND);
-
-        log.info("Creating a new game with players {}", randomizedOrderPlayers);
+        log.info("Creating a new game with players {}", players);
 
         return userRepository.findById(creator)
             .flatMap((user) -> Mono.just(new Game())
@@ -104,7 +103,7 @@ public class GameServiceImpl implements GameService {
                     game.setCreator(creator);
                     game.setCreated(Instant.now());
                     game.setUpdated(Instant.now());
-                    game.setPlayers(randomizedOrderPlayers);
+                    game.setPlayers(new ArrayList<>(players));
                     game.setDealer(RAND.nextInt(4));
                     game.setSay(new HashMap<>());
                     game.setTurns(new ArrayList<>());
