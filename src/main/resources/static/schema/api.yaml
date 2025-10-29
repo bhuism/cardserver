@@ -8,7 +8,60 @@ servers:
     description: Klavers Jassen
 
 paths:
+  /boom:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    get:
+      tags:
+        - boom
+      operationId: getBooms
+      responses:
+        "200":
+          description: get all booms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Boom"
+    post:
+      tags:
+        - boom
+      operationId: createBoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBoom"
+      responses:
+        "200":
+          description: Boomresponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Boom"
+  /boom/{boomId}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    get:
+      tags:
+        - boom
+      operationId: getBoom
+      parameters:
+        - $ref: "#/components/parameters/boomId"
+      responses:
+        "200":
+          description: a boom
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Boom"
+        '404':
+          description: Todo item not found.
   /debug/sseconnections/get:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
     get:
       tags:
         - debug
@@ -314,6 +367,55 @@ components:
           schema:
             $ref: "#/components/schemas/postMessage"
   schemas:
+    Boom:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the test
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+        creator:
+          description: initial dealer
+          type: string
+        dealer:
+          type: integer
+          minimum: 0
+          maximum: 3
+        players:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: string
+        games:
+          type: array
+          maxItems: 32
+          items:
+            type: string
+      required:
+        - id
+        - created
+        - updated
+        - creator
+        - dealer
+        - players
+        - games
+    CreateBoom:
+      type: object
+      properties:
+        players:
+          type: array
+          minItems: 4
+          maxItems: 4
+          items:
+            type: string
+      required:
+        - players
     UserMessage:
       type: object
       properties:
@@ -531,6 +633,12 @@ components:
       required: true
     gameId:
       name: gameId
+      in: path
+      schema:
+        type: string
+      required: true
+    boomId:
+      name: boomId
       in: path
       schema:
         type: string

@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -23,12 +25,12 @@ public class DebugController implements DebugApi, V1Api {
     private final SseEmitterRepository sseEmitterRepository;
 
     @Override
-    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final UUID appIdentifier,final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .filter(Utils::isAdmin)
-            .map(s -> sseEmitterRepository.getDebugSseConnections())
+            .map(_s -> sseEmitterRepository.getDebugSseConnections())
             .map(ResponseEntity::ok)
             .defaultIfEmpty(
                 ResponseEntity.status(HttpStatus.FORBIDDEN)

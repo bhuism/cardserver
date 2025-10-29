@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.openapitools.model.GameVariant;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
@@ -36,6 +37,11 @@ public class Boom {
 
     @NotNull
     @Field
+    @QueryIndexed
+    private String creator;
+
+    @NotNull
+    @Field
     private GameVariant gameVariant = GameVariant.ROTTERDAMS;
 
     @NotNull
@@ -45,5 +51,9 @@ public class Boom {
     @Field
     @NotNull
     private List<String> players = new ArrayList<>();
+
+    @Field
+    @NotNull
+    private List<String> games = new ArrayList<>();
 
 }

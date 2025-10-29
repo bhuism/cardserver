@@ -1,5 +1,6 @@
 package nl.appsource.cardserver;
 
+import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,9 @@ class CardServerApplicationTests {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private BoomRepository boomRepository;
 
     @Test
     void contextLoads() {
