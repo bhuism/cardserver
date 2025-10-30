@@ -54,6 +54,7 @@ public class GameServiceImpl implements GameService {
     private final SseEmitterRepository sseEmitterRepository;
 
     private static final Random RAND = new SecureRandom();
+
     private final UserRepository userRepository;
 
     @Override

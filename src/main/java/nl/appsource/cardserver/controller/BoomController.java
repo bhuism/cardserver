@@ -2,7 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
-import nl.appsource.cardserver.repository.BoomRepository;
+import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.BoomApi;
 import org.openapitools.model.Boom;
@@ -19,19 +19,25 @@ import java.util.UUID;
 @Slf4j
 public class BoomController extends GenericController implements BoomApi {
 
-    private final BoomRepository boomRepository;
+    private final BoomService boomService;
 
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
-    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomRepository boomRepositoryArg, final BoomToOpenApiConverter boomToOpenApiConverterArg) {
+    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg) {
         super(sseEmitterRepository);
-        this.boomRepository = boomRepositoryArg;
+        this.boomService = boolServiceArg;
         this.boomToOpenApiConverter = boomToOpenApiConverterArg;
     }
 
     @Override
-    public Mono<ResponseEntity<Boom>> createBoom(final UUID appIdentifier, final Mono<CreateBoom> createBoom, final ServerWebExchange exchange) {
-        return null;
+    public Mono<ResponseEntity<Boom>> createBoom(final UUID appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .flatMap(userId -> createBoomMono.flatMap(createBoom -> boomService.createBoom(userId, createBoom.getPlayers())))
+            .mapNotNull(boomToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 
     @Override
@@ -39,7 +45,7 @@ public class BoomController extends GenericController implements BoomApi {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
                 .getRemoteAddress(), userId, boomId))
-            .flatMap(_userId -> boomRepository.findById(boomId))
+            .flatMap(userId -> boomService.getBoom(userId, boomId))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.defer(() -> {
