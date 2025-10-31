@@ -2,7 +2,6 @@ package nl.appsource.cardserver.migrator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
@@ -50,9 +49,7 @@ public class Migrator {
 
     private final ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
-    @PostConstruct
-    @SuppressWarnings("AvoidNestedBlocks")
-    public void init() {
+    public synchronized void run() {
         migrate();
         //loadUser("users.json");
         //loadGames("games.json");
