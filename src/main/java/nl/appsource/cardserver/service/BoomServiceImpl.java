@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.repository.BoomRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
@@ -60,5 +61,10 @@ public class BoomServiceImpl implements BoomService {
                 .flatMap(boomRepository::save)
             );
 
+    }
+
+    @Override
+    public Flux<Boom> getBooms(final String userId) {
+        return boomRepository.findByUserId(userId);
     }
 }

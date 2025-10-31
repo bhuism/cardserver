@@ -32,7 +32,8 @@ public class BoomController extends GenericController implements BoomApi {
     @Override
     public Mono<ResponseEntity<Boom>> createBoom(final UUID appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .doOnNext((userId) -> log.info("{} createBoom() userId={}", exchange.getRequest()
+                .getRemoteAddress(), userId))
             .flatMap(userId -> createBoomMono.flatMap(createBoom -> boomService.createBoom(userId, createBoom.getPlayers())))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
@@ -59,6 +60,13 @@ public class BoomController extends GenericController implements BoomApi {
 
     @Override
     public Mono<ResponseEntity<Flux<Boom>>> getBooms(final UUID appIdentifier, final ServerWebExchange exchange) {
-        return null;
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} getBooms() userId={}", exchange.getRequest()
+                .getRemoteAddress(), userId))
+            .mapNotNull(userId -> boomService.getBooms(userId)
+                .mapNotNull(boomToOpenApiConverter::convert))
+            .mapNotNull(ResponseEntity::ok)
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
     }
 }
