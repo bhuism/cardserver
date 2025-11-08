@@ -6,6 +6,7 @@ import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameEngineImpl;
+import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.BoomApi;
 import org.openapitools.model.Boom;
@@ -31,13 +32,18 @@ public class BoomController extends GenericController implements BoomApi {
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
     private final BoomRepository boomRepository;
+
     private final GameRepository gameRepository;
 
-    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, GameRepository gameRepository) {
+    private final GameService gameService;
+
+    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg) {
         super(sseEmitterRepository);
         this.boomService = boolServiceArg;
         this.boomToOpenApiConverter = boomToOpenApiConverterArg;
-        this.gameRepository = gameRepository;
+        this.gameRepository = gameRepositoryArg;
+        this.boomRepository = boomRepositoryArg;
+        this.gameService = gameServiceArg;
     }
 
     @Override
@@ -85,17 +91,27 @@ public class BoomController extends GenericController implements BoomApi {
     public Mono<ResponseEntity<Void>> playBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), userId, boomId))
-            .flatMap(userId -> boomRepository.findById(boomId))
-            .map((boom) -> Flux.fromIterable(boom.getGames()))
-            .flatMapMany(gameRepository::findById)
-            .filter(game -> !new GameEngineImpl(game).isCompleted())
-            .switchIfEmpty(s -> Mono.defer(() = > {
+            .flatMap(userId -> {
+                return boomRepository.findById(boomId)
+                    .map((boom) -> {
+                        return Flux.fromIterable(boom.getGames())
+                            .flatMap(gameRepository::findById)
+                            .filter(game -> !new GameEngineImpl(game).isCompleted())
+                            .next()
+                            .switchIfEmpty(Mono.defer(() -> {
+                                if (boom.getGames()
+                                    .size() < 32) {
+                                    return gameService.createGame(userId, boom.getPlayers());
+                                } else {
+                                    return Mono.empty();
+                                }
+                            }))
+                            .map(game -> new ResponseEntity<Void>(new HttpHeaders(MultiValueMap.fromSingleValue(Map.of("Location", "/gamePlay/" + game.getId()))), HttpStatus.FOUND))
+                            .defaultIfEmpty(ResponseEntity.notFound()
+                                .build());
+                    });
+            })
+            .flatMap(responseEntityMono -> responseEntityMono);
 
-
-            }))
-            .next()
-            .map(game -> {
-                return new ResponseEntity<String>(new HttpHeaders(MultiValueMap.fromSingleValue(Map.of("Location", "/gamePlay/" + game.id))), HttpStatus.FOUND);
-            });
     }
 }
