@@ -41,6 +41,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Boom"
+  /boom/{boomId}/play:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    get:
+      tags:
+        - boom
+      operationId: playBoom
+      parameters:
+        - $ref: "#/components/parameters/boomId"
+      responses:
+        "200":
+          description: a boom
   /boom/{boomId}:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
