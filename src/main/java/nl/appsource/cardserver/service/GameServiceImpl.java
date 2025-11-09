@@ -73,6 +73,11 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Game> createGame(final String creator, final List<String> players) {
+        return createGame(creator, players, null);
+    }
+
+    @Override
+    public Mono<Game> createGame(final String creator, final List<String> players, final String boomId) {
 
         if (players.size() != 4) {
             throw new IllegalArgumentException("need 4 players");
@@ -104,6 +109,7 @@ public class GameServiceImpl implements GameService {
                     game.setLastTrickOpen(false);
                     game.setGameVariant(user.getGameVariant());
                     game.setDealCounter(0);
+                    game.setBoomId(boomId);
                 })
                 .flatMap(gameRepository::save)
                 .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))

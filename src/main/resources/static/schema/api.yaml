@@ -44,7 +44,7 @@ paths:
   /boom/{boomId}/play:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
-    get:
+    post:
       tags:
         - boom
       operationId: playBoom

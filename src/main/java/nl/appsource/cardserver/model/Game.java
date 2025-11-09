@@ -85,4 +85,7 @@ public class Game {
     @NotNull
     private Set<Integer> roemGeklopt = new HashSet<>();
 
+    @Field
+    private String boomId;
+
 }

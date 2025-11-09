@@ -90,7 +90,8 @@ public class BoomController extends GenericController implements BoomApi {
     @Override
     public Mono<ResponseEntity<Void>> playBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), userId, boomId))
+            .doOnNext((userId) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, boomId))
             .flatMap(userId -> {
                 return boomRepository.findById(boomId)
                     .map((boom) -> {
@@ -101,12 +102,17 @@ public class BoomController extends GenericController implements BoomApi {
                             .switchIfEmpty(Mono.defer(() -> {
                                 if (boom.getGames()
                                     .size() < 32) {
-                                    return gameService.createGame(userId, boom.getPlayers());
+                                    return gameService.createGame(userId, boom.getPlayers(), boom.getId())
+                                        .doOnNext(game -> boom.getGames()
+                                            .add(game.getId()))
+                                        .flatMap(game -> boomRepository.save(boom).thenReturn(game));
+                                        //.zipWith(boomRepository.save(boom))
+                                        //.map(Tuple2::getT1)
                                 } else {
                                     return Mono.empty();
                                 }
                             }))
-                            .map(game -> new ResponseEntity<Void>(new HttpHeaders(MultiValueMap.fromSingleValue(Map.of("Location", "/gamePlay/" + game.getId()))), HttpStatus.FOUND))
+                            .map(game -> new ResponseEntity<Void>(new HttpHeaders(MultiValueMap.fromSingleValue(Map.of("Location", "https://klaversjassen.nl/gamePlay/" + game.getId()))), HttpStatus.FOUND))
                             .defaultIfEmpty(ResponseEntity.notFound()
                                 .build());
                     });
