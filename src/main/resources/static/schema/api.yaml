@@ -53,6 +53,10 @@ paths:
       responses:
         "200":
           description: a boom
+          content:
+            application/json:
+              schema:
+                $ref: "./game.yaml#/components/schemas/Game"
   /boom/{boomId}:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
