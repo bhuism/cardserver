@@ -178,6 +178,8 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
             }
         }
 
+        target.setBoomId(Optional.ofNullable(source.getBoomId()));
+
         return target;
 
     }

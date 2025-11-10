@@ -123,6 +123,8 @@ components:
           items:
             type: integer
             uniqueItems: true
+        boomId:
+          type: string
       required:
         - id
         - trump
