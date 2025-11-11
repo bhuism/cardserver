@@ -19,6 +19,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.SecureRandom;
+import java.util.Random;
 import java.util.UUID;
 
 @RestController
@@ -36,6 +38,8 @@ public class BoomController extends GenericController implements BoomApi {
     private final GameService gameService;
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private static final Random RAND = new SecureRandom();
 
     public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg) {
         super(sseEmitterRepository);
@@ -102,9 +106,11 @@ public class BoomController extends GenericController implements BoomApi {
                             .filter(game -> !new GameEngineImpl(game).isCompleted())
                             .next()
                             .switchIfEmpty(Mono.defer(() -> {
-                                if (boom.getGames()
-                                    .size() < 32) {
-                                    return gameService.createGame(userId, boom.getPlayers(), boom.getId())
+                                if (boom.getGames().size() < 32) {
+
+                                    final Integer dealer = RAND.nextInt(4);
+
+                                    return gameService.createGame(userId, boom.getPlayers(), boom.getId(), dealer)
                                         .doOnNext(game -> boom.getGames()
                                             .add(game.getId()))
                                         .flatMap(game -> boomRepository.save(boom)
