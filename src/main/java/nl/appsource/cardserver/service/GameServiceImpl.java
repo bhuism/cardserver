@@ -109,7 +109,7 @@ public class GameServiceImpl implements GameService {
                     game.setCreated(Instant.now());
                     game.setUpdated(Instant.now());
                     game.setPlayers(new ArrayList<>(players));
-                    game.setDealer(dealer == null ? RAND.nextInt(4) : dealer);
+                    game.setDealer(dealer == null ? Integer.valueOf(RAND.nextInt(4)) : dealer);
                     game.setSay(new HashMap<>());
                     game.setTurns(new ArrayList<>());
                     game.setPlayerCard(randomCards());
