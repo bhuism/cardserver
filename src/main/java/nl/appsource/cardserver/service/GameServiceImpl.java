@@ -57,6 +57,14 @@ public class GameServiceImpl implements GameService {
 
     private final UserRepository userRepository;
 
+    private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
+
+    private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
+
+    boolean stop = false;
+
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
         if (isAdmin(userId)) {
@@ -136,14 +144,6 @@ public class GameServiceImpl implements GameService {
                 );
         }
     }
-
-    private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
-
-    private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
-
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
-
-    boolean stop = false;
 
     @PostConstruct
     public void init() {

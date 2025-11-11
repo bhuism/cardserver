@@ -20,6 +20,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @RestController
 @Slf4j
@@ -36,6 +38,8 @@ public class BoomController extends GenericController implements BoomApi {
     private final GameService gameService;
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg) {
         super(sseEmitterRepository);
@@ -91,37 +95,33 @@ public class BoomController extends GenericController implements BoomApi {
 
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
-                .getRemoteAddress(), userId, boomId))
-            .flatMap(userId -> {
-                return boomRepository.findById(boomId)
-                    .map((boom) -> {
-                        return Flux.fromIterable(boom.getGames())
-                            .flatMap(gameRepository::findById)
-                            .filter(game -> !new GameEngineImpl(game).isCompleted())
-                            .next()
-                            .switchIfEmpty(Mono.defer(() -> {
-                                if (boom.getGames()
-                                    .size() < 32) {
-                                    return gameService.createGame(userId, boom.getPlayers(), boom.getId())
-                                        .doOnNext(game -> boom.getGames()
-                                            .add(game.getId()))
-                                        .flatMap(game -> boomRepository.save(boom)
-                                            .thenReturn(game));
-                                    //.zipWith(boomRepository.save(boom))
-                                    //.map(Tuple2::getT1)
-                                } else {
-                                    return Mono.empty();
-                                }
-                            }))
-                            .mapNotNull(gameToOpenApiConverter::convert)
-                            .map(ResponseEntity::ok)
-                            .defaultIfEmpty(ResponseEntity.notFound()
-                                .build());
-                    });
-            })
-            .flatMap(responseEntityMono -> responseEntityMono);
-
+        synchronized (lockMap.computeIfAbsent(boomId, _ -> new Object())) {
+            return authorize(appIdentifier, exchange)
+                .doOnNext((userId) -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), userId, boomId))
+                .flatMap(userId -> {
+                    return boomRepository.findById(boomId)
+                        .map((boom) -> {
+                            return Flux.fromIterable(boom.getGames())
+                                .flatMap(gameRepository::findById)
+                                .filter(game -> !new GameEngineImpl(game).isCompleted())
+                                .next()
+                                .switchIfEmpty(Mono.defer(() -> {
+                                    if (boom.getGames()
+                                        .size() < 32) {
+                                        return gameService.createGame(userId, boom.getPlayers(), boom.getId())
+                                            .doOnNext(game -> boom.getGames().add(game.getId()))
+                                            .flatMap(game -> boomRepository.save(boom).thenReturn(game));
+                                    } else {
+                                        return Mono.empty();
+                                    }
+                                }))
+                                .mapNotNull(gameToOpenApiConverter::convert)
+                                .map(ResponseEntity::ok)
+                                .defaultIfEmpty(ResponseEntity.notFound()
+                                    .build());
+                        });
+                })
+                .flatMap(responseEntityMono -> responseEntityMono);
+        }
     }
 }
