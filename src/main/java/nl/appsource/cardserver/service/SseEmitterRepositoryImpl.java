@@ -135,6 +135,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void updateGameStateAllPlayers(final Game game) {
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
         doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
+
+        this.subscriptions.forEachValue(1, s -> {
+
+        });
+
     }
 
     public void updateGameStateForId(final UUID appIdentifier, final Game game) {
@@ -247,6 +252,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
 
         return true;
+    }
+
+    private final ConcurrentHashMap<UUID, String> subscriptions = new ConcurrentHashMap<UUID, String>();
+
+    @Override
+    public void eventSubscribe(final UUID appIdentifier, final String entity, final String entityId) {
+        subscriptions.put(appIdentifier, entity + ":" + entityId);
+    }
+
+    @Override
+    public void eventUnSubscribe(final UUID appIdentifier, final String entity, final String entityId) {
+        subscriptions.remove(appIdentifier, entity + ":" + entityId);
     }
 
 }

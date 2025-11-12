@@ -42,4 +42,8 @@ public interface SseEmitterRepository {
     Boolean validate(UUID appIdentifier, String userId);
 
     SseConnections getDebugSseConnections();
+
+    void eventSubscribe(UUID appIdentifier, String entity, String entityId);
+
+    void eventUnSubscribe(UUID appIdentifier, String entity, String entityId);
 }

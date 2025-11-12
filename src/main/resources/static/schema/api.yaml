@@ -117,6 +117,26 @@ paths:
           description: some application error
         "404":
           description: not found
+  /games/{gameId}/subscribe:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: subscribeGame
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      responses:
+        "200":
+          description: ok
+  /games/{gameId}/unsubscribe:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: unSubscribeGame
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      responses:
+        "200":
+          description: ok
   /games/{gameId}/claimRoem:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"

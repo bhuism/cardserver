@@ -217,4 +217,17 @@ public class GameController implements GamesApi, V1Api {
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
+
+    @Override
+    public Mono<ResponseEntity<Void>> subscribeGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        sseEmitterRepository.eventSubscribe(appIdentifier, "game", gameId);
+        return Mono.just(ResponseEntity.ok().build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> unSubscribeGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        sseEmitterRepository.eventUnSubscribe(appIdentifier, "game", gameId);
+        return Mono.just(ResponseEntity.ok().build());
+    }
+
 }
