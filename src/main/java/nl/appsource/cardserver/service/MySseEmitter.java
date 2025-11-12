@@ -160,7 +160,7 @@ public final class MySseEmitter {
     }
 
     public void sendUpdateGameState(final Game game) {
-        internalSend(createServerSentEvent("stateUpdate", game));
+        internalSend(createServerSentEvent("updateGame", game));
     }
 
 }
