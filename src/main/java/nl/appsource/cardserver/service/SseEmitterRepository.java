@@ -43,7 +43,7 @@ public interface SseEmitterRepository {
 
     SseConnections getDebugSseConnections();
 
-    void eventSubscribe(UUID appIdentifier, String entityId);
+    void eventSubscribe(UUID appIdentifier, String topic);
 
-    void eventUnSubscribe(UUID appIdentifier, String entityId);
+    void eventUnSubscribe(UUID appIdentifier, String topic);
 }

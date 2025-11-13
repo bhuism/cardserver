@@ -371,10 +371,10 @@ paths:
               type: object
               nullable: false
               properties:
-                entityId:
+                topic:
                   type: string
               required:
-                - entityId
+                - topic
       responses:
         "200":
           description: ok
@@ -393,10 +393,10 @@ paths:
               type: object
               nullable: false
               properties:
-                entityId:
+                topic:
                   type: string
               required:
-                - entityId
+                - topic
       responses:
         "200":
           description: ok
