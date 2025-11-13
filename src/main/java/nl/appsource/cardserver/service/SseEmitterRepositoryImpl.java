@@ -143,10 +143,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("Distributing topic: " + topic);
 
-        this.topics.getOrDefault(topic, Collections.emptyList()).forEach(uuid -> {
-            log.info("Distributing topic: " + topic + " to appId: " + uuid);
-            doId(uuid, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
-        });
+        log.info("count subscribes: " + Optional.ofNullable(this.topics.get(topic)).orElse(Collections.emptyList()).size());
+
+        Optional.ofNullable(this.topics.get(topic))
+            .ifPresent(uuids -> {
+                uuids.forEach(uuid -> {
+                    log.info("Distributing topic: " + topic + " to appId: " + uuid);
+                    doId(uuid, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
+                });
+            });
     }
 
     public void updateGameStateForId(final UUID appIdentifier, final Game game) {
@@ -268,6 +273,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void eventSubscribe(final UUID appIdentifier, final String topic) {
         log.info("Subscribing " + appIdentifier + " to topic " + topic);
         topics.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier);
+
+        log.info("got: " + topics.get(topic));
     }
 
     @Override
