@@ -42,7 +42,7 @@ public class SubscribeController implements V1Api, SubscribeEventApi, UnSubscrib
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> subscribeEvent(UUID appIdentifier, Mono<String> body, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<String> body, final ServerWebExchange exchange) {
         return body.doOnNext(entityId -> sseEmitterRepository.eventSubscribe(appIdentifier, entityId))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -50,7 +50,7 @@ public class SubscribeController implements V1Api, SubscribeEventApi, UnSubscrib
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, Mono<String> body, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<String> body, final ServerWebExchange exchange) {
         return body.doOnNext(entityId -> sseEmitterRepository.eventUnSubscribe(appIdentifier, entityId))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());

@@ -15,11 +15,14 @@ import reactor.core.publisher.Flux;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -82,7 +85,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         joiner.add(uuid.toString());
                     });
 
-                log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, joiner.toString(), emitters.size(), new Throwable());
+                log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, joiner, emitters.size(), new Throwable());
             });
     }
 
@@ -135,11 +138,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void updateGameStateAllPlayers(final Game game) {
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
         doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
-
-        this.subscriptions.forEachValue(1, s -> {
-
+        this.topics.getOrDefault("game" + game.getId(), Collections.emptyList()).forEach(uuid -> {
+            doId(uuid, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
         });
-
     }
 
     public void updateGameStateForId(final UUID appIdentifier, final Game game) {
@@ -241,7 +242,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 .forEachRemaining(uuid -> {
                     joiner.add(uuid.toString());
                 });
-            log.error("Emitter not found for " + appIdentifier + ", got: " + joiner.toString());
+            log.error("Emitter not found for " + appIdentifier + ", got: " + joiner);
             return false;
         }
 
@@ -254,16 +255,20 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return true;
     }
 
-    private final ConcurrentHashMap<UUID, String> subscriptions = new ConcurrentHashMap<UUID, String>();
+
+    private final Map<String, List<UUID>> topics = new ConcurrentHashMap<>();
 
     @Override
-    public void eventSubscribe(final UUID appIdentifier, String entityId) {
-        subscriptions.put(appIdentifier, entityId);
+    public void eventSubscribe(final UUID appIdentifier, final String topic) {
+        topics.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier);
     }
 
     @Override
-    public void eventUnSubscribe(final UUID appIdentifier, final String entityId) {
-        subscriptions.remove(appIdentifier, entityId);
+    public void eventUnSubscribe(final UUID appIdentifier, final String topic) {
+        final List<UUID> subscribers = topics.get(topic);
+        if (subscribers != null) {
+            subscribers.remove(appIdentifier);
+        }
     }
 
 }

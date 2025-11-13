@@ -153,7 +153,7 @@ public class Migrator {
 
             final JsonNode data = jsonNode.get("data");
 
-            data.fields()
+            data.properties().iterator()
                 .forEachRemaining(gameNode -> {
 
                     final String id = gameNode.getKey();
@@ -240,6 +240,7 @@ public class Migrator {
                                     break;
                                 case "uid":
                                 case COLLECTIONS:
+                                    break;
                                 case "choices":
                                     break;
                                 default:
@@ -249,9 +250,8 @@ public class Migrator {
 
                     log.info("Persisting game: {}", game.getId());
 
-                    if (gameRepository.existsById(game.getId())
-                        .block()) {
-                        gameRepository.deleteById(game.getId());
+                    if (gameRepository.existsById(game.getId()).block()) {
+                        gameRepository.deleteById(game.getId()).block();
                     }
                     gameRepository.save(game)
                         .subscribe();
@@ -274,7 +274,7 @@ public class Migrator {
 
     private void loadUser(final String fileName) throws IOException {
 
-        log.info("Found {} users in db", userRepository.count());
+        log.info("Found {} users in db", userRepository.count().block());
 
         final File userFile = new File(fileName);
 
@@ -286,7 +286,7 @@ public class Migrator {
 
             final JsonNode data = jsonNode.get("data");
 
-            data.fields()
+            data.properties().iterator()
                 .forEachRemaining(userNode -> {
 
                     final String id = userNode.getKey();

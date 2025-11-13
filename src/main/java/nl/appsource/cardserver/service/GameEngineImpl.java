@@ -637,7 +637,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .filter(entry -> entry.getValue()
                 .equals(speler))
             .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
+            .toList();
 
         final int turnIndexOfPlayedCard = game.getTurns()
             .indexOf(playedCard);
@@ -646,7 +646,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .subList(0, turnIndexOfPlayedCard)
             .stream()
             .filter(c -> whoHasCard(c) == speler)
-            .collect(Collectors.toList());
+            .toList();
 
         final List<Card> handAtTimeOfPlay = new ArrayList<>(initialHand);
         handAtTimeOfPlay.removeAll(playedByPlayerBefore);
