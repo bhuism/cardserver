@@ -141,16 +141,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final String topic = "game" + game.getId();
 
-        log.info("got (b): " + topics.get(topic) + ", hash: " + topic.hashCode());
-
-        log.info("Distributing topic: " + topic + ", hash=" + topic.hashCode());
-
-        log.info("count subscribes: " + Optional.ofNullable(this.topics.get(topic)).orElse(Collections.emptyList()).size());
-
         Optional.ofNullable(this.topics.get(topic))
             .ifPresent(uuids -> {
                 uuids.forEach(uuid -> {
-                    log.info("Distributing topic: " + topic + " to appId: " + uuid);
                     doId(uuid, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
                 });
             });
@@ -272,15 +265,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void eventSubscribe(final UUID appIdentifier, final String topic) {
-        log.info("Subscribing " + appIdentifier + " to topic " + topic);
         topics.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier);
-
-        log.info("got (a): " + topics.get(topic) + ", hash: " + topic.hashCode());
     }
 
     @Override
     public void eventUnSubscribe(final UUID appIdentifier, final String topic) {
-        log.info("unSubscribing " + appIdentifier + " to topic " + topic);
         final List<UUID> subscribers = topics.get(topic);
         if (subscribers != null) {
             subscribers.remove(appIdentifier);
