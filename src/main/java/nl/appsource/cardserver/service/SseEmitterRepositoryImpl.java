@@ -257,13 +257,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final ConcurrentHashMap<UUID, String> subscriptions = new ConcurrentHashMap<UUID, String>();
 
     @Override
-    public void eventSubscribe(final UUID appIdentifier, final String entity, final String entityId) {
-        subscriptions.put(appIdentifier, entity + ":" + entityId);
+    public void eventSubscribe(final UUID appIdentifier, String entityId) {
+        subscriptions.put(appIdentifier, entityId);
     }
 
     @Override
-    public void eventUnSubscribe(final UUID appIdentifier, final String entity, final String entityId) {
-        subscriptions.remove(appIdentifier, entity + ":" + entityId);
+    public void eventUnSubscribe(final UUID appIdentifier, final String entityId) {
+        subscriptions.remove(appIdentifier, entityId);
     }
 
 }
