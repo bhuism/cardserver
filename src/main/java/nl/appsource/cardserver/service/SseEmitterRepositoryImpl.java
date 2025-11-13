@@ -141,7 +141,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final String topic = "game" + game.getId();
 
-        log.info("Distributing topic: " + topic);
+        log.info("Distributing topic: " + topic + ", hash=" + topic.hashCode());
 
         log.info("count subscribes: " + Optional.ofNullable(this.topics.get(topic)).orElse(Collections.emptyList()).size());
 
@@ -274,7 +274,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         log.info("Subscribing " + appIdentifier + " to topic " + topic);
         topics.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier);
 
-        log.info("got: " + topics.get(topic));
+        log.info("got: " + topics.get(topic) + ", hash: " + topic.hashCode());
     }
 
     @Override
