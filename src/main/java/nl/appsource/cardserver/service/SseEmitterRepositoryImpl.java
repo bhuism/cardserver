@@ -138,7 +138,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void updateGameStateAllPlayers(final Game game) {
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
         doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
-        this.topics.getOrDefault("game" + game.getId(), Collections.emptyList()).forEach(uuid -> {
+
+        final String topic = "game" + game.getId();
+
+        log.info("Distributing topic: " + topic);
+
+        this.topics.getOrDefault(topic, Collections.emptyList()).forEach(uuid -> {
+            log.info("Distributing topic: " + topic + " to appId: " + uuid);
             doId(uuid, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
         });
     }
@@ -260,11 +266,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void eventSubscribe(final UUID appIdentifier, final String topic) {
+        log.info("Subscribing " + appIdentifier + " to topic " + topic);
         topics.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier);
     }
 
     @Override
     public void eventUnSubscribe(final UUID appIdentifier, final String topic) {
+        log.info("unSubscribing " + appIdentifier + " to topic " + topic);
         final List<UUID> subscribers = topics.get(topic);
         if (subscribers != null) {
             subscribers.remove(appIdentifier);
