@@ -6,6 +6,7 @@ import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.SubscribeEventApi;
 import org.openapitools.api.UnSubscribeEventApi;
+import org.openapitools.model.SubscribeEventRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
@@ -41,17 +42,18 @@ public class SubscribeController implements V1Api, SubscribeEventApi, UnSubscrib
             .flatMapMany(userId -> userService.subscribe(UUID.fromString(appIdentifier), userId, "" + exchange.getRequest().getRemoteAddress()));
     }
 
+
     @Override
-    public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<String> body, final ServerWebExchange exchange) {
-        return body.doOnNext(entityId -> sseEmitterRepository.eventSubscribe(appIdentifier, entityId))
+    public Mono<ResponseEntity<Void>> subscribeEvent(UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, ServerWebExchange exchange) {
+        return subscribeEventRequest.doOnNext(entityEventRequest -> sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getEntityId()))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
 
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<String> body, final ServerWebExchange exchange) {
-        return body.doOnNext(entityId -> sseEmitterRepository.eventUnSubscribe(appIdentifier, entityId))
+    public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
+        return subscribeEventRequest.doOnNext(entityEventRequest -> sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getEntityId()))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
