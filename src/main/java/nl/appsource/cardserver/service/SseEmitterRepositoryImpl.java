@@ -136,7 +136,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void updateGameStateAllPlayers(final Game game) {
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
+        //doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
 
         final String topic = "game" + game.getId();
 

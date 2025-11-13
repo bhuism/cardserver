@@ -458,6 +458,8 @@ components:
           maxItems: 32
           items:
             type: string
+        gameVariant:
+          $ref: '#/components/schemas/GameVariant'
       required:
         - id
         - created
@@ -466,6 +468,7 @@ components:
         - dealer
         - players
         - games
+        - gameVariant
     CreateBoom:
       type: object
       properties:

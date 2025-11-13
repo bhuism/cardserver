@@ -5,6 +5,7 @@ import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.GameService;
@@ -45,7 +46,9 @@ public class BoomController extends GenericController implements BoomApi {
 
     private static final Random RAND = new SecureRandom();
 
-    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg) {
+    private final UserRepository userRepository;
+
+    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg, final UserRepository userRepositoryArg) {
         super(sseEmitterRepository);
         this.boomService = boolServiceArg;
         this.boomToOpenApiConverter = boomToOpenApiConverterArg;
@@ -53,14 +56,15 @@ public class BoomController extends GenericController implements BoomApi {
         this.boomRepository = boomRepositoryArg;
         this.gameService = gameServiceArg;
         this.gameToOpenApiConverter = gameToOpenApiConverterArg;
+        this.userRepository = userRepositoryArg;
     }
 
     @Override
     public Mono<ResponseEntity<Boom>> createBoom(final UUID appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} createBoom() userId={}", exchange.getRequest()
-                .getRemoteAddress(), userId))
-            .flatMap(userId -> createBoomMono.flatMap(createBoom -> boomService.createBoom(userId, createBoom.getPlayers())))
+            .doOnNext((userId) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .flatMap(userRepository::findById)
+            .flatMap(user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(user.getId(), createBoom.getPlayers(), user.getGameVariant())))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
@@ -115,7 +119,7 @@ public class BoomController extends GenericController implements BoomApi {
 
                                         final Integer dealer = RAND.nextInt(4);
 
-                                        return gameService.createGame(userId, boom.getPlayers(), boom.getId(), dealer)
+                                        return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
                                             .doOnNext(game -> boom.getGames().add(game.getId()))
                                             .flatMap(game -> boomRepository.save(boom).thenReturn(game));
                                     } else {

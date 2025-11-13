@@ -3,6 +3,7 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -36,6 +37,8 @@ public class GameController implements GamesApi, V1Api {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private final SseEmitterRepository sseEmitterRepository;
+
+    private final UserRepository userRepository;
 
     private Mono<String> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
@@ -108,14 +111,13 @@ public class GameController implements GamesApi, V1Api {
     @Override
     public Mono<ResponseEntity<Game>> createGame(final UUID appIdentifier, final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} createGame() userId={}", exchange.getRequest()
-                .getRemoteAddress(), userId))
-            .flatMap(userId -> createGameMono.flatMap(createGame -> gameService.createGame(userId, createGame.getPlayers())))
+            .doOnNext((userId) -> log.info("{} createGame() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .flatMap(userRepository::findById)
+            .flatMap(user -> createGameMono.flatMap(createGame -> gameService.createGame(user.getId(), createGame.getPlayers(), user.getGameVariant())))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
-
     }
 
     @Override

@@ -21,6 +21,7 @@ public class BoomToOpenApiConverter implements Converter<Boom, org.openapitools.
         target.setDealer(source.getDealer());
         target.setPlayers(source.getPlayers());
         target.setGames(source.getGames());
+        target.setGameVariant(source.getGameVariant());
 
         return target;
 

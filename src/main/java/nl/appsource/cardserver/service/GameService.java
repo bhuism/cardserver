@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -14,9 +15,9 @@ public interface GameService {
 
     Flux<Game> getGames(String userId);
 
-    Mono<Game> createGame(String creator, List<String> players);
+    Mono<Game> createGame(String creator, List<String> players, GameVariant gameVariant);
 
-    Mono<Game> createGame(String creator, List<String> players, String boomId, Integer dealer);
+    Mono<Game> createGame(String creator, List<String> players, GameVariant gameVariant, String boomId, Integer dealer);
 
     Mono<Boolean> deleteGame(String userId, String gameId);
 

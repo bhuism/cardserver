@@ -42,7 +42,7 @@ public class Boom {
 
     @NotNull
     @Field
-    private GameVariant gameVariant = GameVariant.ROTTERDAMS;
+    private GameVariant gameVariant;
 
     @NotNull
     @Field

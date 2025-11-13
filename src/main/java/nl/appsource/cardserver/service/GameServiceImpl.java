@@ -10,6 +10,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -80,12 +81,12 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Game> createGame(final String creator, final List<String> players) {
-        return createGame(creator, players, null, null);
+    public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant) {
+        return createGame(creator, players, gameVariant, null, null);
     }
 
     @Override
-    public Mono<Game> createGame(final String creator, final List<String> players, final String boomId, final Integer dealer) {
+    public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant, final String boomId, final Integer dealer) {
 
         if (players.size() != 4) {
             throw new IllegalArgumentException("need 4 players");
@@ -101,8 +102,7 @@ public class GameServiceImpl implements GameService {
 
         log.info("Creating a new game with players {}", players);
 
-        return userRepository.findById(creator)
-            .flatMap((user) -> Mono.just(new Game())
+        return Mono.just(new Game())
                 .doOnNext((game) -> {
                     game.setId(idGen(20));
                     game.setCreator(creator);
@@ -115,7 +115,7 @@ public class GameServiceImpl implements GameService {
                     game.setPlayerCard(randomCards());
                     game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
                     game.setLastTrickOpen(false);
-                    game.setGameVariant(user.getGameVariant());
+                    game.setGameVariant(gameVariant);
                     game.setDealCounter(0);
                     game.setBoomId(boomId);
                 })
@@ -126,9 +126,9 @@ public class GameServiceImpl implements GameService {
                     if (new GameEngineImpl(game).isAiSay()) {
                         scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
                     }
-                })
+                });
 
-            );
+
 
     }
 
