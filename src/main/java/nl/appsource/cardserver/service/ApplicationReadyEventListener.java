@@ -24,12 +24,9 @@ public class ApplicationReadyEventListener implements ApplicationListener<Applic
     @Override
     @Transactional
     public void onApplicationEvent(final ApplicationReadyEvent event) {
-        log.info(event.getClass()
-            .getSimpleName());
-
-        if (environment.acceptsProfiles(Profiles.of("production"))) {
-            migrator.run();
-        }
+//        if (environment.acceptsProfiles(Profiles.of("production"))) {
+//            migrator.run();
+//        }
     }
 
 }
