@@ -75,17 +75,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(appIdentifier))
-            .ifPresentOrElse(consumer, () -> {
-
-                final StringJoiner joiner = new StringJoiner(",");
-                this.emitters.keys()
-                    .asIterator()
-                    .forEachRemaining(uuid -> {
-                        joiner.add(uuid.toString());
-                    });
-
-                log.error("SseEmitter not found for appIdentifier: {}, got: {} size: {}", appIdentifier, joiner, emitters.size(), new Throwable());
-            });
+            .ifPresentOrElse(consumer, () -> emitters.remove(appIdentifier));
     }
 
     private Flux<String> getFriends(final String userId) {
@@ -266,10 +256,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void eventUnSubscribe(final UUID appIdentifier, final String topic) {
-        final List<UUID> subscribers = topics.get(topic);
-        if (subscribers != null) {
-            subscribers.remove(appIdentifier);
-        }
+        Optional.ofNullable(topics.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier));
     }
 
 }
