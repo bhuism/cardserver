@@ -13,7 +13,7 @@ import java.time.Instant;
 @Component
 public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<Game> {
     @Override
-    public Publisher<Game> onBeforeConvert(Game game, String collection) {
+    public Publisher<Game> onBeforeConvert(final Game game, final String collection) {
         log.info("Before save: " + game.getId());
         game.setUpdated(Instant.now());
 
