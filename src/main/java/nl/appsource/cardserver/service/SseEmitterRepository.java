@@ -29,7 +29,7 @@ public interface SseEmitterRepository {
 
     void gamesChanged(Collection<String> userIds);
 
-    void updateGameStateAllPlayers(Game game);
+    void updateGameState(Game game);
 
     void updateGameStateForId(UUID appIdentifier, Game game);
 
