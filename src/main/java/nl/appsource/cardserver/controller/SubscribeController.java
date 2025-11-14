@@ -37,9 +37,10 @@ public class SubscribeController extends GenericController implements SubscribeE
     @Override
     public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} subscribeEvent() userId={}", exchange.getRequest().getRemoteAddress(), userId))
-            .flatMap((userId) -> subscribeEventRequest)
-            .doOnNext(entityEventRequest -> sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopic()))
+            .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
+                    log.info("{} subscribeEvent() userId={} topic={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopic());
+                    sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopic());
+                }))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
@@ -47,12 +48,12 @@ public class SubscribeController extends GenericController implements SubscribeE
     @Override
     public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} unSubscribeEvent() userId={}", exchange.getRequest().getRemoteAddress(), userId))
-            .flatMap((userId) -> subscribeEventRequest)
-            .doOnNext(entityEventRequest -> sseEmitterRepository.eventUnSubscribe(appIdentifier, entityEventRequest.getTopic()))
-            .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+            .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
+                    log.info("{} unSubscribeEvent() userId={} topic={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopic());
+                    sseEmitterRepository.eventUnSubscribe(appIdentifier, entityEventRequest.getTopic());
+                }))
+                .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
     }
-
 
 }
