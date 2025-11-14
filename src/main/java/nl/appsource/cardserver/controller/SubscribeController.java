@@ -1,18 +1,13 @@
 package nl.appsource.cardserver.controller;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.service.SseEmitterRepository;
-import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.SubscribeEventApi;
 import org.openapitools.api.UnSubscribeEventApi;
 import org.openapitools.model.SubscribeEventRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,35 +20,36 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequiredArgsConstructor
-public class SubscribeController implements V1Api, SubscribeEventApi, UnSubscribeEventApi {
+public class SubscribeController extends GenericController implements SubscribeEventApi, UnSubscribeEventApi {
 
     public static final String APP_IDENTIFIER_HEADER_NAME = "App-Identifier";
 
-    private final UserService userService;
-
-    private final SseEmitterRepository sseEmitterRepository;
+    public SubscribeController(final SseEmitterRepository sseEmitterRepository) {
+        super(sseEmitterRepository);
+    }
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<?>> subscribe(final ServerWebExchange exchange, @RequestHeader(name = APP_IDENTIFIER_HEADER_NAME) final String appIdentifier) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .flatMapMany(userId -> userService.subscribe(UUID.fromString(appIdentifier), userId, "" + exchange.getRequest().getRemoteAddress()));
+        return getUserId(exchange)
+            .flatMapMany(userId -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier), userId, "" + exchange.getRequest().getRemoteAddress()));
     }
-
 
     @Override
     public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
-        return subscribeEventRequest.doOnNext(entityEventRequest -> sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopic()))
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} subscribeEvent() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .flatMap((userId) -> subscribeEventRequest)
+            .doOnNext(entityEventRequest -> sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopic()))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
-
     }
 
     @Override
     public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
-        return subscribeEventRequest.doOnNext(entityEventRequest -> sseEmitterRepository.eventUnSubscribe(appIdentifier, entityEventRequest.getTopic()))
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} unSubscribeEvent() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .flatMap((userId) -> subscribeEventRequest)
+            .doOnNext(entityEventRequest -> sseEmitterRepository.eventUnSubscribe(appIdentifier, entityEventRequest.getTopic()))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }

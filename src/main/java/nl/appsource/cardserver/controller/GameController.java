@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.controller;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -15,9 +14,6 @@ import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayerSay;
 import org.openapitools.model.PostMessage;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -27,36 +23,21 @@ import java.util.UUID;
 
 import static reactor.core.publisher.Mono.just;
 
-@RestController
-@RequiredArgsConstructor
 @Slf4j
-public class GameController implements GamesApi, V1Api {
+@RestController
+public class GameController extends GenericController implements GamesApi {
 
     private final GameService gameService;
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
-    private final SseEmitterRepository sseEmitterRepository;
-
     private final UserRepository userRepository;
 
-    private Mono<String> getUserId(final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} no authentication", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath());
-                return Mono.empty();
-            }));
-    }
-
-    private Mono<String> authorize(final UUID appIdentifier, final ServerWebExchange exchange) {
-        return getUserId(exchange)
-            .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath());
-                return Mono.empty();
-            }));
+    public GameController(final SseEmitterRepository sseEmitterRepository, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg, final UserRepository userRepositoryArg) {
+        super(sseEmitterRepository);
+        this.gameService = gameServiceArg;
+        this.gameToOpenApiConverter = gameToOpenApiConverterArg;
+        this.userRepository = userRepositoryArg;
     }
 
     @Override

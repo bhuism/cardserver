@@ -6,14 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.UpdatePreferences;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singleton;
@@ -149,9 +147,4 @@ public class UserServiceImpl implements UserService {
                 }));
     }
 
-    @Override
-    public Flux<ServerSentEvent<?>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
-        return sseEmitterRepository.subscribe(appIdentifier, userId, remoteAddress);
-
-    }
 }

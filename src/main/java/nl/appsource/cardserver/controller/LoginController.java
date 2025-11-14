@@ -30,7 +30,6 @@ import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
 public class LoginController implements LoginApi, LoadUserApi {
 
     private final UserService userService;
-
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
     private final UserRepository userRepository;
@@ -108,21 +107,9 @@ public class LoginController implements LoginApi, LoadUserApi {
 
     }
 
-    private Mono<String> getUserId(final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} no authentication", exchange.getRequest()
-                    .getRemoteAddress(), exchange.getRequest()
-                    .getPath());
-                return Mono.empty();
-            }));
-    }
-
     @Override
     public Mono<ResponseEntity<User>> loadUser(final ServerWebExchange exchange) {
-        return getUserId(exchange)
+        return GenericController.getUserId(exchange)
             .flatMap(userRepository::findById)
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)

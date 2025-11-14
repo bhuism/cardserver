@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.controller;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -12,9 +11,6 @@ import org.openapitools.model.InvitesResponse;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -26,47 +22,25 @@ import java.util.UUID;
 
 import static reactor.core.publisher.Mono.just;
 
-@RestController
-@RequiredArgsConstructor
 @Slf4j
-public class UserController implements UsersApi, V1Api {
+@RestController
+public class UserController extends GenericController implements UsersApi {
 
     private final UserService userService;
 
-    private final SseEmitterRepository sseEmitterRepository;
-
     private final UserToOpenApiConverter userToOpenApiConverter;
 
-    private Mono<String> getUserId(final ServerWebExchange exchange) {
-        return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getName)
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} no authentication", exchange.getRequest()
-                    .getRemoteAddress(), exchange.getRequest()
-                    .getPath());
-                return Mono.empty();
-            }));
+    public UserController(final SseEmitterRepository sseEmitterRepository, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg) {
+        super(sseEmitterRepository);
+        this.userService = userServiceArg;
+        this.userToOpenApiConverter = userToOpenApiConverterArg;
     }
-
-    private Mono<String> authorize(final UUID appIdentifier, final ServerWebExchange exchange) {
-        return getUserId(exchange)
-            .filter((userId) -> sseEmitterRepository.validate(appIdentifier, userId))
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest()
-                    .getRemoteAddress(), exchange.getRequest()
-                    .getPath());
-                return Mono.empty();
-            }));
-    }
-    // FIXME: unauthorized
 
     @Override
     public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
 
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getUser({}) userId={}", exchange.getRequest()
-                .getRemoteAddress(), userIdParam, userId))
+            .doOnNext((userId) -> log.info("{} getUser({}) userId={}", exchange.getRequest().getRemoteAddress(), userIdParam, userId))
             .flatMap((userId) -> userService.findById(userIdParam))
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
@@ -76,7 +50,7 @@ public class UserController implements UsersApi, V1Api {
 
     @Override
     public Mono<ResponseEntity<InvitesResponse>> getInvites(final UUID appIdentifier, final ServerWebExchange exchange) {
-//        log.info("{} getIncomingFriends()", exchange.getRequest().getRemoteAddress());
+
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getInvites() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))

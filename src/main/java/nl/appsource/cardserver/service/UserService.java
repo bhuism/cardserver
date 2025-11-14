@@ -3,12 +3,10 @@ package nl.appsource.cardserver.service;
 import jakarta.validation.constraints.NotNull;
 import nl.appsource.cardserver.model.User;
 import org.openapitools.model.UpdatePreferences;
-import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface UserService {
 
@@ -29,8 +27,6 @@ public interface UserService {
     Mono<Integer> createInvite(String userId, String searchString);
 
     Mono<User> updatePreferences(String userId, @NotNull UpdatePreferences updatePreferences);
-
-    Flux<ServerSentEvent<?>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
 
 }
 

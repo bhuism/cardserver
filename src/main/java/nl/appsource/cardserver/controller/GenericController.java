@@ -15,9 +15,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class GenericController implements V1Api {
 
-    private final SseEmitterRepository sseEmitterRepository;
+    protected final SseEmitterRepository sseEmitterRepository;
 
-    protected Mono<String> getUserId(final ServerWebExchange exchange) {
+    public static Mono<String> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getName)
