@@ -29,9 +29,9 @@ public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<BaseEn
     }
 
     @Override
-    public Publisher<BaseEntity> onAfterConvert(final BaseEntity entity, final CouchbaseDocument document, String collection) {
+    public Publisher<BaseEntity> onAfterConvert(final BaseEntity entity, final CouchbaseDocument document, final String collection) {
         if (entity instanceof Game) {
-            sseEmitterRepository.updateGameState((Game)entity);
+            sseEmitterRepository.updateGameState((Game) entity);
         }
         return Mono.just(entity);
     }
