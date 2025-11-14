@@ -14,7 +14,7 @@ import java.time.Instant;
 public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<BaseEntity> {
     @Override
     public Publisher<BaseEntity> onBeforeConvert(final BaseEntity entity, final String collection) {
-        log.info("Saving entity {} with id {}", collection, entity.getId());
+        log.info("Saving entity {} with id {}", entity.getClass().getSimpleName(), entity.getId());
         entity.setUpdated(Instant.now());
         return Mono.just(entity);
     }
