@@ -213,7 +213,7 @@ public class GameServiceImpl implements GameService {
                 })
                 .doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now()))
                 .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
-                .doOnNext(gameEngine -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
+//                .doOnNext(gameEngine -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
                 .subscribe(this::scheduleNext, throwable -> {
                     sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
                         .variant(UserMessage.VariantEnum.ERROR)
@@ -303,7 +303,7 @@ public class GameServiceImpl implements GameService {
                                 .message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
                                 .variant(UserMessage.VariantEnum.INFO));
                             return gameRepository.save(gameEngine.getGame())
-                                .doOnNext(_ -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
+//                                .doOnNext(_ -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
                                 .map(_ -> gameEngine);
                         } else {
                             return Mono.empty();
