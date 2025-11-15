@@ -411,7 +411,7 @@ public record AiPlayer(GameEngine gameEngine) {
             .sorted()
             .collect(Collectors.toList());
 
-        if (hasSequence( trumpRanks, 3)) {
+        if (hasSequence(trumpRanks, 3)) {
             handStrength += 4;
         }
         if (hasSequence(trumpRanks, 4)) {
