@@ -157,7 +157,7 @@ public record AiPlayer(GameEngine gameEngine) {
         final Suit trumpSuit = gameEngine.getGame().getTrump();
         final String partnerId = gameEngine.getPartner(userId);
         final String currentWinnerId = gameEngine.getTrickWinnerId(currentTrick);
-        final boolean isPartnerWinning = currentWinnerId.equals(partnerId) && !gameEngine.isLastTrick();
+        final boolean isPartnerWinning = currentWinnerId.equals(partnerId);
 
         // Rule 1: Must follow suit if possible.
         if (hand.hasSuit(leadingSuit)) {
