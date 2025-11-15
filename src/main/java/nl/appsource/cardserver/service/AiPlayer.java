@@ -191,15 +191,14 @@ public record AiPlayer(GameEngine gameEngine) {
 
         // Rule 2: Cannot follow suit. Check for trumping obligations.
         final boolean hasTrump = hand.hasSuit(trumpSuit);
-        final boolean trickContainsTrump = highestCardInTrick.getSuit() == trumpSuit;
 
-        // Rotterdam variant special rule: If partner is winning, you don't have to trump.
-        if (gameEngine.getGame().getGameVariant() == ROTTERDAMS && isPartnerWinning) {
-            return discardCardWithSignal(hand.cards(), hand.bySuit());
-        }
-
-        // Standard trumping obligation applies.
         if (hasTrump) {
+            // Rotterdam variant special rule: If partner is winning, you don't have to trump.
+            if (gameEngine.getGame().getGameVariant() == ROTTERDAMS && isPartnerWinning) {
+                return discardCardWithSignal(hand.cards(), hand.bySuit());
+            }
+
+            // Standard trumping obligation applies.
             final List<Card> trumpCards = hand.ofSuit(trumpSuit);
             final Optional<Card> overTrumpCard = trumpCards.stream()
                 .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
@@ -210,6 +209,7 @@ public record AiPlayer(GameEngine gameEngine) {
             }
 
             // Cannot over-trump. Check variant rules for under-trumping.
+            final boolean trickContainsTrump = highestCardInTrick.getSuit() == trumpSuit;
             if (trickContainsTrump) { // Only need to under-trump if a trump is already played
                 if (gameEngine.getGame().getGameVariant() == ROTTERDAMS) {
                     // Rotterdam: If you can't over-trump, you can discard.
