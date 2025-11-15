@@ -137,7 +137,7 @@ public record AiPlayer(GameEngine gameEngine) {
                     }
                     return suitSize;
                 }) // Prefer shorter suits
-                .thenComparing(this::getKlaverjassenValue)); // Then play lowest card of that suit
+                .thenComparing(this::getKlaverjassenRank)); // Then play lowest card of that suit
 
         // Strategy 6: Only trumps are left, must lead with a trump.
         // Lead with the lowest trump to avoid losing a high trump unnecessarily.
@@ -306,16 +306,50 @@ public record AiPlayer(GameEngine gameEngine) {
     }
 
     /**
-     * Compares cards based on their game-winning value (trump > non-trump).
+     * Compares cards based on their game-winning rank (trump > non-trump).
      */
     private int compareKlaverjassenCards(final Card c1, final Card c2) {
-        return Integer.compare(getKlaverjassenValue(c1), getKlaverjassenValue(c2));
+        return Integer.compare(getKlaverjassenRank(c1), getKlaverjassenRank(c2));
     }
 
     /**
-     * Gets the Klaverjassen power-value of a card (e.g., Trump Jack is highest).
+     * Gets the Klaverjassen trick-taking rank of a card.
+     * Trump: J > 9 > A > 10 > K > Q > 8 > 7
+     * Non-Trump: A > 10 > K > Q > J > 9 > 8 > 7
+     * A higher value means a higher rank. A trump card is always higher than a non-trump.
      */
-    private int getKlaverjassenValue(final Card card) {
+    private int getKlaverjassenRank(final Card card) {
+        final boolean isTrump = card.getSuit().equals(gameEngine.getGame().getTrump());
+        if (isTrump) {
+            return switch (card.getRank()) {
+                case JACK -> 22;
+                case NINE -> 21;
+                case ACE -> 20;
+                case TEN -> 19;
+                case KING -> 18;
+                case QUEEN -> 17;
+                case EIGHT -> 16;
+                case SEVEN -> 15;
+            };
+        } else {
+            return switch (card.getRank()) {
+                case ACE -> 14;
+                case TEN -> 13;
+                case KING -> 12;
+                case QUEEN -> 11;
+                case JACK -> 10;
+                case NINE -> 9;
+                case EIGHT -> 8;
+                case SEVEN -> 7;
+            };
+        }
+    }
+
+
+    /**
+     * Gets the Klaverjassen point-value of a card (e.g., Trump Jack is 20).
+     */
+    private int getKlaverjassenPoints(final Card card) {
         return card.getSuit()
             .equals(gameEngine.getGame()
                 .getTrump())
@@ -388,16 +422,10 @@ public record AiPlayer(GameEngine gameEngine) {
         }
 
         // Bonus for having a sequence (roem) in trump, indicates strong control.
-        List<Integer> trumpRanks = trumpCards.stream()
-            .map(c -> c.getRank()
-                .getTrumpValue())
-            .sorted()
-            .collect(Collectors.toList());
-
-        if (hasSequence(trumpRanks, 3)) {
+        if (hasSequence(trumpCards, 3)) {
             handStrength += 4;
         }
-        if (hasSequence(trumpRanks, 4)) {
+        if (hasSequence(trumpCards, 4)) {
             handStrength += 6;
         }
 
@@ -470,12 +498,24 @@ public record AiPlayer(GameEngine gameEngine) {
         return decision;
     }
 
-    private boolean hasSequence(final List<Integer> sortedRanks, final int length) {
+    private boolean hasSequence(final List<Card> cards, final int length) {
+        if (cards.size() < length) {
+            return false;
+        }
+        // Get ranks, sort them descending, and remove duplicates
+        final List<Integer> sortedRanks = cards.stream()
+            .map(this::getKlaverjassenRank)
+            .distinct()
+            .sorted(Comparator.reverseOrder())
+            .toList();
+
         if (sortedRanks.size() < length) {
             return false;
         }
+
+        // Check for a consecutive sequence of ranks
         for (int i = 0; i <= sortedRanks.size() - length; i++) {
-            if (sortedRanks.get(i + length - 1) - sortedRanks.get(i) == length - 1) {
+            if (sortedRanks.get(i) - sortedRanks.get(i + length - 1) == length - 1) {
                 return true;
             }
         }
