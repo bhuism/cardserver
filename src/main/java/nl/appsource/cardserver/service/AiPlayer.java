@@ -140,11 +140,11 @@ public record AiPlayer(GameEngine gameEngine) {
                 .thenComparing(this::getKlaverjassenValue)); // Then play lowest card of that suit
 
         // Strategy 6: Only trumps are left, must lead with a trump.
-        // Lead with the highest trump to try and win the trick.
+        // Lead with the lowest trump to avoid losing a high trump unnecessarily.
         return safePlay.orElseGet(() -> hand.cards()
             .stream()
-            .max(this::compareKlaverjassenCards)
-            .orElseThrow()); // Fallback to highest trump
+            .min(this::compareKlaverjassenCards)
+            .orElseThrow()); // Fallback to lowest trump
     }
 
     /**
@@ -158,7 +158,7 @@ public record AiPlayer(GameEngine gameEngine) {
         // If it's the last trick, always try to win for the +10 points.
         if (currentWinnerId.equals(partnerId) && !gameEngine.isLastTrick()) {
             return playToSupportPartner(hand, currentTrick.getFirst()
-                .getSuit(), highestCardInTrick);
+                .getSuit());
         } else {
             return playToWin(hand, currentTrick, highestCardInTrick);
         }
@@ -218,7 +218,7 @@ public record AiPlayer(GameEngine gameEngine) {
      * Play to support a partner who is already winning the trick.
      * Rules for "Amsterdam" Klaverjassen are followed here.
      */
-    private Card playToSupportPartner(final Hand hand, final Suit leadingSuit, final Card highestCardInTrick) {
+    private Card playToSupportPartner(final Hand hand, final Suit leadingSuit) {
         final Suit trumpSuit = gameEngine.getGame()
             .getTrump();
 
@@ -231,29 +231,14 @@ public record AiPlayer(GameEngine gameEngine) {
                 .orElseThrow();
         }
 
-        // Rule 2: Cannot follow suit. The rules now depend on the game variant.
-        if (gameEngine.getGame()
-            .getGameVariant() == ROTTERDAMS && hand.hasSuit(trumpSuit)) {
-            // Rotterdam: You MUST over-trump if you can. You cannot under-trump.
-            final Optional<Card> overTrumpCard = hand.ofSuit(trumpSuit)
-                .stream()
-                .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
-                .min(this::compareKlaverjassenCards);
-
-            if (overTrumpCard.isPresent()) {
-                return overTrumpCard.get();
-            }
-            // If you cannot over-trump, you can discard.
-        }
-
-        // Amsterdam OR Rotterdam (when you can't over-trump):
-        // You are not obligated to trump. The best strategy is to "smeren" (grease) with points.
+        // Rule 2: Cannot follow suit. If partner is winning, you are never obligated to trump.
+        // The best strategy is to "smeren" (grease) with points.
         // Discard the highest-point non-trump card to maximize points for the trick.
         return hand.cards()
             .stream()
             .filter(c -> c.getSuit() != trumpSuit)
             .max(Comparator.comparingInt(this::getStandardPointValue))
-            // Fallback: If only non-trumps are left, must discard the lowest trump to save high trumps.
+            // Fallback: If only trumps are left, must discard the lowest trump to save high trumps.
             .orElseGet(() -> hand.cards()
                 .stream()
                 .min(this::compareKlaverjassenCards)
@@ -361,7 +346,7 @@ public record AiPlayer(GameEngine gameEngine) {
      * Gets the standard point value of a card for scoring and "smeren" (Ace=11, 10=10, etc.).
      */
     private int getStandardPointValue(final Card card) {
-        return getKlaverjassenValue(card); // Standard value is the same as non-trump Klaverjassen value
+        return card.getRank().getStandardValue();
     }
 
     // The bidding threshold is an estimate of how many points the AI thinks it can make with its partner.
@@ -426,7 +411,7 @@ public record AiPlayer(GameEngine gameEngine) {
             .sorted()
             .collect(Collectors.toList());
 
-        if (hasSequence(trumpRanks, 3)) {
+        if (hasSequence( trumpRanks, 3)) {
             handStrength += 4;
         }
         if (hasSequence(trumpRanks, 4)) {
