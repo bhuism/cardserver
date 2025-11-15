@@ -259,4 +259,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Optional.ofNullable(topics.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier));
     }
 
+    @Override
+    public int getSubscribtionCount(final String topic) {
+        return Optional.ofNullable(topics.get(topic)).map(List::size).orElse(0);
+    }
+
 }

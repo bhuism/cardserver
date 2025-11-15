@@ -38,7 +38,7 @@ public class SubscribeController extends GenericController implements SubscribeE
     public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
-                    log.info("{} subscribeEvent() userId={} topic={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopic());
+                    log.info("{} subscribeEvent() userId={} topic={} count={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopic(), sseEmitterRepository.getSubscribtionCount(entityEventRequest.getTopic()));
                     sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopic());
                 }))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
