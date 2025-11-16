@@ -2,6 +2,7 @@ package nl.appsource.cardserver.migrator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
@@ -35,7 +36,7 @@ import java.util.stream.StreamSupport;
 @Service
 @Slf4j
 @AllArgsConstructor
-@Profile("!citest")
+@Profile("production")
 public class Migrator {
 
     public static final String TIME = "__time__";
@@ -49,6 +50,7 @@ public class Migrator {
 
     private final ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
+    @PostConstruct
     public synchronized void run() {
         migrate();
         //loadUser("users.json");
@@ -91,7 +93,10 @@ public class Migrator {
                     changed = true;
                 }
 
+                log.info("Handling game {}", game.getId());
+
                 if (changed) {
+                    log.info("Migrated game {}", game.getId());
                     return gameRepository.save(game);
                 } else {
                     return Mono.empty();
@@ -130,7 +135,13 @@ public class Migrator {
                     changed = true;
                 }
 
+                if (user.getCreator() == null) {
+                    user.setCreator(user.getId());
+                    changed = true;
+                }
+
                 if (changed) {
+                    log.info("Migrated user {}", user.getId());
                     return userRepository.save(user);
                 } else {
                     return Mono.empty();

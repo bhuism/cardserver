@@ -8,6 +8,7 @@ import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
+import org.openapitools.model.User;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
@@ -111,7 +112,7 @@ public final class MySseEmitter {
         return createServerSentEvent(event, null);
     }
 
-    public static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
+    private static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
 
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
@@ -159,8 +160,12 @@ public final class MySseEmitter {
                 }));
     }
 
-    public void sendUpdateGameState(final Game game) {
+    public void sendUpdateGame(final Game game) {
         internalSend(createServerSentEvent("updateGame", game));
+    }
+
+    public void sendUpdateUser(final User user) {
+        internalSend(createServerSentEvent("updateUser", user));
     }
 
 }

@@ -2,11 +2,9 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.migrator.Migrator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,16 +14,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("!citest")
 public class ApplicationReadyEventListener implements ApplicationListener<ApplicationReadyEvent> {
 
-    private final Migrator migrator;
-
-    private final Environment environment;
-
     @Override
     @Transactional
     public void onApplicationEvent(final ApplicationReadyEvent event) {
-//        if (environment.acceptsProfiles(Profiles.of("production"))) {
-//            migrator.run();
-//        }
+        log.info("Application ready: {} seconds", event.getTimeTaken().toSeconds());
     }
 
 }

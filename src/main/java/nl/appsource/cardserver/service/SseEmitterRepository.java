@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.User;
 import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
@@ -29,9 +30,11 @@ public interface SseEmitterRepository {
 
     void gamesChanged(Collection<String> userIds);
 
-    void updateGameState(Game game);
+    void updateGame(Game game);
 
-    void updateGameStateForId(UUID appIdentifier, Game game);
+    void updateGameForId(UUID appIdentifier, Game game);
+
+    void updateUser(User user);
 
     void newGame(Game game);
 

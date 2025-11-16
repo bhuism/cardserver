@@ -7,12 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.openapitools.model.GameVariant;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,23 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class Boom {
-
-    @Id
-    private String id;
-
-    @Field
-    @NotNull
-    private Instant created;
-
-    @Field
-    @NotNull
-    private Instant updated;
-
-    @NotNull
-    @Field
-    @QueryIndexed
-    private String creator;
+public class Boom extends BaseEntity {
 
     @NotNull
     @Field

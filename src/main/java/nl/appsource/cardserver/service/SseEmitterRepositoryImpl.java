@@ -3,6 +3,7 @@ package nl.appsource.cardserver.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
+import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -44,6 +45,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
+    private final UserToOpenApiConverter userToOpenApiConverter;
 
     private Predicate<MySseEmitter> forUserId(final String userId) {
         return emitter -> userId.equals(emitter.getUserId());
@@ -125,20 +127,30 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void updateGameState(final Game game) {
+    public void updateGame(final Game game) {
         final String topic = "game" + game.getId();
         Optional.ofNullable(this.topics.get(topic))
             .ifPresent(uuids -> {
-                uuids.forEach(uuid -> {
-                    updateGameStateForId(uuid, game);
+                uuids.forEach(appIdentifier -> {
+                    updateGameForId(appIdentifier, game);
                 });
             });
     }
 
     @Override
-    public void updateGameStateForId(final UUID appIdentifier, final Game game) {
-        final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGameState(requireNonNull(convertedGame)));
+    public void updateGameForId(final UUID appIdentifier, final Game game) {
+        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
+    }
+
+    @Override
+    public void updateUser(final User user) {
+        final String topic = "user" + user.getId();
+        Optional.ofNullable(this.topics.get(topic))
+            .ifPresent(uuids -> {
+                uuids.forEach(appIdentifier -> {
+                    doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
+                });
+            });
     }
 
     @Override

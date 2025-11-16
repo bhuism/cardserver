@@ -10,7 +10,6 @@ import lombok.ToString;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.ScreenOrientation;
 import org.openapitools.model.Theme;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
@@ -24,18 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class User {
-
-    @Id
-    private String id;
-
-    @Field
-    @NotNull
-    private Instant created;
-
-    @Field
-    @NotNull
-    private Instant updated;
+public class User extends BaseEntity {
 
     @Field
     @NotEmpty

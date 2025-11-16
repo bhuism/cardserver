@@ -69,9 +69,10 @@ public class LoginController implements LoginApi, LoadUserApi {
                         final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
 
                         user.setId(idGen(28));
-                        user.setEmail(email);
+                        user.setCreator(user.getId());
                         user.setCreated(now);
                         user.setUpdated(now);
+                        user.setEmail(email);
                         user.setName(principal.getClaims()
                             .get("name")
                             .toString());

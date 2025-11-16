@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.BaseEntity;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.reactivestreams.Publisher;
 import org.springframework.context.ApplicationContext;
@@ -33,14 +34,17 @@ public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<BaseEn
 
     @Override
     public Publisher<BaseEntity> onAfterConvert(final BaseEntity entity, final CouchbaseDocument document, final String collection) {
-        if (entity instanceof Game) {
 
-            if (sseEmitterRepository == null) {
-                this.sseEmitterRepository = applicationContext.getBean(SseEmitterRepository.class);
-            }
-
-            sseEmitterRepository.updateGameState((Game) entity);
+        if (sseEmitterRepository == null) {
+            this.sseEmitterRepository = applicationContext.getBean(SseEmitterRepository.class);
         }
+
+        if (entity instanceof Game) {
+            sseEmitterRepository.updateGame((Game) entity);
+        } else if (entity instanceof User) {
+            sseEmitterRepository.updateUser((User) entity);
+        }
+
         return Mono.just(entity);
     }
 }
