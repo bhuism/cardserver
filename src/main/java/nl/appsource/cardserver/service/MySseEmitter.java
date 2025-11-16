@@ -20,33 +20,27 @@ import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
+@Getter
 public final class MySseEmitter {
 
-    @Getter
     private final String userId;
 
-    @Getter
+    private final Instant created = Instant.now();
+
     private Instant pingReceived;
 
-    @Getter
     private Instant pongReceived;
 
-    @Getter
     private Instant pingSent;
 
-    @Getter
     private Instant pongSent;
 
-    @Getter
     private int pingReceivedCount = 0;
 
-    @Getter
     private int pongReceivedCount = 0;
 
-    @Getter
     private int pingSentCount = 0;
 
-    @Getter
     private int pongSentCount = 0;
 
     private Sinks.Many<ServerSentEvent<?>> unicastSink = Sinks.many()

@@ -621,6 +621,9 @@ components:
       properties:
         id:
           type: string
+        created:
+          type: string
+          format: date-time
         userId:
           type: string
         appId:
@@ -651,6 +654,7 @@ components:
             type: string
       required:
         - id
+        - created
         - userId
         - appId
         - pingReceivedCount
