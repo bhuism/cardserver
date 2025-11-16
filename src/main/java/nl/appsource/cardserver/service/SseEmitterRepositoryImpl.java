@@ -192,13 +192,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                 final List<String> subscriptions = new ArrayList<>();
 
-                sseConnection.subscriptions(subscriptions);
-
                 this.topics.forEach((topic, uuids) -> {
-                    if(uuids.contains(mySseEmitterEntry.getKey())){
+                    if (uuids.contains(mySseEmitterEntry.getKey())) {
                         subscriptions.add(topic);
                     }
                 });
+
+                sseConnection.subscriptions(subscriptions);
 
                 return sseConnection;
 
