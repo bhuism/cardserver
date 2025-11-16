@@ -645,9 +645,19 @@ components:
           format: date-time
         pongSentCount:
           type: integer
+        subscriptions:
+          type: array
+          items:
+            type: string
       required:
         - id
         - userId
+        - appId
+        - pingReceivedCount
+        - pongReceivedCount
+        - pingSentCount
+        - pongSentCount
+        - subscriptions
     NewGameEvent:
       type: object
       properties:

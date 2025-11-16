@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -188,6 +189,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sseConnection.pongReceivedCount(mySseEmitterEntry.getValue().getPongReceivedCount());
                 sseConnection.pongSent(mySseEmitterEntry.getValue().getPongSent());
                 sseConnection.pongSentCount(mySseEmitterEntry.getValue().getPongSentCount());
+
+                final List<String> subscriptions = new ArrayList<>();
+
+                sseConnection.subscriptions(subscriptions);
+
+                this.topics.forEach((topic, uuids) -> {
+                    if(uuids.contains(mySseEmitterEntry.getKey())){
+                        subscriptions.add(topic);
+                    }
+                });
 
                 return sseConnection;
 
