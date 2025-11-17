@@ -371,10 +371,13 @@ paths:
               type: object
               nullable: false
               properties:
-                topic:
-                  type: string
+                topics:
+                  type: array
+                  uniqueItems: true
+                  items:
+                    type: string
               required:
-                - topic
+                - topics
       responses:
         "200":
           description: ok
@@ -393,10 +396,13 @@ paths:
               type: object
               nullable: false
               properties:
-                topic:
-                  type: string
+                topics:
+                  type: array
+                  uniqueItems: true
+                  items:
+                    type: string
               required:
-                - topic
+                - topics
       responses:
         "200":
           description: ok

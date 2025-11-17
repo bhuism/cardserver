@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,7 +130,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void updateGame(final Game game) {
         final String topic = "game" + game.getId();
-        Optional.ofNullable(this.topics.get(topic))
+        Optional.ofNullable(this.subscriptions.get(topic))
             .ifPresent(uuids -> {
                 uuids.forEach(appIdentifier -> {
                     updateGameForId(appIdentifier, game);
@@ -145,7 +146,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void updateUser(final User user) {
         final String topic = "user" + user.getId();
-        Optional.ofNullable(this.topics.get(topic))
+        Optional.ofNullable(this.subscriptions.get(topic))
             .ifPresent(uuids -> {
                 uuids.forEach(appIdentifier -> {
                     doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
@@ -203,15 +204,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sseConnection.pongSent(mySseEmitterEntry.getValue().getPongSent());
                 sseConnection.pongSentCount(mySseEmitterEntry.getValue().getPongSentCount());
 
-                final List<String> subscriptions = new ArrayList<>();
+                final List<String> returnSubscriptions = new ArrayList<>();
 
-                this.topics.forEach((topic, uuids) -> {
+                this.subscriptions.forEach((topic, uuids) -> {
                     if (uuids.contains(mySseEmitterEntry.getKey())) {
-                        subscriptions.add(topic);
+                        returnSubscriptions.add(topic);
                     }
                 });
 
-                sseConnection.subscriptions(subscriptions);
+                sseConnection.subscriptions(returnSubscriptions);
 
                 return sseConnection;
 
@@ -271,21 +272,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return true;
     }
 
-    private final Map<String, List<UUID>> topics = new ConcurrentHashMap<>();
+    private final Map<String, List<UUID>> subscriptions = new ConcurrentHashMap<>();
 
     @Override
-    public void eventSubscribe(final UUID appIdentifier, final String topic) {
-        topics.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier);
+    public void eventSubscribe(final UUID appIdentifier, final Set<String> topics) {
+        topics.forEach(topic -> subscriptions.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier));
     }
 
     @Override
-    public void eventUnSubscribe(final UUID appIdentifier, final String topic) {
-        Optional.ofNullable(topics.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier));
+    public void eventUnSubscribe(final UUID appIdentifier, final Set<String> topics) {
+        topics.forEach(topic -> Optional.ofNullable(subscriptions.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier)));
     }
 
     @Override
     public int getSubscribtionCount(final String topic) {
-        return Optional.ofNullable(topics.get(topic)).map(List::size).orElse(0);
+        return Optional.ofNullable(subscriptions.get(topic)).map(List::size).orElse(0);
     }
 
 }

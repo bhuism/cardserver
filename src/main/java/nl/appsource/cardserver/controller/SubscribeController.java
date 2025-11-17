@@ -38,8 +38,8 @@ public class SubscribeController extends GenericController implements SubscribeE
     public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
-                    log.info("{} subscribeEvent() userId={} topic={} count={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopic(), sseEmitterRepository.getSubscribtionCount(entityEventRequest.getTopic()));
-                    sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopic());
+                    log.info("{} subscribeEvent() userId={} topics={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopics());
+                    sseEmitterRepository.eventSubscribe(appIdentifier, entityEventRequest.getTopics());
                 }))
             .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -49,8 +49,8 @@ public class SubscribeController extends GenericController implements SubscribeE
     public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
-                    log.info("{} unSubscribeEvent() userId={} topic={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopic());
-                    sseEmitterRepository.eventUnSubscribe(appIdentifier, entityEventRequest.getTopic());
+                    log.info("{} unSubscribeEvent() userId={} topics={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopics());
+                    sseEmitterRepository.eventUnSubscribe(appIdentifier, entityEventRequest.getTopics());
                 }))
                 .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
                 .defaultIfEmpty(ResponseEntity.notFound().build());
