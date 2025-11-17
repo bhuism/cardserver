@@ -373,7 +373,6 @@ paths:
               properties:
                 topics:
                   type: array
-                  uniqueItems: true
                   items:
                     type: string
               required:
@@ -398,7 +397,6 @@ paths:
               properties:
                 topics:
                   type: array
-                  uniqueItems: true
                   items:
                     type: string
               required:
