@@ -78,12 +78,11 @@ public class GameController extends GenericController implements GamesApi {
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<Game>>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<String>>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getGames() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
-            .mapNotNull(userId -> gameService.getGames(userId)
-                .mapNotNull(gameToOpenApiConverter::convert))
+            .mapNotNull(userId -> gameService.getGames(userId))
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());

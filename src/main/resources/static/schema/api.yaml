@@ -765,7 +765,7 @@ components:
           schema:
             type: array
             items:
-              $ref: "./game.yaml#/components/schemas/Game"
+             type: string
     UsersResponse:
       description: users
       content:
