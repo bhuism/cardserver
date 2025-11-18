@@ -763,9 +763,12 @@ components:
       content:
         application/json:
           schema:
-            type: array
-            items:
-             type: string
+            type: object
+            properties:
+              games:
+                type: array
+                items:
+                  type: string
     UsersResponse:
       description: users
       content:

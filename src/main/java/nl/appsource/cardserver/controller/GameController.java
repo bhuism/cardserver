@@ -10,13 +10,13 @@ import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
 import org.openapitools.model.Game;
+import org.openapitools.model.GetGames200Response;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayerSay;
 import org.openapitools.model.PostMessage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -77,12 +77,15 @@ public class GameController extends GenericController implements GamesApi {
             .then(just(ResponseEntity.ok().build()));
     }
 
+
     @Override
-    public Mono<ResponseEntity<Flux<String>>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getGames() userId={}", exchange.getRequest()
                 .getRemoteAddress(), userId))
-            .mapNotNull(userId -> gameService.getGames(userId))
+            .flatMapMany(gameService::getGames)
+            .collectList()
+            .map(games -> new GetGames200Response().games(games))
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
