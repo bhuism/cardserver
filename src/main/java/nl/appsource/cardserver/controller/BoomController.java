@@ -115,7 +115,7 @@ public class BoomController extends GenericController implements BoomApi {
                                 .next()
                                 .switchIfEmpty(Mono.defer(() -> {
                                     if (boom.getGames()
-                                        .size() < 32) {
+                                        .size() < 16) {
 
                                         final Integer dealer = RAND.nextInt(4);
 
