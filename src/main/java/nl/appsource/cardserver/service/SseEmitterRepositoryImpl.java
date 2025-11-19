@@ -129,6 +129,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
+    public void boomsChanged(final Collection<String> userIds) {
+        doSelectedUserIds(userIds, MySseEmitter::sendUpdateBooms);
+    }
+
+    @Override
     public void updateGame(final Game game) {
         doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGame(gameToOpenApiConverter.convert(game)));
     }

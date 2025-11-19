@@ -134,6 +134,10 @@ public final class MySseEmitter {
         internalSend(createServerSentEvent("updateGames"));
     }
 
+    public void sendUpdateBooms() {
+        internalSend(createServerSentEvent("updateBooms"));
+    }
+
     public void newGame(final Game game) {
         internalSend(createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator())
             .gameId(game.getId())));

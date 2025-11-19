@@ -31,6 +31,8 @@ public interface SseEmitterRepository {
 
     void gamesChanged(Collection<String> userIds);
 
+    void boomsChanged(Collection<String> userIds);
+
     void updateGame(Game game);
 
     void updateGameForId(UUID appIdentifier, Game game);
