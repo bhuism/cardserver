@@ -3,6 +3,7 @@ package nl.appsource.cardserver.repository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.BaseEntity;
+import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -42,6 +43,8 @@ public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<BaseEn
             sseEmitterRepository.updateGame((Game) entity);
         } else if (entity instanceof User) {
             sseEmitterRepository.updateUser((User) entity);
+        } else if (entity instanceof Boom) {
+            sseEmitterRepository.updateBoom((Boom) entity);
         }
 
         return Mono.just(entity);

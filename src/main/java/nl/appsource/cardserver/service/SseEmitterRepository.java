@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import org.openapitools.model.SseConnections;
@@ -35,6 +36,8 @@ public interface SseEmitterRepository {
     void updateGameForId(UUID appIdentifier, Game game);
 
     void updateUser(User user);
+
+    void updateBoom(Boom boom);
 
     void newGame(Game game);
 

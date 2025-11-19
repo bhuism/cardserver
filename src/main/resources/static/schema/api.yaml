@@ -356,55 +356,6 @@ paths:
           description: ok
         "404":
           description: not found
-  /subscribeEvent:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      tags:
-        - events
-      operationId: subscribeEvent
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              nullable: false
-              properties:
-                topics:
-                  type: array
-                  items:
-                    type: string
-              required:
-                - topics
-      responses:
-        "200":
-          description: ok
-  /unSubscribeEvent:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      tags:
-        - events
-      operationId: unSubscribeEvent
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              nullable: false
-              properties:
-                topics:
-                  type: array
-                  items:
-                    type: string
-              required:
-                - topics
-      responses:
-        "200":
-          description: ok
-
 components:
   requestBodies:
     sayRequest:
@@ -661,7 +612,6 @@ components:
         - pongReceivedCount
         - pingSentCount
         - pongSentCount
-        - subscriptions
     NewGameEvent:
       type: object
       properties:

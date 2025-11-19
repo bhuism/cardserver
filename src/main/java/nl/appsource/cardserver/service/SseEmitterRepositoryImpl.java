@@ -2,8 +2,10 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -44,6 +46,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private final UserToOpenApiConverter userToOpenApiConverter;
+
+    private final BoomToOpenApiConverter boomToOpenApiConverter;
 
     private Predicate<MySseEmitter> forUserId(final String userId) {
         return emitter -> userId.equals(emitter.getUserId());
@@ -137,6 +141,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void updateUser(final User user) {
         doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
+    }
+
+    @Override
+    public void updateBoom(final Boom boom) {
+        doSelectedUserIds(boom.getPlayers(), mySseEmitter -> mySseEmitter.sendupdateBoom(boomToOpenApiConverter.convert(boom)));
     }
 
     @Override
@@ -256,22 +265,5 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return true;
     }
-
-//    private final Map<String, List<UUID>> subscriptions = new ConcurrentHashMap<>();
-//
-//    @Override
-//    public void eventSubscribe(final UUID appIdentifier, final Set<String> topics) {
-//        topics.forEach(topic -> subscriptions.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier));
-//    }
-//
-//    @Override
-//    public void eventUnSubscribe(final UUID appIdentifier, final Set<String> topics) {
-//        topics.forEach(topic -> Optional.ofNullable(subscriptions.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier)));
-//    }
-
-//    @Override
-//    public int getSubscribtionCount(final String topic) {
-//        return Optional.ofNullable(subscriptions.get(topic)).map(List::size).orElse(0);
-//    }
 
 }

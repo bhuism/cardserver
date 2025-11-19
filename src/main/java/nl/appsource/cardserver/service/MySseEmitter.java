@@ -3,6 +3,7 @@ package nl.appsource.cardserver.service;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openapitools.model.Boom;
 import org.openapitools.model.Game;
 import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
@@ -162,4 +163,7 @@ public final class MySseEmitter {
         internalSend(createServerSentEvent("updateUser", user));
     }
 
+    public void sendupdateBoom(final Boom boom) {
+        internalSend(createServerSentEvent("updateUser", boom));
+    }
 }
