@@ -8,7 +8,6 @@ import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.UUID;
 
 public interface SseEmitterRepository {
@@ -47,9 +46,9 @@ public interface SseEmitterRepository {
 
     SseConnections getDebugSseConnections();
 
-    void eventSubscribe(UUID appIdentifier, Set<String> topic);
+//    void eventSubscribe(UUID appIdentifier, Set<String> topic);
 
-    void eventUnSubscribe(UUID appIdentifier, Set<String> topic);
+//    void eventUnSubscribe(UUID appIdentifier, Set<String> topic);
 
-    int getSubscribtionCount(String topic);
+//    int getSubscribtionCount(String topic);
 }

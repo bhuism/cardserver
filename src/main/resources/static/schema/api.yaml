@@ -652,10 +652,6 @@ components:
           format: date-time
         pongSentCount:
           type: integer
-        subscriptions:
-          type: array
-          items:
-            type: string
       required:
         - id
         - created

@@ -15,7 +15,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
 import java.util.UUID;
 
 
@@ -31,30 +30,23 @@ public class SubscribeController extends GenericController implements SubscribeE
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<?>> subscribe(final ServerWebExchange exchange, @RequestHeader(name = APP_IDENTIFIER_HEADER_NAME) final String appIdentifier) {
-        return getUserId(exchange)
-            .flatMapMany(userId -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier), userId, "" + exchange.getRequest().getRemoteAddress()));
+        return getUserId(exchange).flatMapMany(userId -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier), userId, "" + exchange.getRequest().getRemoteAddress()));
     }
 
     @Override
     public Mono<ResponseEntity<Void>> subscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
-            .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
-                log.info("{} subscribeEvent() userId={} topics={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopics());
-                sseEmitterRepository.eventSubscribe(appIdentifier, new HashSet<>(entityEventRequest.getTopics()));
-            }))
-            .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+        return authorize(appIdentifier, exchange).flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
+            log.info("{} subscribeEvent() userId={} topics={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopics());
+//                sseEmitterRepository.eventSubscribe(appIdentifier, new HashSet<>(entityEventRequest.getTopics()));
+        })).<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build())).defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> unSubscribeEvent(final UUID appIdentifier, final Mono<SubscribeEventRequest> subscribeEventRequest, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
-            .flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
-                log.info("{} unSubscribeEvent() userId={} topics={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopics());
-                sseEmitterRepository.eventUnSubscribe(appIdentifier, new HashSet<>(entityEventRequest.getTopics()));
-            }))
-            .<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.notFound().build());
+        return authorize(appIdentifier, exchange).flatMap((userId) -> subscribeEventRequest.doOnNext(entityEventRequest -> {
+            log.info("{} unSubscribeEvent() userId={} topics={}", exchange.getRequest().getRemoteAddress(), userId, entityEventRequest.getTopics());
+//                sseEmitterRepository.eventUnSubscribe(appIdentifier, new HashSet<>(entityEventRequest.getTopics()));
+        })).<ResponseEntity<Void>>then(Mono.just(ResponseEntity.ok().build())).defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
 }

@@ -15,16 +15,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -46,6 +42,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final ConcurrentHashMap<UUID, MySseEmitter> emitters = new ConcurrentHashMap<>();
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
+
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     private Predicate<MySseEmitter> forUserId(final String userId) {
@@ -70,12 +67,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .forEach(consumer);
     }
 
-    private void doUserIds(final Collection<String> userIds, final Consumer<MySseEmitter> consumer) {
-        emitters.values()
-            .stream()
-            .filter(forUserIds(userIds))
-            .forEach(consumer);
-    }
+//    private void doUserIds(final Collection<String> userIds, final Consumer<MySseEmitter> consumer) {
+//        emitters.values()
+//            .stream()
+//            .filter(forUserIds(userIds))
+//            .forEach(consumer);
+//    }
 
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(appIdentifier))
@@ -104,7 +101,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void sendMessage(final Collection<String> userIds, final UserMessage userMessage) {
-        doUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
+        doSelectedUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
     @Override
@@ -129,13 +126,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void updateGame(final Game game) {
-        final String topic = "game" + game.getId();
-        Optional.ofNullable(this.subscriptions.get(topic))
-            .ifPresent(uuids -> {
-                uuids.forEach(appIdentifier -> {
-                    updateGameForId(appIdentifier, game);
-                });
-            });
+        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGame(gameToOpenApiConverter.convert(game)));
     }
 
     @Override
@@ -145,13 +136,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void updateUser(final User user) {
-        final String topic = "user" + user.getId();
-        Optional.ofNullable(this.subscriptions.get(topic))
-            .ifPresent(uuids -> {
-                uuids.forEach(appIdentifier -> {
-                    doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
-                });
-            });
+        doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
     }
 
     @Override
@@ -204,15 +189,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sseConnection.pongSent(mySseEmitterEntry.getValue().getPongSent());
                 sseConnection.pongSentCount(mySseEmitterEntry.getValue().getPongSentCount());
 
-                final List<String> returnSubscriptions = new ArrayList<>();
-
-                this.subscriptions.forEach((topic, uuids) -> {
-                    if (uuids.contains(mySseEmitterEntry.getKey())) {
-                        returnSubscriptions.add(topic);
-                    }
-                });
-
-                sseConnection.subscriptions(returnSubscriptions);
+//                final List<String> returnSubscriptions = new ArrayList<>();
+//
+//                this.subscriptions.forEach((topic, uuids) -> {
+//                    if (uuids.contains(mySseEmitterEntry.getKey())) {
+//                        returnSubscriptions.add(topic);
+//                    }
+//                });
+//
+//                sseConnection.subscriptions(returnSubscriptions);
 
                 return sseConnection;
 
@@ -272,21 +257,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return true;
     }
 
-    private final Map<String, List<UUID>> subscriptions = new ConcurrentHashMap<>();
+//    private final Map<String, List<UUID>> subscriptions = new ConcurrentHashMap<>();
+//
+//    @Override
+//    public void eventSubscribe(final UUID appIdentifier, final Set<String> topics) {
+//        topics.forEach(topic -> subscriptions.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier));
+//    }
+//
+//    @Override
+//    public void eventUnSubscribe(final UUID appIdentifier, final Set<String> topics) {
+//        topics.forEach(topic -> Optional.ofNullable(subscriptions.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier)));
+//    }
 
-    @Override
-    public void eventSubscribe(final UUID appIdentifier, final Set<String> topics) {
-        topics.forEach(topic -> subscriptions.computeIfAbsent(topic, k -> new CopyOnWriteArrayList<>()).add(appIdentifier));
-    }
-
-    @Override
-    public void eventUnSubscribe(final UUID appIdentifier, final Set<String> topics) {
-        topics.forEach(topic -> Optional.ofNullable(subscriptions.get(topic)).ifPresent(subscribers -> subscribers.remove(appIdentifier)));
-    }
-
-    @Override
-    public int getSubscribtionCount(final String topic) {
-        return Optional.ofNullable(subscriptions.get(topic)).map(List::size).orElse(0);
-    }
+//    @Override
+//    public int getSubscribtionCount(final String topic) {
+//        return Optional.ofNullable(subscriptions.get(topic)).map(List::size).orElse(0);
+//    }
 
 }
