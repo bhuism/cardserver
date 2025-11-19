@@ -8,7 +8,6 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
@@ -56,8 +55,6 @@ public class GameServiceImpl implements GameService {
 
     private static final Random RAND = new SecureRandom();
 
-    private final UserRepository userRepository;
-
     private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
@@ -103,31 +100,30 @@ public class GameServiceImpl implements GameService {
         log.info("Creating a new game with players {}", players);
 
         return Mono.just(new Game())
-                .doOnNext((game) -> {
-                    game.setId(idGen(20));
-                    game.setCreator(creator);
-                    game.setCreated(Instant.now());
-                    game.setUpdated(Instant.now());
-                    game.setPlayers(new ArrayList<>(players));
-                    game.setDealer(dealer == null ? Integer.valueOf(RAND.nextInt(4)) : dealer);
-                    game.setSay(new HashMap<>());
-                    game.setTurns(new ArrayList<>());
-                    game.setPlayerCard(randomCards());
-                    game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-                    game.setLastTrickOpen(false);
-                    game.setGameVariant(gameVariant);
-                    game.setDealCounter(0);
-                    game.setBoomId(boomId);
-                })
-                .flatMap(gameRepository::save)
-                .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
-                .doOnNext(sseEmitterRepository::newGame)
-                .doOnNext(game -> {
-                    if (new GameEngineImpl(game).isAiSay()) {
-                        scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
-                    }
-                });
-
+            .doOnNext((game) -> {
+                game.setId(idGen(20));
+                game.setCreator(creator);
+                game.setCreated(Instant.now());
+                game.setUpdated(Instant.now());
+                game.setPlayers(new ArrayList<>(players));
+                game.setDealer(dealer == null ? Integer.valueOf(RAND.nextInt(4)) : dealer);
+                game.setSay(new HashMap<>());
+                game.setTurns(new ArrayList<>());
+                game.setPlayerCard(randomCards());
+                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                game.setLastTrickOpen(false);
+                game.setGameVariant(gameVariant);
+                game.setDealCounter(0);
+                game.setBoomId(boomId);
+            })
+            .flatMap(gameRepository::save)
+            .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+            .doOnNext(sseEmitterRepository::newGame)
+            .doOnNext(game -> {
+                if (new GameEngineImpl(game).isAiSay()) {
+                    scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
+                }
+            });
 
 
     }

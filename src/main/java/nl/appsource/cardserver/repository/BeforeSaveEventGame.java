@@ -28,18 +28,12 @@ public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<BaseEn
 
     @Override
     public Publisher<BaseEntity> onBeforeConvert(final BaseEntity entity, final String collection) {
-
-        log.info("onAfterConvert() {} {} {}", entity.getId(), collection);
-
         entity.setUpdated(Instant.now());
         return Mono.just(entity);
     }
 
     @Override
     public Publisher<BaseEntity> onAfterConvert(final BaseEntity entity, final CouchbaseDocument document, final String collection) {
-
-
-        log.info("onAfterConvert() {} {} {}", entity.getId(), document.getId(), collection);
 
         if (sseEmitterRepository == null) {
             this.sseEmitterRepository = applicationContext.getBean(SseEmitterRepository.class);
