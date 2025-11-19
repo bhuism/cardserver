@@ -135,4 +135,15 @@ public class BoomController extends GenericController implements BoomApi {
                 .flatMap(responseEntityMono -> responseEntityMono);
         }
     }
+
+    @Override
+    public Mono<ResponseEntity<Void>> deleteBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} deleteBoom() userId={} boomId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, boomId))
+            .flatMap(boomRepository::deleteById)
+            .then(Mono.just(ResponseEntity.ok().build()));
+    }
+
+
 }

@@ -75,6 +75,15 @@ paths:
                 $ref: "#/components/schemas/Boom"
         '404':
           description: Todo item not found.
+    delete:
+      tags:
+        - boom
+      operationId: deleteBoom
+      parameters:
+        - $ref: "#/components/parameters/boomId"
+      responses:
+        "200":
+          description: ok
   /debug/sseconnections/get:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
