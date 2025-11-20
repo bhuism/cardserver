@@ -100,6 +100,17 @@ public class BoomController extends GenericController implements BoomApi {
                 .build());
     }
 
+    private Mono<Integer> calcDealer(final nl.appsource.cardserver.model.Boom boom) {
+
+        if (boom.getGames().isEmpty()) {
+            return Mono.just(RAND.nextInt(4));
+        }
+
+        return boomRepository.findById(boom.getGames().getLast())
+            .map(game -> (game.getDealer() + 1) % 4);
+
+    }
+
 
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
@@ -114,14 +125,14 @@ public class BoomController extends GenericController implements BoomApi {
                                 .filter(game -> !new GameEngineImpl(game).isCompleted())
                                 .next()
                                 .switchIfEmpty(Mono.defer(() -> {
-                                    if (boom.getGames()
-                                        .size() < 16) {
-
-                                        final Integer dealer = RAND.nextInt(4);
-
-                                        return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
-                                            .doOnNext(game -> boom.getGames().add(game.getId()))
-                                            .flatMap(game -> boomRepository.save(boom).thenReturn(game));
+                                    if (boom.getGames().size() < 16) {
+                                        return calcDealer(boom).flatMap(dealer -> {
+                                            return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
+                                                .doOnNext(game -> boom.getGames()
+                                                    .add(game.getId()))
+                                                .flatMap(game -> boomRepository.save(boom)
+                                                    .thenReturn(game));
+                                        });
                                     } else {
                                         return Mono.empty();
                                     }
