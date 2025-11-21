@@ -1,21 +1,19 @@
-package nl.appsource.cardserver.controller;
+package nl.appsource.cardserver;
 
+import nl.appsource.cardserver.controller.BoomController;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.data.couchbase.CouchbaseDataAutoConfiguration;
-import org.springframework.boot.info.GitProperties;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -28,15 +26,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 
 @ActiveProfiles("citest")
-@ExtendWith(MockitoExtension.class)
-@WebFluxTest(
-    controllers = GameController.class,
-    excludeAutoConfiguration = {CouchbaseDataAutoConfiguration.class}
-)
-public class GameControllerTest {
+@SpringBootTest(properties = "spring.main.web-application-type=reactive", webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
+public class GameControllerTests {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -48,15 +42,19 @@ public class GameControllerTest {
     private SseEmitterRepository sseEmitterRepository;
 
     @MockitoBean
-    private GitProperties gitProperties;
+    private GameService gameService;
 
     @MockitoBean
-    private GameService gameService;
+    private BoomService boomService;
+
+    @MockitoBean
+    private BoomController boomController;
 
     @MockitoBean
     private GameRepository gameRepository;
 
     @Test
+    @WithMockUser(username = "user-abc")
     void getGame_whenGameNotFound_shouldReturnNotFound() {
 
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.empty());
@@ -64,7 +62,7 @@ public class GameControllerTest {
 
         webTestClient
             // Set up a mock authenticated user for the request
-            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
+//            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
             .get()
             .uri("/api/v1/games/game-123")
             .header("App-Identifier", "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
@@ -74,6 +72,7 @@ public class GameControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "user-abc")
     void getGame_whenGameFound_shouldReturnGame() {
 
         final Game mockGame = new Game();
@@ -98,7 +97,7 @@ public class GameControllerTest {
 
         webTestClient
             // Set up a mock authenticated user for the request
-            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
+//            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
             .get()
             .uri("/api/v1/games/game-123")
             .header("App-Identifier", "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
