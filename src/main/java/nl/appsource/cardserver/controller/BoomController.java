@@ -114,7 +114,7 @@ public class BoomController extends GenericController implements BoomApi {
 
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
-        synchronized (lockMap.computeIfAbsent(boomId, _ -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(boomId, _unused -> new Object())) {
             return authorize(appIdentifier, exchange)
                 .doOnNext((userId) -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), userId, boomId))
                 .flatMap(userId -> {

@@ -20,7 +20,7 @@ public class CardServerApplication {
             });
     }
 
-    static void main(final String[] args) {
+    public static void main(final String[] args) {
         SpringApplication.run(CardServerApplication.class, args);
     }
 

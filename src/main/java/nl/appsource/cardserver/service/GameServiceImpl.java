@@ -130,7 +130,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             return gameRepository.findById(gameId)
                 .filter(game -> game.getCreator()
                     .equals(userId))
@@ -190,7 +190,7 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId()
                 .equals(gameId));
             log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
@@ -280,7 +280,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
@@ -300,7 +300,7 @@ public class GameServiceImpl implements GameService {
                                 .variant(UserMessage.VariantEnum.INFO));
                             return gameRepository.save(gameEngine.getGame())
 //                                .doOnNext(_ -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
-                                .map(_ -> gameEngine);
+                                .map(_unused -> gameEngine);
                         } else {
                             return Mono.empty();
                         }
@@ -326,7 +326,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimVerzaken(final UUID appIdentifier, final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, _ -> new Object())) {
+        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
