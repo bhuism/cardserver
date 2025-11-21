@@ -46,7 +46,7 @@ public class Migrator {
 
     private final GameRepository gameRepository;
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
