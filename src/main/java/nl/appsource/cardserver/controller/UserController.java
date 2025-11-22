@@ -149,6 +149,19 @@ public class UserController extends GenericController implements UsersApi {
             .map(ResponseEntity::ok)
             .switchIfEmpty(just(ResponseEntity.notFound()
                 .build()));
-
     }
+
+    @Override
+    public Mono<ResponseEntity<Void>> reloadUser(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .doOnNext((userId) -> log.info("{} reload() userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), userId, gameId))
+            .flatMap(userId -> userService.reload(appIdentifier, userId, gameId))
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
+                .build()))
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build());
+    }
+
+
 }

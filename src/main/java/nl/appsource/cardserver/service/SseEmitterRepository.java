@@ -37,6 +37,8 @@ public interface SseEmitterRepository {
 
     void updateGameForId(UUID appIdentifier, Game game);
 
+    void updateUserForId(UUID appIdentifier, User user);
+
     void updateUser(User user);
 
     void updateBoom(Boom boom);

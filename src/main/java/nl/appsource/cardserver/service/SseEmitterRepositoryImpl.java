@@ -144,6 +144,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
+    public void updateUserForId(final UUID appIdentifier, final User user) {
+        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
+    }
+
+    @Override
     public void updateUser(final User user) {
         doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
     }
@@ -255,9 +260,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             final StringJoiner joiner = new StringJoiner(",");
             this.emitters.keys()
                 .asIterator()
-                .forEachRemaining(uuid -> {
-                    joiner.add(uuid.toString());
-                });
+                .forEachRemaining(uuid -> joiner.add(uuid.toString()));
             log.error("Emitter not found for " + appIdentifier + ", got: " + joiner);
             return false;
         }

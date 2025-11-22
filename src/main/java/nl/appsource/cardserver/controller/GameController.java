@@ -160,7 +160,7 @@ public class GameController extends GenericController implements GamesApi {
 
 
     @Override
-    public Mono<ResponseEntity<Void>> reload(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> reloadGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} reload() userId={} gameId={}", exchange.getRequest()
                 .getRemoteAddress(), userId, gameId))
@@ -170,7 +170,6 @@ public class GameController extends GenericController implements GamesApi {
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
     }
-
 
     @Override
     public Mono<ResponseEntity<Void>> claimRoem(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {

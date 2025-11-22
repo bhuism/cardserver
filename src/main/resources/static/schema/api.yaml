@@ -202,7 +202,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     post:
-      operationId: reload
+      operationId: reloadGame
       parameters:
         - $ref: "#/components/parameters/gameId"
       responses:
@@ -365,6 +365,16 @@ paths:
           description: ok
         "404":
           description: not found
+  /users/{userId}/reload:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: reloadUser
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "200":
+          description: ok
 components:
   requestBodies:
     sayRequest:
