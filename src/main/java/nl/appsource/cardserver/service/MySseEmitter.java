@@ -52,12 +52,12 @@ public final class MySseEmitter {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
     }
 
-    private void tryEmitNext(final ServerSentEvent<?> userServerSentEvent) {
+    private void tryEmitNext(final ServerSentEvent<?> serverSentEvent) {
+
+        //log.info("tryEmitNext() sending id: {} event '{}'", serverSentEvent.id(), serverSentEvent.event());
+
         if (unicastSink != null) {
-            final Sinks.EmitResult emitResult = unicastSink.tryEmitNext(userServerSentEvent);
-            if (emitResult.isFailure()) {
-                unicastSink.tryEmitComplete();
-            }
+            unicastSink.emitNext(serverSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(100)));
         } else {
             log.warn("unicastSink == null");
         }
@@ -107,10 +107,12 @@ public final class MySseEmitter {
         return createServerSentEvent(event, null);
     }
 
-    private static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
+    private ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
 
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
+
+        //log.info("Creating sererSentEvent {} {}", id, event);
 
         final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
             .event(event)
@@ -150,7 +152,7 @@ public final class MySseEmitter {
     public Flux<ServerSentEvent<?>> subscribe() {
         this.pingSent = Instant.now();
         return Flux.just(createPingEvent(), createPingEvent(), createPingEvent())
-            .concatWith(unicastSink.asFlux())
+            .mergeWith(unicastSink.asFlux())
             .mergeWith(Flux.interval(Duration.ofSeconds(15))
                 .map(aLong -> createPingEvent())
                 .doOnNext((_a) -> {

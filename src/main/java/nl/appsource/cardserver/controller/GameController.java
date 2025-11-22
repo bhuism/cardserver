@@ -165,10 +165,8 @@ public class GameController extends GenericController implements GamesApi {
             .doOnNext((userId) -> log.info("{} reload() userId={} gameId={}", exchange.getRequest()
                 .getRemoteAddress(), userId, gameId))
             .flatMap(userId -> gameService.reload(appIdentifier, userId, gameId))
-            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
-                .build()))
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
