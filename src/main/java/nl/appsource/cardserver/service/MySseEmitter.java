@@ -52,7 +52,7 @@ public final class MySseEmitter {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
     }
 
-    private void tryEmitNext(final ServerSentEvent<?> serverSentEvent) {
+    private void emitNext(final ServerSentEvent<?> serverSentEvent) {
 
         //log.info("tryEmitNext() sending id: {} event '{}'", serverSentEvent.id(), serverSentEvent.event());
 
@@ -100,7 +100,7 @@ public final class MySseEmitter {
         if (log.isTraceEnabled()) {
             log.trace("internalSend() sending event '{}' data: '{}' ", serverSentEvent.event(), serverSentEvent.data());
         }
-        tryEmitNext(serverSentEvent);
+        emitNext(serverSentEvent);
     }
 
     private ServerSentEvent<?> createServerSentEvent(final String event) {
