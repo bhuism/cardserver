@@ -8,6 +8,8 @@ import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.BoomRepository;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.SseConnection;
 import org.openapitools.model.SseConnections;
@@ -18,6 +20,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -48,6 +51,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     private final BoomToOpenApiConverter boomToOpenApiConverter;
+
+    private final GameRepository gameRepository;
+
+    private final BoomRepository boomRepository;
 
     private Predicate<MySseEmitter> forUserId(final String userId) {
         return emitter -> userId.equals(emitter.getUserId());
@@ -230,6 +237,45 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
+    public void initCache(final MySseEmitter mySseEmitter) {
+
+        final HashSet<String> users = new HashSet<>();
+        final HashSet<String> games = new HashSet<>();
+        final HashSet<String> booms = new HashSet<>();
+
+        getFriends(mySseEmitter.getUserId())
+            .doOnNext(users::add)
+            .subscribe();
+
+        gameRepository.findByUserId(mySseEmitter.getUserId())
+            .doOnNext(users::add)
+            .flatMap(gameRepository::findById)
+            .subscribe(game -> users.addAll(game.getPlayers()));
+
+
+        boomRepository.findByUserId(mySseEmitter.getUserId())
+            .subscribe(boom -> {
+                booms.add(boom.getId());
+                games.addAll(boom.getGames());
+                users.addAll(boom.getPlayers());
+            });
+
+        log.info("Cache counts: {} {} {} ", users.size(), games.size(), booms.size());
+
+        Flux.fromIterable(users).flatMap(userRepository::findById).subscribe(user -> {
+            mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user));
+        });
+
+        Flux.fromIterable(games).flatMap(gameRepository::findById).subscribe(game -> {
+            mySseEmitter.sendUpdateGame(gameToOpenApiConverter.convert(game));
+        });
+
+        Flux.fromIterable(booms).flatMap(boomRepository::findById).subscribe(boom -> {
+            mySseEmitter.sendupdateBoom(boomToOpenApiConverter.convert(boom));
+        });
+
+    }
+
     @Override
     public Flux<ServerSentEvent<?>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
 
@@ -246,6 +292,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
+                initCache(mySseEmitter);
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             });
