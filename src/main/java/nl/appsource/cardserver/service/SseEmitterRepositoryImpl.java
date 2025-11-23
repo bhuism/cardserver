@@ -292,7 +292,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
-                initCache(mySseEmitter);
+                //initCache(mySseEmitter);
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             });
