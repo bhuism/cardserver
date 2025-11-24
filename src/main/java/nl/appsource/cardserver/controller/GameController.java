@@ -46,16 +46,17 @@ public class GameController extends GenericController implements GamesApi {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getGame() userId={} gameId={}", exchange.getRequest()
                 .getRemoteAddress(), userId, gameId))
-            .flatMap(userId -> gameService.getGame(userId, gameId))
-            .mapNotNull(gameToOpenApiConverter::convert)
-            .map(ResponseEntity::ok)
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} getGame({}), game not found", exchange.getRequest()
-                    .getRemoteAddress(), gameId);
-                return Mono.empty();
-            }))
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .flatMap(userId -> gameService.getGame(userId, gameId)
+                .mapNotNull(gameToOpenApiConverter::convert)
+                .map(ResponseEntity::ok)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("{} getGame({}), game not found", exchange.getRequest()
+                        .getRemoteAddress(), gameId);
+                    return Mono.empty();
+                }))
+                .defaultIfEmpty(ResponseEntity.notFound()
+                    .build()))
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @Override
