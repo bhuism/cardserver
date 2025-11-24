@@ -66,7 +66,16 @@ public final class MySseEmitter {
     public void close() {
         if (unicastSink != null) {
             try {
-                this.unicastSink.emitComplete(Sinks.EmitFailureHandler.FAIL_FAST);
+                final Sinks.EmitResult emitResult = this.unicastSink.tryEmitComplete();
+
+                if (emitResult.isFailure()) {
+                    log.info("close() failure");
+                }
+
+                if (emitResult.isSuccess()) {
+                    log.info("close() isSuccess");
+                }
+
             } catch (Throwable t) {
                 log.error("", t);
             } finally {
