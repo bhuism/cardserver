@@ -239,17 +239,25 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     public Publisher<ServerSentEvent<?>> initCache(final String userId) {
-        return getFriends(userId)
-            .flatMap(userRepository::findById)
+        final Flux<String> friendIds = userRepository.findById(userId)
+            .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
+            .mergeWith(userRepository.findIncomingInvites(userId))
+            .distinct();
+
+        final Flux<ServerSentEvent<?>> friends = friendIds.collectList()
+            .flatMapMany(userRepository::findAllById)
             .map(userToOpenApiConverter::convert)
-            .map(MySseEmitter::createServerSentEvent) // friends
-            .mergeWith(gameRepository.findGamesByUserId(userId)
-                .map(gameToOpenApiConverter::convert)
-                .map(MySseEmitter::createServerSentEvent) // games
-            ).mergeWith(boomRepository.findByUserId(userId)
-                .map(boomToOpenApiConverter::convert)
-                .map(MySseEmitter::createServerSentEvent) // booms
-            );
+            .map(MySseEmitter::createServerSentEvent);
+
+        final Flux<ServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId)
+            .map(gameToOpenApiConverter::convert)
+            .map(MySseEmitter::createServerSentEvent);
+
+        final Flux<ServerSentEvent<?>> booms = boomRepository.findByUserId(userId)
+            .map(boomToOpenApiConverter::convert)
+            .map(MySseEmitter::createServerSentEvent);
+
+        return Flux.merge(friends, games, booms);
     }
 
     @Override
