@@ -74,7 +74,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Flux<String> getGames(final String userId) {
-        return gameRepository.findByUserId(userId);
+        return gameRepository.findGameIdsByUserId(userId);
     }
 
     @Override

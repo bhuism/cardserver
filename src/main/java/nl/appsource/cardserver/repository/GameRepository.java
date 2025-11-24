@@ -22,7 +22,10 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
     //@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
 
     @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 10")
-    Flux<String> findByUserId(@Param("userId") String userId);
+    Flux<String> findGameIdsByUserId(@Param("userId") String userId);
+
+    @Query("#{#n1ql.selectEntity}  WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 10")
+    Flux<Game> findGamesByUserId(@Param("userId") String userId);
 
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
     Mono<Game> findByUserIdAndGameId(@Param("userId") String userId, @Param("gameId") String gameId);

@@ -112,11 +112,23 @@ public final class MySseEmitter {
         emitNext(serverSentEvent);
     }
 
-    private ServerSentEvent<?> createServerSentEvent(final String event) {
+    private static ServerSentEvent<?> createServerSentEvent(final String event) {
         return createServerSentEvent(event, null);
     }
 
-    private ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
+    public static ServerSentEvent<?> createServerSentEvent(final User user) {
+        return createServerSentEvent("updateUser", user);
+    }
+
+    public static ServerSentEvent<?> createServerSentEvent(final Game game) {
+        return createServerSentEvent("updateGame", game);
+    }
+
+    public static ServerSentEvent<?> createServerSentEvent(final Boom boom) {
+        return createServerSentEvent("updateBoom", boom);
+    }
+
+    public static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
 
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
@@ -171,14 +183,14 @@ public final class MySseEmitter {
     }
 
     public void sendUpdateGame(final Game game) {
-        internalSend(createServerSentEvent("updateGame", game));
+        internalSend(createServerSentEvent(game));
     }
 
     public void sendUpdateUser(final User user) {
-        internalSend(createServerSentEvent("updateUser", user));
+        internalSend(createServerSentEvent(user));
     }
 
     public void sendupdateBoom(final Boom boom) {
-        internalSend(createServerSentEvent("updateUser", boom));
+        internalSend(createServerSentEvent(boom));
     }
 }
