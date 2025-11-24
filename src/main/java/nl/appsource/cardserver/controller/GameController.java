@@ -14,6 +14,7 @@ import org.openapitools.model.GetGames200Response;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayerSay;
 import org.openapitools.model.PostMessage;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -81,14 +82,14 @@ public class GameController extends GenericController implements GamesApi {
     @Override
     public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getGames() userId={}", exchange.getRequest()
-                .getRemoteAddress(), userId))
-            .flatMapMany(gameService::getGames)
-            .collectList()
-            .map(games -> new GetGames200Response().games(games))
-            .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .doOnNext((userId) -> log.info("{} getGames() userId={}", exchange.getRequest().getRemoteAddress(), userId))
+            .flatMap(userId -> gameService.getGames(userId)
+                .collectList()
+                .map(games -> new GetGames200Response().games(games))
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build())
+            )
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @Override
