@@ -194,9 +194,7 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
                 }
             });
 
-            if (!verzakers.isEmpty()) {
-                verzakenResult.add(vtrick, verzakers);
-            }
+            verzakenResult.add(vtrick, verzakers);
 
         });
 
