@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Component
 @RequiredArgsConstructor
@@ -179,6 +180,29 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         }
 
         target.setBoomId(Optional.ofNullable(source.getBoomId()));
+
+
+        final List<List<Integer>> verzakenResult = new ArrayList<>();
+
+        IntStream.range(0, gameEngine.calcTricksPlayed()).forEach(vtrick -> {
+
+            final ArrayList<Integer> verzakers = new ArrayList<>();
+
+            IntStream.range(0, 3).forEach(speler -> {
+                if (gameEngine.verzaakt(vtrick, speler)) {
+                    verzakers.add(speler);
+                }
+            });
+
+            if (!verzakers.isEmpty()) {
+                verzakenResult.set(vtrick, verzakers);
+            }
+
+        });
+
+        if (!verzakenResult.isEmpty()) {
+            target.setVerzaakt(verzakenResult);
+        }
 
         return target;
 

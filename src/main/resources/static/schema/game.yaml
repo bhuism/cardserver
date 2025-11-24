@@ -125,6 +125,13 @@ components:
             uniqueItems: true
         boomId:
           type: string
+        verzaakt:
+          type: array
+          items:
+            type: array
+            items:
+              type: integer
+              uniqueItems: true
       required:
         - id
         - trump
