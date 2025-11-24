@@ -79,13 +79,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .forEach(consumer);
     }
 
-//    private void doUserIds(final Collection<String> userIds, final Consumer<MySseEmitter> consumer) {
-//        emitters.values()
-//            .stream()
-//            .filter(forUserIds(userIds))
-//            .forEach(consumer);
-//    }
-
     private void doId(final UUID appIdentifier, final Consumer<MySseEmitter> consumer) {
         Optional.ofNullable(emitters.get(appIdentifier))
             .ifPresentOrElse(consumer, () -> emitters.remove(appIdentifier));
@@ -216,16 +209,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sseConnection.pongSent(mySseEmitterEntry.getValue().getPongSent());
                 sseConnection.pongSentCount(mySseEmitterEntry.getValue().getPongSentCount());
 
-//                final List<String> returnSubscriptions = new ArrayList<>();
-//
-//                this.subscriptions.forEach((topic, uuids) -> {
-//                    if (uuids.contains(mySseEmitterEntry.getKey())) {
-//                        returnSubscriptions.add(topic);
-//                    }
-//                });
-//
-//                sseConnection.subscriptions(returnSubscriptions);
-
                 return sseConnection;
 
             })
@@ -274,7 +257,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         emitters.put(appIdentifier, mySseEmitter);
 
         return mySseEmitter.subscribe()
-            .mergeWith(this.initCache(userId))
             .doFinally((s) -> {
                 log.info("{} unSubscribe() appIdentifier={} userId={}, count={}", remoteAddress, appIdentifier, userId, emitters.size());
                 emitters.remove(appIdentifier);
@@ -283,10 +265,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .doOnSubscribe((s) -> {
                 log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
-                //initCache(mySseEmitter);
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
-            });
+            })
+            .mergeWith(this.initCache(userId));
+
     }
 
     @Override
