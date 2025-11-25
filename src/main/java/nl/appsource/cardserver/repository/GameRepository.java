@@ -21,8 +21,14 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
 //    List<Game> findByEmail(@Param("email") String email);
     //@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
 
-    @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 10")
-    Flux<String> findGameIdsByUserId(@Param("userId") String userId);
+    @Query("SELECT meta(#{#n1ql.bucket}).id "
+        + "FROM #{#n1ql.bucket} "
+        + "WHERE #{#n1ql.filter} "
+        + "AND (creator=$userId OR ANY p IN players SATISFIES p=$userId END) "
+        + "AND ($includeBoom OR boomId IS NOT VALUED) "
+        + "AND ($includeFinished OR ARRAY_LENGTH(games) == 16) "
+        + "ORDER BY updated DESC LIMIT 10")
+    Flux<String> findGameIdsByUserId(@Param("userId") String userId, Boolean includeBoom,  Boolean includeFinished);
 
     @Query("#{#n1ql.selectEntity}  WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 10")
     Flux<Game> findGamesByUserId(@Param("userId") String userId);

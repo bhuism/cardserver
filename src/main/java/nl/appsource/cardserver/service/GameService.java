@@ -13,7 +13,7 @@ public interface GameService {
 
     Mono<Game> getGame(String userId, String gameId);
 
-    Flux<String> getGames(String userId);
+    Flux<String> getGames(String userId, boolean includeBoom, boolean includeFinished);
 
     Mono<Game> createGame(String creator, List<String> players, GameVariant gameVariant);
 

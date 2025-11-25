@@ -239,6 +239,15 @@ paths:
       - $ref: "#/components/parameters/AppIdentifier"
     get:
       operationId: getGames
+      parameters:
+        - name: boom
+          in: query
+          schema:
+            type: boolean
+        - name: finished
+          in: query
+          schema:
+            type: boolean
       responses:
         "200":
           $ref: "#/components/responses/GamesResponse"

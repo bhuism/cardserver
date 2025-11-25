@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -79,11 +80,12 @@ public class GameController extends GenericController implements GamesApi {
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
+
     @Override
-    public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final Optional<Boolean> boom, final Optional<Boolean> finished, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getGames() userId={}", exchange.getRequest().getRemoteAddress(), userId))
-            .flatMap(userId -> gameService.getGames(userId)
+            .doOnNext((userId) -> log.info("{} getGames() userId={} boom={} finished={}", exchange.getRequest().getRemoteAddress(), userId, boom, finished))
+            .flatMap(userId -> gameService.getGames(userId, boom.orElse(true), finished.orElse(true))
                 .collectList()
                 .map(games -> new GetGames200Response().games(games))
                 .map(ResponseEntity::ok)
