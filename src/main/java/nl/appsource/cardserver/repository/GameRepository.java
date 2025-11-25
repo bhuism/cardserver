@@ -3,7 +3,6 @@ package nl.appsource.cardserver.repository;
 import nl.appsource.cardserver.model.Game;
 import org.springframework.data.couchbase.repository.Query;
 import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,7 +27,7 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
         + "AND ($includeBoom OR boomId IS NOT VALUED) "
         + "AND ($includeFinished OR ARRAY_LENGTH(turns) != 32) "
         + "ORDER BY updated DESC LIMIT 10")
-    Flux<String> findGameIdsByUserId(String userId,Boolean includeBoom,Boolean includeFinished);
+    Flux<String> findGameIdsByUserId(String userId, Boolean includeBoom, Boolean includeFinished);
 
     @Query("#{#n1ql.selectEntity}  WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 10")
     Flux<Game> findGamesByUserId(String userId);
