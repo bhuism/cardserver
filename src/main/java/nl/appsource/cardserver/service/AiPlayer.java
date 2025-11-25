@@ -34,6 +34,9 @@ public record AiPlayer(GameEngine gameEngine) {
 
     // Main entry point for the AI's decision
     public Card calcAiCard(final String userId) throws GameEngineException {
+
+        log.info("calcAiCard {}", userId);
+
         final Hand hand = Hand.from(getHand(userId));
         final List<Card> currentTrick = gameEngine.getTrickCards(gameEngine.calcTricksPlayed());
 
@@ -48,6 +51,9 @@ public record AiPlayer(GameEngine gameEngine) {
      * Logic for when the AI is the first to play in a trick.
      */
     private Card playAsLeader(final Hand hand) {
+
+        log.info("playAsLeader {}", hand.cards);
+
         final Suit trumpSuit = gameEngine.getGame()
             .getTrump();
         final List<Card> trumpCards = hand.ofSuit(trumpSuit);
@@ -153,26 +159,41 @@ public record AiPlayer(GameEngine gameEngine) {
      * before applying strategy (winning, smearing, or saving points).
      */
     private Card playAsFollower(final String userId, final Hand hand, final List<Card> currentTrick, final Card highestCardInTrick) {
+
+        log.info("playAsFollower {} {} {} ", hand.cards, currentTrick, highestCardInTrick);
+
         final Suit leadingSuit = currentTrick.getFirst().getSuit();
         final Suit trumpSuit = gameEngine.getGame().getTrump();
         final String partnerId = gameEngine.getPartner(userId);
         final String currentWinnerId = gameEngine.getTrickWinnerId(currentTrick);
         final boolean isPartnerWinning = currentWinnerId.equals(partnerId);
 
+        log.info("playAsFollower {} {} {} {} {} ", leadingSuit, trumpSuit, partnerId, currentWinnerId, isPartnerWinning);
+
         // Rule 1: Must follow suit if possible.
         if (hand.hasSuit(leadingSuit)) {
+
+            log.info("playAsFollower hand.hasSuit(leadingSuit)");
+
             final List<Card> playableCards = hand.ofSuit(leadingSuit);
             // If leading suit is trump, you must try to play a higher trump if you can.
             if (leadingSuit == trumpSuit) {
+                log.info("playAsFollower leadingSuit == trumpSuit");
                 return playableCards.stream()
                     .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
                     .min(this::compareKlaverjassenCards) // Play lowest winning card
                     .orElseGet(() -> playableCards.stream()
                         .min(this::compareKlaverjassenCards)
-                        .orElseThrow()); // Or else play lowest card
+                        .orElseThrow()); // Or else play lowest card of the suit
             } else {
+
+                log.info("playAsFollower leadingSuit != trumpSuit");
+
                 // Not a trump suit.
                 if (isPartnerWinning) {
+
+                    log.info("playAsFollower isPartnerWinning");
+
                     // Partner is winning, so "smear" with high-value cards.
                     return playableCards.stream()
                         .max(Comparator.comparingInt(this::getStandardPointValue))
@@ -189,42 +210,51 @@ public record AiPlayer(GameEngine gameEngine) {
             }
         }
 
-        // Rule 2: Cannot follow suit. Check for trumping obligations.
-        final boolean hasTrump = hand.hasSuit(trumpSuit);
+        // Rule 2: Cannot follow suit. You must play a trump if you have one, with one exception for Rotterdam.
+        if (hand.hasSuit(trumpSuit)) {
+            log.info("playAsFollower hasTrump");
 
-        if (hasTrump) {
-            // Rotterdam variant special rule: If partner is winning, you don't have to trump.
-            if (gameEngine.getGame().getGameVariant() == ROTTERDAMS && isPartnerWinning) {
-                return discardCardWithSignal(hand.cards(), hand.bySuit());
-            }
-
-            // Standard trumping obligation applies.
             final List<Card> trumpCards = hand.ofSuit(trumpSuit);
+            final boolean trickContainsTrump = highestCardInTrick.getSuit() == trumpSuit;
+
+            // Find the lowest trump card that can beat the current highest card.
             final Optional<Card> overTrumpCard = trumpCards.stream()
                 .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
-                .min(this::compareKlaverjassenCards); // Find the lowest possible over-trump
+                .min(this::compareKlaverjassenCards);
 
+            // If you can over-trump...
             if (overTrumpCard.isPresent()) {
-                return overTrumpCard.get(); // If you can over-trump, you MUST.
+                // ...you must do so unless your partner is already winning.
+                if (isPartnerWinning) {
+                    // Partner is winning, no need to waste a high trump. Play the lowest trump.
+                    return trumpCards.stream().min(this::compareKlaverjassenCards).orElseThrow();
+                } else {
+                    // An opponent is winning. You must over-trump. Play the lowest possible over-trump card.
+                    return overTrumpCard.get();
+                }
             }
 
-            // Cannot over-trump. Check variant rules for under-trumping.
-            final boolean trickContainsTrump = highestCardInTrick.getSuit() == trumpSuit;
-            if (trickContainsTrump) { // Only need to under-trump if a trump is already played
+            // You CANNOT over-trump. Now the rules diverge.
+            // This situation only matters if an opponent is already winning with a trump.
+            if (trickContainsTrump && !isPartnerWinning) {
                 if (gameEngine.getGame().getGameVariant() == ROTTERDAMS) {
-                    // Rotterdam: If you can't over-trump, you can discard.
+                    // Rotterdam Rule: If you cannot over-trump, you are NOT obligated to under-trump.
+                    // You can play any card. The best strategic move is to discard a non-trump.
                     return discardCardWithSignal(hand.cards(), hand.bySuit());
                 } else {
-                    // Amsterdam: If you can't over-trump, you MUST under-trump.
+                    // Amsterdam Rule: If you cannot over-trump, you MUST under-trump.
                     return trumpCards.stream().min(this::compareKlaverjassenCards).orElseThrow();
                 }
             } else {
-                // You are the first to trump in this trick. You must play a trump.
+                // This covers cases where:
+                // a) No trump has been played yet.
+                // b) Your partner is winning (with a trump or non-trump).
+                // In these cases, you still must play a trump (since you couldn't follow suit), so play your lowest one.
                 return trumpCards.stream().min(this::compareKlaverjassenCards).orElseThrow();
             }
         }
 
-        // Rule 3: Cannot follow suit and cannot trump. Must discard.
+        // Rule 3: Cannot follow suit and have no trump. Must discard.
         return discardCardWithSignal(hand.cards(), hand.bySuit());
     }
 
