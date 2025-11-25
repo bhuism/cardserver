@@ -26,9 +26,9 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
         + "WHERE #{#n1ql.filter} "
         + "AND (creator=$userId OR ANY p IN players SATISFIES p=$userId END) "
         + "AND ($includeBoom OR boomId IS NOT VALUED) "
-        + "AND ($includeFinished OR ARRAY_LENGTH(games) == 16) "
+        + "AND ($includeFinished OR ARRAY_LENGTH(turns) != 32) "
         + "ORDER BY updated DESC LIMIT 10")
-    Flux<String> findGameIdsByUserId(@Param("userId") String userId, Boolean includeBoom,  Boolean includeFinished);
+    Flux<String> findGameIdsByUserId(@Param("userId") String userId, @Param("includeBoom") Boolean includeBoom, @Param("includeFinished") Boolean includeFinished);
 
     @Query("#{#n1ql.selectEntity}  WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 10")
     Flux<Game> findGamesByUserId(@Param("userId") String userId);
