@@ -634,13 +634,11 @@ public record GameEngineImpl(Game game) implements GameEngine {
         final List<Card> initialHand = game.getPlayerCard()
             .entrySet()
             .stream()
-            .filter(entry -> entry.getValue()
-                .equals(speler))
+            .filter(entry -> entry.getValue().equals(speler))
             .map(Map.Entry::getKey)
             .toList();
 
-        final int turnIndexOfPlayedCard = game.getTurns()
-            .indexOf(playedCard);
+        final int turnIndexOfPlayedCard = game.getTurns().indexOf(playedCard);
 
         final List<Card> playedByPlayerBefore = game.getTurns()
             .subList(0, turnIndexOfPlayedCard)
@@ -649,6 +647,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .toList();
 
         final List<Card> handAtTimeOfPlay = new ArrayList<>(initialHand);
+
         handAtTimeOfPlay.removeAll(playedByPlayerBefore);
 
         // Check for not following suit
