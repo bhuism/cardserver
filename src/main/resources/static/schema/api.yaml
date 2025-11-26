@@ -6,6 +6,8 @@ info:
 servers:
   - url: 'https://api.klaversjassen.nl/api/v1'
     description: Klavers Jassen
+  - url: 'https://api.klaversjassen.nl'
+    description: Klavers Jassen Root
 
 paths:
   /boom:
