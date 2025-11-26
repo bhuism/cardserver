@@ -19,7 +19,6 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
@@ -246,11 +245,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Flux<ServerSentEvent<?>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
 
-        try {
-            Thread.sleep(Duration.ofSeconds(2));
-        } catch (InterruptedException e) {
-            log.error("SLeep interrupted", e);
-        }
+//        try {
+//            Thread.sleep(Duration.ofSeconds(2));
+//        } catch (InterruptedException e) {
+//            log.error("SLeep interrupted", e);
+//        }
 
         final MySseEmitter mySseEmitter = new MySseEmitter(userId);
 
