@@ -238,7 +238,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(boomToOpenApiConverter::convert)
             .map(MySseEmitter::createServerSentEvent);
 
-        return Flux.merge(friends, games, booms);
+        final Flux<ServerSentEvent<?>> me = Flux.from(userRepository.findById(userId).map(userToOpenApiConverter::convert).map(MySseEmitter::createServerSentEvent));
+
+        return Flux.merge(me, friends, games, booms);
     }
 
     @Override
