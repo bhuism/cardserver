@@ -392,6 +392,40 @@ paths:
       responses:
         "200":
           description: ok
+  /calcAiCard:
+    post:
+      operationId: calcAiCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentTrick:
+                  type: array
+                  items:
+                    $ref: "./game.yaml#/components/schemas/Card"
+                trumpSuit:
+                  $ref: "./game.yaml#/components/schemas/Suit"
+                hand:
+                  type: array
+                  items:
+                    $ref: "./game.yaml#/components/schemas/Card"
+                gameVariant:
+                  $ref: '#/components/schemas/GameVariant'
+              required:
+                - currentTrick
+                - trumpSuit
+                - hand
+                - gameVariant
+      responses:
+        "200":
+          description: Boomresponse
+          content:
+            application/json:
+              schema:
+                $ref: "./game.yaml#/components/schemas/Card"
 components:
   requestBodies:
     sayRequest:

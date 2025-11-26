@@ -3,6 +3,7 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.controller.BoomController;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
@@ -82,6 +83,7 @@ public class GameControllerTests {
         mockGame.setPlayers(List.of("a", "b", "c", "d"));
         mockGame.setDealer(0);
         mockGame.setSay(new HashMap<>());
+        mockGame.setTrump(Suit.Spades);
 
 //        final org.openapitools.model.Game expectedGame = new org.openapitools.model.Game();
 //        expectedGame.setId("myid");

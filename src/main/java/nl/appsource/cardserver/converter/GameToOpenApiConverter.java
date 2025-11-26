@@ -206,7 +206,13 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
 
     }
 
-    private static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.model.Card> source) {
+    public static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.model.Card> source) {
+        return source.stream()
+            .map(GameToOpenApiConverter::convertCard)
+            .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public static List<nl.appsource.cardserver.model.Card> convertToModel(final List<Card> source) {
         return source.stream()
             .map(GameToOpenApiConverter::convertCard)
             .collect(Collectors.toCollection(ArrayList::new));
@@ -220,16 +226,23 @@ public class GameToOpenApiConverter implements Converter<Game, org.openapitools.
         return nl.appsource.cardserver.model.Card.valueOf(source.getValue());
     }
 
-    private static final Map<Suit, org.openapitools.model.Suit> SUITCONVERTER = Map.of(
-        Suit.Clubs, org.openapitools.model.Suit.CLUBS,
-        Suit.Hearts, org.openapitools.model.Suit.HEARTS,
-        Suit.Spades, org.openapitools.model.Suit.SPADES,
-        Suit.Diamonds, org.openapitools.model.Suit.DIAMONDS);
 
-    private static org.openapitools.model.Suit convertSuit(final Suit trump) {
-        return Optional.ofNullable(trump)
-            .map(SUITCONVERTER::get)
-            .orElse(null);
+    public static org.openapitools.model.Suit convertSuit(final Suit suit) {
+        return switch (suit) {
+            case Clubs -> org.openapitools.model.Suit.CLUBS;
+            case Hearts -> org.openapitools.model.Suit.HEARTS;
+            case Spades -> org.openapitools.model.Suit.SPADES;
+            case Diamonds -> org.openapitools.model.Suit.DIAMONDS;
+        };
+    }
+
+    public static Suit convertSuit(final org.openapitools.model.Suit suit) {
+        return switch (suit) {
+            case org.openapitools.model.Suit.CLUBS -> Suit.Clubs;
+            case org.openapitools.model.Suit.HEARTS -> Suit.Hearts;
+            case org.openapitools.model.Suit.SPADES -> Suit.Spades;
+            case org.openapitools.model.Suit.DIAMONDS -> Suit.Diamonds;
+        };
     }
 
 }
