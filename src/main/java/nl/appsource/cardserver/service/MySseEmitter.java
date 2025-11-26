@@ -12,6 +12,7 @@ import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.User;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -44,9 +45,7 @@ public final class MySseEmitter {
 
     private int pongSentCount = 0;
 
-    private Sinks.Many<ServerSentEvent<?>> unicastSink = Sinks.many()
-        .unicast()
-        .onBackpressureBuffer();
+    private Sinks.Many<ServerSentEvent<?>> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
 
     public void message(final UserMessage userMessage) {
         internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
@@ -135,9 +134,7 @@ public final class MySseEmitter {
 
         //log.info("Creating sererSentEvent {} {}", id, event);
 
-        final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
-            .event(event)
-            .id(id);
+        final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder().event(event).id(id);
 
         builder.data(Objects.requireNonNullElse(data, "{}"));
 
@@ -145,8 +142,7 @@ public final class MySseEmitter {
     }
 
     public void sendOnlineList(final Flux<String> onlineList) {
-        onlineList.collectList()
-            .subscribe(list -> internalSend(createServerSentEvent("online", new OnlineListEvent().onlineList(list))));
+        onlineList.collectList().subscribe(list -> internalSend(createServerSentEvent("online", new OnlineListEvent().onlineList(list))));
     }
 
     public void sendUpdateFriends() {
@@ -162,8 +158,7 @@ public final class MySseEmitter {
     }
 
     public void newGame(final Game game) {
-        internalSend(createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator())
-            .gameId(game.getId())));
+        internalSend(createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId())));
     }
 
     public void newFriend(final String newFriendId) {
@@ -172,14 +167,10 @@ public final class MySseEmitter {
 
     public Flux<ServerSentEvent<?>> subscribe() {
         this.pingSent = Instant.now();
-        return Flux.just(createPingEvent(), createPingEvent(), createPingEvent())
-            .mergeWith(unicastSink.asFlux())
-            .mergeWith(Flux.interval(Duration.ofSeconds(15))
-                .map(aLong -> createPingEvent())
-                .doOnNext((_a) -> {
-                    this.pingSent = Instant.now();
-                    this.pingSentCount++;
-                }));
+        return Flux.just(createPingEvent(), createPingEvent(), createPingEvent()).mergeWith(unicastSink.asFlux()).mergeWith(Flux.interval(Duration.ofSeconds(15)).map(aLong -> createPingEvent()).doOnNext((_a) -> {
+            this.pingSent = Instant.now();
+            this.pingSentCount++;
+        }));
     }
 
     public void sendUpdateGame(final Game game) {
@@ -193,4 +184,9 @@ public final class MySseEmitter {
     public void sendupdateBoom(final Boom boom) {
         internalSend(createServerSentEvent(boom));
     }
+
+    public Disposable sendFlux(final Flux<ServerSentEvent<?>> flux) {
+        return flux.subscribe(this::emitNext);
+    }
+
 }

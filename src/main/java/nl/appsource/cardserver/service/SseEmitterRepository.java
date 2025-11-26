@@ -5,7 +5,6 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
-import org.reactivestreams.Publisher;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
@@ -21,8 +20,6 @@ public interface SseEmitterRepository {
     void sendMessage(Collection<String> userIds, UserMessage userMessage);
 
     void sendAppIdentifierMessage(UUID appIdentifier, UserMessage userMessage);
-
-    Publisher<ServerSentEvent<?>> initCache(String userId);
 
     Flux<ServerSentEvent<?>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
 
@@ -51,6 +48,8 @@ public interface SseEmitterRepository {
     boolean isUserOnline(String userId);
 
     void newFriend(String userId, String friendId);
+
+    void sendFlux(UUID appIdentifier, String userId);
 
     Boolean validate(UUID appIdentifier, String userId);
 

@@ -23,7 +23,7 @@ public class CacheController extends GenericController implements ReloadCacheApi
     public Mono<ResponseEntity<Void>> reloadCache(final UUID appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} reloadCache() userId={}", exchange.getRequest().getRemoteAddress(), userId))
-            .map(sseEmitterRepository::initCache)
+            .doOnNext(userId -> sseEmitterRepository.sendFlux(appIdentifier, userId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }

@@ -14,7 +14,6 @@ import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.SseConnection;
 import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
-import org.reactivestreams.Publisher;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -221,8 +220,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    @Override
-    public Publisher<ServerSentEvent<?>> initCache(final String userId) {
+    private Flux<ServerSentEvent<?>> initCache(final String userId) {
         final Flux<String> friendIds = userRepository.findById(userId)
             .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
             .mergeWith(userRepository.findIncomingInvites(userId))
@@ -271,6 +269,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .mergeWith(this.initCache(userId));
 
+    }
+
+    @Override
+    public void sendFlux(final UUID appIdentifier, final String userId) {
+        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendFlux(initCache(userId)));
     }
 
     @Override
