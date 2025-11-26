@@ -384,6 +384,14 @@ paths:
       responses:
         "200":
           description: ok
+  /reloadCache:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: reloadCache
+      responses:
+        "200":
+          description: ok
 components:
   requestBodies:
     sayRequest:

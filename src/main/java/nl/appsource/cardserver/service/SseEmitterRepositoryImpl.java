@@ -220,6 +220,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
+    @Override
     public Publisher<ServerSentEvent<?>> initCache(final String userId) {
         final Flux<String> friendIds = userRepository.findById(userId)
             .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
