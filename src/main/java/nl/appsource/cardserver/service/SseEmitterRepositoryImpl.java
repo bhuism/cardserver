@@ -248,7 +248,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public Flux<ServerSentEvent<?>> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
 
         try {
-            Thread.sleep(Duration.ofMillis(500));
+            Thread.sleep(Duration.ofMillis(1000));
         } catch (InterruptedException e) {
             log.error("SLeep interrupted", e);
         }
