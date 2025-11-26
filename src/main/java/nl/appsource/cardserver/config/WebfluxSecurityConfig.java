@@ -59,7 +59,6 @@ public class WebfluxSecurityConfig {
     @Bean
     @Order(2)
     public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) {
-
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
@@ -73,17 +72,17 @@ public class WebfluxSecurityConfig {
     @Bean
     @Order(3)
     public SecurityWebFilterChain securityFilterChainRest(final ServerHttpSecurity http) {
-
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
                 exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json")
                     .permitAll()
+                    .pathMatchers(HttpMethod.POST, "/calcAiCard")
+                    .permitAll()
                     .anyExchange()
                     .denyAll()
             );
-
         return http.build();
     }
 
