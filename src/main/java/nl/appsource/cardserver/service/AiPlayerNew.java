@@ -35,7 +35,7 @@ public record AiPlayerNew(List<Card> currentTrick, Suit trumpSuit, Hand hand, Ga
     // Main entry point for the AI's decision
     public Card calcAiCard() throws GameEngineException {
 
-        log.info("calcAiCard()");
+//        log.info("calcAiCard()");
 
 //        final Hand hand = Hand.from(getHand(userId));
 //        final List<Card> currentTrick = gameEngine.getTrickCards(gameEngine.calcTricksPlayed());
@@ -52,7 +52,7 @@ public record AiPlayerNew(List<Card> currentTrick, Suit trumpSuit, Hand hand, Ga
      */
     private Card playAsLeader() {
 
-        log.info("playAsLeader {}", hand.cards);
+//        log.info("playAsLeader {}", hand.cards);
 
 //        final Suit trumpSuit = gameEngine.getGame()
 //            .getTrump();
@@ -160,7 +160,7 @@ public record AiPlayerNew(List<Card> currentTrick, Suit trumpSuit, Hand hand, Ga
      */
     private Card playAsFollower() {
 
-        log.info("playAsFollower");
+//        log.info("playAsFollower");
 
         final Card highestCardInTrick = getHighestCardInTrick();
         final Suit leadingSuit = currentTrick.getFirst().getSuit();
@@ -179,17 +179,17 @@ public record AiPlayerNew(List<Card> currentTrick, Suit trumpSuit, Hand hand, Ga
 
 
 
-        log.info("playAsFollower {} {} {}", leadingSuit, trumpSuit, isPartnerWinning);
+//        log.info("playAsFollower {} {} {}", leadingSuit, trumpSuit, isPartnerWinning);
 
         // Rule 1: Must follow suit if possible.
         if (hand.hasSuit(leadingSuit)) {
 
-            log.info("playAsFollower hand.hasSuit(leadingSuit)");
+//            log.info("playAsFollower hand.hasSuit(leadingSuit)");
 
             final List<Card> playableCards = hand.ofSuit(leadingSuit);
             // If leading suit is trump, you must try to play a higher trump if you can.
             if (leadingSuit == trumpSuit) {
-                log.info("playAsFollower leadingSuit == trumpSuit");
+//                log.info("playAsFollower leadingSuit == trumpSuit");
                 return playableCards.stream()
                     .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
                     .min(this::compareKlaverjassenCards) // Play lowest winning card
@@ -198,12 +198,12 @@ public record AiPlayerNew(List<Card> currentTrick, Suit trumpSuit, Hand hand, Ga
                         .orElseThrow()); // Or else play lowest card of the suit
             } else {
 
-                log.info("playAsFollower leadingSuit != trumpSuit");
+//                log.info("playAsFollower leadingSuit != trumpSuit");
 
                 // Not a trump suit.
                 if (isPartnerWinning) {
 
-                    log.info("playAsFollower isPartnerWinning");
+//                    log.info("playAsFollower isPartnerWinning");
 
                     // Partner is winning, so "smear" with high-value cards.
                     return playableCards.stream()
@@ -223,7 +223,7 @@ public record AiPlayerNew(List<Card> currentTrick, Suit trumpSuit, Hand hand, Ga
 
         // Rule 2: Cannot follow suit. You must play a trump if you have one, with one exception for Rotterdam.
         if (hand.hasSuit(trumpSuit)) {
-            log.info("playAsFollower hasTrump");
+//            log.info("playAsFollower hasTrump");
 
             final List<Card> trumpCards = hand.ofSuit(trumpSuit);
             final boolean trickContainsTrump = highestCardInTrick.getSuit() == trumpSuit;
