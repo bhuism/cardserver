@@ -25,7 +25,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-public class GameController extends GenericController implements GamesApi {
+public class GameController extends GenericController implements GamesApi, V1Api {
 
     private final GameService gameService;
 

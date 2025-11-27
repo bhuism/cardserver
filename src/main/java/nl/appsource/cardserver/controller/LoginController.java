@@ -42,6 +42,8 @@ public class LoginController extends GenericController implements LoginApi, Load
     @Override
     public Mono<ResponseEntity<LoginResponse>> login(final ServerWebExchange exchange) {
 
+        log.info("/login");
+
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)
             .map(Authentication::getPrincipal)
@@ -109,7 +111,8 @@ public class LoginController extends GenericController implements LoginApi, Load
                     )
                     .map(ResponseEntity::ok);
 
-            });
+            })
+            .defaultIfEmpty(ResponseEntity.notFound().build());
 
     }
 

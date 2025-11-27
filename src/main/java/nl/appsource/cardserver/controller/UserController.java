@@ -26,7 +26,7 @@ import static reactor.core.publisher.Mono.just;
 
 @Slf4j
 @RestController
-public class UserController extends GenericController implements UsersApi {
+public class UserController extends GenericController implements UsersApi, V1Api {
 
     private final UserService userService;
 

@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
-public class GenericController implements V1Api {
+public class GenericController {
 
     protected final SseEmitterRepository sseEmitterRepository;
 

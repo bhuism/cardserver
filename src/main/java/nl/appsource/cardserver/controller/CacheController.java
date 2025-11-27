@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @RestController
 @Slf4j
-public class CacheController extends GenericController implements ReloadCacheApi {
+public class CacheController extends GenericController implements ReloadCacheApi, V1Api {
 
     public CacheController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepositoryArg) {
         super(sseEmitterRepository, userRepositoryArg);

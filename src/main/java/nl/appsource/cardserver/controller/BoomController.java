@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @RestController
 @Slf4j
-public class BoomController extends GenericController implements BoomApi {
+public class BoomController extends GenericController implements BoomApi, V1Api {
 
     private final BoomService boomService;
 

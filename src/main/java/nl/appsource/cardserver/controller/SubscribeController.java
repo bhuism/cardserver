@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-public class SubscribeController extends GenericController {
+public class SubscribeController extends GenericController implements V1Api {
 
     public static final String APP_IDENTIFIER_HEADER_NAME = "App-Identifier";
 
