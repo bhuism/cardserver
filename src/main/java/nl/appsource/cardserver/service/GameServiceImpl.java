@@ -132,8 +132,8 @@ public class GameServiceImpl implements GameService {
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
         synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             return gameRepository.findById(gameId)
-                .filter(game -> game.getCreator()
-                    .equals(userId))
+                .filter(game -> game.getCreator().equals(userId))
+                .filter(game -> game.getBoomId() == null)
                 .flatMap(game -> gameRepository.delete(game)
                     .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
                     .thenReturn(true)
