@@ -285,8 +285,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             return false;
         }
 
-        if (!mySseEmitter.getUserId()
-            .equals(userId)) {
+        if (!mySseEmitter.getUserId().equals(userId)) {
             log.error("Emitter has wrong userId");
             return false;
         }

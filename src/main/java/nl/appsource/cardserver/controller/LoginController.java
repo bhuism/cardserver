@@ -1,11 +1,11 @@
 package nl.appsource.cardserver.controller;
 
 import com.nimbusds.jose.JOSEException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.CardServerJwtModem;
+import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.LoadUserApi;
 import org.openapitools.api.LoginApi;
@@ -24,15 +24,20 @@ import java.time.Instant;
 
 import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
 
-@RestController
-@RequiredArgsConstructor
 @Slf4j
-public class LoginController implements LoginApi, LoadUserApi {
+@RestController
+public class LoginController extends GenericController implements LoginApi, LoadUserApi {
 
     private final UserService userService;
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
-    private final UserRepository userRepository;
+
+    public LoginController(final SseEmitterRepository sseEmitterRepositoryArg, final UserRepository userRepositoryArg, final UserService userServiceArg, final CardServerJwtModem cardServerJwtModemArg, final UserToOpenApiConverter userToOpenApiConverterArg) {
+        super(sseEmitterRepositoryArg, userRepositoryArg);
+        this.userService = userServiceArg;
+        this.cardServerJwtModem = cardServerJwtModemArg;
+        this.userToOpenApiConverter = userToOpenApiConverterArg;
+    }
 
     @Override
     public Mono<ResponseEntity<LoginResponse>> login(final ServerWebExchange exchange) {
@@ -110,8 +115,7 @@ public class LoginController implements LoginApi, LoadUserApi {
 
     @Override
     public Mono<ResponseEntity<User>> loadUser(final ServerWebExchange exchange) {
-        return GenericController.getUserId(exchange)
-            .flatMap(userRepository::findById)
+        return getUserId(exchange)
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
