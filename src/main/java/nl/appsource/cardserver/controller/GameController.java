@@ -79,10 +79,10 @@ public class GameController extends GenericController implements GamesApi, V1Api
 
 
     @Override
-    public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final Optional<Boolean> boom, final Optional<Boolean> finished, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final Optional<Boolean> boom, final Optional<Boolean> finished, final Optional<Integer> limit, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((userId) -> log.info("{} getGames() userId={} boom={} finished={}", exchange.getRequest().getRemoteAddress(), userId, boom, finished))
-            .flatMap(user -> gameService.getGames(user.getId(), boom.orElse(true), finished.orElse(true))
+            .flatMap(user -> gameService.getGames(user.getId(), boom.orElse(true), finished.orElse(true), limit.orElse(10))
                 .collectList()
                 .map(games -> new GetGames200Response().games(games))
                 .map(ResponseEntity::ok)

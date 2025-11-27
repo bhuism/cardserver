@@ -250,6 +250,10 @@ paths:
           in: query
           schema:
             type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
           $ref: "#/components/responses/GamesResponse"
