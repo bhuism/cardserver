@@ -199,6 +199,10 @@ public record AiPlayer(GameEngine gameEngine) {
                         .max(Comparator.comparingInt(this::getStandardPointValue))
                         .orElseThrow();
                 } else {
+
+
+                    log.info("playAsFollower !isPartnerWinning");
+
                     // Opponent is winning, must try to take the trick.
                     return playableCards.stream()
                         .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
@@ -210,7 +214,7 @@ public record AiPlayer(GameEngine gameEngine) {
             }
         }
 
-        // Rule 2: Cannot follow suit. You must play a trump if you have one, with one exception for Rotterdam.
+        // Rule 2: Cannot follow suit. You must play a trump if you have one.
         if (hand.hasSuit(trumpSuit)) {
             log.info("playAsFollower hasTrump");
 
@@ -224,6 +228,9 @@ public record AiPlayer(GameEngine gameEngine) {
 
             // If you can over-trump...
             if (overTrumpCard.isPresent()) {
+
+                log.info("overTrumpCard.isPresent()");
+
                 // ...you must do so unless your partner is already winning.
                 if (isPartnerWinning) {
                     // Partner is winning, no need to waste a high trump. Play the lowest trump.
@@ -234,17 +241,14 @@ public record AiPlayer(GameEngine gameEngine) {
                 }
             }
 
-            // You CANNOT over-trump. Now the rules diverge.
+            // You CANNOT over-trump. Now the rules for under-trumping apply.
             // This situation only matters if an opponent is already winning with a trump.
             if (trickContainsTrump && !isPartnerWinning) {
-                if (gameEngine.getGame().getGameVariant() == ROTTERDAMS) {
-                    // Rotterdam Rule: If you cannot over-trump, you are NOT obligated to under-trump.
-                    // You can play any card. The best strategic move is to discard a non-trump.
-                    return discardCardWithSignal(hand.cards(), hand.bySuit());
-                } else {
-                    // Amsterdam Rule: If you cannot over-trump, you MUST under-trump.
-                    return trumpCards.stream().min(this::compareKlaverjassenCards).orElseThrow();
-                }
+
+                log.info("trickContainsTrump && !isPartnerWinning");
+
+                // Amsterdam/Rotterdam Rule: If you cannot over-trump, you MUST under-trump.
+                return trumpCards.stream().min(this::compareKlaverjassenCards).orElseThrow();
             } else {
                 // This covers cases where:
                 // a) No trump has been played yet.

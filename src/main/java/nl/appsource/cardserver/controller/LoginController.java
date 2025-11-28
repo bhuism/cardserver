@@ -62,7 +62,7 @@ public class LoginController extends GenericController implements LoginApi, Load
                 return userService.findByEmail(email)
                     .map((user) -> {
 
-                        log.info("User login {}", user.getDisplayName());
+                        log.info("{} User login {}", exchange.getRequest().getRemoteAddress(), user.getDisplayName());
 
                         user.setLastLogin(now);
                         user.setUpdated(now);
