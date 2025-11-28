@@ -12,8 +12,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.openapitools.model.GameVariant.ROTTERDAMS;
-
 @Slf4j
 public record AiPlayer(GameEngine gameEngine) {
 
