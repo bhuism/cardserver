@@ -37,7 +37,7 @@ public class GenericController {
 
     protected Mono<User> authorize(final UUID appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
-            .filter((user) -> sseEmitterRepository.validate(appIdentifier, user.getId()))
+//            .filter((user) -> sseEmitterRepository.validate(appIdentifier, user.getId()))
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest()
                     .getRemoteAddress(), exchange.getRequest()
