@@ -8,6 +8,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
@@ -34,7 +35,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
@@ -60,6 +60,7 @@ public class GameServiceImpl implements GameService {
     private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
+    private final UserRepository userRepository;
 
     boolean stop = false;
 
@@ -334,31 +335,34 @@ public class GameServiceImpl implements GameService {
 
                     final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
-                    final AtomicBoolean atLeastOne = new AtomicBoolean(false);
-
-                    List.of(0, 1, 2, 3)
-                        .forEach(playerNr -> {
+                    return Flux.just(0, 1, 2, 3)
+                        .flatMap(playerNr -> {
                             final Boolean verzaakt = gameEngine.verzaakt(correctedSlagNr, playerNr);
                             if (verzaakt) {
-                                sseEmitterRepository.sendMessage(gameEngine.getGame()
-                                    .getPlayers(), new UserMessage().userId(userId)
-                                    .variant(UserMessage.VariantEnum.ERROR)
-                                    .message("Er is verzaakt in slag " + correctedSlagNr + " door speler " + playerNr));
-                                atLeastOne.set(true);
+                                return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr)).map((player) -> {
+                                    sseEmitterRepository.sendMessage(gameEngine.getGame()
+                                        .getPlayers(), new UserMessage().userId(userId)
+                                        .variant(UserMessage.VariantEnum.ERROR)
+                                        .message("Er is verzaakt in slag " + correctedSlagNr + " door " + player.getDisplayName()));
+                                    return player;
+                                });
+                            } else {
+                                return Mono.empty();
                             }
-                        });
+                        })
+                        .next()
+                        .doOnNext(ineger -> {
+                            log.info("Got number {}", ineger);
+                        })
+                        .switchIfEmpty(Mono.fromRunnable(() -> {
+                            sseEmitterRepository.sendMessage(gameEngine.getGame()
+                                .getPlayers(), new UserMessage().userId(userId)
+                                .variant(UserMessage.VariantEnum.INFO)
+                                .message("Er is niet verzaakt in slag " + correctedSlagNr));
 
-                    if (!atLeastOne.get()) {
-                        sseEmitterRepository.sendMessage(gameEngine.getGame()
-                            .getPlayers(), new UserMessage().userId(userId)
-                            .variant(UserMessage.VariantEnum.INFO)
-                            .message("Er is niet verzaakt in slag " + correctedSlagNr));
-                    }
-
-                    return Mono.just(gameEngine);
-
-                })
-                .then();
+                        }))
+                        .then();
+                });
         }
     }
 
