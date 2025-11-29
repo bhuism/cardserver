@@ -71,10 +71,6 @@ public final class MySseEmitter {
                     log.info("close() failure");
                 }
 
-                if (emitResult.isSuccess()) {
-                    log.info("close() isSuccess");
-                }
-
             } catch (Throwable t) {
                 log.error("", t);
             } finally {
