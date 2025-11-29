@@ -351,15 +351,11 @@ public class GameServiceImpl implements GameService {
                             }
                         })
                         .next()
-                        .doOnNext(ineger -> {
-                            log.info("Got number {}", ineger);
-                        })
                         .switchIfEmpty(Mono.fromRunnable(() -> {
                             sseEmitterRepository.sendMessage(gameEngine.getGame()
                                 .getPlayers(), new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.INFO)
                                 .message("Er is niet verzaakt in slag " + correctedSlagNr));
-
                         }))
                         .then();
                 });
