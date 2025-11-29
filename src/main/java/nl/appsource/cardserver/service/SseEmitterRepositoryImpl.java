@@ -230,11 +230,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(userToOpenApiConverter::convert)
             .map(MySseEmitter::createServerSentEvent);
 
-        final Flux<ServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId)
+        final Flux<ServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
             .map(gameToOpenApiConverter::convert)
             .map(MySseEmitter::createServerSentEvent);
 
-        final Flux<ServerSentEvent<?>> booms = boomRepository.findByUserId(userId)
+        final Flux<ServerSentEvent<?>> booms = boomRepository.findByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
             .map(MySseEmitter::createServerSentEvent);
 

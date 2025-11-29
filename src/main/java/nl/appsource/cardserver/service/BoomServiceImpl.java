@@ -66,6 +66,6 @@ public class BoomServiceImpl implements BoomService {
 
     @Override
     public Flux<Boom> getBooms(final String userId) {
-        return boomRepository.findByUserId(userId);
+        return boomRepository.findByUserId(userId, Integer.MAX_VALUE);
     }
 }

@@ -29,8 +29,8 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
         + "ORDER BY updated DESC LIMIT $limit")
     Flux<String> findGameIdsByUserId(String userId, Boolean includeBoom, Boolean includeFinished, Integer limit);
 
-    @Query("#{#n1ql.selectEntity}  WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT 100")
-    Flux<Game> findGamesByUserId(String userId);
+    @Query("#{#n1ql.selectEntity}  WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit")
+    Flux<Game> findGamesByUserId(String userId, Integer limit);
 
     @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
     Mono<Game> findByUserIdAndGameId(String userId, String gameId);
