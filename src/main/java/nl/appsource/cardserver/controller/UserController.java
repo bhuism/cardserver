@@ -141,7 +141,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> reloadUser(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} reload() userId={} gameId={}", exchange.getRequest()
+            .doOnNext((user) -> log.info("{} reloadUser() userId={} gameId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId(), gameId))
             .flatMap(user -> userService.reload(appIdentifier, user.getId(), gameId)
                 .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()

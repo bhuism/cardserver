@@ -58,7 +58,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> playCard(final UUID appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} playCard() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .doOnNext((user) -> log.info("{} playCard() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
             .flatMap(user -> playCardMono.map(PlayCard::getCard)
                 .map(GameToOpenApiConverter::convertCard)
                 .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.HUMAN_PLAY_CARD, gameId).setCard(playCard)))
@@ -81,7 +81,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<GetGames200Response>> getGames(final UUID appIdentifier, final Optional<Boolean> boom, final Optional<Boolean> finished, final Optional<Integer> limit, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} getGames() userId={} boom={} finished={}", exchange.getRequest().getRemoteAddress(), userId, boom, finished))
+            .doOnNext((user) -> log.info("{} getGames() userId={} boom={} finished={}", exchange.getRequest().getRemoteAddress(), user.getId(), boom, finished))
             .flatMap(user -> gameService.getGames(user.getId(), boom.orElse(true), finished.orElse(true), limit.orElse(10))
                 .collectList()
                 .map(games -> new GetGames200Response().games(games))
@@ -106,8 +106,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} deleteGame() userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), userId, gameId))
+            .doOnNext((user) -> log.info("{} deleteGame() userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), user.getId(), gameId))
             .flatMap(user -> gameService.deleteGame(user.getId(), gameId)
                 .defaultIfEmpty(false)
                 .map(deleted -> deleted
@@ -156,8 +156,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> reloadGame(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} reload() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
-            .flatMap(userId -> gameService.reload(appIdentifier, userId.getId(), gameId))
+            .doOnNext((user) -> log.info("{} reloadGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
+            .flatMap(user -> gameService.reload(appIdentifier, user.getId(), gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -174,7 +174,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> claimVerzaken(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((userId) -> log.info("{} claimRoem() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameId))
+            .doOnNext((user) -> log.info("{} claimVerzaken() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
             .flatMap(user -> gameService.claimVerzaken(appIdentifier, user.getId(), gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
