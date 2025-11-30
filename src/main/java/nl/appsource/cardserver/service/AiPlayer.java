@@ -39,7 +39,7 @@ public record AiPlayer(GameEngine gameEngine) {
         final List<Card> currentTrick = gameEngine.getTrickCards(gameEngine.calcTricksPlayed());
 
         if (currentTrick.isEmpty()) {
-            return playAsLeader(hand);
+            return playAsLeader(userId, hand);
         } else {
             return playAsFollower(userId, hand, currentTrick, getHighestCardInTrick(currentTrick));
         }
@@ -48,13 +48,24 @@ public record AiPlayer(GameEngine gameEngine) {
     /**
      * Logic for when the AI is the first to play in a trick.
      */
-    private Card playAsLeader(final Hand hand) {
+    private Card playAsLeader(final String userId, final Hand hand) {
 
-        log.info("playAsLeader {}", hand.cards);
+        log.info("playAsLeader for user: {} with hand: {}", userId, hand.cards);
 
-        final Suit trumpSuit = gameEngine.getGame()
-            .getTrump();
+        // New Strategy: If partner is "gegaan", lead with a trump to support them.
+        final String partnerId = gameEngine.getPartner(userId);
+        final int partnerIndex = gameEngine.getGame().getPlayers().indexOf(partnerId);
+        final Boolean partnerSaidGo = gameEngine.getGame().getSay().getOrDefault(partnerIndex, false);
+
+        final Suit trumpSuit = gameEngine.getGame().getTrump();
         final List<Card> trumpCards = hand.ofSuit(trumpSuit);
+
+        if (Boolean.TRUE.equals(partnerSaidGo) && !trumpCards.isEmpty()) {
+            log.info("Partner ({}) is 'gegaan', leading with highest trump.", partnerId);
+            return trumpCards.stream()
+                .max(this::compareKlaverjassenCards)
+                .orElseThrow(); // Safe, as trumpCards is not empty
+        }
 
         // Strategy 1: "Trump hunting". If you have a strong trump suit, lead a high trump
         // to exhaust the opponents' trumps.
