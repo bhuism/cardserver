@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
@@ -54,6 +55,9 @@ public class GameControllerTests {
 
     @MockitoBean
     private GameRepository gameRepository;
+
+    @MockitoBean
+    private FeedbackRepository feedbackRepository;
 
     @Test
     @WithMockUser(username = "user-abc")

@@ -1,6 +1,7 @@
 package nl.appsource.cardserver;
 
 import nl.appsource.cardserver.repository.BoomRepository;
+import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ public class HttpRequestTests {
 
     @MockitoBean
     private BoomRepository boomRepository;
+
+    @MockitoBean
+    private FeedbackRepository feedbackRepository;
 
     @Test
     void greetingShouldReturnDefaultMessage() {

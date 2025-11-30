@@ -10,6 +10,25 @@ servers:
     description: Klavers Jassen Root
 
 paths:
+  /feedback:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+              required:
+                - message
+      responses:
+        "200":
+          description: ok
   /boom:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
