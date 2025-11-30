@@ -422,10 +422,8 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     @Override
     public Mono<GameEngine> closeLastTrick() {
-        if (this.getGame()
-            .getLastTrickOpen()) {
-            this.getGame()
-                .setLastTrickOpen(false);
+        if (this.getGame().getLastTrickOpen()) {
+            this.getGame().setLastTrickOpen(false);
             return Mono.just(this);
         } else {
             return Mono.empty();

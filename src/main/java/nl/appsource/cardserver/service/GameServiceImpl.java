@@ -192,32 +192,34 @@ public class GameServiceImpl implements GameService {
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
         synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
-            eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId()
-                .equals(gameId));
             log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
+            eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
                 .map(GameEngineImpl::new)
                 .filter(gameEngine -> !gameEngine.isCompleted())
-                .flatMap(gameEngine -> switch (gameEventType) {
-                    case AI_SAY -> catchException(gameEngine::sayAi);
-                    case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
-                    case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
-                    case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
-                    case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
-                    case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
-                    case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
-                })
-                .doOnNext(gameEngine -> gameEngine.getGame().setUpdated(Instant.now()))
-                .flatMap(gameEngine -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
-//                .doOnNext(gameEngine -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
-                .subscribe(this::scheduleNext, throwable -> {
-                    sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
-                        .variant(UserMessage.VariantEnum.ERROR)
-                        .message(throwable.getClass()
-                            .getName() + ":" + throwable.getMessage()));
-                });
+                .flatMap(gameEngine -> {
 
+                    final Mono<GameEngine> result =  switch (gameEventType) {
+                        case AI_SAY -> catchException(() -> gameEngine.sayAi());
+                        case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
+                        case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
+                        case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
+                        case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
+                        case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+                        case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
+                    };
+
+                    return result.doOnNext(_unused -> gameEngine.getGame().setUpdated(Instant.now()))
+                        .flatMap(_unused -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
+                        .doOnError(throwable -> {
+                            sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
+                                .variant(UserMessage.VariantEnum.ERROR)
+                                .message(throwable.getClass()
+                                    .getName() + ":" + throwable.getMessage()));
+                        })
+                        .doFinally((_unused) -> this.scheduleNext(gameEngine));
+                });
         }
     }
 
