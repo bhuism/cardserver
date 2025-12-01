@@ -219,7 +219,7 @@ public class GameServiceImpl implements GameService {
                         })
                         .doFinally((_unused) -> this.scheduleNext(gameEngine));
                 })
-                .subscribe()
+                .subscribe();
         }
     }
 
