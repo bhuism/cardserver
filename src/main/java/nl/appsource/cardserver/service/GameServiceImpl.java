@@ -201,7 +201,7 @@ public class GameServiceImpl implements GameService {
                 .flatMap(gameEngine -> {
 
                     final Mono<GameEngine> result = switch (gameEventType) {
-                        case AI_SAY -> catchException(() -> gameEngine.sayAi());
+                        case AI_SAY -> catchException(gameEngine::sayAi);
                         case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
                         case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
                         case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
