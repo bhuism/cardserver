@@ -77,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "./game.yaml#/components/schemas/Game"
+                $ref: "#/components/schemas/Game"
   /boom/{boomId}:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
@@ -417,8 +417,43 @@ paths:
       responses:
         "200":
           description: ok
-  /calcAiCard:
+  /ai/createGame:
     post:
+      tags:
+        - aiapi
+      operationId: aiCreateGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                playerCards:
+                  type: array
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Card"
+                trumpSuit:
+                  $ref: "#/components/schemas/Suit"
+                gameVariant:
+                  $ref: '#/components/schemas/GameVariant'
+              required:
+                - playerCards
+                - trumpSuit
+                - gameVariant
+      responses:
+        "200":
+          description: Boomresponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
+  /ai/caldAiCard:
+    post:
+      tags:
+        - aiapi
       operationId: calcAiCard
       requestBody:
         required: true
@@ -430,13 +465,13 @@ paths:
                 currentTrick:
                   type: array
                   items:
-                    $ref: "./game.yaml#/components/schemas/Card"
+                    $ref: "#/components/schemas/Card"
                 trumpSuit:
-                  $ref: "./game.yaml#/components/schemas/Suit"
+                  $ref: "#/components/schemas/Suit"
                 hand:
                   type: array
                   items:
-                    $ref: "./game.yaml#/components/schemas/Card"
+                    $ref: "#/components/schemas/Card"
                 gameVariant:
                   $ref: '#/components/schemas/GameVariant'
               required:
@@ -450,7 +485,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "./game.yaml#/components/schemas/Card"
+                $ref: "#/components/schemas/Card"
 components:
   requestBodies:
     sayRequest:
@@ -477,6 +512,109 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/postMessage"
+  parameters:
+    AppIdentifier:
+      name: App-Identifier
+      in: header
+      schema:
+        type: string
+        format: uuid
+      required: true
+    gameId:
+      name: gameId
+      in: path
+      schema:
+        type: string
+      required: true
+    boomId:
+      name: boomId
+      in: path
+      schema:
+        type: string
+      required: true
+    userId:
+      name: userId
+      in: path
+      schema:
+        type: string
+      required: true
+    multipleUserId:
+      name: userIds
+      in: path
+      schema:
+        type: array
+        items:
+          type: string
+      required: true
+  securitySchemes:
+    openId:
+      type: openIdConnect
+      scheme: bearer
+      bearerFormat: JWT
+      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+  responses:
+    GameResponse:
+      description: a game
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Game"
+    UserResponse:
+      description: a user
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+    GamesResponse:
+      description: all games
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              games:
+                type: array
+                items:
+                  type: string
+    UsersResponse:
+      description: users
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/User"
+    SseConnectionsResponse:
+      description: sse connnection response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/sseConnections"
+    LoginResponse:
+      description: login response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/loginResponse'
+    LoadUserResponse:
+      description: load user response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+    CreateInvitesResponse:
+      description: response for create invites
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/createInviteResponse'
+    InvitesResponse:
+      description: incoming invites response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/invitesResponse'
+
   schemas:
     Boom:
       type: object
@@ -567,7 +705,7 @@ components:
           type: string
           format: password
         user:
-          $ref: './user.yaml/#/components/schemas/User'
+          $ref: '#/components/schemas/User'
       required:
         - jwt
         - user
@@ -607,7 +745,7 @@ components:
       type: object
       properties:
         card:
-          $ref: "./game.yaml#/components/schemas/Card"
+          $ref: "#/components/schemas/Card"
       required:
         - card
     createInvite:
@@ -746,108 +884,264 @@ components:
         - auto
         - light
         - dark
-  parameters:
-    AppIdentifier:
-      name: App-Identifier
-      in: header
-      schema:
-        type: string
-        format: uuid
-      required: true
-    gameId:
-      name: gameId
-      in: path
-      schema:
-        type: string
-      required: true
-    boomId:
-      name: boomId
-      in: path
-      schema:
-        type: string
-      required: true
-    userId:
-      name: userId
-      in: path
-      schema:
-        type: string
-      required: true
-    multipleUserId:
-      name: userIds
-      in: path
-      schema:
-        type: array
-        items:
+    Game:
+      type: object
+      properties:
+        id:
           type: string
-      required: true
-  securitySchemes:
-    openId:
-      type: openIdConnect
-      scheme: bearer
-      bearerFormat: JWT
-      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
-  responses:
-    GameResponse:
-      description: a game
-      content:
-        application/json:
-          schema:
-            $ref: "./game.yaml#/components/schemas/Game"
-    UserResponse:
-      description: a user
-      content:
-        application/json:
-          schema:
-            $ref: "./user.yaml#/components/schemas/User"
-    GamesResponse:
-      description: all games
-      content:
-        application/json:
-          schema:
+          description: The unique identifier of the test
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+        creator:
+          type: string
+        dealer:
+          type: integer
+          minimum: 0
+          maximum: 3
+        playerCard:
+          type: array
+          items:
             type: object
             properties:
-              games:
-                type: array
-                items:
-                  type: string
-    UsersResponse:
-      description: users
-      content:
-        application/json:
-          schema:
+              card:
+                $ref: '#/components/schemas/Card'
+              player:
+                type: integer
+                minimum: 0
+                maximum: 3
+            required:
+              - card
+              - player
+        #        elder:
+        #          type: integer
+        #          minimum: 0
+        #          maximum: 3
+        says:
+          type: object
+          additionalProperties:
+            type: boolean
+        players:
+          type: array
+          minItems: 0
+          maxItems: 4
+          items:
+            type: string
+        turns:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+          minItems: 0
+          maxItems: 32
+        trump:
+          $ref: '#/components/schemas/Suit'
+        whosTurn:
+          type: integer
+        whoSay:
+          type: integer
+        lastTrickOpen:
+          type: boolean
+        variant:
+          $ref: '#/components/schemas/GameVariant'
+        dealCounter:
+          type: integer
+        numberOfTurns:
+          type: integer
+        isCompleted:
+          type: boolean
+        hasFullTrick:
+          type: boolean
+        tricksPlayed:
+          type: integer
+        iedereenPast:
+          type: boolean
+        niemandGezegd:
+          type: boolean
+        geenKaartGespeeld:
+          type: boolean
+        huidigeTafelKaarten:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+        trickPoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/NorthSouthNumber"
+        allPoints:
+          $ref: "#/components/schemas/NorthSouthNumber"
+        trickRoem:
+          type: array
+          items:
+            $ref: "#/components/schemas/NorthSouthNumber"
+        allRoem:
+          $ref: "#/components/schemas/NorthSouthNumber"
+        winner:
+          $ref: "#/components/schemas/Teams"
+        erIsGegaan:
+          type: boolean
+        elder:
+          type: integer
+        elderTeam:
+          $ref: "#/components/schemas/Teams"
+        trickWinnerPlayer:
+          type: array
+          items:
+            type: integer
+        trickWinnerCard:
+          type: array
+          items:
+            $ref: "#/components/schemas/Card"
+        playerPoints:
+          type: array
+          items:
+            type: integer
+        heeftGepast:
+          type: array
+          items:
+            type: integer
+        roemGeklopt:
+          type: array
+          items:
+            type: integer
+            uniqueItems: true
+        boomId:
+          type: string
+        verzaakt:
+          type: array
+          items:
             type: array
             items:
-              $ref: "./user.yaml#/components/schemas/User"
-    SseConnectionsResponse:
-      description: sse connnection response
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/sseConnections"
-    LoginResponse:
-      description: login response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/loginResponse'
-    LoadUserResponse:
-      description: load user response
-      content:
-        application/json:
-          schema:
-            $ref: "./user.yaml#/components/schemas/User"
-    CreateInvitesResponse:
-      description: response for create invites
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/createInviteResponse'
-    InvitesResponse:
-      description: incoming invites response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/invitesResponse'
+              type: integer
+              uniqueItems: true
+      required:
+        - id
+        - trump
+        - created
+        - updated
+        - creator
+        - dealer
+        - playerCard
+        - ended
+        - players
+        - turns
+        - trump
+        - lastTrickOpen
+        - variant
+        - dealCounter
+        - numberOfTurns
+        - isCompleted
+        - hasFullTrick
+        - tricksPlayed
+        - iedereenPast
+        - niemandGezegd
+        - geenKaartGespeeld
+        - huidigeTafelKaarten
+        - trickPoints
+        - allPoints
+        - trickRoem
+        - allRoem
+        - erIsGegaan
+        - trickWinnerPlayer
+        - trickWinnerCard
+        - playerPoints
+        - heeftGepast
+        - roemGeklopt
+        - verzaakt
+    Suit:
+      type: string
+      enum:
+        - Clubs
+        - Diamonds
+        - Hearts
+        - Spades
+    Teams:
+      type: string
+      enum:
+        - NothSouth
+        - EastWest
+    NorthSouthNumber:
+      type: object
+      properties:
+        northSouth:
+          type: integer
+          default: 0
+        eastWest:
+          type: integer
+          default: 0
+      required:
+        - northSouth
+        - eastWest
+    Card:
+      type: string
+      enum:
+        - Ah
+        - Kh
+        - Qh
+        - Jh
+        - Th
+        - Nh
+        - Eh
+        - Sh
+        - Ac
+        - Kc
+        - Qc
+        - Jc
+        - Tc
+        - Nc
+        - Ec
+        - Sc
+        - Ad
+        - Kd
+        - Qd
+        - Jd
+        - Td
+        - Nd
+        - Ed
+        - Sd
+        - As
+        - Ks
+        - Qs
+        - Js
+        - Ts
+        - Ns
+        - Es
+        - Ss
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        updated:
+          type: string
+          format: date-time
+        displayName:
+          type: string
+        photoURL:
+          type: string
+        online:
+          type: boolean
+        skipAnimation:
+          type: boolean
+        gameVariant:
+          $ref: "#/components/schemas/GameVariant"
+        screenOrientation:
+          $ref: "#/components/schemas/ScreenOrientation"
+        theme:
+          $ref: "#/components/schemas/Theme"
+      required:
+        - id
+        - updated
+        - displayName
+        - photoURL
+        - online
+        - skipAnimation
+        - gameVariant
+        - screenOrientation
+        - theme
+
 security:
   - bearerAuth:
       - openid

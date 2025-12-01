@@ -62,7 +62,6 @@ public class GameController extends GenericController implements GamesApi, V1Api
             .flatMap(user -> playCardMono.map(PlayCard::getCard)
                 .map(GameToOpenApiConverter::convertCard)
                 .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.HUMAN_PLAY_CARD, gameId).setCard(playCard)))
-
                 .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                 .defaultIfEmpty(ResponseEntity.notFound().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

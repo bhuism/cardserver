@@ -76,9 +76,9 @@ public class WebfluxSecurityConfig {
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
-                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json")
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json")
                     .permitAll()
-                    .pathMatchers(HttpMethod.POST, "/calcAiCard")
+                    .pathMatchers(HttpMethod.POST, "/ai/**")
                     .permitAll()
                     .anyExchange()
                     .denyAll()

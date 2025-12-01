@@ -31,7 +31,8 @@ import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
 @Slf4j
 public record GameEngineImpl(Game game) implements GameEngine {
 
-    public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9");
+
+    public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9", "2ab5fd69a2796c4740380cd98eba");
 
     private static final Comparator<? super Card> TRUMP_SORTER = comparing((Card o) -> o.rank.trumpValue).thenComparing(o -> -o.rank.ordinal());
 

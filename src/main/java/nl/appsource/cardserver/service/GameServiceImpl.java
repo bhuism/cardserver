@@ -254,7 +254,6 @@ public class GameServiceImpl implements GameService {
     @Override
     public void scheduleGameEvent(final ScheduledGameEvent scheduledGameEvent) {
         eventQueue.add(scheduledGameEvent);
-        this.processDueEvents();
     }
 
     public static Map<Card, Integer> randomCards() {
