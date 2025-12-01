@@ -5,9 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.service.AiPlayerNew;
+import nl.appsource.cardserver.service.GameEngine;
+import nl.appsource.cardserver.service.GameEngineImpl;
 import org.openapitools.api.AiApi;
 import org.openapitools.model.AiCreateGameRequest;
+import org.openapitools.model.AiPlayCardRequest;
 import org.openapitools.model.CalcAiCardRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCard;
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertSuit;
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertToModel;
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
@@ -33,9 +38,9 @@ public class CalcAiCardController implements AiApi {
 
     private static final Random RAND = new SecureRandom();
 
-    private final GameController gameController;
-
     private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final GameRepository gameRepository;
 
     @Override
     public Mono<ResponseEntity<org.openapitools.model.Game>> aiCreateGame(final Mono<AiCreateGameRequest> aiCreateGameRequestArg, final ServerWebExchange exchange) {
@@ -59,6 +64,20 @@ public class CalcAiCardController implements AiApi {
             })
             .map(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
+    }
+
+
+    @Override
+    public Mono<ResponseEntity<org.openapitools.model.Game>> aiPlayCard(final Mono<AiPlayCardRequest> aiPlayCardRequestArg, final ServerWebExchange exchange) {
+
+        return aiPlayCardRequestArg
+            .flatMap(aiPlayCardRequest -> gameRepository.findById(aiPlayCardRequest.getGameId())
+                .map(GameEngineImpl::new)
+                .flatMap(gameEngine -> gameEngine.playCard(aiPlayCardRequest.getPlayerId(), convertCard(aiPlayCardRequest.getCard())))
+                .map(GameEngine::getGame))
+            .mapNotNull(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok);
+
     }
 
     @Override

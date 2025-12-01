@@ -440,6 +440,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Game"
+  /ai/playCard:
+    post:
+      tags:
+        - aiapi
+      operationId: aiPlayCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                playerId:
+                  type: string
+                card:
+                  $ref: '#/components/schemas/Card'
+              required:
+                - gameId
+                - playerId
+                - card
+      responses:
+        "200":
+          description: Boomresponse
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Game"
   /ai/caldAiCard:
     post:
       tags:
