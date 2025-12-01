@@ -77,9 +77,9 @@ public class CalcAiCardController implements AiApi {
                     .flatMap(gameEngine -> gameEngine.playCard(aiPlayCardRequest.getPlayerId(), convertCard(aiPlayCardRequest.getCard())))
                     .map(GameEngine::getGame);
             })
+            .flatMap(gameRepository::save)
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
-
     }
 
     @Override
