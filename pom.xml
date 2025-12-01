@@ -119,6 +119,11 @@
             <version>5.30.3</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>webjars-locator-core</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
