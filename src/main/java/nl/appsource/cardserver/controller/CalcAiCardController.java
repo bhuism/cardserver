@@ -69,12 +69,14 @@ public class CalcAiCardController implements AiApi {
 
     @Override
     public Mono<ResponseEntity<org.openapitools.model.Game>> aiPlayCard(final Mono<AiPlayCardRequest> aiPlayCardRequestArg, final ServerWebExchange exchange) {
-
         return aiPlayCardRequestArg
-            .flatMap(aiPlayCardRequest -> gameRepository.findById(aiPlayCardRequest.getGameId())
-                .map(GameEngineImpl::new)
-                .flatMap(gameEngine -> gameEngine.playCard(aiPlayCardRequest.getPlayerId(), convertCard(aiPlayCardRequest.getCard())))
-                .map(GameEngine::getGame))
+            .flatMap(aiPlayCardRequest -> {
+                log.info("aiPlayCard() gameId={} playerId={} card={}", aiPlayCardRequest.getGameId(), aiPlayCardRequest.getPlayerId(), aiPlayCardRequest.getCard());
+                return gameRepository.findById(aiPlayCardRequest.getGameId())
+                    .map(GameEngineImpl::new)
+                    .flatMap(gameEngine -> gameEngine.playCard(aiPlayCardRequest.getPlayerId(), convertCard(aiPlayCardRequest.getCard())))
+                    .map(GameEngine::getGame);
+            })
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
 
