@@ -200,7 +200,7 @@ public class GameServiceImpl implements GameService {
                 .filter(gameEngine -> !gameEngine.isCompleted())
                 .flatMap(gameEngine -> {
 
-                    final Mono<GameEngine> result =  switch (gameEventType) {
+                    final Mono<GameEngine> result = switch (gameEventType) {
                         case AI_SAY -> catchException(() -> gameEngine.sayAi());
                         case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
                         case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
@@ -210,8 +210,7 @@ public class GameServiceImpl implements GameService {
                         case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
                     };
 
-                    return result.doOnNext(_unused -> gameEngine.getGame().setUpdated(Instant.now()))
-                        .flatMap(_unused -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
+                    return result.doOnNext(_unused -> gameEngine.getGame().setUpdated(Instant.now())).flatMap(_unused -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
                         .doOnError(throwable -> {
                             sseEmitterRepository.sendMessage(singleton(userId), new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
@@ -219,11 +218,13 @@ public class GameServiceImpl implements GameService {
                                     .getName() + ":" + throwable.getMessage()));
                         })
                         .doFinally((_unused) -> this.scheduleNext(gameEngine));
-                });
+                })
+                .subscribe();
         }
     }
 
     private void scheduleNext(final GameEngine gameEngine) {
+
         if (gameEngine.isCompleted()) {
             return;
         }
