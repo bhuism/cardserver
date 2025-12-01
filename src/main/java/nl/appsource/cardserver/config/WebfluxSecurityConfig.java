@@ -76,14 +76,20 @@ public class WebfluxSecurityConfig {
 //            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
-                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**")
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
                     .permitAll()
                     .pathMatchers(HttpMethod.POST, "/ai/**")
                     .permitAll()
-                    .anyExchange()
-                    .denyAll()
             );
         return http.build();
+    }
+
+    @Bean
+    @Order(4)
+    public SecurityWebFilterChain securityFilterChainDenyAll(final ServerHttpSecurity http) {
+        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .authorizeExchange(exchanges -> exchanges.anyExchange().denyAll())
+            .build();
     }
 
     public CorsConfigurationSource getPublicCorsConfigurationSource() {
