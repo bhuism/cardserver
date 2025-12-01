@@ -37,6 +37,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import static java.lang.Math.max;
+import static java.lang.Runtime.getRuntime;
 import static java.util.Collections.shuffle;
 import static java.util.Collections.singleton;
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
@@ -59,7 +61,8 @@ public class GameServiceImpl implements GameService {
 
     private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(max(1, getRuntime().availableProcessors() - 1));
+
     private final UserRepository userRepository;
 
     boolean stop = false;
@@ -170,7 +173,7 @@ public class GameServiceImpl implements GameService {
         Mono<GameEngine> run();
     }
 
-    public synchronized void processDueEvents() {
+    private void processDueEvents() {
         long currentTime = System.currentTimeMillis();
         while (!eventQueue.isEmpty() && eventQueue.peek()
             .getExecutionTime() <= currentTime) {
