@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.AiPlayerNew;
 import org.openapitools.api.AiApi;
 import org.openapitools.model.AiCreateGameRequest;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertSuit;
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertToModel;
@@ -28,12 +31,15 @@ import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
 @RequiredArgsConstructor
 public class CalcAiCardController implements AiApi {
 
+    private static final Random RAND = new SecureRandom();
+
     private final GameController gameController;
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     @Override
     public Mono<ResponseEntity<org.openapitools.model.Game>> aiCreateGame(final Mono<AiCreateGameRequest> aiCreateGameRequestArg, final ServerWebExchange exchange) {
+        log.info("aiCreateGame()");
         return aiCreateGameRequestArg.map(aiCreateGameRequest -> {
                 final Game game = new Game();
                 game.setId(idGen(20));
@@ -45,7 +51,7 @@ public class CalcAiCardController implements AiApi {
                 game.setSay(new HashMap<>());
                 game.setTurns(new ArrayList<>());
                 game.setPlayerCard(randomCards());
-                game.setTrump(convertSuit(aiCreateGameRequest.getTrumpSuit()));
+                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
                 game.setLastTrickOpen(false);
                 game.setGameVariant(aiCreateGameRequest.getGameVariant());
                 game.setDealCounter(0);
@@ -57,6 +63,7 @@ public class CalcAiCardController implements AiApi {
 
     @Override
     public Mono<ResponseEntity<org.openapitools.model.Card>> calcAiCard(final Mono<CalcAiCardRequest> calcAiCardRequestArg, final ServerWebExchange exchange) {
+        log.info("calcAiCard()");
         return calcAiCardRequestArg
             .doOnNext((calcAiCardRequest) -> log.info("{} calcAiCard()", exchange.getRequest().getRemoteAddress()))
             .map(calcAiCardRequest -> new AiPlayerNew(convertToModel(calcAiCardRequest.getCurrentTrick()), convertSuit(calcAiCardRequest.getTrumpSuit()), AiPlayerNew.Hand.from(convertToModel(calcAiCardRequest.getHand())), calcAiCardRequest.getGameVariant()).calcAiCard())

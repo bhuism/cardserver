@@ -429,19 +429,9 @@ paths:
             schema:
               type: object
               properties:
-                playerCards:
-                  type: array
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Card"
-                trumpSuit:
-                  $ref: "#/components/schemas/Suit"
                 gameVariant:
                   $ref: '#/components/schemas/GameVariant'
               required:
-                - playerCards
-                - trumpSuit
                 - gameVariant
       responses:
         "200":
