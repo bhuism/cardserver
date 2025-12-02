@@ -86,9 +86,9 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<User>>> getUsers(final UUID appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final UUID appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} getUsers() user.getId()={}", exchange.getRequest().getRemoteAddress(), user.getId()))
+            .doOnNext((user) -> log.info("{} getUserByIds() user.getId()={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .map((_user) -> ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }

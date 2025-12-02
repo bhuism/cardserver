@@ -313,7 +313,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     get:
-      operationId: getUsers
+      operationId: getUserByIds
       parameters:
         - $ref: "#/components/parameters/multipleUserId"
       responses:
