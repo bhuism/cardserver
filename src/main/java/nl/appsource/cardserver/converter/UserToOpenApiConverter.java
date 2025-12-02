@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.converter;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -16,6 +17,7 @@ public class UserToOpenApiConverter implements Converter<User, org.openapitools.
     private SseEmitterRepository sseEmitterRepository;
 
     @Override
+    @NonNull
     public org.openapitools.model.User convert(final User source) {
 
         if (sseEmitterRepository == null) {

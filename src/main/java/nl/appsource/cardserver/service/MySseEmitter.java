@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Boom;
@@ -12,20 +13,18 @@ import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.User;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 
-import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @RequiredArgsConstructor
 @Getter
 public final class MySseEmitter {
 
-    private final String userId;
+    //    private final String userId;
 
     private final Instant created = Instant.now();
 
@@ -45,144 +44,164 @@ public final class MySseEmitter {
 
     private int pongSentCount = 0;
 
-    private Sinks.Many<ServerSentEvent<?>> unicastSink = Sinks.many().unicast().onBackpressureBuffer();
-
-    public void message(final UserMessage userMessage) {
-        internalSend(createServerSentEvent("messageEvent", new MessageEvent().message(userMessage)));
+    public static MyServerSentEvent createMessageEvent(final UUID appIdentifier, final String userId, final UserMessage userMessage) {
+        return createServerSentEvent(appIdentifier, userId, "messageEvent", new MessageEvent().message(userMessage));
     }
 
-    private void emitNext(final ServerSentEvent<?> serverSentEvent) {
+//    private void emitNext(final ServerSentEvent<?> serverSentEvent) {
+//
+//        //log.info("tryEmitNext() sending id: {} event '{}'", serverSentEvent.id(), serverSentEvent.event());
+//
+//        if (unicastSink != null) {
+//            unicastSink.emitNext(serverSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(100)));
+//        } else {
+//            log.warn("unicastSink == null");
+//        }
+//    }
+//
+//    public void close() {
+//        if (unicastSink != null) {
+//            try {
+//                final Sinks.EmitResult emitResult = this.unicastSink.tryEmitComplete();
+//
+//                if (emitResult.isFailure()) {
+//                    log.info("close() failure");
+//                }
+//
+//            } catch (Throwable t) {
+//                log.error("", t);
+//            } finally {
+//                unicastSink = null;
+//            }
+//        }
+//    }
 
-        //log.info("tryEmitNext() sending id: {} event '{}'", serverSentEvent.id(), serverSentEvent.event());
-
-        if (unicastSink != null) {
-            unicastSink.emitNext(serverSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(100)));
-        } else {
-            log.warn("unicastSink == null");
-        }
+    public static MyServerSentEvent createPingEvent(final Long counter) {
+        return createServerSentEvent(null, null, "ping");
     }
 
-    public void close() {
-        if (unicastSink != null) {
-            try {
-                final Sinks.EmitResult emitResult = this.unicastSink.tryEmitComplete();
-
-                if (emitResult.isFailure()) {
-                    log.info("close() failure");
-                }
-
-            } catch (Throwable t) {
-                log.error("", t);
-            } finally {
-                unicastSink = null;
-            }
-        }
+    public static MyServerSentEvent createPongEvent(final UUID appIdentifier, final String userId) {
+        return createServerSentEvent(appIdentifier, userId, "pong");
     }
 
-    private ServerSentEvent<?> createPingEvent() {
-        return createServerSentEvent("ping");
+//    private void sendPong() {
+//        this.pongSent = Instant.now();
+//        this.pongSentCount++;
+//        internalSend(createServerSentEvent("pong"));
+//    }
+//
+//    public void receivePing() {
+//        pingReceived = Instant.now();
+//        pingReceivedCount++;
+//        sendPong();
+//    }
+//
+//    public void receivePong() {
+//        pongReceived = Instant.now();
+//        pongReceivedCount++;
+//    }
+
+//    private <T> void internalSend(final ServerSentEvent<T> serverSentEvent) {
+//        if (log.isTraceEnabled()) {
+//            log.trace("internalSend() sending event '{}' data: '{}' ", serverSentEvent.event(), serverSentEvent.data());
+//        }
+//        emitNext(serverSentEvent);
+//    }
+
+    private static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final String event) {
+        return createServerSentEvent(appIdentifier, userId, event, null);
     }
 
-    private void sendPong() {
-        this.pongSent = Instant.now();
-        this.pongSentCount++;
-        internalSend(createServerSentEvent("pong"));
+    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final User user) {
+        return createServerSentEvent(appIdentifier, userId, "updateUser", user);
     }
 
-    public void receivePing() {
-        pingReceived = Instant.now();
-        pingReceivedCount++;
-        sendPong();
+    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final Game game) {
+        return createServerSentEvent(appIdentifier, userId, "updateGame", game);
     }
 
-    public void receivePong() {
-        pongReceived = Instant.now();
-        pongReceivedCount++;
+    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final Boom boom) {
+        return createServerSentEvent(appIdentifier, userId, "updateBoom", boom);
     }
 
-    private <T> void internalSend(final ServerSentEvent<T> serverSentEvent) {
-        if (log.isTraceEnabled()) {
-            log.trace("internalSend() sending event '{}' data: '{}' ", serverSentEvent.event(), serverSentEvent.data());
-        }
-        emitNext(serverSentEvent);
-    }
-
-    private static ServerSentEvent<?> createServerSentEvent(final String event) {
-        return createServerSentEvent(event, null);
-    }
-
-    public static ServerSentEvent<?> createServerSentEvent(final User user) {
-        return createServerSentEvent("updateUser", user);
-    }
-
-    public static ServerSentEvent<?> createServerSentEvent(final Game game) {
-        return createServerSentEvent("updateGame", game);
-    }
-
-    public static ServerSentEvent<?> createServerSentEvent(final Boom boom) {
-        return createServerSentEvent("updateBoom", boom);
-    }
-
-    public static ServerSentEvent<?> createServerSentEvent(final String event, final Object data) {
+    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final String event, final Object data) {
 
         final Instant now = Instant.now();
         final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
 
         //log.info("Creating sererSentEvent {} {}", id, event);
 
-        final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder().event(event).id(id);
+        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id(id);
 
         builder.data(Objects.requireNonNullElse(data, "{}"));
 
-        return builder.build();
+        return new MyServerSentEvent() {
+
+            @Override
+            public UUID getAppIdentifier() {
+                return appIdentifier;
+            }
+
+            @Override
+            public String getUserId() {
+                return userId;
+            }
+
+            @Override
+            public ServerSentEvent<@NonNull Object> getServerSentEvent() {
+                return builder.build();
+            }
+        };
     }
 
-    public void sendOnlineList(final Flux<String> onlineList) {
-        onlineList.collectList().subscribe(list -> internalSend(createServerSentEvent("online", new OnlineListEvent().onlineList(list))));
+    public static MyServerSentEvent createOnlineList(final UUID appIdentifier, final String userId, final List<String> onlineList) {
+        return createServerSentEvent(appIdentifier, userId, "online", new OnlineListEvent().onlineList(onlineList));
     }
 
-    public void sendUpdateFriends() {
-        internalSend(createServerSentEvent("updateFriends"));
+    public static MyServerSentEvent createUpdateFriends(final UUID appIdentifier, final String userId) {
+        return createServerSentEvent(appIdentifier, userId, "updateFriends");
     }
 
-    public void sendUpdateGames() {
-        internalSend(createServerSentEvent("updateGames"));
+    public static MyServerSentEvent createUpdateGames(final UUID appIdentifier, final String userId) {
+        return createServerSentEvent(appIdentifier, userId, "updateGames");
     }
 
-    public void sendUpdateBooms() {
-        internalSend(createServerSentEvent("updateBooms"));
+    public static MyServerSentEvent createUpdateBooms(final UUID appIdentifier, final String userId) {
+        return createServerSentEvent(appIdentifier, userId, "updateBooms");
     }
 
-    public void newGame(final Game game) {
-        internalSend(createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId())));
+    public static MyServerSentEvent createNewGame(final UUID appIdentifier, final String userId, final Game game) {
+        return createServerSentEvent(appIdentifier, userId, "newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
     }
 
-    public void newFriend(final String newFriendId) {
-        internalSend(createServerSentEvent("newFriend", new NewFriendEvent().newFriendId(newFriendId)));
+    public static MyServerSentEvent newFriend(final UUID appIdentifier, final String userId, final String newFriendId) {
+        return createServerSentEvent(appIdentifier, userId, "newFriend", new NewFriendEvent().newFriendId(newFriendId));
     }
 
-    public Flux<ServerSentEvent<?>> subscribe() {
-        this.pingSent = Instant.now();
-        return Flux.just(createPingEvent(), createPingEvent(), createPingEvent()).mergeWith(unicastSink.asFlux()).mergeWith(Flux.interval(Duration.ofSeconds(15)).map(aLong -> createPingEvent()).doOnNext((_a) -> {
-            this.pingSent = Instant.now();
-            this.pingSentCount++;
-        }));
-    }
+//    public Flux<ServerSentEvent<?>> subscribe() {
+//        this.pingSent = Instant.now();
+//        return Flux.just(createPingEvent(), createPingEvent(), createPingEvent()).mergeWith(unicastSink.asFlux())
+//            .mergeWith(Flux.interval(Duration.ofSeconds(15))
+//                .map(aLong -> createPingEvent()).doOnNext((_a) -> {
+//            this.pingSent = Instant.now();
+//            this.pingSentCount++;
+//        }));
+//    }
 
-    public void sendUpdateGame(final Game game) {
-        internalSend(createServerSentEvent(game));
-    }
+//    public void sendUpdateGame(final Game game) {
+//        internalSend(createServerSentEvent(game));
+//    }
+//
+//    public void sendUpdateUser(final User user) {
+//        internalSend(createServerSentEvent(user));
+//    }
+//
+//    public static void sendupdateBoom(final Boom boom) {
+//        internalSend(createServerSentEvent(boom));
+//    }
 
-    public void sendUpdateUser(final User user) {
-        internalSend(createServerSentEvent(user));
-    }
-
-    public void sendupdateBoom(final Boom boom) {
-        internalSend(createServerSentEvent(boom));
-    }
-
-    public Disposable sendFlux(final Flux<ServerSentEvent<?>> flux) {
-        return flux.subscribe(this::emitNext);
-    }
+//    public Disposable sendFlux(final Flux<ServerSentEvent<?>> flux) {
+//        return flux.subscribe(this::emitNext);
+//    }
 
 }

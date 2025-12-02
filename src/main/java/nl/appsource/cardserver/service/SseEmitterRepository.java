@@ -1,11 +1,11 @@
 package nl.appsource.cardserver.service;
 
+import lombok.NonNull;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
-import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.Collection;
@@ -21,7 +21,7 @@ public interface SseEmitterRepository {
 
     void sendAppIdentifierMessage(UUID appIdentifier, UserMessage userMessage);
 
-    Flux<ServerSentEvent<?>> subscribe(UUID appIdentifier, String userId, String remoteAddress);
+    Flux<@NonNull MyServerSentEvent> subscribe(UUID appIdentifier, String userId, String remoteAddress);
 
     void ping(UUID appIdentifier);
 
@@ -39,9 +39,9 @@ public interface SseEmitterRepository {
 
     void updateUserForId(UUID appIdentifier, User user);
 
-    void updateUser(User user);
+    void updateUserInvites(User user);
 
-    void updateBoom(Boom boom);
+    void updateBoomPlayers(Boom boom);
 
     void newGame(Game game);
 
@@ -49,9 +49,9 @@ public interface SseEmitterRepository {
 
     void newFriend(String userId, String friendId);
 
-    void sendFlux(UUID appIdentifier, String userId);
+    void reloadCache(UUID appIdentifier, String userId);
 
-    Boolean validate(UUID appIdentifier, String userId);
+//    Boolean validate(UUID appIdentifier, String userId);
 
     SseConnections getDebugSseConnections();
 

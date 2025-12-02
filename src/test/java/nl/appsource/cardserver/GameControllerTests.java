@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 
@@ -64,7 +63,7 @@ public class GameControllerTests {
     void getGame_whenGameNotFound_shouldReturnNotFound() {
 
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.empty());
-        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
+//        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
         final User user = new User();
         user.setId("user-abc");
@@ -112,7 +111,7 @@ public class GameControllerTests {
         mockGame.setTrump(Suit.Spades);
 
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
-        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
+//        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
         webTestClient
             // Set up a mock authenticated user for the request

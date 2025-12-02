@@ -1,7 +1,9 @@
 package nl.appsource.cardserver.controller;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -25,8 +27,8 @@ public class SubscribeController extends GenericController implements V1Api {
     }
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<?>> subscribe(final ServerWebExchange exchange, @RequestHeader(name = APP_IDENTIFIER_HEADER_NAME) final String appIdentifier) {
-        return getUserId(exchange).flatMapMany(user -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier), user.getId(), "" + exchange.getRequest().getRemoteAddress()));
+    public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final ServerWebExchange exchange, @RequestHeader(name = APP_IDENTIFIER_HEADER_NAME) final String appIdentifier) {
+        return getUserId(exchange).flatMapMany(user -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier), user.getId(), "" + exchange.getRequest().getRemoteAddress()).map(MyServerSentEvent::getServerSentEvent));
     }
 
 }
