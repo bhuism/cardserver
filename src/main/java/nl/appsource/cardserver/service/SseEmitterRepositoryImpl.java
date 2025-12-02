@@ -16,7 +16,6 @@ import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.SseConnection;
 import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The type Sse emitter repository.
@@ -56,7 +54,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final BoomRepository boomRepository;
 
-    @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
+    private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
+
     private void emittersCleaner() {
         emitters.values().removeIf(sseSession -> sseSession.getPingReceived() != null && sseSession.getPingReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))) || sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))));
     }
@@ -232,9 +231,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .anyMatch(
                 sseSession -> sseSession.getUserId().equals(userId)
                     && sseSession.getPingReceived() != null
-                    &&  sseSession.getPingReceived().isAfter(Instant.now().plus(Duration.ofSeconds(15)))
+                    &&  sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
                     && sseSession.getPongReceived() != null
-                && sseSession.getPongReceived().isAfter(Instant.now().plus(Duration.ofSeconds(15)))
+                && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
             );
     }
 
@@ -256,6 +255,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public SseConnections getDebugSseConnections() {
 
         final SseConnections getDebugSseConnections200Response = new SseConnections();
+
+        emittersCleaner();
 
         final List<SseConnection> events = emitters.entrySet()
             .stream()
@@ -279,7 +280,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         getDebugSseConnections200Response.events(events);
         getDebugSseConnections200Response.timeStamp(Instant.now());
-        getDebugSseConnections200Response.setCurrentSubscriberCount(BigDecimal.valueOf(this.mainFlux.currentSubscriberCount()));
+        getDebugSseConnections200Response.setCurrentSubscriberCount(BigDecimal.valueOf(this.mainSink.currentSubscriberCount()));
 
         return getDebugSseConnections200Response;
 
@@ -326,8 +327,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return Flux.concat(me, friends, games, booms, onlineFriendsMe, onlineFriends, Mono.just(MySseEmitter.createServerSentEvent(null, null, "hello", null)));
     }
 
-    private final Sinks.Many<@NonNull MyServerSentEvent> mainFlux = Sinks.many().multicast().onBackpressureBuffer(1024, false);
-
     @PostConstruct
     public void postStruct() {
         log.info("Creating heartbeat");
@@ -335,7 +334,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     private void send(final MyServerSentEvent myServerSentEvent) {
-        mainFlux.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000)));
+        mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000)));
     }
 
     @Override
@@ -345,7 +344,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("{} Got new subscription appIdentifier={} userId={} ", remoteAddress, appIdentifier, userId);
 
-        return mainFlux.asFlux()
+        return mainSink.asFlux()
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
 //            .doOnNext(myServerSentEvent -> {
 //                log.info("Sending message: {} appIdentifier={} userId={}", myServerSentEvent.getServerSentEvent().event(), myServerSentEvent.getAppIdentifier(), myServerSentEvent.getUserId());
@@ -381,7 +380,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void reloadCache(final UUID appIdentifier, final String userId) {
-        mainFlux.asFlux().mergeWith(initCache(appIdentifier, userId)).subscribe();
+        initCache(appIdentifier, userId).subscribe(
+            msg -> mainSink.emitNext(msg, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
+            err -> mainSink.emitError(err, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
+            () -> { /* Don't close sink if you want to reuse it */ }
+        );
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendFlux(initCache(appIdentifier, userId)));
     }
 
