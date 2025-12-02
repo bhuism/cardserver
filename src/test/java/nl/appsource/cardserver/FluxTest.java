@@ -8,7 +8,7 @@ import reactor.test.StepVerifier;
 import java.util.List;
 
 @Slf4j
-public class FLuxTest {
+public class FluxTest {
 
     @Test
     void givenFlux_whenMultipleSubscribers_thenEachReceivesData() {
@@ -16,23 +16,23 @@ public class FLuxTest {
         List<Integer> outgoing = List.of(4, 5, 6, 7, 8);
 
         Flux<Integer> incomingFlux = Flux.fromIterable(incoming).doOnSubscribe(subscription -> {
-            log.info("Subscribtion onlyIncoming");
+            log.info("Subscription onlyIncoming");
         }).cache();
 
         Flux<Integer> outgoingFlux = Flux.fromIterable(outgoing).doOnSubscribe(subscription -> {
-            log.info("Subscribtion outgoingFlux");
+            log.info("Subscription outgoingFlux");
         }).cache();
 
         Flux<Integer> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).doOnSubscribe(subscription -> {
-            log.info("Subscribtion filtered onlyIncoming");
+            log.info("Subscription filtered onlyIncoming");
         }).cache();
 
         Flux<Integer> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).doOnSubscribe(subscription -> {
-            log.info("Subscribtion filtered friends");
+            log.info("Subscription filtered friends");
         }).cache();
 
         Flux<Integer> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2))).doOnSubscribe(subscription -> {
-            log.info("Subscribtion filtered onlyOutgoing");
+            log.info("Subscription filtered onlyOutgoing");
         });
 
         StepVerifier.create(onlyIncoming)

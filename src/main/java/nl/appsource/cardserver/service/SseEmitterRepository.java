@@ -59,5 +59,5 @@ public interface SseEmitterRepository {
 
 //    void eventUnSubscribe(UUID appIdentifier, Set<String> topic);
 
-//    int getSubscribtionCount(String topic);
+//    int getSubscriptionCount(String topic);
 }

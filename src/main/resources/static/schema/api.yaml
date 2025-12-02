@@ -711,11 +711,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SseConnection'
+        currentSubscriberCount:
+          type: number
         timeStamp:
           type: string
           format: date-time
       required:
         - events
+        - currentSubscriberCount
         - timeStamp
     loginResponse:
       type: object
@@ -833,7 +836,7 @@ components:
           format: date-time
         userId:
           type: string
-        appId:
+        applicationIdentifier:
           type: string
         pingReceived:
           type: string
@@ -845,25 +848,13 @@ components:
           format: date-time
         pongReceivedCount:
           type: integer
-        pingSent:
-          type: string
-          format: date-time
-        pingSentCount:
-          type: integer
-        pongSent:
-          type: string
-          format: date-time
-        pongSentCount:
-          type: integer
       required:
         - id
         - created
         - userId
-        - appId
+        - applicationIdentifier
         - pingReceivedCount
         - pongReceivedCount
-        - pingSentCount
-        - pongSentCount
     NewGameEvent:
       type: object
       properties:

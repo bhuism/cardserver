@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.controller;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -69,19 +70,18 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> ping(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<@NonNull  ResponseEntity<@NonNull Void>> ping(final UUID appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> sseEmitterRepository.ping(appIdentifier))
-            .then(just(ResponseEntity.ok()
-                .<Void>build()))
+            .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final UUID appIdentifier, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange).doOnNext((user) -> sseEmitterRepository.pong(appIdentifier))
-            .then(just(ResponseEntity.ok()
-                .<Void>build()))
+        return authorize(appIdentifier, exchange)
+            .doOnNext((user) -> sseEmitterRepository.pong(appIdentifier))
+            .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 

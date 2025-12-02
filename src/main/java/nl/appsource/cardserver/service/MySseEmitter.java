@@ -2,7 +2,6 @@ package nl.appsource.cardserver.service;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Boom;
 import org.openapitools.model.Game;
@@ -20,29 +19,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Getter
 public final class MySseEmitter {
-
-    //    private final String userId;
-
-    private final Instant created = Instant.now();
-
-    private Instant pingReceived;
-
-    private Instant pongReceived;
-
-    private Instant pingSent;
-
-    private Instant pongSent;
-
-    private int pingReceivedCount = 0;
-
-    private int pongReceivedCount = 0;
-
-    private int pingSentCount = 0;
-
-    private int pongSentCount = 0;
 
     public static MyServerSentEvent createMessageEvent(final UUID appIdentifier, final String userId, final UserMessage userMessage) {
         return createServerSentEvent(appIdentifier, userId, "messageEvent", new MessageEvent().message(userMessage));

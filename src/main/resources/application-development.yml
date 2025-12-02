@@ -1,7 +1,4 @@
 server:
-  error:
-    whitelabel:
-      enabled: false
   tomcat:
     accesslog:
       enabled: true
@@ -9,7 +6,7 @@ server:
 logging:
   level:
     ROOT: info
-#    org.springframework.security: info
+#    org.springframework: trace
     nl.appsource: debug
 management:
   endpoints:
@@ -17,6 +14,10 @@ management:
       exposure:
         include: '*'
 spring:
+  web:
+    error:
+      whitelabel:
+        enabled: false
   security:
     oauth2:
       resourceserver:
