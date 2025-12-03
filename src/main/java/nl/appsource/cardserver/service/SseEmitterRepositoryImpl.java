@@ -59,9 +59,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private void emittersCleaner() {
         emitters.values().removeIf(
             sseSession ->
-                (sseSession.getPingReceived() != null && sseSession.getPingReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))))
-                || (sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))))
-                || (sseSession.getCreated().isBefore(Instant.now().minus(Duration.ofSeconds(20))) && sseSession.getPongReceived() == null && sseSession.getPingReceived() == null)
+                (sseSession.getPingReceived() != null && sseSession.getPingReceived().isBefore(Instant.now().minus(Duration.ofSeconds(30))))
+                || (sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(30))))
+                || (sseSession.getCreated().isBefore(Instant.now().minus(Duration.ofSeconds(60))) && sseSession.getPongReceived() == null && sseSession.getPingReceived() == null)
         );
     }
 
