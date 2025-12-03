@@ -277,6 +277,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 sseConnection.pingReceivedCount(mySseEmitterEntry.getValue().getPingReceivedCount());
                 sseConnection.pongReceived(mySseEmitterEntry.getValue().getPongReceived());
                 sseConnection.pongReceivedCount(mySseEmitterEntry.getValue().getPongReceivedCount());
+                sseConnection.setRemoteAddress(mySseEmitterEntry.getValue().getRemoteAddress());
+                sseConnection.setUserAgent(mySseEmitterEntry.getValue().getUserAgent());
 
                 return sseConnection;
 
@@ -315,19 +317,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(userToOpenApiConverter::convert)
             .map(user -> MySseEmitter.createServerSentEvent(appIdentifier, userId, user));
 
-
         final Mono<@NonNull MyServerSentEvent> onlineFriendsMe = createOnlineListTo(userId);
-//
+
         final Flux<@NonNull MyServerSentEvent> onlineFriends = createSendOnlineListToFriendsOf(userId).flatMap(this::createOnlineListTo);
 
-//        final Flux<@NonNull MyServerSentEvent> onlineFriendsOFMe = getFriends(userId)
-//            .filter(this::isUserOnline)
-//            .map(this::createOnlineListTo);
+        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MySseEmitter.createServerSentEvent(null, null, "hello", null));
 
-//        sendOnlineListTo(userId);
-//        sendOnlineListToFriendsOf(userId);
-
-        return Flux.concat(me, friends, games, booms, onlineFriendsMe, onlineFriends, Mono.just(MySseEmitter.createServerSentEvent(null, null, "hello", null)));
+        return Flux.concat(me, friends, games, booms, onlineFriendsMe, onlineFriends, hello)
+            ;
     }
 
     @PostConstruct
@@ -341,15 +338,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Flux<@NonNull MyServerSentEvent> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress) {
-//                sendOnlineListTo(userId);
-//                sendOnlineListToFriendsOf(userId);
+    public Flux<@NonNull MyServerSentEvent> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
 
-        //log.info("{} Got new subscription appIdentifier={} userId={} ", remoteAddress, appIdentifier, userId);
-
-        emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId));
+        emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId, remoteAddress, userAgent));
 
         return mainSink.asFlux()
+            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
             .doOnSubscribe(signalType -> {
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
@@ -359,38 +353,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 log.info("{} cancel() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
                 sendOnlineListToFriendsOf(userId);
             })
-
-//            .doOnNext(myServerSentEvent -> {
-//                log.info("Sending message: {} appIdentifier={} userId={}", myServerSentEvent.getServerSentEvent().event(), myServerSentEvent.getAppIdentifier(), myServerSentEvent.getUserId());
-//            })
-            .mergeWith(initCache(appIdentifier, userId))
-//
-//        final Flux<@NonNull MyServerSentEvent> onlineFriendsOFMe = getFriends(userId)
-//            .filter(this::isUserOnline)
-//            .map(this::createOnlineListTo);
-
-            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null));
-
-
-
-//        final MySseEmitter mySseEmitter = new MySseEmitter(userId);
-//
-//        emitters.put(appIdentifier, mySseEmitter);
-//
-//        return mySseEmitter.subscribe()
-//            .doFinally((s) -> {
-//                log.info("{} unSubscribe() appIdentifier={} userId={}, count={}", remoteAddress, appIdentifier, userId, emitters.size());
-//                emitters.remove(appIdentifier);
-//                mySseEmitter.close();
-//                sendOnlineListToFriendsOf(userId);
-//            })
-//            .doOnSubscribe((s) -> {
-//                log.info("{} subscribe() appIdentifier={} userId={} count={}", remoteAddress, appIdentifier, userId, emitters.size());
-//                sendOnlineListTo(userId);
-//                sendOnlineListToFriendsOf(userId);
-//            })
-//            .mergeWith(this.initCache(userId));
-//
+            .mergeWith(initCache(appIdentifier, userId));
     }
 
     @Override

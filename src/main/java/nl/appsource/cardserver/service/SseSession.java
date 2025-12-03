@@ -14,6 +14,10 @@ public class SseSession {
 
     private final String userId;
 
+    private final String remoteAddress;
+
+    private final String userAgent;
+
     private final Instant created = Instant.now();
 
     private Instant pingReceived;

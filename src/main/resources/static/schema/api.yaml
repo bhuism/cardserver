@@ -848,6 +848,10 @@ components:
           format: date-time
         pongReceivedCount:
           type: integer
+        remoteAddress:
+          type: string
+        userAgent:
+          type: string
       required:
         - id
         - created
@@ -855,6 +859,8 @@ components:
         - applicationIdentifier
         - pingReceivedCount
         - pongReceivedCount
+        - remoteAddress
+        - userAgent
     NewGameEvent:
       type: object
       properties:

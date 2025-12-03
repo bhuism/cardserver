@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -28,7 +29,15 @@ public class SubscribeController extends GenericController implements V1Api {
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final ServerWebExchange exchange, @RequestHeader(name = APP_IDENTIFIER_HEADER_NAME) final String appIdentifier) {
-        return getUserId(exchange).flatMapMany(user -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier), user.getId(), "" + exchange.getRequest().getRemoteAddress()).map(MyServerSentEvent::getServerSentEvent));
+
+        final List<String> userAgentList = exchange.getRequest().getHeaders().get("user-agent");
+        final String userAgent = userAgentList != null && userAgentList.isEmpty() ? userAgentList.getFirst() : null;
+
+        return getUserId(exchange)
+            .flatMapMany(user -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier),
+                user.getId(), "" + exchange.getRequest().getRemoteAddress(),
+                userAgent
+            ).map(MyServerSentEvent::getServerSentEvent));
     }
 
 }
