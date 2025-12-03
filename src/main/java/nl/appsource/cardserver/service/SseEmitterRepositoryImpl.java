@@ -347,9 +347,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         //log.info("{} Got new subscription appIdentifier={} userId={} ", remoteAddress, appIdentifier, userId);
 
+        emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId));
+
         return mainSink.asFlux()
+            .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
             .doOnSubscribe(signalType -> {
-                emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId));
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
             })
             .doOnCancel(() -> {
@@ -357,7 +359,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 log.info("{} cancel() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
                 sendOnlineListToFriendsOf(userId);
             })
-            .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
+
 //            .doOnNext(myServerSentEvent -> {
 //                log.info("Sending message: {} appIdentifier={} userId={}", myServerSentEvent.getServerSentEvent().event(), myServerSentEvent.getAppIdentifier(), myServerSentEvent.getUserId());
 //            })
