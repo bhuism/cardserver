@@ -117,7 +117,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //        doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
     }
 
-    private Mono<MyServerSentEvent> createOnlineListTo(final String userId) {
+    private Mono<@NonNull  MyServerSentEvent> createOnlineListTo(final String userId) {
 
         return getFriends(userId).filter(this::isUserOnline).collectList().map(list -> {
             return MySseEmitter.createOnlineList(null, userId, list);
@@ -317,13 +317,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(userToOpenApiConverter::convert)
             .map(user -> MySseEmitter.createServerSentEvent(appIdentifier, userId, user));
 
-        final Mono<@NonNull MyServerSentEvent> onlineFriendsMe = createOnlineListTo(userId);
-
-        final Flux<@NonNull MyServerSentEvent> onlineFriends = createSendOnlineListToFriendsOf(userId).flatMap(this::createOnlineListTo);
-
         final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MySseEmitter.createServerSentEvent(null, null, "hello", null));
 
-        return Flux.concat(me, friends, games, booms, onlineFriendsMe, onlineFriends, hello);
+        return Flux.concat(me, friends, games, booms, hello);
 
     }
 
@@ -347,11 +343,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
             .doOnSubscribe(signalType -> {
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
+                sendOnlineListTo(userId);
+                sendOnlineListToFriendsOf(userId);
             })
             .doOnCancel(() -> {
                 this.emitters.remove(appIdentifier);
-                log.info("{} cancel() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
                 sendOnlineListToFriendsOf(userId);
+                log.info("{} cancel() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
             })
             .mergeWith(initCache(appIdentifier, userId));
     }
