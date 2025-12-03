@@ -293,8 +293,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private Flux<@NonNull MyServerSentEvent> initCache(final UUID appIdentifier, final String userId) {
 
-        emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId));
-
         final Flux<@NonNull String> friendIds = userRepository.findById(userId)
             .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
             .mergeWith(userRepository.findIncomingInvites(userId))
@@ -347,9 +345,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //                sendOnlineListTo(userId);
 //                sendOnlineListToFriendsOf(userId);
 
-        log.info("{} Got new subscription appIdentifier={} userId={} ", remoteAddress, appIdentifier, userId);
+        //log.info("{} Got new subscription appIdentifier={} userId={} ", remoteAddress, appIdentifier, userId);
 
         return mainSink.asFlux()
+            .doOnSubscribe(signalType -> {
+                emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId));
+                log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
+            })
+            .doFinally(signalType -> {
+                this.emitters.remove(appIdentifier);
+                log.info("{} unSubscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
+            })
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
 //            .doOnNext(myServerSentEvent -> {
 //                log.info("Sending message: {} appIdentifier={} userId={}", myServerSentEvent.getServerSentEvent().event(), myServerSentEvent.getAppIdentifier(), myServerSentEvent.getUserId());
@@ -361,6 +367,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .map(this::createOnlineListTo);
 
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null));
+
 
 
 //        final MySseEmitter mySseEmitter = new MySseEmitter(userId);
