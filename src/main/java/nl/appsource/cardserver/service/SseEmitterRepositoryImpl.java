@@ -352,9 +352,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 emitters.computeIfAbsent(appIdentifier, _a -> new SseSession(appIdentifier, userId));
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
             })
-            .doFinally(signalType -> {
+            .doOnCancel(() -> {
                 this.emitters.remove(appIdentifier);
-                log.info("{} unSubscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
+                log.info("{} cancel() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
+                sendOnlineListToFriendsOf(userId);
             })
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
 //            .doOnNext(myServerSentEvent -> {
