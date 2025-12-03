@@ -323,8 +323,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MySseEmitter.createServerSentEvent(null, null, "hello", null));
 
-        return Flux.concat(me, friends, games, booms, onlineFriendsMe, onlineFriends, hello)
-            ;
+        return Flux.concat(me, friends, games, booms, onlineFriendsMe, onlineFriends, hello);
+
     }
 
     @PostConstruct
