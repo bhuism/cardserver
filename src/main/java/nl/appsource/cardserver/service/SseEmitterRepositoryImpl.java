@@ -57,7 +57,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
 
     private void emittersCleaner() {
-        emitters.values().removeIf(sseSession -> sseSession.getPingReceived() != null && sseSession.getPingReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))) || sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))));
+        emitters.values().removeIf(
+            sseSession ->
+                (sseSession.getPingReceived() != null && sseSession.getPingReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))))
+                || (sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(20))))
+                || (sseSession.getCreated().isBefore(Instant.now().minus(Duration.ofSeconds(20))) && sseSession.getPongReceived() == null && sseSession.getPingReceived() == null)
+        );
     }
 
 //    private Predicate<MySseEmitter> forUserId(final String userId) {
