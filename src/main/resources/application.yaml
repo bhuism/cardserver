@@ -32,6 +32,8 @@ spring:
           max-age: 0
 management:
   endpoint:
+    env:
+      show-values: always
     info:
       access: read_only
     health:
