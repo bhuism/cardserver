@@ -50,7 +50,7 @@ public record AiPlayer(GameEngine gameEngine) {
      */
     private Card playAsLeader(final String userId, final Hand hand) {
 
-        log.info("playAsLeader for user: {} with hand: {}", userId, hand.cards);
+        log.trace("playAsLeader for user: {} with hand: {}", userId, hand.cards);
 
         // New Strategy: If partner is "gegaan", lead with a trump to support them.
         final String partnerId = gameEngine.getPartner(userId);
@@ -61,7 +61,7 @@ public record AiPlayer(GameEngine gameEngine) {
         final List<Card> trumpCards = hand.ofSuit(trumpSuit);
 
         if (Boolean.TRUE.equals(partnerSaidGo) && !trumpCards.isEmpty()) {
-            log.info("Partner ({}) is 'gegaan', leading with highest trump.", partnerId);
+            log.trace("Partner ({}) is 'gegaan', leading with highest trump.", partnerId);
             return trumpCards.stream()
                 .max(this::compareKlaverjassenCards)
                 .orElseThrow(); // Safe, as trumpCards is not empty
@@ -169,7 +169,7 @@ public record AiPlayer(GameEngine gameEngine) {
      */
     private Card playAsFollower(final String userId, final Hand hand, final List<Card> currentTrick, final Card highestCardInTrick) {
 
-        log.info("playAsFollower {} {} {} ", hand.cards, currentTrick, highestCardInTrick);
+        log.trace("playAsFollower {} {} {} ", hand.cards, currentTrick, highestCardInTrick);
 
         final Suit leadingSuit = currentTrick.getFirst().getSuit();
         final Suit trumpSuit = gameEngine.getGame().getTrump();
@@ -177,17 +177,17 @@ public record AiPlayer(GameEngine gameEngine) {
         final String currentWinnerId = gameEngine.getTrickWinnerId(currentTrick);
         final boolean isPartnerWinning = currentWinnerId.equals(partnerId);
 
-        log.info("playAsFollower {} {} {} {} {} ", leadingSuit, trumpSuit, partnerId, currentWinnerId, isPartnerWinning);
+        log.trace("playAsFollower {} {} {} {} {} ", leadingSuit, trumpSuit, partnerId, currentWinnerId, isPartnerWinning);
 
         // Rule 1: Must follow suit if possible.
         if (hand.hasSuit(leadingSuit)) {
 
-            log.info("playAsFollower hand.hasSuit(leadingSuit)");
+            log.trace("playAsFollower hand.hasSuit(leadingSuit)");
 
             final List<Card> playableCards = hand.ofSuit(leadingSuit);
             // If leading suit is trump, you must try to play a higher trump if you can.
             if (leadingSuit == trumpSuit) {
-                log.info("playAsFollower leadingSuit == trumpSuit");
+                log.trace("playAsFollower leadingSuit == trumpSuit");
                 return playableCards.stream()
                     .filter(c -> compareKlaverjassenCards(c, highestCardInTrick) > 0)
                     .min(this::compareKlaverjassenCards) // Play lowest winning card
@@ -196,12 +196,12 @@ public record AiPlayer(GameEngine gameEngine) {
                         .orElseThrow()); // Or else play lowest card of the suit
             } else {
 
-                log.info("playAsFollower leadingSuit != trumpSuit");
+                log.trace("playAsFollower leadingSuit != trumpSuit");
 
                 // Not a trump suit.
                 if (isPartnerWinning) {
 
-                    log.info("playAsFollower isPartnerWinning");
+                    log.trace("playAsFollower isPartnerWinning");
 
                     // Partner is winning, so "smear" with high-value cards.
                     return playableCards.stream()
@@ -210,7 +210,7 @@ public record AiPlayer(GameEngine gameEngine) {
                 } else {
 
 
-                    log.info("playAsFollower !isPartnerWinning");
+                    log.trace("playAsFollower !isPartnerWinning");
 
                     // Opponent is winning, must try to take the trick.
                     return playableCards.stream()
@@ -225,7 +225,7 @@ public record AiPlayer(GameEngine gameEngine) {
 
         // Rule 2: Cannot follow suit. You must play a trump if you have one.
         if (hand.hasSuit(trumpSuit)) {
-            log.info("playAsFollower hasTrump");
+            log.trace("playAsFollower hasTrump");
 
             final List<Card> trumpCards = hand.ofSuit(trumpSuit);
             final boolean trickContainsTrump = highestCardInTrick.getSuit() == trumpSuit;
@@ -238,7 +238,7 @@ public record AiPlayer(GameEngine gameEngine) {
             // If you can over-trump...
             if (overTrumpCard.isPresent()) {
 
-                log.info("overTrumpCard.isPresent()");
+                log.trace("overTrumpCard.isPresent()");
 
                 // ...you must do so unless your partner is already winning.
                 if (isPartnerWinning) {
@@ -254,7 +254,7 @@ public record AiPlayer(GameEngine gameEngine) {
             // This situation only matters if an opponent is already winning with a trump.
             if (trickContainsTrump && !isPartnerWinning) {
 
-                log.info("trickContainsTrump && !isPartnerWinning");
+                log.trace("trickContainsTrump && !isPartnerWinning");
 
                 // Amsterdam/Rotterdam Rule: If you cannot over-trump, you MUST under-trump.
                 return trumpCards.stream().min(this::compareKlaverjassenCards).orElseThrow();
