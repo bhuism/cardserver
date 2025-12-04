@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.controller;
 
 import com.nimbusds.jose.JOSEException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -54,15 +55,16 @@ public class LoginController extends GenericController implements LoginApi, Load
                     .get("email")
                     .toString();
 
-                log.info("{} whoampi(), email={}", exchange.getRequest()
-                    .getRemoteAddress(), email);
+                final String name = principal.getClaims()
+                    .get("name")
+                    .toString();
+
+                log.info("{} login(), name={} email={}", exchange.getRequest().getRemoteAddress(), name, email);
 
                 final Instant now = Instant.now();
 
                 return userService.findByEmail(email)
                     .map((user) -> {
-
-                        log.info("{} User login {}", exchange.getRequest().getRemoteAddress(), user.getDisplayName());
 
                         user.setLastLogin(now);
                         user.setUpdated(now);
@@ -117,8 +119,10 @@ public class LoginController extends GenericController implements LoginApi, Load
     }
 
     @Override
-    public Mono<ResponseEntity<User>> loadUser(final ServerWebExchange exchange) {
+    public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
         return getUserId(exchange)
+            .doOnNext(user -> user.setLastLogin(Instant.now()))
+            .flatMap(userRepository::save)
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
