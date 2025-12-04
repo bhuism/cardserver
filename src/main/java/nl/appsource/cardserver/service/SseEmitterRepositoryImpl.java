@@ -60,8 +60,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         emitters.values().removeIf(
             sseSession ->
                 (sseSession.getPingReceived() != null && sseSession.getPingReceived().isBefore(Instant.now().minus(Duration.ofSeconds(30))))
-                || (sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(30))))
-                || (sseSession.getCreated().isBefore(Instant.now().minus(Duration.ofSeconds(60))) && sseSession.getPongReceived() == null && sseSession.getPingReceived() == null)
+                    || (sseSession.getPongReceived() != null && sseSession.getPongReceived().isBefore(Instant.now().minus(Duration.ofSeconds(30))))
+                    || (sseSession.getCreated().isBefore(Instant.now().minus(Duration.ofSeconds(60))) && sseSession.getPongReceived() == null && sseSession.getPingReceived() == null)
         );
     }
 
@@ -117,7 +117,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //        doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
     }
 
-    private Mono<@NonNull  MyServerSentEvent> createOnlineListTo(final String userId) {
+    private Mono<@NonNull MyServerSentEvent> createOnlineListTo(final String userId) {
 
         return getFriends(userId).filter(this::isUserOnline).collectList().map(list -> {
             return MySseEmitter.createOnlineList(null, userId, list);
@@ -236,9 +236,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .anyMatch(
                 sseSession -> sseSession.getUserId().equals(userId)
                     && sseSession.getPingReceived() != null
-                    &&  sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
+                    && sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
                     && sseSession.getPongReceived() != null
-                && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
+                    && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
             );
     }
 
@@ -341,6 +341,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
+            .mergeWith(initCache(appIdentifier, userId))
+            .doOnNext(myServerSentEvent -> {
+                if ("hello".equals(myServerSentEvent.getServerSentEvent().event())) {
+                    log.info("{} Seding hello appIdentifier={}", remoteAddress, appIdentifier);
+                }
+            })
             .doOnSubscribe(signalType -> {
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
                 sendOnlineListTo(userId);
@@ -350,8 +356,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 this.emitters.remove(appIdentifier);
                 sendOnlineListToFriendsOf(userId);
                 log.info("{} cancel() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
-            })
-            .mergeWith(initCache(appIdentifier, userId));
+            });
     }
 
     @Override
