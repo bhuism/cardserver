@@ -410,7 +410,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
     @Override
     public Mono<GameEngine> openLastTrick() {
-        if (!isCompleted() && getTurnCount() > 4) {
+        if (!isCompleted() && getTurnCount() > 4 && getTurnCount() % 4 != 0) {
             if (!this.getGame()
                 .getLastTrickOpen()) {
                 this.getGame()
