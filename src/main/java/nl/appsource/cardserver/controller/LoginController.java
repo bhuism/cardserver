@@ -46,8 +46,8 @@ public class LoginController extends GenericController implements LoginApi, Load
         log.info("/login");
 
         return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
-            .map(Authentication::getPrincipal)
+            .mapNotNull(SecurityContext::getAuthentication)
+            .mapNotNull(Authentication::getPrincipal)
             .map(Jwt.class::cast)
             .flatMap(principal -> {
 

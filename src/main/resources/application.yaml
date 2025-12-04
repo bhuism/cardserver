@@ -42,9 +42,7 @@ management:
     web:
       base-path: /manage
       exposure:
-        include:
-          - health
-          - info
+        include: '*'
   server:
     port: 9080
     ssl:

@@ -27,7 +27,7 @@ public class DebugController implements DebugApi, V1Api {
     @Override
     public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final UUID appIdentifier, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
+            .mapNotNull(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .filter(Utils::isAdmin)
             .map(_s -> sseEmitterRepository.getDebugSseConnections())

@@ -340,7 +340,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     private void send(final MyServerSentEvent myServerSentEvent) {
-        mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000)));
+        mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
     }
 
     @Override

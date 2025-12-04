@@ -61,17 +61,6 @@ jobs:
     runs-on: ubuntu-22.04-arm
     steps:
 
-#      - name: Install kubectl
-#        run: |
-#          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
-#          chmod +x ./kubectl
-
-#      - name: Set Kubernetes Context
-#        uses: Azure/k8s-set-context@ae59a723ba9abe7a9655538854a025448dbab4aa # v4
-#        with:
-#          method: kubeconfig
-#          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-
       - name: Rollout Restart Deployment
         uses: actions-hub/kubectl@master
         env:
