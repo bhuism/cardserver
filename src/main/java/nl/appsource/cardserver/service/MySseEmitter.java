@@ -17,11 +17,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 //@RequiredArgsConstructor
 @Getter
 public final class MySseEmitter {
+
+    private static final AtomicLong ATOMIC_LONG = new AtomicLong(1);
 
     public static MyServerSentEvent createMessageEvent(final UUID appIdentifier, final String userId, final UserMessage userMessage) {
         return createServerSentEvent(appIdentifier, userId, "messageEvent", new MessageEvent().message(userMessage));
@@ -106,11 +109,11 @@ public final class MySseEmitter {
     public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final String event, final Object data) {
 
         final Instant now = Instant.now();
-        final String id = "" + (now.getEpochSecond() * 1000000 + now.getNano());
+        final Long id = ATOMIC_LONG.getAndIncrement();
 
         //log.info("Creating sererSentEvent {} {}", id, event);
 
-        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id(id);
+        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id("id:" + id);
 
         builder.data(Objects.requireNonNullElse(data, "{}"));
 

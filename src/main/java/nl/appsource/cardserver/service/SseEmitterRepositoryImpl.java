@@ -279,14 +279,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                 final SseConnection sseConnection = new SseConnection();
 
-                sseConnection.id(mySseEmitterEntry.getKey().toString());
+                sseConnection.setId(mySseEmitterEntry.getKey().toString());
                 sseConnection.setCreated(mySseEmitterEntry.getValue().getCreated());
-                sseConnection.userId(mySseEmitterEntry.getValue().getUserId());
-                sseConnection.applicationIdentifier(mySseEmitterEntry.getKey().toString());
-                sseConnection.pingReceived(mySseEmitterEntry.getValue().getPingReceived());
-                sseConnection.pingReceivedCount(mySseEmitterEntry.getValue().getPingReceivedCount());
-                sseConnection.pongReceived(mySseEmitterEntry.getValue().getPongReceived());
-                sseConnection.pongReceivedCount(mySseEmitterEntry.getValue().getPongReceivedCount());
+                sseConnection.setUserId(mySseEmitterEntry.getValue().getUserId());
+                sseConnection.setApplicationIdentifier(mySseEmitterEntry.getKey().toString());
+                sseConnection.setPingReceived(Optional.ofNullable(mySseEmitterEntry.getValue().getPingReceived()));
+                sseConnection.setPingReceivedCount(mySseEmitterEntry.getValue().getPingReceivedCount());
+                sseConnection.setPongReceived(Optional.ofNullable(mySseEmitterEntry.getValue().getPongReceived()));
+                sseConnection.setPongReceivedCount(mySseEmitterEntry.getValue().getPongReceivedCount());
                 sseConnection.setRemoteAddress(mySseEmitterEntry.getValue().getRemoteAddress());
                 sseConnection.setUserAgent(mySseEmitterEntry.getValue().getUserAgent());
 
