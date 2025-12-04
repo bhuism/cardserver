@@ -346,12 +346,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Flux<@NonNull MyServerSentEvent> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
 
-
         return mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
             .doOnNext(myServerSentEvent -> {
-                emitters.put(appIdentifier, new SseSession(appIdentifier, userId, remoteAddress, userAgent));
+                emitters.computeIfAbsent(appIdentifier, (_a) -> new SseSession(appIdentifier, userId, remoteAddress, userAgent));
             })
             .mergeWith(initCache(appIdentifier, userId))
             .doOnNext(myServerSentEvent -> {
