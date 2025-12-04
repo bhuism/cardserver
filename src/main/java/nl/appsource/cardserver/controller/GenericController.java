@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.controller;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
@@ -26,7 +27,7 @@ public class GenericController {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .map(Authentication::getName)
-            .flatMap(userId -> userRepository.findById(userId).doOnNext(user -> user.setUpdated(Instant.now())).flatMap(userRepository::save))
+            .flatMap(userRepository::findById)
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} {} no authentication", exchange.getRequest()
                     .getRemoteAddress(), exchange.getRequest()
@@ -44,6 +45,11 @@ public class GenericController {
                     .getPath());
                 return Mono.empty();
             }));
+    }
+
+    public Mono<@NonNull User> updateUser(final User user) {
+        user.setUpdated(Instant.now());
+        return userRepository.save(user);
     }
 
 }
