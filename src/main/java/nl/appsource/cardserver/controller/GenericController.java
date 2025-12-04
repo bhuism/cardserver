@@ -24,7 +24,7 @@ public class GenericController {
 
     public Mono<User> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
-            .map(SecurityContext::getAuthentication)
+            .mapNotNull(SecurityContext::getAuthentication)
             .map(Authentication::getName)
             .flatMap(userId -> userRepository.findById(userId).doOnNext(user -> user.setUpdated(Instant.now())).flatMap(userRepository::save))
             .switchIfEmpty(Mono.defer(() -> {

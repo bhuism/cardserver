@@ -42,9 +42,9 @@ public class BeforeSaveEventGame implements ReactiveBeforeConvertCallback<BaseEn
         if (entity instanceof Game) {
             sseEmitterRepository.updateGame((Game) entity);
         } else if (entity instanceof User) {
-            sseEmitterRepository.updateUserInvites((User) entity);
+            sseEmitterRepository.updateUser((User) entity);
         } else if (entity instanceof Boom) {
-            sseEmitterRepository.updateBoomPlayers((Boom) entity);
+            sseEmitterRepository.updateBoom((Boom) entity);
         }
 
         return Mono.just(entity);

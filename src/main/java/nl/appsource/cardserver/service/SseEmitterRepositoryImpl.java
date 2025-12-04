@@ -194,22 +194,32 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void updateUserInvites(final User user) {
+    public void updateUser(final User user) {
+
         final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);
-        user.getInvites().forEach(invite -> {
+
+        // update self
+        send(MySseEmitter.createServerSentEvent(null, user.getId(), convertedUser));
+
+        // update friends
+        getFriends(user.getId()).subscribe(invite -> {
             send(MySseEmitter.createServerSentEvent(null, invite, convertedUser));
         });
 //        doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
     }
 
     @Override
-    public void updateBoomPlayers(final Boom boom) {
+    public void updateBoom(final Boom boom) {
 //        doSelectedUserIds(boom.getPlayers(), mySseEmitter -> mySseEmitter.sendupdateBoom(boomToOpenApiConverter.convert(boom)));
 
         final org.openapitools.model.Boom convertedBoom = boomToOpenApiConverter.convert(boom);
-        boom.getPlayers().forEach(player -> {
-            send(MySseEmitter.createServerSentEvent(null, player, convertedBoom));
-        });
+
+        Flux.fromIterable(boom.getPlayers())
+            .concatWith(Flux.just(boom.getCreator()))
+            .distinct()
+            .subscribe(player -> {
+                send(MySseEmitter.createServerSentEvent(null, player, convertedBoom));
+            });
 
     }
 
@@ -336,11 +346,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Flux<@NonNull MyServerSentEvent> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
 
-        emitters.put(appIdentifier, new SseSession(appIdentifier, userId, remoteAddress, userAgent));
 
         return mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
+            .doOnNext(myServerSentEvent -> {
+                emitters.put(appIdentifier, new SseSession(appIdentifier, userId, remoteAddress, userAgent));
+            })
             .mergeWith(initCache(appIdentifier, userId))
             .doOnNext(myServerSentEvent -> {
                 if ("hello".equals(myServerSentEvent.getServerSentEvent().event())) {
