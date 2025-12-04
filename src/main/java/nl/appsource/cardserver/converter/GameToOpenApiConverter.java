@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.converter;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
@@ -22,8 +23,9 @@ import java.util.stream.IntStream;
 
 @Component
 @RequiredArgsConstructor
-public class GameToOpenApiConverter implements Converter<Game, org.openapitools.model.Game> {
+public class GameToOpenApiConverter implements Converter<@NonNull Game, org.openapitools.model.Game> {
 
+    @NonNull
     @Override
     public org.openapitools.model.Game convert(final Game source) {
 
