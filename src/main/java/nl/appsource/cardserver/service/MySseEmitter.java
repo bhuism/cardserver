@@ -13,7 +13,6 @@ import org.openapitools.model.User;
 import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -108,12 +107,7 @@ public final class MySseEmitter {
 
     public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final String event, final Object data) {
 
-        final Instant now = Instant.now();
-        final Long id = ATOMIC_LONG.getAndIncrement();
-
-        //log.info("Creating sererSentEvent {} {}", id, event);
-
-        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id("id:" + id);
+        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id("id:" + ATOMIC_LONG.getAndIncrement());
 
         builder.data(Objects.requireNonNullElse(data, "{}"));
 
