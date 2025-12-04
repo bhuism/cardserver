@@ -66,13 +66,15 @@ jobs:
 #          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
 #          chmod +x ./kubectl
 
-      - name: Set Kubernetes Context
-        uses: Azure/k8s-set-context@ae59a723ba9abe7a9655538854a025448dbab4aa # v4
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+#      - name: Set Kubernetes Context
+#        uses: Azure/k8s-set-context@ae59a723ba9abe7a9655538854a025448dbab4aa # v4
+#        with:
+#          method: kubeconfig
+#          kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       - name: Rollout Restart Deployment
         uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
           args: -n cardserver rollout restart deployment cardserver
