@@ -353,11 +353,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 emitters.computeIfAbsent(appIdentifier, (_a) -> new SseSession(appIdentifier, userId, remoteAddress, userAgent));
             })
             .mergeWith(initCache(appIdentifier, userId))
-            .doOnNext(myServerSentEvent -> {
-                if ("hello".equals(myServerSentEvent.getServerSentEvent().event())) {
-                    log.info("{} Seding hello appIdentifier={}", remoteAddress, appIdentifier);
-                }
-            })
+//            .doOnNext(myServerSentEvent -> {
+//                if ("hello".equals(myServerSentEvent.getServerSentEvent().event())) {
+//                    log.info("{} Sending hello appIdentifier={}", remoteAddress, appIdentifier);
+//                }
+//            })
             .doOnSubscribe(signalType -> {
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} count={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), emitters.size());
                 sendOnlineListTo(userId);
