@@ -657,23 +657,15 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return true; // Verzaakt: Did not follow suit when possible
         }
 
-        // Check for not trumping when required (Rotterdam variant has special rules for this)
+        // Check for not trumping when required
         if (!couldFollowSuit) {
             final List<Card> trickBeforePlay = trick.subList(0, playerTurnInTrick);
             if (mustTrump(handAtTimeOfPlay, trickBeforePlay) && playedCard.getSuit() != game.getTrump()) {
                 return true; // Verzaakt: Did not trump when required
             }
 
-            // Rotterdam variant: check for over-trumping
-            if (game.getGameVariant() == GameVariant.ROTTERDAMS) {
-                final boolean oldFollowSuit = handAtTimeOfPlay.stream()
-                    .anyMatch(c -> c.getSuit()
-                        .equals(leadingSuit));
-
-                if (!oldFollowSuit && playedCard.getSuit() != game.getTrump()) {
-                    return true; // Verzaakt: Did not trump when required
-                }
-
+            // Rotterdam variant: check for over-trumping, in Rotterdams overtrumping is mandatory when possible
+            if (game.getGameVariant() == GameVariant.ROTTERDAMS && playedCard.getSuit() == game.getTrump()) {
                 final Card highestTrumpOnTable = trickBeforePlay.stream()
                     .filter(c -> c.getSuit() == game.getTrump())
                     .max(TRUMP_SORTER)
@@ -684,12 +676,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
                         .filter(c -> c.getSuit() == game.getTrump())
                         .anyMatch(c -> TRUMP_SORTER.compare(c, highestTrumpOnTable) > 0);
 
-                    return couldOverTrump && playedCard.getSuit() != game.getTrump(); // Verzaakt: Did not over-trump when possible
+                    return couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0; // Verzaakt: Did not over-trump when possible
                 }
             }
-
-            // If none of the above conditions are met, no renege occurred.
-            return false;
         }
         return false;
     }
