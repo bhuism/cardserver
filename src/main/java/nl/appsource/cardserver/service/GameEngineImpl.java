@@ -605,9 +605,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public Boolean verzaakt(final int correctedSlagNr, final int speler) {
+    public Boolean verzaakt(final int slagNr, final int speler) {
 
-        final List<Card> trick = getTrickCards(correctedSlagNr);
+        final List<Card> trick = getTrickCards(slagNr);
 
         final Card playedCard = trick.stream()
             .filter(c -> whoHasCard(c) == speler)
@@ -657,7 +657,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             return true; // Verzaakt: Did not follow suit when possible
         }
 
-        // Check for not trumping when required
+        // Check for not trumping when required (Rotterdam variant has special rules for this)
         if (!couldFollowSuit) {
             final List<Card> trickBeforePlay = trick.subList(0, playerTurnInTrick);
             if (mustTrump(handAtTimeOfPlay, trickBeforePlay) && playedCard.getSuit() != game.getTrump()) {
@@ -665,7 +665,15 @@ public record GameEngineImpl(Game game) implements GameEngine {
             }
 
             // Rotterdam variant: check for over-trumping
-            if (game.getGameVariant() == GameVariant.ROTTERDAMS && playedCard.getSuit() == game.getTrump()) {
+            if (game.getGameVariant() == GameVariant.ROTTERDAMS) {
+                final boolean oldFollowSuit = handAtTimeOfPlay.stream()
+                    .anyMatch(c -> c.getSuit()
+                        .equals(leadingSuit));
+
+                if (!oldFollowSuit && playedCard.getSuit() != game.getTrump()) {
+                    return true; // Verzaakt: Did not trump when required
+                }
+
                 final Card highestTrumpOnTable = trickBeforePlay.stream()
                     .filter(c -> c.getSuit() == game.getTrump())
                     .max(TRUMP_SORTER)
@@ -676,11 +684,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
                         .filter(c -> c.getSuit() == game.getTrump())
                         .anyMatch(c -> TRUMP_SORTER.compare(c, highestTrumpOnTable) > 0);
 
-                    return couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0; // Verzaakt: Did not over-trump when possible
+                    return couldOverTrump && playedCard.getSuit() != game.getTrump(); // Verzaakt: Did not over-trump when possible
                 }
             }
-        }
 
+            // If none of the above conditions are met, no renege occurred.
+            return false;
+        }
         return false;
     }
 }
