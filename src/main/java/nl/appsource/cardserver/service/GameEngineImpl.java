@@ -605,9 +605,9 @@ public record GameEngineImpl(Game game) implements GameEngine {
     }
 
     @Override
-    public Boolean verzaakt(final int correctedSlagNr, final int speler) {
+    public Boolean verzaakt(final int slagNr, final int speler) {
 
-        final List<Card> trick = getTrickCards(correctedSlagNr);
+        final List<Card> trick = getTrickCards(slagNr);
 
         final Card playedCard = trick.stream()
             .filter(c -> whoHasCard(c) == speler)
@@ -664,7 +664,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 return true; // Verzaakt: Did not trump when required
             }
 
-            // Rotterdam variant: check for over-trumping
+            // Rotterdam variant: check for over-trumping, in Rotterdams overtrumping is mandatory when possible
             if (game.getGameVariant() == GameVariant.ROTTERDAMS && playedCard.getSuit() == game.getTrump()) {
                 final Card highestTrumpOnTable = trickBeforePlay.stream()
                     .filter(c -> c.getSuit() == game.getTrump())
@@ -680,7 +680,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 }
             }
         }
-
         return false;
     }
 }

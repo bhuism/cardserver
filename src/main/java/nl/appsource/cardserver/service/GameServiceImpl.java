@@ -338,17 +338,17 @@ public class GameServiceImpl implements GameService {
                 .flatMap(gameEngine -> {
                     final int slagNr = gameEngine.calcTricksPlayed();
 
-                    final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
+                    final int laatsteCompleteSlag = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
                     return Flux.just(0, 1, 2, 3)
                         .flatMap(playerNr -> {
-                            final Boolean verzaakt = gameEngine.verzaakt(correctedSlagNr, playerNr);
+                            final Boolean verzaakt = gameEngine.verzaakt(laatsteCompleteSlag, playerNr);
                             if (verzaakt) {
                                 return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr)).map((player) -> {
                                     sseEmitterRepository.sendMessage(gameEngine.getGame()
                                         .getPlayers(), new UserMessage().userId(userId)
                                         .variant(UserMessage.VariantEnum.ERROR)
-                                        .message("Er is verzaakt in slag " + correctedSlagNr + " door " + player.getDisplayName()));
+                                        .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
                                     return player;
                                 });
                             } else {
@@ -360,7 +360,7 @@ public class GameServiceImpl implements GameService {
                             sseEmitterRepository.sendMessage(gameEngine.getGame()
                                 .getPlayers(), new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.INFO)
-                                .message("Er is niet verzaakt in slag " + correctedSlagNr));
+                                .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
                         }))
                         .then();
                 });

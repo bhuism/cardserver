@@ -15,6 +15,8 @@ management:
     web:
       exposure:
         include: '*'
+  server:
+    port: 9081
 spring:
   security:
     oauth2:
