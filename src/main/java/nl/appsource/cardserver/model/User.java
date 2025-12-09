@@ -62,6 +62,6 @@ public class User extends BaseEntity {
 
     @NotNull
     @Field
-    private Theme theme = Theme.AUTO;
+    private Theme theme = Theme.DARK;
 
 }
