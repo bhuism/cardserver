@@ -118,6 +118,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
         target.setRoemGeklopt(source.getRoemGeklopt().stream().toList());
 
+        var numberOfTrickWinsNorthSource = 0;
+
         if (gameEngine.getErIsGegaan()) {
 
             for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
@@ -146,6 +148,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
                     target.getAllPoints().setNorthSouth(target.getAllPoints().getNorthSouth() + points);
                     target.getAllRoem().setNorthSouth(target.getAllRoem().getNorthSouth() + roemPoints);
+
+                    numberOfTrickWinsNorthSource++;
 
                 } else {
                     northSouthNumber.setNorthSouth(0);
@@ -178,6 +182,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             target.setElderTeam(Optional.of(elder % 2 == 0 ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
 
             if (gameEngine.isCompleted()) {
+
+                target.setPit(Optional.of(numberOfTrickWinsNorthSource == 8 || numberOfTrickWinsNorthSource == 0));
 
                 if (target.getAllPoints()
                     .getNorthSouth() + target.getAllRoem()

@@ -1025,6 +1025,8 @@ components:
           items:
             type: integer
             uniqueItems: true
+        pit:
+          type: boolean
         boomId:
           type: string
         verzaakt:
