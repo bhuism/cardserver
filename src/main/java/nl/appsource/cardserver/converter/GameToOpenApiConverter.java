@@ -168,13 +168,13 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
             }
 
-            if (target.getAllPoints().getNorthSouth() == 162 && target.getAllPoints().getEastWest() == 0) {
-                target.getAllPoints().setNorthSouth(262);
-            }
-
-            if (target.getAllPoints().getNorthSouth() == 0 && target.getAllPoints().getEastWest() == 162) {
-                target.getAllPoints().setEastWest(262);
-            }
+//            if (target.getAllPoints().getNorthSouth() == 162 && target.getAllPoints().getEastWest() == 0) {
+//                target.getAllPoints().setNorthSouth(262);
+//            }
+//
+//            if (target.getAllPoints().getNorthSouth() == 0 && target.getAllPoints().getEastWest() == 162) {
+//                target.getAllPoints().setEastWest(262);
+//            }
 
             final int elder = source.getSay().entrySet().stream().filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true)).map(Map.Entry::getKey).findFirst().get();
 
