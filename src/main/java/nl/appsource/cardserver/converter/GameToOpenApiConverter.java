@@ -95,7 +95,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
         target.setCurrentTrickCards(gameEngine.getHuidigeTableCards().stream().map(GameToOpenApiConverter::convertCard).toList());
 
         if (!gameEngine.getHuidigeTableCards().isEmpty()) {
-            target.setCurrentTrickCardWinner(
+            target.setCurrentTrickWinnerCard(
                 Optional.of(convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getHuidigeTableCards(), source.getTrump())))
             );
         }

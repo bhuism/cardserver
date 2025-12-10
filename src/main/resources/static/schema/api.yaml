@@ -978,7 +978,7 @@ components:
           type: boolean
         geenKaartGespeeld:
           type: boolean
-        currentTrickCardWinner:
+        currentTrickWinnerCard:
           $ref: "#/components/schemas/Card"
         currentTrickCards:
           type: array
@@ -1056,7 +1056,7 @@ components:
         - iedereenPast
         - niemandGezegd
         - geenKaartGespeeld
-        - huidigeTafelKaarten
+        - currentTrickCards
         - trickPoints
         - allPoints
         - trickRoem
