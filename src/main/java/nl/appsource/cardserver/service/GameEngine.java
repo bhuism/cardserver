@@ -10,7 +10,7 @@ public interface GameEngine {
 
     List<Card> getTrickCards(int trickNr);
 
-    Card determineTrickWinningCard(List<Card> trick);
+//    Card determineTrickWinningCard(List<Card> trick);
 
     int determineTrickWinningPlayer(int trickNr);
 

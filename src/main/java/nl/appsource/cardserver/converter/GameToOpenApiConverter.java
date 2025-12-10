@@ -91,7 +91,14 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             .getSay()
             .isEmpty());
         target.setGeenKaartGespeeld(gameEngine.getTurnCount() == 0);
-        target.setHuidigeTafelKaarten(gameEngine.getHuidigeTableCards().stream().map(GameToOpenApiConverter::convertCard).toList());
+
+        target.setCurrentTrickCards(gameEngine.getHuidigeTableCards().stream().map(GameToOpenApiConverter::convertCard).toList());
+
+        if (!gameEngine.getHuidigeTableCards().isEmpty()) {
+            target.setCurrentTrickCardWinner(
+                Optional.of(convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getHuidigeTableCards(), source.getTrump())))
+            );
+        }
 
 //        target.setTrickPoints(new ArrayList<>());
         target.setAllPoints(new NorthSouthNumber());
@@ -119,7 +126,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
                 target.getTrickWinnerPlayer().add(trickNr, trickWinner);
 
-                target.getTrickWinnerCard().add(trickNr, GameToOpenApiConverter.convertCard(gameEngine.determineTrickWinningCard(gameEngine.getTrickCards(trickNr))));
+                target.getTrickWinnerCard().add(trickNr, GameToOpenApiConverter.convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getTrickCards(trickNr), source.getTrump())));
 
                 final NorthSouthNumber northSouthNumber = new NorthSouthNumber();
                 final NorthSouthNumber roemNorthSouthNumber = new NorthSouthNumber();

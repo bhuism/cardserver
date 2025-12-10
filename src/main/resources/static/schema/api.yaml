@@ -978,7 +978,9 @@ components:
           type: boolean
         geenKaartGespeeld:
           type: boolean
-        huidigeTafelKaarten:
+        currentTrickCardWinner:
+          $ref: "#/components/schemas/Card"
+        currentTrickCards:
           type: array
           items:
             $ref: "#/components/schemas/Card"

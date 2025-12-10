@@ -59,8 +59,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
             .subList(trickNr * 4, Math.min(getTurnCount(), trickNr * 4 + 4));
     }
 
-    @Override
-    public Card determineTrickWinningCard(final List<Card> trick) {
+    public static Card determineTrickWinningCard(final List<Card> trick, final Suit trump) {
 
         if (trick.isEmpty()) {
             throw new RuntimeException("Empty trick");
@@ -68,14 +67,14 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         final boolean troefAanwezig = trick.stream()
             .anyMatch(c -> c.getSuit()
-                .equals(game.getTrump()));
+                .equals(trump));
 
         final Suit requestedSuit = trick.getFirst()
             .getSuit();
 
         return trick.stream()
             .filter(c -> c.getSuit()
-                .equals(troefAanwezig ? game.getTrump() : requestedSuit))
+                .equals(troefAanwezig ? trump : requestedSuit))
             .max(troefAanwezig ? TRUMP_SORTER : REGULAR_SORTER)
             .orElseThrow(() -> new RuntimeException("determineTrickWinningCard() No card found"));
 
@@ -89,7 +88,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         final List<Card> trick = getTrickCards(trickNr);
-        final Card winningCard = determineTrickWinningCard(trick);
+        final Card winningCard = determineTrickWinningCard(trick, this.game.getTrump());
         return whoHasCard(winningCard);
     }
 
@@ -452,7 +451,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
     public String getTrickWinnerId(final List<Card> currentTrick) {
         return this.getGame()
             .getPlayers()
-            .get(whoHasCard(determineTrickWinningCard(currentTrick)));
+            .get(whoHasCard(determineTrickWinningCard(currentTrick, this.game.getTrump())));
     }
 
     @Override
