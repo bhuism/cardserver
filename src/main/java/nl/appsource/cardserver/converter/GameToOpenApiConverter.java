@@ -179,7 +179,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             final int elder = source.getSay().entrySet().stream().filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true)).map(Map.Entry::getKey).findFirst().get();
 
             target.setElder(Optional.of(elder));
-            target.setElderTeam(Optional.of(elder % 2 == 0 ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
+            target.setElderTeam(Optional.of(elder % 2 == 0 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
 
             if (gameEngine.isCompleted()) {
 
@@ -190,13 +190,13 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
                     .getNorthSouth() == target.getAllPoints()
                     .getEastWest() + target.getAllRoem()
                     .getEastWest()) {
-                    target.setWinner(Optional.of(elder == 1 || elder == 3 ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
+                    target.setWinner(Optional.of(elder == 1 || elder == 3 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
                 } else {
                     target.setWinner(Optional.of(target.getAllPoints()
                         .getNorthSouth() + target.getAllRoem()
                         .getNorthSouth() > target.getAllPoints()
                         .getEastWest() + target.getAllRoem()
-                        .getEastWest() ? Teams.NOTH_SOUTH : Teams.EAST_WEST));
+                        .getEastWest() ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
                 }
 
             }

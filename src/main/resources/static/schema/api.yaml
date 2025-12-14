@@ -1080,7 +1080,7 @@ components:
     Teams:
       type: string
       enum:
-        - NothSouth
+        - NorthSouth
         - EastWest
     NorthSouthNumber:
       type: object
