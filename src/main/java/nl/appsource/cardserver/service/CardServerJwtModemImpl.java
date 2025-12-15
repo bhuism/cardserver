@@ -17,8 +17,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerProperties;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -67,13 +67,13 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
             final SignedJWT signedJWT = SignedJWT.parse(token);
 
             if (!signedJWT.verify(verifier)) {
-                throw new JwtException("JWT verification failed");
+                throw new BadJwtException("JWT verification failed");
             }
 
             return Mono.just(createJwt(token, JWTParser.parse(token)));
 
         } catch (ParseException | JOSEException | IllegalStateException e) {
-            throw new JwtException("JWT verification failed", e);
+            throw new BadJwtException("JWT verification failed", e);
         }
 
     }
