@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.openapitools.model.GameVariant;
 
 import java.util.Comparator;
 import java.util.List;
@@ -237,6 +238,11 @@ public record AiPlayer(GameEngine gameEngine) {
 
             // If you can over-trump...
             if (overTrumpCard.isPresent()) {
+
+                if (GameVariant.ROTTERDAMS.equals(gameEngine.getGame().getGameVariant())) {
+                    // In Rotterdams, if you can over-trump, you MUST over-trump, regardless of partner winning.
+                    return overTrumpCard.get();
+                }
 
                 log.trace("overTrumpCard.isPresent()");
 
