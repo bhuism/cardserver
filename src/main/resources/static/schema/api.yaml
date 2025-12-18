@@ -1036,6 +1036,10 @@ components:
             items:
               type: integer
               uniqueItems: true
+        tricksWonNorthSouth:
+          type: integer
+        tricksWonEastWest:
+          type: integer
       required:
         - id
         - trump
