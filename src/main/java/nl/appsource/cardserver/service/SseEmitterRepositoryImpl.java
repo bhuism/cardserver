@@ -348,7 +348,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
-            .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, null, "ping", null)))
+            .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, userId, "ping", null)))
             .doOnNext(myServerSentEvent -> {
                 emitters.computeIfAbsent(appIdentifier, (_a) -> new SseSession(appIdentifier, userId, remoteAddress, userAgent));
             })

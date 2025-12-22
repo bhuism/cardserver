@@ -43,24 +43,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<InvitesResponse> getInvites(final String userId) {
-
         return userRepository.findById(userId)
-            .flatMap(user -> {
-
-                final Flux<String> incomingFlux = userRepository.findIncomingInvites(userId)
-                    .cache();
-                final Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites())
-                    .cache();
-                final Flux<String> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2)))
-                    .cache();
-                final Flux<String> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2)))
-                    .cache();
+            .map(user -> {
+                final Flux<String> incomingFlux = userRepository.findIncomingInvites(userId).cache();
+                final Flux<String> outgoingFlux = Flux.fromIterable(user.getInvites()).cache();
+                final Flux<String> onlyIncoming = incomingFlux.filterWhen(s1 -> outgoingFlux.all(s2 -> !s1.equals(s2))).cache();
+                final Flux<String> friends = incomingFlux.filterWhen(s1 -> onlyIncoming.all(s2 -> !s1.equals(s2))).cache();
                 final Flux<String> onlyOutgoing = outgoingFlux.filterWhen(s1 -> friends.all(s2 -> !s1.equals(s2)));
-                final InvitesResponse invitesResponse = new InvitesResponse(onlyIncoming, onlyOutgoing, friends);
-                return Mono.just(invitesResponse);
-
+                return new InvitesResponse(onlyIncoming, onlyOutgoing, friends);
             });
-
     }
 
     @Override

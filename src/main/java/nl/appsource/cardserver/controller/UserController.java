@@ -58,7 +58,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
                         final Flux<String> incoming = invites.incoming();
                         final Flux<String> outgoing = invites.outgoing();
                         final Flux<String> friends = invites.friends();
-
                         return Mono.zip(arr -> new InvitesResponse().incoming((List<String>) arr[0])
                             .friends((List<String>) arr[1])
                             .outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
