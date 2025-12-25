@@ -361,7 +361,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         })
                         .subscribe();
             })
-            .doOnCancel(() -> {
+            .doFinally((a) -> {
                 sseSessionRepository.deleteById(appIdentifier.toString())
                     .doOnSuccess(unused -> {
                         sendOnlineListToFriendsOf(userId);
