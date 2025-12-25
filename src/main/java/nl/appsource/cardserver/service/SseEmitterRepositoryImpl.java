@@ -246,11 +246,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public Mono<Boolean> isUserOnline(final String userId) {
-        return sseSessionRepository.findByUserId(userId)
-            .any(sseSession -> sseSession.getPingReceived() != null
-            && sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
-            && sseSession.getPongReceived() != null
-            && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15))));
+        return sseSessionRepository.existsByUserId(userId);
+//            .any(sseSession -> sseSession.getPingReceived() != null
+//            && sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
+//            && sseSession.getPongReceived() != null
+//            && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15))));
     }
 
     @Override
