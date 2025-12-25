@@ -335,7 +335,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Flux<@NonNull MyServerSentEvent> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
 
-            final Mono<Void> saveSession = sseSessionRepository.save(new SseSession(appIdentifier, userId, remoteAddress, userAgent, Instant.now())).then();
+            //final Mono<Void> saveSession = sseSessionRepository.save(new SseSession(appIdentifier, userId, remoteAddress, userAgent, Instant.now())).then();
 
             final Flux<MyServerSentEvent> result = mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
@@ -354,18 +354,26 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            })
             .doOnSubscribe(signalType -> {
                 log.info("{} subscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-                sendOnlineListTo(userId);
-                sendOnlineListToFriendsOf(userId);
+                sseSessionRepository.save(new SseSession(appIdentifier, userId, remoteAddress, userAgent, Instant.now()))
+                        .doOnSuccess(sseSession -> {
+                            sendOnlineListTo(userId);
+                            sendOnlineListToFriendsOf(userId);
+                        })
+                        .subscribe();
             })
             .doOnCancel(() -> {
-                sseSessionRepository.deleteById(appIdentifier.toString()).subscribe();
+                sseSessionRepository.deleteById(appIdentifier.toString())
+                    .doOnSuccess(unused -> {
+                        sendOnlineListToFriendsOf(userId);
+                    })
+                    .subscribe();
                 //this.emitters.remove(appIdentifier);
-                sendOnlineListToFriendsOf(userId);
+
                 log.info("{} cancel() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
             });
 
 
-            return saveSession.thenMany(result);
+            return result;
 
     }
 
