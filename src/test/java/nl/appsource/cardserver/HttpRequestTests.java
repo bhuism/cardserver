@@ -3,6 +3,7 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class HttpRequestTests {
 
     @MockitoBean
     private FeedbackRepository feedbackRepository;
+
+    @MockitoBean
+    private SseSessionRepository sseSessionRepository;
 
     @Test
     void greetingShouldReturnDefaultMessage() {

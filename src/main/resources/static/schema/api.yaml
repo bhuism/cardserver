@@ -707,7 +707,7 @@ components:
     sseConnections:
       type: object
       properties:
-        events:
+        connections:
           type: array
           items:
             $ref: '#/components/schemas/SseConnection'
@@ -717,7 +717,7 @@ components:
           type: string
           format: date-time
       required:
-        - events
+        - connections
         - currentSubscriberCount
         - timeStamp
     loginResponse:
@@ -835,8 +835,6 @@ components:
           type: string
           format: date-time
         userId:
-          type: string
-        applicationIdentifier:
           type: string
         pingReceived:
           type: string
@@ -1145,8 +1143,6 @@ components:
           type: string
         photoURL:
           type: string
-        online:
-          type: boolean
         skipAnimation:
           type: boolean
         gameVariant:

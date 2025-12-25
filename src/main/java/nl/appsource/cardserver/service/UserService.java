@@ -15,7 +15,7 @@ public interface UserService {
 
     Mono<User> findByEmail(String email);
 
-    Mono<InvitesResponse> getInvites(String userId);
+    Mono<UserServiceImpl.InvitesResponse> getInvites(String userId);
 
     Mono<User> save(User user);
 

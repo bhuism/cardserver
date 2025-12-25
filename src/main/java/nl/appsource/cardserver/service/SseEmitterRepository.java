@@ -4,9 +4,9 @@ import lombok.NonNull;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
-import org.openapitools.model.SseConnections;
 import org.openapitools.model.UserMessage;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -23,9 +23,9 @@ public interface SseEmitterRepository {
 
     Flux<@NonNull MyServerSentEvent> subscribe(UUID appIdentifier, String userId, String remoteAddress, String userAgent);
 
-    void ping(UUID appIdentifier);
+    Mono<Void> ping(UUID appIdentifier);
 
-    void pong(UUID appIdentifier);
+    Mono<Void> pong(UUID appIdentifier);
 
     void friendsChanged(Collection<String> userIds);
 
@@ -45,7 +45,7 @@ public interface SseEmitterRepository {
 
     void newGame(Game game);
 
-    boolean isUserOnline(String userId);
+    Mono<Boolean> isUserOnline(String userId);
 
     void newFriend(String userId, String friendId);
 
@@ -53,7 +53,7 @@ public interface SseEmitterRepository {
 
 //    Boolean validate(UUID appIdentifier, String userId);
 
-    SseConnections getDebugSseConnections();
+    SseEmitterRepositoryImpl.DebugSseConnections getDebugSseConnections();
 
 //    void eventSubscribe(UUID appIdentifier, Set<String> topic);
 

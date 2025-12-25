@@ -8,7 +8,6 @@ import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -37,13 +36,13 @@ public class DcpConfiguration {
 
         client.dataEventHandler((flowController, event) -> {
             if (DcpMutationMessage.is(event)) {
-                log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
+                //log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
                 final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
                 final String content = DcpMutationMessage.content(event).toString(StandardCharsets.UTF_8);
-                log.info("Mutation: key={}, content={}", key, content);
+                //log.info("Mutation: key={}, content={}", key, content);
             } else if (DcpDeletionMessage.is(event)) {
                 final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
-                log.info("Deletion: key={}", key);
+                //log.info("Deletion: key={}", key);
             }
             event.release();
         });
@@ -57,9 +56,11 @@ public class DcpConfiguration {
         return client;
     }
 
-    @Bean
-    public DisposableBean dcpClientDisposer(final Client client) {
-        return () -> client.disconnect().block();
-    }
+//    @PreDestroy
+//    public void destroy(final Client client) {
+//        log.info("Stopping");
+//        client.stopStreaming(Collections.emptyList()).block();
+//        client.disconnect().block();
+//    }
 
 }

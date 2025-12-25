@@ -41,6 +41,9 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email);
     }
 
+    public record InvitesResponse(Flux<String> incoming, Flux<String> outgoing, Flux<String> friends) {
+    }
+
     @Override
     public Mono<InvitesResponse> getInvites(final String userId) {
         return userRepository.findById(userId)
