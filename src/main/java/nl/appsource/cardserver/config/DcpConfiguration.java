@@ -59,7 +59,7 @@ public class DcpConfiguration {
 
                     if (rootNode.isObject()) {
                         final String className = rootNode.get("_class").stringValue();
-                        log.info("Got update " + className + " " + key + " " + rootNode.toPrettyString());
+                        log.info("Got update " + className + " " + key);
                         switch (className) {
                             case "nl.appsource.cardserver.model.SseSession" -> {}
                             case "nl.appsource.cardserver.model.Boom" -> {
