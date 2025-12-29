@@ -1,7 +1,5 @@
 package nl.appsource.cardserver.migrator;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class Migrator {
 
     private final GameRepository gameRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper jsonMapper;
 
     private final ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
@@ -160,7 +160,7 @@ public class Migrator {
 
         if (gameFile.exists()) {
 
-            final JsonNode jsonNode = objectMapper.readTree(gameFile);
+            final JsonNode jsonNode = jsonMapper.readTree(gameFile);
 
             final JsonNode data = jsonNode.get("data");
 
@@ -182,8 +182,8 @@ public class Migrator {
 
                     final JsonNode gameNodeValue = gameNode.getValue();
 
-                    gameNodeValue.fieldNames()
-                        .forEachRemaining(fieldName -> {
+                    gameNodeValue.propertyNames()
+                        .forEach(fieldName -> {
 
                             final JsonNode fieldValue = gameNodeValue.get(fieldName);
 
@@ -293,7 +293,7 @@ public class Migrator {
 
             // userRepository.deleteAll();
 
-            final JsonNode jsonNode = objectMapper.readTree(userFile);
+            final JsonNode jsonNode = jsonMapper.readTree(userFile);
 
             final JsonNode data = jsonNode.get("data");
 
@@ -310,8 +310,8 @@ public class Migrator {
 
                     final JsonNode userNodeValue = userNode.getValue();
 
-                    userNodeValue.fieldNames()
-                        .forEachRemaining(fieldName -> {
+                    userNodeValue.propertyNames()
+                        .forEach(fieldName -> {
 
                             final JsonNode fieldValue = userNodeValue.get(fieldName);
 

@@ -221,8 +221,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
         game.setUpdated(Instant.now());
-        game.getTurns()
-            .add(card);
+        game.getTurns().add(card);
         game.setLastTrickOpen(false);
 
         return Mono.just(this);

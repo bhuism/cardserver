@@ -1,18 +1,27 @@
 package nl.appsource.cardserver.config;
 
+import com.couchbase.client.core.deps.io.netty.buffer.ByteBufInputStream;
 import com.couchbase.client.dcp.Client;
 import com.couchbase.client.dcp.StreamFrom;
 import com.couchbase.client.dcp.StreamTo;
 import com.couchbase.client.dcp.message.DcpDeletionMessage;
+import com.couchbase.client.dcp.message.DcpExpirationMessage;
 import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.model.Boom;
+import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.InputStream;
 
 @Slf4j
 @Configuration
@@ -21,6 +30,10 @@ import java.nio.charset.StandardCharsets;
 public class DcpConfiguration {
 
     private final CardServerCouchbaseProperties cardServerCouchbaseProperties;
+
+    private final JsonMapper jsonMapper;
+
+    private final SseEmitterRepository sseEmitterRepository;
 
     @Bean
     public Client dcpClient() {
@@ -35,22 +48,64 @@ public class DcpConfiguration {
         });
 
         client.dataEventHandler((flowController, event) -> {
+            final String key = MessageUtil.getKeyAsString(event);
             if (DcpMutationMessage.is(event)) {
-                //log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
-                final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
-                final String content = DcpMutationMessage.content(event).toString(StandardCharsets.UTF_8);
+
+                log.info("Mutation: key={}", key);
+
+                try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+
+                    final JsonNode rootNode = jsonMapper.readTree(is);
+
+                    if (rootNode.isObject()) {
+                        final String className = rootNode.get("_class").stringValue();
+                        log.info("Got update " + className + " " + key);
+                        switch (className) {
+                            case "nl.appsource.cardserver.model.Boom" -> {
+                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+                                sseEmitterRepository.updateBoom(boom);
+                            }
+                            case "nl.appsource.cardserver.model.User" -> {
+                                final User user = jsonMapper.treeToValue(rootNode, User.class);
+                                sseEmitterRepository.updateUser(user);
+                            }
+                            case "nl.appsource.cardserver.model.Game" -> {
+                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+                                sseEmitterRepository.updateGame(game);
+                            }
+                            default -> log.warn("Not handling unknown class mutation : " + className);
+                        }
+
+                        jsonMapper.treeToValue(rootNode, Boom.class);
+                    }
+
+
+                } catch (IOException e) {
+                    log.warn("Can not deserialize key: " + key);
+                }
+
+//
+//                DcpMutationMessage.content(event)
+//                event.asReadOnly()
+//
+//                try (InputStream is = new ByteBufInputStream(MutationMessage.content(event))) {
+//                    MyModel model = objectMapper.readValue(is, MyModel.class);
+//                }
+//
+//                //log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
+//                final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
+//                final String content = DcpMutationMessage.content(event).toString(StandardCharsets.UTF_8);
                 //log.info("Mutation: key={}, content={}", key, content);
             } else if (DcpDeletionMessage.is(event)) {
-                final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
-                //log.info("Deletion: key={}", key);
+                log.info("Deletion: key={}", key);
+            } else if (DcpExpirationMessage.is(event)) {
+                log.info("Expiration: key={}", key);
             }
             event.release();
         });
 
         client.connect().block();
-
         client.initializeState(StreamFrom.NOW, StreamTo.INFINITY).block();
-
         client.startStreaming().block();
 
         return client;
