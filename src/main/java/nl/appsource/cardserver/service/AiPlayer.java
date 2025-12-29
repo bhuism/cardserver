@@ -34,8 +34,6 @@ public record AiPlayer(GameEngine gameEngine) {
     // Main entry point for the AI's decision
     public Card calcAiCard(final String userId) throws GameEngineException {
 
-        log.info("calcAiCard {}", userId);
-
         final Hand hand = Hand.from(getHand(userId));
         final List<Card> currentTrick = gameEngine.getTrickCards(gameEngine.calcTricksPlayed());
 
