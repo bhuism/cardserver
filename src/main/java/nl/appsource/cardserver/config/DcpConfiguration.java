@@ -61,8 +61,8 @@ public class DcpConfiguration {
                         final String className = rootNode.get("_class").stringValue();
                         log.info("Got update " + className + " " + key);
                         switch (className) {
-                            case "nl.appsource.cardserver.model.SseSession" -> {}
-                            case "nl.appsource.cardserver.model.Feedback" -> {}
+                            case "nl.appsource.cardserver.model.SseSession" -> { }
+                            case "nl.appsource.cardserver.model.Feedback" -> { }
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(key);
