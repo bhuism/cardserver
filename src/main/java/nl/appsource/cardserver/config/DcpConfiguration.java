@@ -63,14 +63,17 @@ public class DcpConfiguration {
                         switch (className) {
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+                                boom.setId(key);
                                 sseEmitterRepository.updateBoom(boom);
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
+                                user.setId(key);
                                 sseEmitterRepository.updateUser(user);
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+                                game.setId(key);
                                 sseEmitterRepository.updateGame(game);
                             }
                             default -> log.warn("Not handling unknown class mutation : " + className);
