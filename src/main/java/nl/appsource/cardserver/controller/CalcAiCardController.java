@@ -19,7 +19,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -28,8 +27,9 @@ import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertCa
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertSuit;
 import static nl.appsource.cardserver.converter.GameToOpenApiConverter.convertToModel;
 import static nl.appsource.cardserver.service.GameEngineImpl.AI_USER_ID;
-import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
 import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
+import static nl.appsource.cardserver.utils.IDTYPE.GAME;
+import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Slf4j
 @RestController
@@ -47,10 +47,8 @@ public class CalcAiCardController implements AiApi {
         log.info("aiCreateGame()");
         return aiCreateGameRequestArg.map(aiCreateGameRequest -> {
                 final Game game = new Game();
-                game.setId(idGen(20));
-                game.setCreator(AI_USER_ID.get(0));
-                game.setCreated(Instant.now());
-                game.setUpdated(Instant.now());
+                game.setId(idGen(GAME, 20));
+                game.setCreator(AI_USER_ID.getFirst());
                 game.setPlayers(new ArrayList<>(AI_USER_ID));
                 game.setDealer(0);
                 game.setSay(new HashMap<>());
@@ -62,6 +60,7 @@ public class CalcAiCardController implements AiApi {
                 game.setDealCounter(0);
                 return game;
             })
+            .flatMap(gameRepository::save)
             .map(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
     }

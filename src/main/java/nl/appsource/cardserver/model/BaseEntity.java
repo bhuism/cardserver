@@ -1,34 +1,36 @@
 package nl.appsource.cardserver.model;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
-import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
 
-@CompositeQueryIndex(fields = {"id", "creator"})
 @Getter
 @Setter
+@CompositeQueryIndex(fields = {"id", "creator"})
 public abstract class BaseEntity {
 
     @Id
     private String id;
 
-    @Field
-    @NotNull
+    @CreatedDate
     private Instant created;
 
-    @Field
+    @LastModifiedDate
     private Instant updated;
 
-    @NotNull
-    @Field
     @QueryIndexed
+    @CreatedBy
     private String creator;
 
+    @Version
+    private Long version;
 
 }

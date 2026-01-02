@@ -26,6 +26,7 @@ public class GenericController {
     public Mono<User> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
+            .filter(Authentication::isAuthenticated)
             .map(Authentication::getName)
             .flatMap(userRepository::findById)
             .switchIfEmpty(Mono.defer(() -> {
@@ -38,13 +39,11 @@ public class GenericController {
 
     protected Mono<User> authorize(final UUID appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
-//            .filter((user) -> sseEmitterRepository.validate(appIdentifier, user.getId()))
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} sseEmitterRepository validation failed", exchange.getRequest()
-                    .getRemoteAddress(), exchange.getRequest()
-                    .getPath());
-                return Mono.empty();
-            }));
+            .flatMap((user) -> sseEmitterRepository.validate(appIdentifier, user).switchIfEmpty(Mono.defer(() -> {
+                    log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier.toString(), user.getDisplayName());
+                    return Mono.empty();
+                }))
+            );
     }
 
     public Mono<@NonNull User> updateUser(final User user) {

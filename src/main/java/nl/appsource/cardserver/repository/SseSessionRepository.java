@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface SseSessionRepository extends ReactiveCouchbaseRepository<SseSession, String> {
-    Flux<SseSession> findByUserId(String userId);
-    Mono<Boolean> existsByUserId(String userId);
+    Flux<SseSession> findByCreator(String userId);
+    Mono<Boolean> existsByCreator(String userId);
+    Mono<SseSession> findByIdAndCreator(String s, String userId);
 }

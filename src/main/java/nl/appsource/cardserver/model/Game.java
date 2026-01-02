@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.model;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +22,8 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @ToString
-public class Game extends BaseEntity {
+@AllArgsConstructor
+public class Game extends BaseEntity  {
 
     @NotNull
     @Field

@@ -22,6 +22,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 @Slf4j
 @Configuration
@@ -44,19 +45,31 @@ public class DcpConfiguration {
             .build();
 
         client.controlEventHandler((flowController, event) -> {
+            flowController.ack(event);
             event.release();
         });
 
+        client.systemEventHandler(event -> {
+            log.info("system event: keys: " + event.toMap().keySet());
+        });
+
         client.dataEventHandler((flowController, event) -> {
+
             final String key = MessageUtil.getKeyAsString(event);
+            final long revSeq = DcpMutationMessage.revisionSeqno(event);
+
             if (DcpMutationMessage.is(event)) {
-//                log.info("Mutation: key={}", key);
+
+                String className = "";
+                Optional<Long> version = Optional.empty();
+
                 try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
 
                     final JsonNode rootNode = jsonMapper.readTree(is);
 
                     if (rootNode.isObject()) {
-                        final String className = rootNode.get("_class").stringValue();
+                        className = rootNode.get("_class").stringValue();
+                        version = rootNode.optional("version").map(JsonNode::asLong);
                         switch (className) {
                             case "nl.appsource.cardserver.model.SseSession" -> { }
                             case "nl.appsource.cardserver.model.Feedback" -> { }
@@ -86,6 +99,8 @@ public class DcpConfiguration {
                     log.warn("Can not deserialize key: " + key);
                 }
 
+                log.info("Mutation: key={} revSeq={} class={} version={}", key, revSeq, className, version);
+
 //
 //                DcpMutationMessage.content(event)
 //                event.asReadOnly()
@@ -110,7 +125,6 @@ public class DcpConfiguration {
                         log.info("Deletion: key={} className={}", key, className);
                     }
 
-
                 } catch (IOException e) {
                     log.warn("Can not deserialize key: " + key);
                 }
@@ -134,7 +148,10 @@ public class DcpConfiguration {
                     log.warn("Can not deserialize key: " + key);
                 }
 
+            } else {
+                log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
             }
+            flowController.ack(event);
             event.release();
         });
 

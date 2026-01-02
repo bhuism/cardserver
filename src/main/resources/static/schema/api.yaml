@@ -834,7 +834,10 @@ components:
         created:
           type: string
           format: date-time
-        userId:
+        updated:
+          type: string
+          format: date-time
+        creator:
           type: string
         pingReceived:
           type: string
@@ -853,7 +856,7 @@ components:
       required:
         - id
         - created
-        - userId
+        - creator
         - applicationIdentifier
         - pingReceivedCount
         - pongReceivedCount

@@ -42,6 +42,8 @@ import static java.lang.Runtime.getRuntime;
 import static java.util.Collections.shuffle;
 import static java.util.Collections.singleton;
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.utils.IDTYPE.GAME;
+import static nl.appsource.cardserver.utils.Utils.idGen;
 import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
 @Slf4j
@@ -105,10 +107,7 @@ public class GameServiceImpl implements GameService {
 
         return Mono.just(new Game())
             .doOnNext((game) -> {
-                game.setId(idGen(20));
-                game.setCreator(creator);
-                game.setCreated(Instant.now());
-                game.setUpdated(Instant.now());
+                game.setId(idGen(GAME, 20));
                 game.setPlayers(new ArrayList<>(players));
                 game.setDealer(dealer == null ? Integer.valueOf(RAND.nextInt(4)) : dealer);
                 game.setSay(new HashMap<>());
@@ -263,18 +262,6 @@ public class GameServiceImpl implements GameService {
         IntStream.range(0, deck.size())
             .forEach(index -> cards.put(deck.get(index), index % 4));
         return cards;
-    }
-
-    public static String idGen(final int length) {
-        final String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        final StringBuilder result = new StringBuilder(length);
-
-        for (int i = 0; i < length; i++) {
-            int index = RAND.nextInt(characters.length());
-            result.append(characters.charAt(index));
-        }
-
-        return result.toString();
     }
 
     @Override

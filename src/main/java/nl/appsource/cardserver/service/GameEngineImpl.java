@@ -16,7 +16,6 @@ import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -220,7 +219,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
 
-        game.setUpdated(Instant.now());
+        //game.setUpdated(Instant.now());
         game.getTurns().add(card);
         game.setLastTrickOpen(false);
 
@@ -276,13 +275,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
         // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
 
-        checkNiemandIsGegaanEnIedereenHeeftGezegd();
+        return checkNiemandIsGegaanEnIedereenHeeftGezegd().then(Mono.just(this));
 
-        game.setUpdated(Instant.now());
+        //game.setUpdated(Instant.now());
 
 //        return userMessages;
 
-        return Mono.just(this);
+        //return Mono.just(this);
 
     }
 
@@ -306,7 +305,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 .clear();
 
             game.setDealCounter(game.getDealCounter() + 1);
-            game.setUpdated(Instant.now());
+            //game.setUpdated(Instant.now());
 
             return Mono.just(this);
         } else {

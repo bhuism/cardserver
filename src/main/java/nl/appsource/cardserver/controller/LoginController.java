@@ -23,7 +23,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
+import static nl.appsource.cardserver.utils.IDTYPE.USER;
+import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Slf4j
 @RestController
@@ -76,10 +77,7 @@ public class LoginController extends GenericController implements LoginApi, Load
 
                         final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
 
-                        user.setId(idGen(28));
-                        user.setCreator(user.getId());
-                        user.setCreated(now);
-                        user.setUpdated(now);
+                        user.setId(idGen(USER, 28));
                         user.setEmail(email);
                         user.setName(principal.getClaims()
                             .get("name")

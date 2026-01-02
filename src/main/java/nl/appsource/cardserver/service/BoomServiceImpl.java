@@ -11,12 +11,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
+import static nl.appsource.cardserver.utils.IDTYPE.BOOM;
+import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Service
 @RequiredArgsConstructor
@@ -52,10 +52,7 @@ public class BoomServiceImpl implements BoomService {
 
         return Mono.just(new Boom())
             .doOnNext((boom) -> {
-                boom.setId(idGen(20));
-                boom.setCreator(creator);
-                boom.setCreated(Instant.now());
-                boom.setUpdated(Instant.now());
+                boom.setId(idGen(BOOM, 20));
                 boom.setPlayers(new ArrayList<>(players));
                 boom.setDealer(RAND.nextInt(4));
                 boom.setGameVariant(gameVariant);

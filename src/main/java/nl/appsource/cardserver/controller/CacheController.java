@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.UUID;
 
-import static nl.appsource.cardserver.service.GameServiceImpl.idGen;
+import static nl.appsource.cardserver.utils.IDTYPE.FEED;
+import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @RestController
 @Slf4j
@@ -48,11 +48,7 @@ public class CacheController extends GenericController implements ReloadCacheApi
 
                 final Feedback feedBack = new Feedback();
 
-                feedBack.setId(idGen(20));
-                feedBack.setCreator(user.getId());
-                feedBack.setUpdated(Instant.now());
-                feedBack.setCreated(Instant.now());
-
+                feedBack.setId(idGen(FEED, 20));
                 feedBack.setText(fb.getMessage());
 
                 return feedBackRepository.save(feedBack);
