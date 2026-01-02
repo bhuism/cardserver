@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 
@@ -71,6 +72,8 @@ public class GameControllerTests {
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
 
+        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), user)).thenReturn(Mono.just(user));
+
         webTestClient
             // Set up a mock authenticated user for the request
 //            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
@@ -112,6 +115,8 @@ public class GameControllerTests {
 
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
 //        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
+
+        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), user)).thenReturn(Mono.just(user));
 
         webTestClient
             // Set up a mock authenticated user for the request
