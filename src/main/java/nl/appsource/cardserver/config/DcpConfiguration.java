@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.context.annotation.Bean;
@@ -99,7 +100,9 @@ public class DcpConfiguration {
                     log.warn("Can not deserialize key: " + key);
                 }
 
-                log.info("Mutation: key={} revSeq={} class={} version={}", key, revSeq, className, version);
+                if (!SseSession.class.getName().equals(className)) {
+                    log.info("Mutation: key={} revSeq={} class={} version={}", key, revSeq, className, version);
+                }
 
 //
 //                DcpMutationMessage.content(event)
