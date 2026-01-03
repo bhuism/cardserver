@@ -279,18 +279,19 @@ public class GameServiceImpl implements GameService {
                         final boolean result = gameEngine.getGame()
                             .getRoemGeklopt()
                             .add(gameEngine.calcTricksPlayed());
+
+                        sseEmitterRepository.sendMessage(gameEngine.getGame()
+                            .getPlayers(), new UserMessage().userId(userId)
+                            .message("Er is " + (result ? "" : "al ")  + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
+                            .variant(UserMessage.VariantEnum.INFO));
+
                         if (result) {
-                            sseEmitterRepository.sendMessage(gameEngine.getGame()
-                                .getPlayers(), new UserMessage().userId(userId)
-                                .message("Er is " + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
-                                .variant(UserMessage.VariantEnum.INFO));
-                            return gameRepository.save(gameEngine.getGame())
-//                                .doOnNext(_ -> sseEmitterRepository.updateGameState(gameEngine.getGame()))
-                                .map(_unused -> gameEngine);
+                            return gameRepository.save(gameEngine.getGame());
                         } else {
                             return Mono.empty();
                         }
                     } else {
+                        log.debug("no roem");
                         sseEmitterRepository.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
                             .message("Er is geen roem in slag " + (correctedSlagNr + 1))
                             .variant(UserMessage.VariantEnum.WARNING));
