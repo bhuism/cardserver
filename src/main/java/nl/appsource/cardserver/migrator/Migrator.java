@@ -36,7 +36,7 @@ import java.util.stream.StreamSupport;
 @Service
 @Slf4j
 @AllArgsConstructor
-@Profile("production")
+@Profile("never")
 public class Migrator {
 
     public static final String TIME = "__time__";
