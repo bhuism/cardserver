@@ -15,6 +15,7 @@ import org.openapitools.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -185,7 +186,8 @@ public class GameServiceImpl implements GameService {
         return gameEngineExecutor.run();
     }
 
-    private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
+    @Transactional
+    public void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
             eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
             Mono.just(gameId)
@@ -266,6 +268,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    @Transactional
     public Mono<Void> claimRoem(final String appIdentifier, final String userId, final String gameId) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
