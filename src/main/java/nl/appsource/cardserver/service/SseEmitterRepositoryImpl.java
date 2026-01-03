@@ -80,9 +80,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private Mono<@NonNull MyServerSentEvent> createOnlineListTo(final String userId) {
 
-        return getFriends(userId).filterWhen(this::isUserOnline).collectList().map(list -> {
-            return MySseEmitter.createOnlineList(null, userId, list);
-        });
+        return getFriends(userId).filterWhen(this::isUserOnline).collectList().map(list -> MySseEmitter.createOnlineList(null, userId, list));
 //        return MySseEmitter.createOnlineList(null, userId, getFriends(userId).filter(this::isUserOnline);
 //        doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
     }
@@ -90,9 +88,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void sendMessage(final Collection<String> userIds, final UserMessage userMessage) {
-        userIds.forEach(userId -> {
-            send(MySseEmitter.createMessageEvent(null, userId, userMessage));
-        });
+        userIds.forEach(userId -> send(MySseEmitter.createMessageEvent(null, userId, userMessage)));
 //        doSelectedUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
     }
 
@@ -120,24 +116,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void friendsChanged(final Collection<String> userIds) {
 //        doSelectedUserIds(userIds, MySseEmitter::sendUpdateFriends);
-        userIds.forEach(userId -> {
-            send(MySseEmitter.createUpdateFriends(null, userId));
-        });
+        userIds.forEach(userId -> send(MySseEmitter.createUpdateFriends(null, userId)));
     }
 
     @Override
     public void gamesChanged(final Collection<String> userIds) {
-        userIds.forEach(userId -> {
-            send(MySseEmitter.createUpdateGames(null, userId));
-        });
+        userIds.forEach(userId -> send(MySseEmitter.createUpdateGames(null, userId)));
 //        doSelectedUserIds(userIds, MySseEmitter::sendUpdateGames);
     }
 
     @Override
     public void boomsChanged(final Collection<String> userIds) {
-        userIds.forEach(userId -> {
-            send(MySseEmitter.createUpdateBooms(null, userId));
-        });
+        userIds.forEach(userId -> send(MySseEmitter.createUpdateBooms(null, userId)));
 //        doSelectedUserIds(userIds, MySseEmitter::sendUpdateBooms);
     }
 
@@ -169,9 +159,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         send(MySseEmitter.createServerSentEvent(null, user.getId(), convertedUser));
 
         // update friends
-        getFriends(user.getId()).subscribe(invite -> {
-            send(MySseEmitter.createServerSentEvent(null, invite, convertedUser));
-        });
+        getFriends(user.getId()).subscribe(invite -> send(MySseEmitter.createServerSentEvent(null, invite, convertedUser)));
 //        doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
     }
 
@@ -184,9 +172,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.fromIterable(boom.getPlayers())
             .concatWith(Flux.just(boom.getCreator()))
             .distinct()
-            .subscribe(player -> {
-                send(MySseEmitter.createServerSentEvent(null, player, convertedBoom));
-            });
+            .subscribe(player -> send(MySseEmitter.createServerSentEvent(null, player, convertedBoom)));
 
     }
 
@@ -198,9 +184,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         game.getPlayers()
             .stream()
             .filter(player -> !player.equals(game.getCreator()))
-            .forEach(player -> {
-                send(MySseEmitter.createNewGame(null, player, convertedGame));
-            });
+            .forEach(player -> send(MySseEmitter.createNewGame(null, player, convertedGame)));
 
 //            .collect(Collectors.toSet()), mySseEmitter -> mySseEmitter.newGame(requireNonNull(gameToOpenApiConverter.convert(game))));
     }
@@ -303,18 +287,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(sseSessionRepository::save)
             .thenMany(
         mainSink.asFlux()
-            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
+            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, userId, "ping", null)))
             .mergeWith(initCache(appIdentifier, userId))
             .doOnSubscribe(signalType -> {
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             })
-            .doFinally((a) -> {
-                sseSessionRepository.deleteById(appIdentifier.toString())
-                    .doOnSuccess(_ -> {
-                        sendOnlineListToFriendsOf(userId);
-                    })
+            .doFinally(a -> {
+                sseSessionRepository.deleteById(appIdentifier)
+                    .doOnSuccess(_ -> sendOnlineListToFriendsOf(userId))
                     .subscribe();
                 log.info("{} cancel() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
             })

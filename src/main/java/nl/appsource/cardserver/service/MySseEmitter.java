@@ -110,23 +110,7 @@ public final class MySseEmitter {
 
         builder.data(Objects.requireNonNullElse(data, "{}"));
 
-        return new MyServerSentEvent() {
-
-            @Override
-            public String getAppIdentifier() {
-                return appIdentifier;
-            }
-
-            @Override
-            public String getUserId() {
-                return userId;
-            }
-
-            @Override
-            public ServerSentEvent<@NonNull Object> getServerSentEvent() {
-                return builder.build();
-            }
-        };
+        return new MyServerSentEvent(appIdentifier, userId, builder.build());
     }
 
     public static MyServerSentEvent createOnlineList(final String appIdentifier, final String userId, final List<String> onlineList) {

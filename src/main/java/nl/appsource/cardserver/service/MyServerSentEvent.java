@@ -5,10 +5,5 @@ import org.springframework.http.codec.ServerSentEvent;
 
 import java.io.Serializable;
 
-public interface MyServerSentEvent extends Serializable {
-    ServerSentEvent<@NonNull Object> getServerSentEvent();
-
-    String getAppIdentifier();
-
-    String getUserId();
+public record MyServerSentEvent(String appIdentifier, String userId, ServerSentEvent<@NonNull Object> serverSentEvent) implements Serializable {
 }
