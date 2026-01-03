@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -36,8 +37,8 @@ public class WebfluxSecurityConfig {
     public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) {
 
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-//            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
-//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
+            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
+            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.OPTIONS)))
             .authorizeExchange((exchanges) -> exchanges.anyExchange()
@@ -60,8 +61,8 @@ public class WebfluxSecurityConfig {
     @Order(2)
     public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-//            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
-//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
+            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
+            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**"), new PathPatternParserServerWebExchangeMatcher("/loadUser")))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
@@ -73,7 +74,8 @@ public class WebfluxSecurityConfig {
     @Order(3)
     public SecurityWebFilterChain securityFilterChainRest(final ServerHttpSecurity http) {
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-//            .sessionManagement(httpSecuritySessionManagementConfigurer -> httpSecuritySessionManagementConfigurer.sessionCreationPolicy(STATELESS))
+            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
+            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
                 exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
