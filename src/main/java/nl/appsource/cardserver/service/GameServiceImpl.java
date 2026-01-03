@@ -149,6 +149,7 @@ public class GameServiceImpl implements GameService {
         log.info("init()");
         if (environment.acceptsProfiles(Profiles.of("production"))) {
             gameRepository.findAll()
+                .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
                 .subscribe(gameId -> {
                     executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
