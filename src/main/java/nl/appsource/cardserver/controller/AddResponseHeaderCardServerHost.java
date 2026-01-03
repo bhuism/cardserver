@@ -1,22 +1,34 @@
 package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.info.GitProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 @Component
 @RequiredArgsConstructor
-public class AddResponseHeaderFilter implements WebFilter {
+public class AddResponseHeaderCardServerHost implements WebFilter {
 
-    private final GitProperties gitProperties;
+    private static final String HOSTNAME;
+
+    static {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            host = "unknown";
+        }
+        HOSTNAME = host;
+    }
 
     @Override
     public Mono<Void> filter(final ServerWebExchange exchange, final WebFilterChain chain) {
-        exchange.getResponse().getHeaders().add("CardServerVersion", gitProperties.getCommitId());
+        exchange.getResponse().getHeaders().add("CardServerHost", HOSTNAME);
         return chain.filter(exchange);
     }
 

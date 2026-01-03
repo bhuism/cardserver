@@ -306,18 +306,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return Mono.just(new SseSession(id, remoteAddress, userAgent, userId))
             .flatMap(sseSessionRepository::save)
-//            .doOnSuccess(_ -> {
-//                sendOnlineListTo(userId);
-//                sendOnlineListToFriendsOf(userId);
-//            })
             .thenMany(
         mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.getAppIdentifier()) || userId.equals(myServerSentEvent.getUserId()) || (myServerSentEvent.getAppIdentifier() == null && myServerSentEvent.getUserId() == null))
             .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, userId, "ping", null)))
             .mergeWith(initCache(appIdentifier, userId))
             .doOnSubscribe(signalType -> {
-                        sendOnlineListTo(userId);
-                        sendOnlineListToFriendsOf(userId);
+                sendOnlineListTo(userId);
+                sendOnlineListToFriendsOf(userId);
             })
             .doFinally((a) -> {
                 sseSessionRepository.deleteById(appIdentifier.toString())
