@@ -188,10 +188,12 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-            log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
             eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
             Mono.just(gameId)
                 .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
+                .doOnNext(game -> {
+                    log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
+                })
                 .map(GameEngineImpl::new)
                 .filter(gameEngine -> !gameEngine.isCompleted())
                 .flatMap(gameEngine -> {
