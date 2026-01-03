@@ -4,6 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -33,12 +34,14 @@ public class LoginController extends GenericController implements LoginApi, Load
     private final UserService userService;
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
+    private final UserRepository userRepository;
 
-    public LoginController(final SseEmitterRepository sseEmitterRepositoryArg, final UserRepository userRepositoryArg, final UserService userServiceArg, final CardServerJwtModem cardServerJwtModemArg, final UserToOpenApiConverter userToOpenApiConverterArg) {
-        super(sseEmitterRepositoryArg, userRepositoryArg);
-        this.userService = userServiceArg;
-        this.cardServerJwtModem = cardServerJwtModemArg;
+    public LoginController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepository, final UserService userService, final CardServerJwtModem cardServerJwtModem, final UserToOpenApiConverter userToOpenApiConverterArg, final SseSessionRepository sseSessionRepository) {
+        super(userRepository, sseSessionRepository);
+        this.userService = userService;
+        this.cardServerJwtModem = cardServerJwtModem;
         this.userToOpenApiConverter = userToOpenApiConverterArg;
+        this.userRepository = userRepository;
     }
 
     @Override

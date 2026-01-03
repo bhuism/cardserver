@@ -2,10 +2,10 @@ package nl.appsource.cardserver.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import org.openapitools.api.GamesApi;
 import org.openapitools.model.CreateGame;
@@ -31,10 +31,10 @@ public class GameController extends GenericController implements GamesApi, V1Api
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
-    public GameController(final SseEmitterRepository sseEmitterRepository, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg, final UserRepository userRepositoryArg) {
-        super(sseEmitterRepository, userRepositoryArg);
-        this.gameService = gameServiceArg;
-        this.gameToOpenApiConverter = gameToOpenApiConverterArg;
+    public GameController(final GameService gameService, final GameToOpenApiConverter gameToOpenApiConverter, final UserRepository userRepository, final SseSessionRepository sseSessionRepository) {
+        super(userRepository, sseSessionRepository);
+        this.gameService = gameService;
+        this.gameToOpenApiConverter = gameToOpenApiConverter;
     }
 
     @Override

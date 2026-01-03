@@ -3,6 +3,7 @@ package nl.appsource.cardserver.controller;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
@@ -33,10 +34,13 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
-    public UserController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepositoryArg, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg) {
-        super(sseEmitterRepository, userRepositoryArg);
+    private final SseEmitterRepository sseEmitterRepository;
+
+    public UserController(final SseEmitterRepository sseEmitterRepository, final SseSessionRepository sseSessionRepository, final UserRepository userRepositoryArg, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg) {
+        super(userRepositoryArg, sseSessionRepository);
         this.userService = userServiceArg;
         this.userToOpenApiConverter = userToOpenApiConverterArg;
+        this.sseEmitterRepository = sseEmitterRepository;
     }
 
     @Override

@@ -3,6 +3,7 @@ package nl.appsource.cardserver.controller;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Feedback;
 import nl.appsource.cardserver.repository.FeedbackRepository;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.FeedbackApi;
@@ -25,8 +26,11 @@ public class CacheController extends GenericController implements ReloadCacheApi
 
     private final FeedbackRepository feedBackRepository;
 
-    public CacheController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepositoryArg, final FeedbackRepository feedbackRepositoryArg) {
-        super(sseEmitterRepository, userRepositoryArg);
+    private final SseEmitterRepository sseEmitterRepository;
+
+    public CacheController(final SseSessionRepository sseSessionRepository, final SseEmitterRepository sseEmitterRepository, final UserRepository userRepositoryArg, final FeedbackRepository feedbackRepositoryArg) {
+        super(userRepositoryArg, sseSessionRepository);
+        this.sseEmitterRepository = sseEmitterRepository;
         this.feedBackRepository = feedbackRepositoryArg;
     }
 

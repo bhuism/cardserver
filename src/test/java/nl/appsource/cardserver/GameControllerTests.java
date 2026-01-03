@@ -3,14 +3,17 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.controller.BoomController;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.utils.IDTYPE;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,6 +62,9 @@ public class GameControllerTests {
     @MockitoBean
     private FeedbackRepository feedbackRepository;
 
+    @MockitoBean
+    private SseSessionRepository sseSessionRepository;
+
     @Test
     @WithMockUser(username = "user-abc")
     void getGame_whenGameNotFound_shouldReturnNotFound() {
@@ -72,7 +78,8 @@ public class GameControllerTests {
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
 
-        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), user)).thenReturn(Mono.just(user));
+        final SseSession sseSession = new SseSession("sessIdTest", "remoteadrews", "userAgent", "user-abc");
+        when(sseSessionRepository.findByIdAndCreator(IDTYPE.SESS.getIdentifier() + "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
 
         webTestClient
             // Set up a mock authenticated user for the request
@@ -116,7 +123,8 @@ public class GameControllerTests {
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
 //        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
-        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), user)).thenReturn(Mono.just(user));
+        final SseSession sseSession = new SseSession("sessIdTest", "remoteadrews", "userAgent", "user-abc");
+        when(sseSessionRepository.findByIdAndCreator(IDTYPE.SESS.getIdentifier() + "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
 
         webTestClient
             // Set up a mock authenticated user for the request

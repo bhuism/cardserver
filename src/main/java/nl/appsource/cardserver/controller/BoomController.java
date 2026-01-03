@@ -6,11 +6,11 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.openapitools.api.BoomApi;
 import org.openapitools.model.Boom;
 import org.openapitools.model.CreateBoom;
@@ -47,8 +47,8 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
 
     private static final Random RAND = new SecureRandom();
 
-    public BoomController(final SseEmitterRepository sseEmitterRepository, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg, final UserRepository userRepositoryArg) {
-        super(sseEmitterRepository, userRepositoryArg);
+    public BoomController(final SseSessionRepository sseSessionRepositoryArg, final BoomService boolServiceArg, final BoomToOpenApiConverter boomToOpenApiConverterArg, final GameRepository gameRepositoryArg, final BoomRepository boomRepositoryArg, final GameService gameServiceArg, final GameToOpenApiConverter gameToOpenApiConverterArg, final UserRepository userRepositoryArg) {
+        super(userRepositoryArg, sseSessionRepositoryArg);
         this.boomService = boolServiceArg;
         this.boomToOpenApiConverter = boomToOpenApiConverterArg;
         this.gameRepository = gameRepositoryArg;

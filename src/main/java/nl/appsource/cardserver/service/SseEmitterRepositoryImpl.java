@@ -342,11 +342,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendFlux(initCache(appIdentifier, userId)));
     }
 
-    @Override
-    public Mono<User> validate(final UUID appIdentifier, final User user) {
-        return sseSessionRepository.findByIdAndCreator(SESS.getIdentifier() + appIdentifier.toString(), user.getId())
-//            .flatMap(sseSessionRepository::save)
-            .then(Mono.just(user));
-    }
+//    @Override
+//    public Mono<User> validate(final UUID appIdentifier, final User user) {
+//        return sseSessionRepository.findByIdAndCreator(SESS.getIdentifier() + appIdentifier.toString(), user.getId())
+////            .flatMap(sseSessionRepository::save)
+//            .then(Mono.just(user));
+//    }
 
 }

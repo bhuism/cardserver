@@ -55,7 +55,7 @@ public interface SseEmitterRepository {
 
     SseEmitterRepositoryImpl.DebugSseConnections getDebugSseConnections();
 
-    Mono<User> validate(UUID appIdentifier, User user);
+    //Mono<User> validate(UUID appIdentifier, User user);
 
 //    void eventSubscribe(UUID appIdentifier, Set<String> topic);
 

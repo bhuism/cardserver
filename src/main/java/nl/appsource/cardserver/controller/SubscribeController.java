@@ -2,6 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -23,8 +24,11 @@ public class SubscribeController extends GenericController implements V1Api {
 
     public static final String APP_IDENTIFIER_HEADER_NAME = "App-Identifier";
 
-    public SubscribeController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepositoryArg) {
-        super(sseEmitterRepository, userRepositoryArg);
+    private final SseEmitterRepository sseEmitterRepository;
+
+    public SubscribeController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepository, final SseSessionRepository sseSessionRepository) {
+        super(userRepository, sseSessionRepository);
+        this.sseEmitterRepository = sseEmitterRepository;
     }
 
     @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
