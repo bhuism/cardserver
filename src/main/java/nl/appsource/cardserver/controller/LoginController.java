@@ -67,7 +67,6 @@ public class LoginController extends GenericController implements LoginApi, Load
                 return userService.findByEmail(email)
                     .map((user) -> {
                         user.setLastLogin(now);
-                        user.setUpdated(now);
                         return user;
                     })
                     .switchIfEmpty(Mono.defer(() -> {

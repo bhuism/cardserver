@@ -43,7 +43,6 @@ public class CacheController extends GenericController implements ReloadCacheApi
     public Mono<ResponseEntity<Void>> feedback(final UUID appIdentifier, final Mono<FeedbackRequest> feedbackRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} feedback() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .flatMap(this::updateUser)
             .flatMap(user -> feedbackRequest.flatMap((fb) -> {
 
                 final Feedback feedBack = new Feedback();

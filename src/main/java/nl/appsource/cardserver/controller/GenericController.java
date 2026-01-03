@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.controller;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
@@ -12,7 +11,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -29,6 +27,7 @@ public class GenericController {
             .filter(Authentication::isAuthenticated)
             .map(Authentication::getName)
             .flatMap(userRepository::findById)
+//            .flatMap(userRepository::save)
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} {} no authentication", exchange.getRequest()
                     .getRemoteAddress(), exchange.getRequest()
@@ -44,11 +43,6 @@ public class GenericController {
                     return Mono.empty();
                 }))
             );
-    }
-
-    public Mono<@NonNull User> updateUser(final User user) {
-        user.setUpdated(Instant.now());
-        return userRepository.save(user);
     }
 
 }

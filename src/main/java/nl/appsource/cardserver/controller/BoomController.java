@@ -61,7 +61,6 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     public Mono<ResponseEntity<Boom>> createBoom(final UUID appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .flatMap(this::updateUser)
             .flatMap(user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(user.getId(), createBoom.getPlayers(), user.getGameVariant())))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
@@ -114,7 +113,6 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
         synchronized (lockMap.computeIfAbsent(boomId, _unused -> new Object())) {
             return authorize(appIdentifier, exchange)
                 .doOnNext((user) -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), user.getId(), boomId))
-                .flatMap(this::updateUser)
                 .flatMap(user -> {
                     return boomRepository.findById(boomId)
                         .map((boom) -> {
@@ -149,7 +147,6 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     public Mono<ResponseEntity<Void>> deleteBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} deleteBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), user.getId(), boomId))
-            .flatMap(this::updateUser)
             .map(User::getId)
             .flatMap(boomRepository::deleteById)
             .then(Mono.just(ResponseEntity.ok().build()));

@@ -98,7 +98,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
     public Mono<ResponseEntity<Void>> removeInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} removeInvites() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .flatMap(this::updateUser)
             .flatMap(user -> userService.removeInvite(user.getId(), friendId).then(just(ResponseEntity.ok().<Void>build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
 
@@ -109,7 +108,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} acceptInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId()))
-            .flatMap(this::updateUser)
             .flatMap(user -> userService.acceptInvite(user.getId(), friendId).then(just(ResponseEntity.ok().<Void>build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -119,7 +117,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} createInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId()))
-            .flatMap(this::updateUser)
             .flatMap(user -> arg.flatMap(createInvite -> userService.createInvite(user.getId(), createInvite.getSearchString()))
                 .map(BigDecimal::new)
                 .map(count -> new CreateInviteResponse().count(count))
@@ -134,7 +131,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
     public Mono<ResponseEntity<User>> updatePreferences(final UUID appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} updatePreferences() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .flatMap(this::updateUser)
             .flatMap(user -> arg.flatMap(updatePreferences -> userService.updatePreferences(user.getId(), updatePreferences))
                 .mapNotNull(userToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
