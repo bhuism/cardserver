@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.service;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -32,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static java.lang.Math.max;
@@ -141,22 +144,22 @@ public class GameServiceImpl implements GameService {
         }
     }
 
-//    @PostConstruct
-//    public void init() {
-//        log.info("init()");
-//        if (environment.acceptsProfiles(Profiles.of("production"))) {
-//            gameRepository.findAll()
-//                .map(Game::getId)
-//                .subscribe(gameId -> {
-//                    executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
-//                    executeSynchronious(GameEventType.CHECK_ROTATE, null, gameId, null, null);
-//                    gameRepository.findById(gameId)
-//                        .map(GameEngineImpl::new)
-//                        .subscribe(this::scheduleNext);
-//                });
-//        }
-//        scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
-//    }
+    @PostConstruct
+    public void init() {
+        log.info("init()");
+        if (environment.acceptsProfiles(Profiles.of("production"))) {
+            gameRepository.findAll()
+                .map(Game::getId)
+                .subscribe(gameId -> {
+                    executeSynchronious(GameEventType.CLOSE_LAST_TRICK, null, gameId, null, null);
+                    executeSynchronious(GameEventType.CHECK_ROTATE, null, gameId, null, null);
+                    gameRepository.findById(gameId)
+                        .map(GameEngineImpl::new)
+                        .subscribe(this::scheduleNext);
+                });
+        }
+        scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
+    }
 
     @PreDestroy
     public void destroy() {
