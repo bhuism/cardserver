@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,8 +56,6 @@ public class GameServiceImpl implements GameService {
     private final SseEmitterRepository sseEmitterRepository;
 
     private static final Random RAND = new SecureRandom();
-
-    private final ConcurrentMap<String, Object> lockMap = new ConcurrentHashMap<>();
 
     private final PriorityQueue<ScheduledGameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(ScheduledGameEvent::getExecutionTime));
 
@@ -133,15 +129,13 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
-            return gameRepository.findById(gameId)
-                .filter(game -> game.getCreator().equals(userId))
-                .filter(game -> game.getBoomId() == null)
-                .flatMap(game -> gameRepository.delete(game)
-                    .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
-                    .thenReturn(true)
-                );
-        }
+        return gameRepository.findById(gameId)
+            .filter(game -> game.getCreator().equals(userId))
+            .filter(game -> game.getBoomId() == null)
+            .flatMap(game -> gameRepository.delete(game)
+                .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
+                .thenReturn(true)
+            );
     }
 
     @PostConstruct
@@ -194,7 +188,6 @@ public class GameServiceImpl implements GameService {
 
     private void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             log.info("Executing locked : {} for game {} userId: {}", gameEventType, gameId, userId);
             eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
             Mono.just(gameId)
@@ -223,7 +216,6 @@ public class GameServiceImpl implements GameService {
                         .doFinally((_unused) -> this.scheduleNext(gameEngine));
                 })
                 .subscribe();
-        }
     }
 
     private void scheduleNext(final GameEngine gameEngine) {
@@ -274,7 +266,6 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
@@ -306,7 +297,6 @@ public class GameServiceImpl implements GameService {
                     }
                 })
                 .then();
-        }
     }
 
     @Override
@@ -320,7 +310,6 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimVerzaken(final UUID appIdentifier, final String userId, final String gameId) {
-        synchronized (lockMap.computeIfAbsent(gameId, _unused -> new Object())) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
@@ -352,7 +341,6 @@ public class GameServiceImpl implements GameService {
                         }))
                         .then();
                 });
-        }
     }
 
 
