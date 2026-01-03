@@ -70,7 +70,6 @@ public class DcpConfiguration {
 
                     if (rootNode.isObject()) {
                         className = rootNode.get("_class").stringValue();
-                        version = rootNode.optional("version").map(JsonNode::asLong);
                         switch (className) {
                             case "nl.appsource.cardserver.model.SseSession" -> { }
                             case "nl.appsource.cardserver.model.Feedback" -> { }
@@ -101,7 +100,7 @@ public class DcpConfiguration {
                 }
 
                 if (!SseSession.class.getName().equals(className)) {
-                    log.info("Mutation: key={} revSeq={} class={} version={}", key, revSeq, className, version);
+                    log.info("Mutation: key={} revSeq={} class={}", key, revSeq, className);
                 }
 
 //
