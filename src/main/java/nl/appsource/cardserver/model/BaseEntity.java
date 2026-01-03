@@ -31,6 +31,6 @@ public abstract class BaseEntity {
     private String creator;
 
     @Version
-    private Long version;
+    private long version;
 
 }
