@@ -7,7 +7,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface GameService {
 
@@ -29,11 +28,11 @@ public interface GameService {
 
     void scheduleGameEvent(ScheduledGameEvent scheduledGameEvent);
 
-    Mono<Void> reload(UUID appIdentifier, String userId, String gameId);
+    Mono<Void> reload(String appIdentifier, String userId, String gameId);
 
-    Mono<Void> claimRoem(UUID appIdentifier, String userId, String gameId);
+    Mono<Void> claimRoem(String appIdentifier, String userId, String gameId);
 
     Mono<Void> gameMessage(String userId, String gameId, String message);
 
-    Mono<Void> claimVerzaken(UUID appIdentifier, String userId, String gameId);
+    Mono<Void> claimVerzaken(String appIdentifier, String userId, String gameId);
 }

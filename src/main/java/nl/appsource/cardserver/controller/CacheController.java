@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 import static nl.appsource.cardserver.utils.IDTYPE.FEED;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
@@ -35,7 +33,7 @@ public class CacheController extends GenericController implements ReloadCacheApi
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> reloadCache(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> reloadCache(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} reloadCache() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .doOnNext(user -> sseEmitterRepository.reloadCache(appIdentifier, user.getId()))
@@ -44,7 +42,7 @@ public class CacheController extends GenericController implements ReloadCacheApi
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> feedback(final UUID appIdentifier, final Mono<FeedbackRequest> feedbackRequest, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> feedback(final String appIdentifier, final Mono<FeedbackRequest> feedbackRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} feedback() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap(user -> feedbackRequest.flatMap((fb) -> {

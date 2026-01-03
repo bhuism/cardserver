@@ -19,7 +19,6 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class DebugController implements DebugApi, V1Api {
     private final SseEmitterRepository sseEmitterRepository;
 
     @Override
-    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final String appIdentifier, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .map(Authentication::getName)

@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singleton;
@@ -144,7 +143,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Mono<Void> reload(final UUID appIdentifier, final String caller, final String userId) {
+    public Mono<Void> reload(final String appIdentifier, final String caller, final String userId) {
         return userRepository.findById(userId)
             .doOnNext(user -> sseEmitterRepository.updateUserForId(appIdentifier, user))
             .then();

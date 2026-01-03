@@ -15,7 +15,6 @@ import org.springframework.http.codec.ServerSentEvent;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -25,7 +24,7 @@ public final class MySseEmitter {
 
     private static final AtomicLong ATOMIC_LONG = new AtomicLong(1);
 
-    public static MyServerSentEvent createMessageEvent(final UUID appIdentifier, final String userId, final UserMessage userMessage) {
+    public static MyServerSentEvent createMessageEvent(final String appIdentifier, final String userId, final UserMessage userMessage) {
         return createServerSentEvent(appIdentifier, userId, "messageEvent", new MessageEvent().message(userMessage));
     }
 
@@ -61,7 +60,7 @@ public final class MySseEmitter {
         return createServerSentEvent(null, null, "ping");
     }
 
-    public static MyServerSentEvent createPongEvent(final UUID appIdentifier, final String userId) {
+    public static MyServerSentEvent createPongEvent(final String appIdentifier, final String userId) {
         return createServerSentEvent(appIdentifier, userId, "pong");
     }
 
@@ -89,23 +88,23 @@ public final class MySseEmitter {
 //        emitNext(serverSentEvent);
 //    }
 
-    private static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final String event) {
+    private static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final String event) {
         return createServerSentEvent(appIdentifier, userId, event, null);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final User user) {
+    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final User user) {
         return createServerSentEvent(appIdentifier, userId, "updateUser", user);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final Game game) {
+    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final Game game) {
         return createServerSentEvent(appIdentifier, userId, "updateGame", game);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final Boom boom) {
+    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final Boom boom) {
         return createServerSentEvent(appIdentifier, userId, "updateBoom", boom);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final UUID appIdentifier, final String userId, final String event, final Object data) {
+    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final String event, final Object data) {
 
         final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id("id:" + ATOMIC_LONG.getAndIncrement());
 
@@ -114,7 +113,7 @@ public final class MySseEmitter {
         return new MyServerSentEvent() {
 
             @Override
-            public UUID getAppIdentifier() {
+            public String getAppIdentifier() {
                 return appIdentifier;
             }
 
@@ -130,27 +129,27 @@ public final class MySseEmitter {
         };
     }
 
-    public static MyServerSentEvent createOnlineList(final UUID appIdentifier, final String userId, final List<String> onlineList) {
+    public static MyServerSentEvent createOnlineList(final String appIdentifier, final String userId, final List<String> onlineList) {
         return createServerSentEvent(appIdentifier, userId, "online", new OnlineListEvent().onlineList(onlineList));
     }
 
-    public static MyServerSentEvent createUpdateFriends(final UUID appIdentifier, final String userId) {
+    public static MyServerSentEvent createUpdateFriends(final String appIdentifier, final String userId) {
         return createServerSentEvent(appIdentifier, userId, "updateFriends");
     }
 
-    public static MyServerSentEvent createUpdateGames(final UUID appIdentifier, final String userId) {
+    public static MyServerSentEvent createUpdateGames(final String appIdentifier, final String userId) {
         return createServerSentEvent(appIdentifier, userId, "updateGames");
     }
 
-    public static MyServerSentEvent createUpdateBooms(final UUID appIdentifier, final String userId) {
+    public static MyServerSentEvent createUpdateBooms(final String appIdentifier, final String userId) {
         return createServerSentEvent(appIdentifier, userId, "updateBooms");
     }
 
-    public static MyServerSentEvent createNewGame(final UUID appIdentifier, final String userId, final Game game) {
+    public static MyServerSentEvent createNewGame(final String appIdentifier, final String userId, final Game game) {
         return createServerSentEvent(appIdentifier, userId, "newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
     }
 
-    public static MyServerSentEvent newFriend(final UUID appIdentifier, final String userId, final String newFriendId) {
+    public static MyServerSentEvent newFriend(final String appIdentifier, final String userId, final String newFriendId) {
         return createServerSentEvent(appIdentifier, userId, "newFriend", new NewFriendEvent().newFriendId(newFriendId));
     }
 

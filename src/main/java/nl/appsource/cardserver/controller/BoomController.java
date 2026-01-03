@@ -23,7 +23,6 @@ import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -58,7 +57,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Boom>> createBoom(final UUID appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Boom>> createBoom(final String appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap(user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(user.getId(), createBoom.getPlayers(), user.getGameVariant())))
@@ -69,7 +68,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Boom>> getBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Boom>> getBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId(), boomId))
@@ -86,7 +85,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<Boom>>> getBooms(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<Boom>>> getBooms(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} getBooms() userId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId()))
@@ -109,7 +108,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
 
 
     @Override
-    public Mono<ResponseEntity<Game>> playBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Game>> playBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         synchronized (lockMap.computeIfAbsent(boomId, _unused -> new Object())) {
             return authorize(appIdentifier, exchange)
                 .doOnNext((user) -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), user.getId(), boomId))
@@ -144,7 +143,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteBoom(final UUID appIdentifier, final String boomId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> deleteBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} deleteBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), user.getId(), boomId))
             .map(User::getId)

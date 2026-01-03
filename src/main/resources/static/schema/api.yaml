@@ -537,7 +537,6 @@ components:
       in: header
       schema:
         type: string
-        format: uuid
       required: true
     gameId:
       name: gameId

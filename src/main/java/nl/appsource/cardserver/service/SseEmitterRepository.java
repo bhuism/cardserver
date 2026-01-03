@@ -9,7 +9,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
-import java.util.UUID;
 
 public interface SseEmitterRepository {
 
@@ -19,13 +18,13 @@ public interface SseEmitterRepository {
 
     void sendMessage(Collection<String> userIds, UserMessage userMessage);
 
-    void sendAppIdentifierMessage(UUID appIdentifier, UserMessage userMessage);
+    void sendAppIdentifierMessage(String appIdentifier, UserMessage userMessage);
 
-    Flux<@NonNull MyServerSentEvent> subscribe(UUID appIdentifier, String userId, String remoteAddress, String userAgent);
+    Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
-    Mono<Void> ping(UUID appIdentifier);
+    Mono<Void> ping(String appIdentifier);
 
-    Mono<Void> pong(UUID appIdentifier);
+    Mono<Void> pong(String appIdentifier);
 
     void friendsChanged(Collection<String> userIds);
 
@@ -35,9 +34,9 @@ public interface SseEmitterRepository {
 
     void updateGame(Game game);
 
-    void updateGameForId(UUID appIdentifier, Game game);
+    void updateGameForId(String appIdentifier, Game game);
 
-    void updateUserForId(UUID appIdentifier, User user);
+    void updateUserForId(String appIdentifier, User user);
 
     void updateUser(User user);
 
@@ -49,7 +48,7 @@ public interface SseEmitterRepository {
 
     void newFriend(String userId, String friendId);
 
-    void reloadCache(UUID appIdentifier, String userId);
+    void reloadCache(String appIdentifier, String userId);
 
 //    Boolean validate(UUID appIdentifier, String userId);
 

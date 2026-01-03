@@ -26,9 +26,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.UUID;
-
-import static nl.appsource.cardserver.utils.IDTYPE.SESS;
 
 /**
  * The type Sse emitter repository.
@@ -100,8 +97,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Mono<Void> ping(final UUID appIdentifier) {
-        return sseSessionRepository.findById(SESS.getIdentifier() + appIdentifier.toString())
+    public Mono<Void> ping(final String appIdentifier) {
+        return sseSessionRepository.findById(appIdentifier)
             .map(sseSession -> {
                 sseSession.ping();
                 send(MySseEmitter.createPongEvent(appIdentifier, null));
@@ -112,8 +109,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Mono<Void> pong(final UUID appIdentifier) {
-        return sseSessionRepository.findById(SESS.getIdentifier() + appIdentifier.toString())
+    public Mono<Void> pong(final String appIdentifier) {
+        return sseSessionRepository.findById(appIdentifier)
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
             .then();
@@ -152,13 +149,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void updateGameForId(final UUID appIdentifier, final Game game) {
+    public void updateGameForId(final String appIdentifier, final Game game) {
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
         send(MySseEmitter.createServerSentEvent(appIdentifier, null, gameToOpenApiConverter.convert(game)));
     }
 
     @Override
-    public void updateUserForId(final UUID appIdentifier, final User user) {
+    public void updateUserForId(final String appIdentifier, final User user) {
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
         send(MySseEmitter.createServerSentEvent(appIdentifier, null, userToOpenApiConverter.convert(user)));
     }
@@ -226,7 +223,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 
     @Override
-    public void sendAppIdentifierMessage(final UUID appIdentifier, final UserMessage userMessage) {
+    public void sendAppIdentifierMessage(final String appIdentifier, final UserMessage userMessage) {
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.message(userMessage));
         send(MySseEmitter.createMessageEvent(appIdentifier, null, userMessage));
     }
@@ -257,7 +254,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 );
     }
 
-    private Flux<@NonNull MyServerSentEvent> initCache(final UUID appIdentifier, final String userId) {
+    private Flux<@NonNull MyServerSentEvent> initCache(final String appIdentifier, final String userId) {
 
         final Flux<@NonNull String> friendIds = userRepository.findById(userId)
             .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
@@ -298,13 +295,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Flux<@NonNull MyServerSentEvent> subscribe(final UUID appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
+    public Flux<@NonNull MyServerSentEvent> subscribe(final String appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
 
         log.info("{} subscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
-        final String id = SESS.getIdentifier() + appIdentifier.toString();
-
-        return Mono.just(new SseSession(id, remoteAddress, userAgent, userId))
+        return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, userId))
             .flatMap(sseSessionRepository::save)
             .thenMany(
         mainSink.asFlux()
@@ -329,20 +324,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void reloadCache(final UUID appIdentifier, final String userId) {
+    public void reloadCache(final String appIdentifier, final String userId) {
         initCache(appIdentifier, userId).subscribe(
             msg -> mainSink.emitNext(msg, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
             err -> mainSink.emitError(err, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
             () -> { /* Don't close sink if you want to reuse it */ }
         );
-//        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendFlux(initCache(appIdentifier, userId)));
     }
-
-//    @Override
-//    public Mono<User> validate(final UUID appIdentifier, final User user) {
-//        return sseSessionRepository.findByIdAndCreator(SESS.getIdentifier() + appIdentifier.toString(), user.getId())
-////            .flatMap(sseSessionRepository::save)
-//            .then(Mono.just(user));
-//    }
 
 }

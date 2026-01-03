@@ -22,7 +22,6 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 import static reactor.core.publisher.Mono.just;
 
@@ -44,7 +43,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<User>> getUser(final UUID appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<User>> getUser(final String appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} getUser({}) userId={}", exchange.getRequest().getRemoteAddress(), userIdParam, user.getId()))
             .flatMap((user) -> userService.findById(userIdParam)
@@ -55,7 +54,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<InvitesResponse>> getInvites(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<InvitesResponse>> getInvites(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} getInvites() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap(user -> userService.getInvites(user.getId()).flatMap(invites -> {
@@ -73,7 +72,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<@NonNull  ResponseEntity<@NonNull Void>> ping(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<@NonNull  ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             //.doOnNext((user) -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap((user) -> sseEmitterRepository.ping(appIdentifier))
@@ -82,7 +81,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> pong(final UUID appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             //.doOnNext((user) -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap((user) -> sseEmitterRepository.pong(appIdentifier))
@@ -91,7 +90,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final UUID appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final String appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} getUserByIds() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .map((_user) -> ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)))
@@ -99,7 +98,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> removeInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> removeInvite(final String appIdentifier, final String friendId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} removeInvites() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap(user -> userService.removeInvite(user.getId(), friendId).then(just(ResponseEntity.ok().<Void>build())))
@@ -108,7 +107,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> acceptInvite(final UUID appIdentifier, final String friendId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> acceptInvite(final String appIdentifier, final String friendId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} acceptInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId()))
@@ -117,7 +116,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final UUID appIdentifier, final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final String appIdentifier, final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} createInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId()))
@@ -132,7 +131,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
 
     @Override
-    public Mono<ResponseEntity<User>> updatePreferences(final UUID appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<User>> updatePreferences(final String appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} updatePreferences() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .flatMap(user -> arg.flatMap(updatePreferences -> userService.updatePreferences(user.getId(), updatePreferences))
@@ -144,7 +143,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> reloadUser(final UUID appIdentifier, final String gameId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> reloadUser(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((user) -> log.info("{} reloadUser() userId={} gameId={}", exchange.getRequest()
                 .getRemoteAddress(), user.getId(), gameId))

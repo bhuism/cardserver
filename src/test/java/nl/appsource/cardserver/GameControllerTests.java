@@ -78,15 +78,15 @@ public class GameControllerTests {
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
 
-        final SseSession sseSession = new SseSession("sessIdTest", "remoteadrews", "userAgent", "user-abc");
-        when(sseSessionRepository.findByIdAndCreator(IDTYPE.SESS.getIdentifier() + "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
+        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "user-abc");
+        when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
 
         webTestClient
             // Set up a mock authenticated user for the request
 //            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
             .get()
             .uri("/api/v1/games/game-123")
-            .header("App-Identifier", "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
+            .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isNotFound(); // Expecting 404 Not Found because the controller now explicitly returns it
@@ -123,15 +123,15 @@ public class GameControllerTests {
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
 //        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
-        final SseSession sseSession = new SseSession("sessIdTest", "remoteadrews", "userAgent", "user-abc");
-        when(sseSessionRepository.findByIdAndCreator(IDTYPE.SESS.getIdentifier() + "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
+        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "user-abc");
+        when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
 
         webTestClient
             // Set up a mock authenticated user for the request
 //            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
             .get()
             .uri("/api/v1/games/game-123")
-            .header("App-Identifier", "0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
+            .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isOk()

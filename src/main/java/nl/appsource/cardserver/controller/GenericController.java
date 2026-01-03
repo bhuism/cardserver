@@ -11,10 +11,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
-import static nl.appsource.cardserver.utils.IDTYPE.SESS;
-
 @Slf4j
 @RequiredArgsConstructor
 public class GenericController {
@@ -28,10 +24,16 @@ public class GenericController {
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
             .map(Authentication::getName)
-            .flatMap(userId -> userRepository.findById(userId).switchIfEmpty(Mono.defer(() -> {
-                    log.warn("{} {} user not found, userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), userId);
-                    return Mono.empty();
-                }))
+            .flatMap(userId -> {
+                //log.info("Looking for userId: {}", userId);
+                    return userRepository.findById(userId)
+                        .switchIfEmpty(Mono.defer(() -> {
+                            log.warn("{} {} user not found, userId={}", exchange.getRequest()
+                                .getRemoteAddress(), exchange.getRequest()
+                                .getPath(), userId);
+                            return Mono.empty();
+                        }));
+                }
             )
 //            .flatMap(userRepository::save)
             .switchIfEmpty(Mono.defer(() -> {
@@ -42,10 +44,11 @@ public class GenericController {
             }));
     }
 
-    protected Mono<User> authorize(final UUID appIdentifier, final ServerWebExchange exchange) {
+    protected Mono<User> authorize(final String appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
             .flatMap((user) -> {
-                return sseSessionRepository.findByIdAndCreator(SESS.getIdentifier() + appIdentifier.toString(), user.getId())
+                //log.info("Looking for session: {}", appIdentifier);
+                return sseSessionRepository.findByIdAndCreator(appIdentifier, user.getId())
                     .map(_ -> user)
                     .switchIfEmpty(Mono.defer(() -> {
                         log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier.toString(), user.getDisplayName());

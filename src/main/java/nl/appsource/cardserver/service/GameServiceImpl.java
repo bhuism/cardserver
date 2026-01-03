@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -260,14 +259,14 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> reload(final UUID appIdentifier, final String userId, final String gameId) {
+    public Mono<Void> reload(final String appIdentifier, final String userId, final String gameId) {
         return gameRepository.findByUserIdAndGameId(userId, gameId)
             .doOnNext(game -> sseEmitterRepository.updateGameForId(appIdentifier, game))
             .then();
     }
 
     @Override
-    public Mono<Void> claimRoem(final UUID appIdentifier, final String userId, final String gameId) {
+    public Mono<Void> claimRoem(final String appIdentifier, final String userId, final String gameId) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {
@@ -311,7 +310,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> claimVerzaken(final UUID appIdentifier, final String userId, final String gameId) {
+    public Mono<Void> claimVerzaken(final String appIdentifier, final String userId, final String gameId) {
             return gameRepository.findById(gameId)
                 .map(GameEngineImpl::new)
                 .flatMap(gameEngine -> {

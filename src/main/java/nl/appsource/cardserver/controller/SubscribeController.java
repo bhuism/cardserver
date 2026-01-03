@@ -15,7 +15,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
-import java.util.UUID;
 
 
 @Slf4j
@@ -38,7 +37,7 @@ public class SubscribeController extends GenericController implements V1Api {
         final String userAgent = userAgentList != null && userAgentList.isEmpty() ? userAgentList.getFirst() : null;
 
         return getUserId(exchange)
-            .flatMapMany(user -> sseEmitterRepository.subscribe(UUID.fromString(appIdentifier),
+            .flatMapMany(user -> sseEmitterRepository.subscribe(appIdentifier,
                 user.getId(), "" + exchange.getRequest().getRemoteAddress(),
                 userAgent
             ).map(MyServerSentEvent::getServerSentEvent));
