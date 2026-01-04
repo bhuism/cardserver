@@ -35,9 +35,6 @@ public interface SseEmitterRepository {
 
     void updateGameForId(String appIdentifier, Game game);
 
-    void updateUserForId(String appIdentifier, User user);
-
-
     void newGame(Game game);
 
     void newFriend(String userId, String friendId);

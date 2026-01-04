@@ -28,6 +28,5 @@ public interface UserService {
 
     Mono<User> updatePreferences(String userId, @NotNull UpdatePreferences updatePreferences);
 
-    Mono<Void> reload(String appIdentifier, String userId, String gameId);
 }
 

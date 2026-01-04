@@ -137,12 +137,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void updateUserForId(final String appIdentifier, final User user) {
-//        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
-        send(createServerSentEvent(appIdentifier, null, userToOpenApiConverter.convert(user)));
-    }
-
-    @Override
     public void updateUser(final User user) {
 
         final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);

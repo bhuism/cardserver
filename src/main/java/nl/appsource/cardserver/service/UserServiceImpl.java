@@ -141,13 +141,4 @@ public class UserServiceImpl implements UserService {
                 }));
     }
 
-
-    @Override
-    public Mono<Void> reload(final String appIdentifier, final String caller, final String userId) {
-        return userRepository.findById(userId)
-            .doOnNext(user -> sseEmitterRepository.updateUserForId(appIdentifier, user))
-            .then();
-    }
-
-
 }

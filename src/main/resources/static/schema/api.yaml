@@ -399,16 +399,6 @@ paths:
           description: ok
         "404":
           description: not found
-  /users/{userId}/reload:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      operationId: reloadUser
-      parameters:
-        - $ref: "#/components/parameters/userId"
-      responses:
-        "200":
-          description: ok
   /reloadCache:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"

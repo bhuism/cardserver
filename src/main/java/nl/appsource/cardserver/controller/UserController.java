@@ -163,17 +163,4 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-    @Override
-    public Mono<ResponseEntity<Void>> reloadUser(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} reloadUser() userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), auth.user().getId(), gameId))
-            .flatMap(auth -> userService.reload(appIdentifier, auth.user().getId(), gameId)
-                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok()
-                    .build()))
-                .defaultIfEmpty(ResponseEntity.notFound()
-                    .build()))
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-    }
-
 }
