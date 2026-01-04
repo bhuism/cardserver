@@ -3,8 +3,8 @@ package nl.appsource.cardserver.service;
 import lombok.NonNull;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.User;
-import org.openapitools.model.UserMessage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -16,9 +16,7 @@ public interface SseEmitterRepository {
 
     void sendOnlineListTo(String userId);
 
-    void sendMessage(Collection<String> userIds, UserMessage userMessage);
-
-    void sendAppIdentifierMessage(String appIdentifier, UserMessage userMessage);
+    // void sendMessage(Collection<String> userIds, UserMessage userMessage);
 
     Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
@@ -53,6 +51,8 @@ public interface SseEmitterRepository {
 //    Boolean validate(UUID appIdentifier, String userId);
 
     SseEmitterRepositoryImpl.DebugSseConnections getDebugSseConnections();
+
+    void send(SseEvent sseEvent);
 
     //Mono<User> validate(UUID appIdentifier, User user);
 

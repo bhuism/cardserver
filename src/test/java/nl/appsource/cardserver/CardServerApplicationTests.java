@@ -3,6 +3,7 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.SseEventRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class CardServerApplicationTests {
 
     @MockitoBean
     private SseSessionRepository sseSessionRepository;
+
+    @MockitoBean
+    private SseEventRepository sseEventRepository;
 
     @Test
     void contextLoads() {

@@ -18,7 +18,7 @@ public final class Utils {
         final String characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         final StringBuilder result = new StringBuilder(length + 4);
 
-        if (length < 16) {
+        if (length < 8) {
             throw new IllegalArgumentException();
         }
 

@@ -11,7 +11,8 @@ public enum IDTYPE {
     GAME("game"),
     BOOM("boom"),
     FEED("feed"),
-    SESS("sess");
+    SESS("sess"),
+    EVNT("evnt");
 
     private final String identifier;
 

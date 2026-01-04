@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -23,7 +24,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 
 @Slf4j
 @Configuration
@@ -57,104 +57,117 @@ public class DcpConfiguration {
         client.dataEventHandler((flowController, event) -> {
 
             final String key = MessageUtil.getKeyAsString(event);
-            final long revSeq = DcpMutationMessage.revisionSeqno(event);
 
-            if (DcpMutationMessage.is(event)) {
+            if (!key.startsWith("_txn")) {
 
-                String className = "";
-                Optional<Long> version = Optional.empty();
+                final long revSeq = DcpMutationMessage.revisionSeqno(event);
 
-                try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+                if (DcpMutationMessage.is(event)) {
 
-                    final JsonNode rootNode = jsonMapper.readTree(is);
+                    String className = "";
 
-                    if (rootNode.isObject()) {
-                        className = rootNode.get("_class").stringValue();
-                        switch (className) {
-                            case "nl.appsource.cardserver.model.SseSession" -> { }
-                            case "nl.appsource.cardserver.model.Feedback" -> { }
-                            case "nl.appsource.cardserver.model.Boom" -> {
-                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
-                                boom.setId(key);
-                                sseEmitterRepository.updateBoom(boom);
+//                    log.info("revSeq=" + revSeq + ", key="+key+", content=" + MessageUtil.getContentAsString(event));
+
+                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+
+                        final JsonNode rootNode = jsonMapper.readTree(is);
+
+                        if (rootNode.isObject()) {
+                            className = rootNode.get("_class").stringValue();
+                            switch (className) {
+                                case "nl.appsource.cardserver.model.SseEvent" -> {
+                                    final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
+                                    //sseEvent.setId(key);
+                                    sseEmitterRepository.send(sseEvent);
+                                }
+                                case "nl.appsource.cardserver.model.SseSession" -> { }
+                                case "nl.appsource.cardserver.model.Feedback" -> { }
+                                case "nl.appsource.cardserver.model.Boom" -> {
+                                    final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+                                    boom.setId(key);
+                                    sseEmitterRepository.updateBoom(boom);
+                                }
+                                case "nl.appsource.cardserver.model.User" -> {
+                                    final User user = jsonMapper.treeToValue(rootNode, User.class);
+                                    user.setId(key);
+                                    sseEmitterRepository.updateUser(user);
+                                }
+                                case "nl.appsource.cardserver.model.Game" -> {
+                                    final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+                                    game.setId(key);
+                                    sseEmitterRepository.updateGame(game);
+                                }
+                                default -> log.warn("Not handling unknown class mutation : " + className);
                             }
-                            case "nl.appsource.cardserver.model.User" -> {
-                                final User user = jsonMapper.treeToValue(rootNode, User.class);
-                                user.setId(key);
-                                sseEmitterRepository.updateUser(user);
-                            }
-                            case "nl.appsource.cardserver.model.Game" -> {
-                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
-                                game.setId(key);
-                                sseEmitterRepository.updateGame(game);
-                            }
-                            default -> log.warn("Not handling unknown class mutation : " + className);
+
+                            jsonMapper.treeToValue(rootNode, Boom.class);
                         }
 
-                        jsonMapper.treeToValue(rootNode, Boom.class);
+
+                    } catch (IOException e) {
+                        log.warn("Can not deserialize key: " + key);
+                    }
+
+                    if (!SseSession.class.getName().equals(className)) {
+                        log.info("Mutation: key={} revSeq={} class={}", key, revSeq, className);
+                    }
+
+    //
+    //                DcpMutationMessage.content(event)
+    //                event.asReadOnly()
+    //
+    //                try (InputStream is = new ByteBufInputStream(MutationMessage.content(event))) {
+    //                    MyModel model = objectMapper.readValue(is, MyModel.class);
+    //                }
+    //
+    //                //log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
+    //                final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
+    //                final String content = DcpMutationMessage.content(event).toString(StandardCharsets.UTF_8);
+                    //log.info("Mutation: key={}, content={}", key, content);
+                } else if (DcpDeletionMessage.is(event)) {
+                    log.info("Deletion: key={}", key);
+
+                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+
+                        final JsonNode rootNode = jsonMapper.readTree(is);
+
+                        if (rootNode.isObject()) {
+                            final String className = rootNode.get("_class").stringValue();
+                            log.info("Deletion: key={} className={}", key, className);
+                        }
+
+                    } catch (IOException e) {
+                        log.warn("Can not deserialize key: " + key);
                     }
 
 
-                } catch (IOException e) {
-                    log.warn("Can not deserialize key: " + key);
-                }
 
-                if (!SseSession.class.getName().equals(className)) {
-                    log.info("Mutation: key={} revSeq={} class={}", key, revSeq, className);
-                }
+                } else if (DcpExpirationMessage.is(event)) {
+                    log.info("Expiration: key={}", key);
 
-//
-//                DcpMutationMessage.content(event)
-//                event.asReadOnly()
-//
-//                try (InputStream is = new ByteBufInputStream(MutationMessage.content(event))) {
-//                    MyModel model = objectMapper.readValue(is, MyModel.class);
-//                }
-//
-//                //log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
-//                final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
-//                final String content = DcpMutationMessage.content(event).toString(StandardCharsets.UTF_8);
-                //log.info("Mutation: key={}, content={}", key, content);
-            } else if (DcpDeletionMessage.is(event)) {
-                log.info("Deletion: key={}", key);
+                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
 
-                try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+                        final JsonNode rootNode = jsonMapper.readTree(is);
 
-                    final JsonNode rootNode = jsonMapper.readTree(is);
+                        if (rootNode.isObject()) {
+                            final String className = rootNode.get("_class").stringValue();
+                            log.info("Expiration: key={} className={}", key, className);
+                        }
 
-                    if (rootNode.isObject()) {
-                        final String className = rootNode.get("_class").stringValue();
-                        log.info("Deletion: key={} className={}", key, className);
+
+                    } catch (IOException e) {
+                        log.warn("Can not deserialize key: " + key);
                     }
 
-                } catch (IOException e) {
-                    log.warn("Can not deserialize key: " + key);
+                } else {
+                    log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
                 }
 
-
-
-            } else if (DcpExpirationMessage.is(event)) {
-                log.info("Expiration: key={}", key);
-
-                try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
-
-                    final JsonNode rootNode = jsonMapper.readTree(is);
-
-                    if (rootNode.isObject()) {
-                        final String className = rootNode.get("_class").stringValue();
-                        log.info("Expiration: key={} className={}", key, className);
-                    }
-
-
-                } catch (IOException e) {
-                    log.warn("Can not deserialize key: " + key);
-                }
-
-            } else {
-                log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
             }
+
             flowController.ack(event);
             event.release();
+
         });
 
         client.connect().block();

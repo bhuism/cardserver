@@ -5,12 +5,10 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Boom;
 import org.openapitools.model.Game;
-import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.User;
-import org.openapitools.model.UserMessage;
 import org.springframework.http.codec.ServerSentEvent;
 
 import java.util.List;
@@ -23,10 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class MySseEmitter {
 
     private static final AtomicLong ATOMIC_LONG = new AtomicLong(1);
-
-    public static MyServerSentEvent createMessageEvent(final String appIdentifier, final String userId, final UserMessage userMessage) {
-        return createServerSentEvent(appIdentifier, userId, "messageEvent", new MessageEvent().message(userMessage));
-    }
 
 //    private void emitNext(final ServerSentEvent<?> serverSentEvent) {
 //

@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -15,6 +16,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @CompositeQueryIndex(fields = {"id", "creator"})
+@NoArgsConstructor
 public abstract class BaseEntity {
 
     @Id
@@ -32,5 +34,9 @@ public abstract class BaseEntity {
 
     @Version
     private long version;
+
+    public BaseEntity(final String id) {
+        this.id = id;
+    }
 
 }

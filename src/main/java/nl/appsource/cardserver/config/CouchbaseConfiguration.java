@@ -8,7 +8,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
 import org.springframework.data.couchbase.repository.config.EnableReactiveCouchbaseRepositories;
+import org.springframework.data.couchbase.transaction.CouchbaseCallbackTransactionManager;
+import org.springframework.data.couchbase.transaction.CouchbaseTransactionalOperator;
 import org.springframework.data.domain.ReactiveAuditorAware;
+import tools.jackson.databind.json.JsonMapper;
 
 import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
 
@@ -21,6 +24,8 @@ import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
 public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
     private final CardServerCouchbaseProperties cardServerCouchbaseProperties;
+
+    private final JsonMapper jsonMapper;
 
     @Override
     public String getConnectionString() {
@@ -50,6 +55,11 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
     @Bean
     public ReactiveAuditorAware<String> reactiveAuditorAware() {
         return new ReactiveAuditorAwareImpl();
+    }
+
+    @Override
+    public CouchbaseTransactionalOperator couchbaseTransactionalOperator(final CouchbaseCallbackTransactionManager couchbaseCallbackTransactionManager) {
+        return super.couchbaseTransactionalOperator(couchbaseCallbackTransactionManager);
     }
 }
 
