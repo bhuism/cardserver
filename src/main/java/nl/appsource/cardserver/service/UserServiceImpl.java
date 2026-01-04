@@ -25,6 +25,8 @@ public class UserServiceImpl implements UserService {
 
     private final SseEmitterRepository sseEmitterRepository;
 
+    private final SseSender sseSender;
+
     @Override
     public Mono<User> findById(final String userId) {
         return userRepository.findById(userId);
@@ -74,12 +76,11 @@ public class UserServiceImpl implements UserService {
 
             })
             .flatMap(userRepository::save)
-            .flatMap((user) -> {
-                sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
+            .flatMap(user -> sseSender.friendsChanged(Set.of(friendId, user.getId())))
+            .then(Mono.fromRunnable(() -> {
                 sseEmitterRepository.sendOnlineListTo(userId);
                 sseEmitterRepository.sendOnlineListTo(friendId);
-                return Mono.empty();
-            });
+            }));
     }
 
     @Override
@@ -91,13 +92,11 @@ public class UserServiceImpl implements UserService {
                 return user;
             })
             .flatMap(userRepository::save)
-            .flatMap((user) -> {
-                sseEmitterRepository.friendsChanged(Set.of(friendId, user.getId()));
-                sseEmitterRepository.newFriend(friendId, userId);
+            .flatMap(user -> sseSender.friendsChanged(Set.of(friendId, user.getId())))
+            .then(Mono.fromRunnable(() -> {
                 sseEmitterRepository.sendOnlineListTo(userId);
                 sseEmitterRepository.sendOnlineListTo(friendId);
-                return Mono.empty();
-            });
+            }));
     }
 
     @Override
@@ -105,21 +104,19 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
             .flatMap(user -> userRepository.searchInvitees(searchString)
                 .map(User::getId)
-                .filter(inviteeId -> !user.getInvites()
-                    .contains(inviteeId))
+                .filter(inviteeId -> !user.getInvites().contains(inviteeId))
                 .collect(Collectors.toSet())
                 .flatMap(newFriendIds -> {
                     if (newFriendIds.isEmpty()) {
                         return Mono.just(0);
                     }
-                    user.getInvites()
-                        .addAll(newFriendIds);
+                    user.getInvites().addAll(newFriendIds);
                     return userRepository.save(user)
-                        .doOnSuccess(savedUser -> {
+                        .flatMap(savedUser -> {
                             newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
                             sseEmitterRepository.sendOnlineListTo(userId);
-                            sseEmitterRepository.friendsChanged(newFriendIds);
-                            sseEmitterRepository.friendsChanged(singleton(userId));
+                            return sseSender.friendsChanged(newFriendIds)
+                                .then(sseSender.friendsChanged(singleton(userId)));
                         })
                         .thenReturn(newFriendIds.size());
                 }));

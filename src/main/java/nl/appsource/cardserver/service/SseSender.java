@@ -14,4 +14,11 @@ public interface SseSender {
     Mono<Void> sendUserIdMessage(Collection<String> userIds, UserMessage userMessage);
 
     Mono<Void> sendPong(String id);
+
+    Mono<Void> friendsChanged(Collection<String> userIds);
+
+    Mono<Void> gamesChanged(Collection<String> userIds);
+
+    Mono<Void> boomsChanged(Collection<String> userIds);
+
 }

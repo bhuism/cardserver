@@ -23,7 +23,6 @@ import reactor.core.publisher.Sinks;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collection;
 
 import static nl.appsource.cardserver.service.MySseEmitter.createServerSentEvent;
 
@@ -104,25 +103,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 ////        doSelectedUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
 //    }
 
-
-    @Override
-    public void friendsChanged(final Collection<String> userIds) {
-//        doSelectedUserIds(userIds, MySseEmitter::sendUpdateFriends);
-        userIds.forEach(userId -> send(MySseEmitter.createUpdateFriends(null, userId)));
-    }
-
-    @Override
-    public void gamesChanged(final Collection<String> userIds) {
-        userIds.forEach(userId -> send(MySseEmitter.createUpdateGames(null, userId)));
-//        doSelectedUserIds(userIds, MySseEmitter::sendUpdateGames);
-    }
-
-    @Override
-    public void boomsChanged(final Collection<String> userIds) {
-        userIds.forEach(userId -> send(MySseEmitter.createUpdateBooms(null, userId)));
-//        doSelectedUserIds(userIds, MySseEmitter::sendUpdateBooms);
-    }
-
     @Override
     public void updateGame(final Game game) {
 //        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGame(gameToOpenApiConverter.convert(game)));
@@ -184,12 +164,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15))));
     }
 
-    @Override
-    public void newFriend(final String userId, final String friendId) {
-//        doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
-
-        send(MySseEmitter.newFriend(null, userId, friendId));
-    }
+//    @Override
+//    public void newFriend(final String userId, final String friendId) {
+////        doUserId(userId, mySseEmitter -> mySseEmitter.newFriend(friendId));
+//
+//        send(MySseEmitter.newFriend(null, userId, friendId));
+//    }
 
     private Flux<@NonNull MyServerSentEvent> initCache(final String appIdentifier, final String userId) {
 

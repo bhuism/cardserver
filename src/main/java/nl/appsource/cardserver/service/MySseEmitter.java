@@ -111,25 +111,13 @@ public final class MySseEmitter {
         return createServerSentEvent(appIdentifier, userId, "online", new OnlineListEvent().onlineList(onlineList));
     }
 
-    public static MyServerSentEvent createUpdateFriends(final String appIdentifier, final String userId) {
-        return createServerSentEvent(appIdentifier, userId, "updateFriends");
-    }
-
-    public static MyServerSentEvent createUpdateGames(final String appIdentifier, final String userId) {
-        return createServerSentEvent(appIdentifier, userId, "updateGames");
-    }
-
-    public static MyServerSentEvent createUpdateBooms(final String appIdentifier, final String userId) {
-        return createServerSentEvent(appIdentifier, userId, "updateBooms");
-    }
-
     public static MyServerSentEvent createNewGame(final String appIdentifier, final String userId, final Game game) {
         return createServerSentEvent(appIdentifier, userId, "newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
     }
 
-    public static MyServerSentEvent newFriend(final String appIdentifier, final String userId, final String newFriendId) {
-        return createServerSentEvent(appIdentifier, userId, "newFriend", new NewFriendEvent().newFriendId(newFriendId));
-    }
+//    public static MyServerSentEvent newFriend(final String appIdentifier, final String userId, final String newFriendId) {
+//        return createServerSentEvent(appIdentifier, userId, "newFriend", new NewFriendEvent().newFriendId(newFriendId));
+//    }
 
 //    public Flux<ServerSentEvent<?>> subscribe() {
 //        this.pingSent = Instant.now();

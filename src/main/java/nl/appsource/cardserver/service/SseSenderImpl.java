@@ -49,4 +49,29 @@ public class SseSenderImpl implements SseSender {
             .flatMap(sseEventRepository::save)
             .then();
     }
+
+    @Override
+    public Mono<Void> boomsChanged(final Collection<String> userIds) {
+        return Flux.fromIterable(userIds)
+            .map(userId -> new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "updateBooms", null))
+            .flatMap(sseEventRepository::save)
+            .then();
+    }
+
+    @Override
+    public Mono<Void> gamesChanged(final Collection<String> userIds) {
+        return Flux.fromIterable(userIds)
+            .map(userId -> new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "updateGames", null))
+            .flatMap(sseEventRepository::save)
+            .then();
+    }
+
+    @Override
+    public Mono<Void> friendsChanged(final Collection<String> userIds) {
+        return Flux.fromIterable(userIds)
+            .map(userId -> new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "updateFriends", null))
+            .flatMap(sseEventRepository::save)
+            .then();
+    }
+
 }

@@ -25,7 +25,7 @@ public class BoomServiceImpl implements BoomService {
 
     private final BoomRepository boomRepository;
 
-    private final SseEmitterRepository sseEmitterRepository;
+    private final SseSender sseSender;
 
     private static final Random RAND = new SecureRandom();
 
@@ -58,7 +58,7 @@ public class BoomServiceImpl implements BoomService {
                 boom.setGameVariant(gameVariant);
             })
             .flatMap(boomRepository::save)
-            .doOnNext((boom) -> sseEmitterRepository.boomsChanged(boom.getPlayers()));
+            .flatMap((boom) -> sseSender.boomsChanged(boom.getPlayers()).then(Mono.just(boom)));
     }
 
     @Override

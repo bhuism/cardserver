@@ -116,15 +116,13 @@ public class GameServiceImpl implements GameService {
                 game.setBoomId(boomId);
             })
             .flatMap(gameRepository::save)
-            .doOnNext((game) -> sseEmitterRepository.gamesChanged(game.getPlayers()))
+            .flatMap((game) -> sseSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
             .doOnNext(sseEmitterRepository::newGame)
             .doOnNext(game -> {
                 if (new GameEngineImpl(game).isAiSay()) {
                     scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
                 }
             });
-
-
     }
 
     @Override
@@ -132,10 +130,8 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId)
             .filter(game -> game.getCreator().equals(userId))
             .filter(game -> game.getBoomId() == null)
-            .flatMap(game -> gameRepository.delete(game)
-                .then(Mono.fromRunnable(() -> sseEmitterRepository.gamesChanged(game.getPlayers())))
-                .thenReturn(true)
-            );
+            .flatMap(game -> gameRepository.delete(game).then(sseSender.gamesChanged(game.getPlayers())))
+            .thenReturn(true);
     }
 
     @PostConstruct
