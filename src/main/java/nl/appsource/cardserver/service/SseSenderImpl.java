@@ -40,7 +40,7 @@ public class SseSenderImpl implements SseSender {
 
     @Override
     public Mono<Void> sendUserIdMessage(final Collection<String> userIds, final UserMessage userMessage) {
-        return Flux.fromIterable(userIds).flatMap(userId -> sendUserIdMessage(userId, userMessage)).last();
+        return Flux.fromIterable(userIds).flatMap(userId -> sendUserIdMessage(userId, userMessage)).then();
     }
 
     @Override

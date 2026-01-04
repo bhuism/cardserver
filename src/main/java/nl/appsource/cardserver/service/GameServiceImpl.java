@@ -335,7 +335,7 @@ public class GameServiceImpl implements GameService {
                                     .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
                             }
                         })
-                        .last();
+                        .then();
                 });
     }
 
