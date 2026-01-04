@@ -2,7 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.utils.Utils;
 import org.openapitools.api.DebugApi;
 import org.openapitools.model.SseConnection;
@@ -14,17 +14,33 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class DebugController implements DebugApi, V1Api {
 
-    private final SseEmitterRepository sseEmitterRepository;
+    private final SseSessionRepository sseSessionRepository;
+
+    private static final String HOSTNAME;
+
+    static {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            host = "unknown";
+        }
+        HOSTNAME = host;
+    }
 
     @Override
     public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final String appIdentifier, final ServerWebExchange exchange) {
@@ -34,12 +50,28 @@ public class DebugController implements DebugApi, V1Api {
             .filter(Utils::isAdmin)
             .flatMap(_s -> {
 
-                final var debugSseConnections = sseEmitterRepository.getDebugSseConnections();
+                final Flux<SseConnection> connections = sseSessionRepository.findAll()
+                    .map(mySseEmitterEntry -> {
+                        final SseConnection sseConnection = new SseConnection();
+                        sseConnection.setId(mySseEmitterEntry.getId());
+                        sseConnection.setHost(HOSTNAME);
+                        sseConnection.setCreated(mySseEmitterEntry.getCreated());
+                        sseConnection.setUpdated(Optional.ofNullable(mySseEmitterEntry.getUpdated()));
+                        sseConnection.setCreator(mySseEmitterEntry.getCreator());
+                        sseConnection.setPingReceived(Optional.ofNullable(mySseEmitterEntry.getPingReceived()));
+                        sseConnection.setPingReceivedCount(mySseEmitterEntry.getPingReceivedCount());
+                        sseConnection.setPongReceived(Optional.ofNullable(mySseEmitterEntry.getPongReceived()));
+                        sseConnection.setPongReceivedCount(mySseEmitterEntry.getPongReceivedCount());
+                        sseConnection.setRemoteAddress(mySseEmitterEntry.getRemoteAddress());
+                        sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());
+                        return sseConnection;
+                    });
+
 
                 return Mono.zip(arr -> new SseConnections().connections(
                     (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
-                    debugSseConnections.connections().collectList(),
-                    Mono.just(debugSseConnections.timeStamp())
+                    connections.collectList(),
+                    Mono.just(Instant.now())
                 );
 
 //                return debugSseConnections.connections().collectList().map(connections -> {

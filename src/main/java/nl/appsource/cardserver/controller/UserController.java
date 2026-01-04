@@ -3,10 +3,12 @@ package nl.appsource.cardserver.controller;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.service.SseSender;
 import nl.appsource.cardserver.service.UserService;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInviteResponse;
@@ -33,13 +35,16 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
-    private final SseEmitterRepository sseEmitterRepository;
+    private final SseSessionRepository sseSessionRepository;
 
-    public UserController(final SseEmitterRepository sseEmitterRepository, final SseSessionRepository sseSessionRepository, final UserRepository userRepositoryArg, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg) {
+    private final SseSender sseSender;
+
+    public UserController(final SseSessionRepository sseSessionRepository, final UserRepository userRepositoryArg, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg, final SseSender sseSender) {
         super(userRepositoryArg, sseSessionRepository);
         this.userService = userServiceArg;
         this.userToOpenApiConverter = userToOpenApiConverterArg;
-        this.sseEmitterRepository = sseEmitterRepository;
+        this.sseSessionRepository = sseSessionRepository;
+        this.sseSender = sseSender;
     }
 
     @Override
@@ -75,16 +80,33 @@ public class UserController extends GenericController implements UsersApi, V1Api
     public Mono<@NonNull  ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-            .flatMap(auth -> sseEmitterRepository.ping(appIdentifier))
+            .map(CardServerAuthentication::sseSession)
+            .doOnNext(SseSession::ping)
+            .flatMap(sseSessionRepository::save)
+            .flatMap(sseSession -> sseSender.sendPong(sseSession.getId()))
             .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
+
+
+//    @Override
+//    public Mono<Void> ping(final String appIdentifier) {
+//        return sseSessionRepository.findById(appIdentifier)
+//            .doOnNext(SseSession::ping)
+//            .flatMap(sseSessionRepository::save)
+//            .doOnNext(sseSession -> {
+//                send(MySseEmitter.createPongEvent(sseSession.getId(), null));
+//            })
+//            .then();
+//    }
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-            .flatMap(auth -> sseEmitterRepository.pong(appIdentifier))
+            .map(CardServerAuthentication::sseSession)
+            .doOnNext(SseSession::pong)
+            .flatMap(sseSessionRepository::save)
             .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -137,8 +159,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .flatMap(auth -> arg.flatMap(updatePreferences -> userService.updatePreferences(auth.user().getId(), updatePreferences))
                 .mapNotNull(userToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
-                .switchIfEmpty(just(ResponseEntity.notFound()
-                    .build())))
+                .switchIfEmpty(just(ResponseEntity.notFound().build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 

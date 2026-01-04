@@ -861,6 +861,7 @@ components:
         - pongReceivedCount
         - remoteAddress
         - userAgent
+        - host
     NewGameEvent:
       type: object
       properties:

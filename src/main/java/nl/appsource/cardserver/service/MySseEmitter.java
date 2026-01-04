@@ -50,13 +50,13 @@ public final class MySseEmitter {
 //        }
 //    }
 
-    public static MyServerSentEvent createPingEvent(final Long counter) {
-        return createServerSentEvent(null, null, "ping");
-    }
+//    public static MyServerSentEvent createPingEvent(final Long counter) {
+//        return createServerSentEvent(null, null, "ping");
+//    }
 
-    public static MyServerSentEvent createPongEvent(final String appIdentifier, final String userId) {
-        return createServerSentEvent(appIdentifier, userId, "pong");
-    }
+//    public static MyServerSentEvent createPongEvent(final String appIdentifier, final String userId) {
+//        return createServerSentEvent(appIdentifier, userId, "pong");
+//    }
 
 //    private void sendPong() {
 //        this.pongSent = Instant.now();
@@ -82,7 +82,7 @@ public final class MySseEmitter {
 //        emitNext(serverSentEvent);
 //    }
 
-    private static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final String event) {
+    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final String event) {
         return createServerSentEvent(appIdentifier, userId, event, null);
     }
 

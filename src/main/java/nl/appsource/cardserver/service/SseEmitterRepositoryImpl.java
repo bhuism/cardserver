@@ -15,7 +15,6 @@ import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import org.openapitools.model.SseConnection;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,9 +23,9 @@ import reactor.core.publisher.Sinks;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Collection;
-import java.util.Optional;
+
+import static nl.appsource.cardserver.service.MySseEmitter.createServerSentEvent;
 
 /**
  * The type Sse emitter repository.
@@ -105,25 +104,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 ////        doSelectedUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
 //    }
 
-    @Override
-    public Mono<Void> ping(final String appIdentifier) {
-        return sseSessionRepository.findById(appIdentifier)
-            .doOnNext(SseSession::ping)
-            .flatMap(sseSessionRepository::save)
-            .doOnNext(sseSession -> {
-                send(MySseEmitter.createPongEvent(sseSession.getId(), null));
-            })
-            .then();
-    }
-
-    @Override
-    public Mono<Void> pong(final String appIdentifier) {
-        return sseSessionRepository.findById(appIdentifier)
-            .doOnNext(SseSession::pong)
-            .flatMap(sseSessionRepository::save)
-            .then();
-//        doId(appIdentifier, MySseEmitter::receivePong);
-    }
 
     @Override
     public void friendsChanged(final Collection<String> userIds) {
@@ -147,19 +127,19 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void updateGame(final Game game) {
 //        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGame(gameToOpenApiConverter.convert(game)));
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-        game.getPlayers().forEach(player -> send(MySseEmitter.createServerSentEvent(null, player, convertedGame)));
+        game.getPlayers().forEach(player -> send(createServerSentEvent(null, player, convertedGame)));
     }
 
     @Override
     public void updateGameForId(final String appIdentifier, final Game game) {
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
-        send(MySseEmitter.createServerSentEvent(appIdentifier, null, gameToOpenApiConverter.convert(game)));
+        send(createServerSentEvent(appIdentifier, null, gameToOpenApiConverter.convert(game)));
     }
 
     @Override
     public void updateUserForId(final String appIdentifier, final User user) {
 //        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateUser(requireNonNull(userToOpenApiConverter.convert(user))));
-        send(MySseEmitter.createServerSentEvent(appIdentifier, null, userToOpenApiConverter.convert(user)));
+        send(createServerSentEvent(appIdentifier, null, userToOpenApiConverter.convert(user)));
     }
 
     @Override
@@ -168,10 +148,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);
 
         // update self
-        send(MySseEmitter.createServerSentEvent(null, user.getId(), convertedUser));
+        send(createServerSentEvent(null, user.getId(), convertedUser));
 
         // update friends
-        getFriends(user.getId()).subscribe(invite -> send(MySseEmitter.createServerSentEvent(null, invite, convertedUser)));
+        getFriends(user.getId()).subscribe(invite -> send(createServerSentEvent(null, invite, convertedUser)));
 //        doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
     }
 
@@ -184,7 +164,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.fromIterable(boom.getPlayers())
             .concatWith(Flux.just(boom.getCreator()))
             .distinct()
-            .subscribe(player -> send(MySseEmitter.createServerSentEvent(null, player, convertedBoom)));
+            .subscribe(player -> send(createServerSentEvent(null, player, convertedBoom)));
 
     }
 
@@ -217,31 +197,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         send(MySseEmitter.newFriend(null, userId, friendId));
     }
 
-    public record DebugSseConnections(Flux<SseConnection> connections, Instant timeStamp) {
-    }
-
-    @Override
-    public DebugSseConnections getDebugSseConnections() {
-        return new DebugSseConnections(
-            sseSessionRepository.findAll()
-                .map(mySseEmitterEntry -> {
-                    final SseConnection sseConnection = new SseConnection();
-                    sseConnection.setId(mySseEmitterEntry.getId());
-                    sseConnection.setCreated(mySseEmitterEntry.getCreated());
-                    sseConnection.setUpdated(Optional.ofNullable(mySseEmitterEntry.getUpdated()));
-                    sseConnection.setCreator(mySseEmitterEntry.getCreator());
-                    sseConnection.setPingReceived(Optional.ofNullable(mySseEmitterEntry.getPingReceived()));
-                    sseConnection.setPingReceivedCount(mySseEmitterEntry.getPingReceivedCount());
-                    sseConnection.setPongReceived(Optional.ofNullable(mySseEmitterEntry.getPongReceived()));
-                    sseConnection.setPongReceivedCount(mySseEmitterEntry.getPongReceivedCount());
-                    sseConnection.setRemoteAddress(mySseEmitterEntry.getRemoteAddress());
-                    sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());
-                    return sseConnection;
-                }),
-                Instant.now()
-                );
-    }
-
     private Flux<@NonNull MyServerSentEvent> initCache(final String appIdentifier, final String userId) {
 
         final Flux<@NonNull String> friendIds = userRepository.findById(userId)
@@ -252,21 +207,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final Flux<@NonNull MyServerSentEvent> friends = friendIds.collectList()
             .flatMapMany(userRepository::findAllById)
             .map(userToOpenApiConverter::convert)
-            .map(user -> MySseEmitter.createServerSentEvent(appIdentifier, userId, user));
+            .map(user -> createServerSentEvent(appIdentifier, userId, user));
 
         final Flux<@NonNull MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
             .map(gameToOpenApiConverter::convert)
-            .map(game -> MySseEmitter.createServerSentEvent(appIdentifier, userId, game));
+            .map(game -> createServerSentEvent(appIdentifier, userId, game));
 
         final Flux<@NonNull MyServerSentEvent> booms = boomRepository.findByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
-            .map(boom -> MySseEmitter.createServerSentEvent(appIdentifier, userId, boom));
+            .map(boom -> createServerSentEvent(appIdentifier, userId, boom));
 
         final Flux<@NonNull MyServerSentEvent> me = Flux.from(userRepository.findById(userId))
             .map(userToOpenApiConverter::convert)
-            .map(user -> MySseEmitter.createServerSentEvent(appIdentifier, userId, user));
+            .map(user -> createServerSentEvent(appIdentifier, userId, user));
 
-        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MySseEmitter.createServerSentEvent(null, null, "hello", null));
+        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent(null, null, "hello", null));
 
         return Flux.concat(me, friends, games, booms, hello);
 
@@ -275,7 +230,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postStruct() {
         log.info("Creating heartbeat");
-        Flux.interval(Duration.ofSeconds(15)).map(MySseEmitter::createPingEvent).subscribe(this::send);
+        Flux.interval(Duration.ofSeconds(15)).map(aLong -> {
+            return createServerSentEvent(null, null, "ping");
+        }).subscribe(this::send);
     }
 
     @Override
@@ -293,7 +250,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .thenMany(
         mainSink.asFlux()
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
-            .mergeWith(Mono.just(MySseEmitter.createServerSentEvent(appIdentifier, userId, "ping", null)))
+            .mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
             .mergeWith(initCache(appIdentifier, userId))
             .doOnSubscribe(signalType -> {
                 sendOnlineListTo(userId);

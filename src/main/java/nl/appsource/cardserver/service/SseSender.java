@@ -13,4 +13,5 @@ public interface SseSender {
 
     Mono<Void> sendUserIdMessage(Collection<String> userIds, UserMessage userMessage);
 
+    Mono<Void> sendPong(String id);
 }

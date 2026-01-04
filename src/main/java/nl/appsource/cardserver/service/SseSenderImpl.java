@@ -42,4 +42,11 @@ public class SseSenderImpl implements SseSender {
     public Mono<Void> sendUserIdMessage(final Collection<String> userIds, final UserMessage userMessage) {
         return Flux.fromIterable(userIds).flatMap(userId -> sendUserIdMessage(userId, userMessage)).last();
     }
+
+    @Override
+    public Mono<Void> sendPong(final String appIdentifier) {
+        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), appIdentifier, null, "pong", null))
+            .flatMap(sseEventRepository::save)
+            .then();
+    }
 }

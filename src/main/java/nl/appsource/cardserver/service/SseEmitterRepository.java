@@ -15,15 +15,9 @@ public interface SseEmitterRepository {
 
     void sendOnlineListTo(String userId);
 
-    // void sendMessage(Collection<String> userIds, UserMessage userMessage);
-
     void send(MyServerSentEvent myServerSentEvent);
 
     Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
-
-    Mono<Void> ping(String appIdentifier);
-
-    Mono<Void> pong(String appIdentifier);
 
     void friendsChanged(Collection<String> userIds);
 
@@ -31,27 +25,28 @@ public interface SseEmitterRepository {
 
     void boomsChanged(Collection<String> userIds);
 
+
     void updateGame(Game game);
-
-    void updateGameForId(String appIdentifier, Game game);
-
-    void updateUserForId(String appIdentifier, User user);
 
     void updateUser(User user);
 
     void updateBoom(Boom boom);
 
-    void newGame(Game game);
 
-    Mono<Boolean> isUserOnline(String userId);
+    void updateGameForId(String appIdentifier, Game game);
+
+    void updateUserForId(String appIdentifier, User user);
+
+
+    void newGame(Game game);
 
     void newFriend(String userId, String friendId);
 
     void reloadCache(String appIdentifier, String userId);
 
-//    Boolean validate(UUID appIdentifier, String userId);
+    Mono<Boolean> isUserOnline(String userId);
 
-    SseEmitterRepositoryImpl.DebugSseConnections getDebugSseConnections();
+//    Boolean validate(UUID appIdentifier, String userId);
 
 //    void send(SseEvent sseEvent);
 
