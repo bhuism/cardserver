@@ -3,7 +3,6 @@ package nl.appsource.cardserver.service;
 import lombok.NonNull;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
