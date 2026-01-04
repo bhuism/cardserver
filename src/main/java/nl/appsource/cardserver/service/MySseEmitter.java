@@ -5,7 +5,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Boom;
 import org.openapitools.model.Game;
-import org.openapitools.model.NewFriendEvent;
 import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.User;

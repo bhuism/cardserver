@@ -862,13 +862,13 @@ components:
       required:
         - gameId
         - displayNameCreator
-    NewFriendEvent:
-      type: object
-      properties:
-        newFriendId:
-          type: string
-      required:
-        - newFriendId
+#    NewFriendEvent:
+#      type: object
+#      properties:
+#        newFriendId:
+#          type: string
+#      required:
+#        - newFriendId
     MessageEvent:
       type: object
       properties:
