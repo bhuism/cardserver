@@ -8,8 +8,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
 import org.springframework.data.couchbase.repository.config.EnableReactiveCouchbaseRepositories;
-import org.springframework.data.couchbase.transaction.CouchbaseCallbackTransactionManager;
-import org.springframework.data.couchbase.transaction.CouchbaseTransactionalOperator;
 import org.springframework.data.domain.ReactiveAuditorAware;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -57,9 +55,10 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
         return new ReactiveAuditorAwareImpl();
     }
 
-    @Override
-    public CouchbaseTransactionalOperator couchbaseTransactionalOperator(final CouchbaseCallbackTransactionManager couchbaseCallbackTransactionManager) {
-        return super.couchbaseTransactionalOperator(couchbaseCallbackTransactionManager);
-    }
+//    @Override
+//    public CouchbaseTransactionalOperator couchbaseTransactionalOperator(final CouchbaseCallbackTransactionManager couchbaseCallbackTransactionManager) {
+//        return super.couchbaseTransactionalOperator(couchbaseCallbackTransactionManager);
+//    }
+
 }
 
