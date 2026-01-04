@@ -30,18 +30,6 @@ public class DebugController implements DebugApi, V1Api {
 
     private final SseSessionRepository sseSessionRepository;
 
-    private static final String HOSTNAME;
-
-    static {
-        String host;
-        try {
-            host = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            host = "unknown";
-        }
-        HOSTNAME = host;
-    }
-
     @Override
     public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final String appIdentifier, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
@@ -54,7 +42,7 @@ public class DebugController implements DebugApi, V1Api {
                     .map(mySseEmitterEntry -> {
                         final SseConnection sseConnection = new SseConnection();
                         sseConnection.setId(mySseEmitterEntry.getId());
-                        sseConnection.setHost(HOSTNAME);
+                        sseConnection.setHost(mySseEmitterEntry.getHost());
                         sseConnection.setCreated(mySseEmitterEntry.getCreated());
                         sseConnection.setUpdated(Optional.ofNullable(mySseEmitterEntry.getUpdated()));
                         sseConnection.setCreator(mySseEmitterEntry.getCreator());
