@@ -11,6 +11,7 @@ import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.GameService;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.BoomApi;
 import org.openapitools.model.Boom;
 import org.openapitools.model.CreateBoom;
@@ -59,8 +60,8 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     @Override
     public Mono<ResponseEntity<Boom>> createBoom(final String appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .flatMap(user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(user.getId(), createBoom.getPlayers(), user.getGameVariant())))
+            .doOnNext((auth) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
+            .flatMap(auth -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.user().getId(), createBoom.getPlayers(), auth.user().getGameVariant())))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
@@ -70,9 +71,9 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     @Override
     public Mono<ResponseEntity<Boom>> getBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
-                .getRemoteAddress(), user.getId(), boomId))
-            .flatMap(user -> boomService.getBoom(user.getId(), boomId))
+            .doOnNext((auth) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
+                .getRemoteAddress(), auth.user().getId(), boomId))
+            .flatMap(auth -> boomService.getBoom(auth.user().getId(), boomId))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.defer(() -> {
@@ -87,9 +88,9 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     @Override
     public Mono<ResponseEntity<Flux<Boom>>> getBooms(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} getBooms() userId={}", exchange.getRequest()
-                .getRemoteAddress(), user.getId()))
-            .mapNotNull(user -> boomService.getBooms(user.getId()).mapNotNull(boomToOpenApiConverter::convert))
+            .doOnNext((auth) -> log.info("{} getBooms() userId={}", exchange.getRequest()
+                .getRemoteAddress(), auth.user().getId()))
+            .mapNotNull(auth -> boomService.getBooms(auth.user().getId()).mapNotNull(boomToOpenApiConverter::convert))
             .mapNotNull(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()
                 .build());
@@ -111,8 +112,8 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     public Mono<ResponseEntity<Game>> playBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         synchronized (lockMap.computeIfAbsent(boomId, _unused -> new Object())) {
             return authorize(appIdentifier, exchange)
-                .doOnNext((user) -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), user.getId(), boomId))
-                .flatMap(user -> {
+                .doOnNext((auth) -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), boomId))
+                .flatMap(auth -> {
                     return boomRepository.findById(boomId)
                         .map((boom) -> {
                             return Flux.fromIterable(boom.getGames())
@@ -122,7 +123,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
                                 .switchIfEmpty(Mono.defer(() -> {
                                     if (boom.getGames().size() < 16) {
                                         return calcDealer(boom).flatMap(dealer -> {
-                                            return gameService.createGame(user.getId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
+                                            return gameService.createGame(auth.user().getId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
                                                 .doOnNext(game -> boom.getGames()
                                                     .add(game.getId()))
                                                 .flatMap(game -> boomRepository.save(boom)
@@ -145,7 +146,8 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     @Override
     public Mono<ResponseEntity<Void>> deleteBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} deleteBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), user.getId(), boomId))
+            .doOnNext((auth) -> log.info("{} deleteBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), boomId))
+            .map(CardServerAuthentication::user)
             .map(User::getId)
             .flatMap(boomRepository::deleteById)
             .then(Mono.just(ResponseEntity.ok().build()));

@@ -82,7 +82,7 @@ public class GameControllerTests {
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
 
-        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "user-abc");
+        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "hostname", "user-abc");
         when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
 
         webTestClient
@@ -127,7 +127,7 @@ public class GameControllerTests {
         when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
 //        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
 
-        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "user-abc");
+        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "hostname", "user-abc");
         when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
 
         webTestClient

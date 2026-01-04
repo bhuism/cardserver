@@ -18,6 +18,8 @@ public class SseSession extends BaseEntity {
 
     private final String userAgent;
 
+    private final String host;
+
     private Instant pingReceived;
 
     private Instant pongReceived;
@@ -26,10 +28,11 @@ public class SseSession extends BaseEntity {
 
     private int pongReceivedCount = 0;
 
-    public SseSession(final String id, final String remoteAddress, final String userAgent, final String creator) {
+    public SseSession(final String id, final String remoteAddress, final String userAgent, final String host, final String creator) {
         setId(id);
         this.remoteAddress = remoteAddress;
         this.userAgent = userAgent;
+        this.host = host;
         this.setCreator(creator);
     }
 

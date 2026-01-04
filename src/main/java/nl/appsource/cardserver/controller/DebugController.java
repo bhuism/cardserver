@@ -38,10 +38,9 @@ public class DebugController implements DebugApi, V1Api {
                 final var debugSseConnections = sseEmitterRepository.getDebugSseConnections();
 
                 return Mono.zip(arr -> new SseConnections().connections(
-                    (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]).currentSubscriberCount((BigDecimal) arr[2]),
+                    (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
                     debugSseConnections.connections().collectList(),
-                    Mono.just(debugSseConnections.timeStamp()),
-                    Mono.just(BigDecimal.valueOf(debugSseConnections.subscriberCount()))
+                    Mono.just(debugSseConnections.timeStamp())
                 );
 
 //                return debugSseConnections.connections().collectList().map(connections -> {

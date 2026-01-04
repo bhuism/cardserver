@@ -15,6 +15,8 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.service.MyServerSentEvent;
+import nl.appsource.cardserver.service.MySseEmitter;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,8 +79,9 @@ public class DcpConfiguration {
                             switch (className) {
                                 case "nl.appsource.cardserver.model.SseEvent" -> {
                                     final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
-                                    //sseEvent.setId(key);
-                                    sseEmitterRepository.send(sseEvent);
+                                    sseEvent.setId(key);
+                                    final MyServerSentEvent myServerSentEvent = MySseEmitter.createServerSentEvent(sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent(), sseEvent.getData());
+                                    sseEmitterRepository.send(myServerSentEvent);
                                 }
                                 case "nl.appsource.cardserver.model.SseSession" -> { }
                                 case "nl.appsource.cardserver.model.Feedback" -> { }

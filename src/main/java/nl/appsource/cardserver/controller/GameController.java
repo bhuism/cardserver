@@ -39,9 +39,9 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} getGame() userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> gameService.getGame(user.getId(), gameId)
+            .doOnNext(auth -> log.info("{} getGame() userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> gameService.getGame(auth.user().getId(), gameId)
                 .mapNotNull(gameToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(Mono.defer(() -> {
@@ -57,10 +57,10 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> playCard(final String appIdentifier, final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} playCard() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> playCardMono.map(PlayCard::getCard)
+            .doOnNext(auth -> log.info("{} playCard() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> playCardMono.map(PlayCard::getCard)
                 .map(GameToOpenApiConverter::convertCard)
-                .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.HUMAN_PLAY_CARD, gameId).setCard(playCard)))
+                .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, auth.user().getId(), GameEventType.HUMAN_PLAY_CARD, gameId).setCard(playCard)))
                 .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                 .defaultIfEmpty(ResponseEntity.notFound().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
@@ -69,8 +69,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> kickAi(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} kickAi() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .doOnNext(user -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.AI_PLAY_CARD, gameId)))
+            .doOnNext(auth -> log.info("{} kickAi() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .doOnNext(auth -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, auth.user().getId(), GameEventType.AI_PLAY_CARD, gameId)))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -79,8 +79,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<GetGames200Response>> getGames(final String appIdentifier, final Optional<Boolean> boom, final Optional<Boolean> finished, final Optional<Integer> limit, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} getGames() userId={} boom={} finished={}", exchange.getRequest().getRemoteAddress(), user.getId(), boom, finished))
-            .flatMap(user -> gameService.getGames(user.getId(), boom.orElse(true), finished.orElse(true), limit.orElse(10))
+            .doOnNext(auth -> log.info("{} getGames() userId={} boom={} finished={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), boom, finished))
+            .flatMap(auth -> gameService.getGames(auth.user().getId(), boom.orElse(true), finished.orElse(true), limit.orElse(10))
                 .collectList()
                 .map(games -> new GetGames200Response().games(games))
                 .map(ResponseEntity::ok)
@@ -92,8 +92,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Game>> createGame(final String appIdentifier, final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} createGame() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .flatMap(user -> createGameMono.flatMap(createGame -> gameService.createGame(user.getId(), createGame.getPlayers(), user.getGameVariant())))
+            .doOnNext(auth -> log.info("{} createGame() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
+            .flatMap(auth -> createGameMono.flatMap(createGame -> gameService.createGame(auth.user().getId(), createGame.getPlayers(), auth.user().getGameVariant())))
                 .mapNotNull(gameToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound()
@@ -104,9 +104,9 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> deleteGame(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} deleteGame() userId={} gameId={}", exchange.getRequest()
-                .getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> gameService.deleteGame(user.getId(), gameId)
+            .doOnNext(auth -> log.info("{} deleteGame() userId={} gameId={}", exchange.getRequest()
+                .getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> gameService.deleteGame(auth.user().getId(), gameId)
                 .defaultIfEmpty(false)
                 .map(deleted -> deleted
                     ? ResponseEntity.noContent()
@@ -119,13 +119,13 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> say(final String appIdentifier, final String gameId, final Mono<PlayerSay> playerSay, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} deleteGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> playerSay.map(say -> {
+            .doOnNext(auth -> log.info("{} deleteGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> playerSay.map(say -> {
                         log.info("{} say() user {} says {}", exchange.getRequest()
-                            .getRemoteAddress(), user.getId(), say.getSay());
+                            .getRemoteAddress(), auth.user().getId(), say.getSay());
                         return say.getSay();
                     })
-                    .doOnNext(say -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.HUMAN_SAY, gameId).setSay(say)))
+                    .doOnNext(say -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, auth.user().getId(), GameEventType.HUMAN_SAY, gameId).setSay(say)))
                     .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                     .defaultIfEmpty(ResponseEntity.<Void>notFound().build())
             )
@@ -135,8 +135,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> openLastTrick(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} openLastTrick() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .doOnNext(user -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.OPEN_LAST_TRICK, gameId)))
+            .doOnNext(auth -> log.info("{} openLastTrick() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .doOnNext(auth -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, auth.user().getId(), GameEventType.OPEN_LAST_TRICK, gameId)))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -144,8 +144,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> closeLastTrick(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} closeLastTrick() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .doOnNext(user -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, user.getId(), GameEventType.CLOSE_LAST_TRICK, gameId)))
+            .doOnNext(auth -> log.info("{} closeLastTrick() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .doOnNext(auth -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, auth.user().getId(), GameEventType.CLOSE_LAST_TRICK, gameId)))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -154,8 +154,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> reloadGame(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} reloadGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> gameService.reload(appIdentifier, user.getId(), gameId))
+            .doOnNext(auth -> log.info("{} reloadGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> gameService.reload(appIdentifier, auth.user().getId(), gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -163,8 +163,8 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> claimRoem(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} claimRoem() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> gameService.claimRoem(appIdentifier, user.getId(), gameId))
+            .doOnNext(auth -> log.info("{} claimRoem() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> gameService.claimRoem(appIdentifier, auth.user().getId(), gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -172,16 +172,16 @@ public class GameController extends GenericController implements GamesApi, V1Api
     @Override
     public Mono<ResponseEntity<Void>> claimVerzaken(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} claimVerzaken() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> gameService.claimVerzaken(appIdentifier, user.getId(), gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
+            .doOnNext(auth -> log.info("{} claimVerzaken() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> gameService.claimVerzaken(appIdentifier, auth.user().getId(), gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> gameMessage(final String appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} gameMessage() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), user.getId(), gameId))
-            .flatMap(user -> arg.flatMap((message -> gameService.gameMessage(user.getId(), gameId, message.getMessage())))
+            .doOnNext(auth -> log.info("{} gameMessage() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+            .flatMap(auth -> arg.flatMap((message -> gameService.gameMessage(auth.user().getId(), gameId, message.getMessage())))
                 .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                 .defaultIfEmpty(ResponseEntity.<Void>notFound().build()))
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());

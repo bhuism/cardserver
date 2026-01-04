@@ -18,6 +18,8 @@ public interface SseEmitterRepository {
 
     // void sendMessage(Collection<String> userIds, UserMessage userMessage);
 
+    void send(MyServerSentEvent myServerSentEvent);
+
     Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
     Mono<Void> ping(String appIdentifier);
@@ -52,7 +54,7 @@ public interface SseEmitterRepository {
 
     SseEmitterRepositoryImpl.DebugSseConnections getDebugSseConnections();
 
-    void send(SseEvent sseEvent);
+//    void send(SseEvent sseEvent);
 
     //Mono<User> validate(UUID appIdentifier, User user);
 

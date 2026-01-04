@@ -9,7 +9,6 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.BoomRepository;
@@ -22,6 +21,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -52,6 +53,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final SseSessionRepository sseSessionRepository;
 
     private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
+
+    private static final String HOSTNAME;
+
+    static {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            host = "unknown";
+        }
+        HOSTNAME = host;
+    }
 
     private Flux<@NonNull String> getFriends(final String userId) {
         return userRepository.findById(userId)
@@ -204,7 +217,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         send(MySseEmitter.newFriend(null, userId, friendId));
     }
 
-    public record DebugSseConnections(Flux<SseConnection> connections, Instant timeStamp, Integer subscriberCount) {
+    public record DebugSseConnections(Flux<SseConnection> connections, Instant timeStamp) {
     }
 
     @Override
@@ -225,8 +238,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                     sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());
                     return sseConnection;
                 }),
-                Instant.now(),
-                this.mainSink.currentSubscriberCount()
+                Instant.now()
                 );
     }
 
@@ -266,13 +278,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.interval(Duration.ofSeconds(15)).map(MySseEmitter::createPingEvent).subscribe(this::send);
     }
 
-    private void send(final MyServerSentEvent myServerSentEvent) {
-        mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
-    }
-
     @Override
-    public void send(final SseEvent sseEvent) {
-        final MyServerSentEvent myServerSentEvent = MySseEmitter.createServerSentEvent(sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent(), sseEvent.getData());
+    public void send(final MyServerSentEvent myServerSentEvent) {
         mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
     }
 
@@ -281,7 +288,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("{} subscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
-        return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, userId))
+        return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .flatMap(sseSessionRepository::save)
             .thenMany(
         mainSink.asFlux()

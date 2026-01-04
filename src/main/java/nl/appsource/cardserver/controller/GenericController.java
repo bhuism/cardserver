@@ -2,14 +2,18 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,19 +48,17 @@ public class GenericController {
             }));
     }
 
-    protected Mono<User> authorize(final String appIdentifier, final ServerWebExchange exchange) {
-        return getUserId(exchange)
-            .flatMap((user) -> {
-                //log.info("Looking for session: {}", appIdentifier);
-                return sseSessionRepository.findByIdAndCreator(appIdentifier, user.getId())
-                    .map(_ -> user)
-                    .switchIfEmpty(Mono.defer(() -> {
-                        log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier.toString(), user.getDisplayName());
-                        return Mono.empty();
-                    })
-                    );
 
-            });
+
+    protected Mono<CardServerAuthentication> authorize(final String appIdentifier, final ServerWebExchange exchange) {
+        return getUserId(exchange)
+            .flatMap((user) -> sseSessionRepository.findByIdAndCreator(appIdentifier, user.getId())
+                .map(sseSession -> new CardServerAuthentication(user, sseSession))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier.toString(), user.getDisplayName());
+                    return Mono.empty();
+                }))
+            );
     }
 
 }

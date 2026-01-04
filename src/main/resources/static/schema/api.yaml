@@ -710,8 +710,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SseConnection'
-        currentSubscriberCount:
-          type: number
         timeStamp:
           type: string
           format: date-time
@@ -851,6 +849,8 @@ components:
         remoteAddress:
           type: string
         userAgent:
+          type: string
+        host:
           type: string
       required:
         - id

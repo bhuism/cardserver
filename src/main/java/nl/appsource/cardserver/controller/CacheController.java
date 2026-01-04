@@ -35,8 +35,8 @@ public class CacheController extends GenericController implements ReloadCacheApi
     @Override
     public Mono<ResponseEntity<Void>> reloadCache(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} reloadCache() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
-            .doOnNext(user -> sseEmitterRepository.reloadCache(appIdentifier, user.getId()))
+            .doOnNext((auth) -> log.info("{} reloadCache() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
+            .doOnNext(auth -> sseEmitterRepository.reloadCache(appIdentifier, auth.user().getId()))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -44,7 +44,7 @@ public class CacheController extends GenericController implements ReloadCacheApi
     @Override
     public Mono<ResponseEntity<Void>> feedback(final String appIdentifier, final Mono<FeedbackRequest> feedbackRequest, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
-            .doOnNext((user) -> log.info("{} feedback() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
+            .doOnNext((auth) -> log.info("{} feedback() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(user -> feedbackRequest.flatMap((fb) -> {
 
                 final Feedback feedBack = new Feedback();
