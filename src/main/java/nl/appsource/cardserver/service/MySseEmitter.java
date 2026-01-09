@@ -106,9 +106,9 @@ public final class MySseEmitter {
         return new MyServerSentEvent(appIdentifier, userId, builder.build());
     }
 
-    public static MyServerSentEvent createOnlineList(final String appIdentifier, final String userId, final List<String> onlineList) {
-        return createServerSentEvent(appIdentifier, userId, "online", new OnlineListEvent().onlineList(onlineList));
-    }
+//    public static MyServerSentEvent createOnlineList(final String appIdentifier, final String userId, final List<String> onlineList) {
+//        return createServerSentEvent(appIdentifier, userId, "online", new OnlineListEvent().onlineList(onlineList));
+//    }
 
     public static MyServerSentEvent createNewGame(final String appIdentifier, final String userId, final Game game) {
         return createServerSentEvent(appIdentifier, userId, "newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));

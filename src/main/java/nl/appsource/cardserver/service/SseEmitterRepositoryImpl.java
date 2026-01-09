@@ -80,8 +80,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void close() {
         log.info("Closing mainSink");
 
-        this.mainSink.emitNext(MySseEmitter.createServerSentEvent("null", "null", "stop"), Sinks.EmitFailureHandler.FAIL_FAST);
-
         try {
             final Sinks.EmitResult emitResult = this.mainSink.tryEmitComplete();
 
