@@ -6,11 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Boom;
 import org.openapitools.model.Game;
 import org.openapitools.model.NewGameEvent;
-import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.User;
 import org.springframework.http.codec.ServerSentEvent;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
