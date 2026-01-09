@@ -12,6 +12,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+
 @Slf4j
 @RequiredArgsConstructor
 public class GenericController {
@@ -50,6 +52,7 @@ public class GenericController {
     protected Mono<CardServerAuthentication> authorize(final String appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
             .flatMap((user) -> sseSessionRepository.findByIdAndCreator(appIdentifier, user.getId())
+//                .flatMap(sseSessionRepository::save)
                 .map(sseSession -> new CardServerAuthentication(user, sseSession))
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier.toString(), user.getDisplayName());

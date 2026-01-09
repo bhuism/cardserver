@@ -146,50 +146,38 @@ public class DcpConfiguration {
                         log.info("Mutation: key={} revSeq={} cas={} class={} version={}", key, revSeq, cas, className, version);
                     }
 
-    //
-    //                DcpMutationMessage.content(event)
-    //                event.asReadOnly()
-    //
-    //                try (InputStream is = new ByteBufInputStream(MutationMessage.content(event))) {
-    //                    MyModel model = objectMapper.readValue(is, MyModel.class);
-    //                }
-    //
-    //                //log.info("getContentAsString: " + MessageUtil.getContentAsString(event.asByteBuf()));
-    //                final String key = MessageUtil.getCollectionIdAndKey(event, false).key();
-    //                final String content = DcpMutationMessage.content(event).toString(StandardCharsets.UTF_8);
-                    //log.info("Mutation: key={}, content={}", key, content);
                 } else if (DcpDeletionMessage.is(event)) {
                     log.info("Deletion: key={} content={}", key, MessageUtil.getContentAsString(event));
 
-                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
-
-                        final JsonNode rootNode = jsonMapper.readTree(is);
-
-                        if (rootNode.isObject()) {
-                            final String className = rootNode.get("_class").stringValue();
-                            log.info("Deletion: key={} className={}", key, className);
-                        }
-
-                    } catch (IOException e) {
-                        log.warn("Can not deserialize key: " + key);
-                    }
+//                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+//
+//                        final JsonNode rootNode = jsonMapper.readTree(is);
+//
+//                        if (rootNode.isObject()) {
+//                            final String className = rootNode.get("_class").stringValue();
+//                            log.info("Deletion: key={} className={}", key, className);
+//                        }
+//
+//                    } catch (IOException e) {
+//                        log.warn("Can not deserialize key: " + key);
+//                    }
 
                 } else if (DcpExpirationMessage.is(event)) {
                     log.info("Expiration: key={} content={}", key, MessageUtil.getContentAsString(event));
 
-                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
-
-                        final JsonNode rootNode = jsonMapper.readTree(is);
-
-                        if (rootNode.isObject()) {
-                            final String className = rootNode.get("_class").stringValue();
-                            log.info("Expiration: key={} className={}", key, className);
-                        }
-
-
-                    } catch (IOException e) {
-                        log.warn("Can not deserialize key: " + key);
-                    }
+//                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+//
+//                        final JsonNode rootNode = jsonMapper.readTree(is);
+//
+//                        if (rootNode.isObject()) {
+//                            final String className = rootNode.get("_class").stringValue();
+//                            log.info("Expiration: key={} className={}", key, className);
+//                        }
+//
+//
+//                    } catch (IOException e) {
+//                        log.warn("Can not deserialize key: " + key);
+//                    }
 
                 } else {
                     log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
