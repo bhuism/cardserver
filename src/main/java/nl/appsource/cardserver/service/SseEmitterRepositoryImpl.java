@@ -15,6 +15,8 @@ import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -72,13 +74,33 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //                .filter(list::contains));
 //    }
 
+    @EventListener(ContextClosedEvent.class)
+    public void close() {
+        log.info("Closing mainSink");
+
+        this.mainSink.emitNext(MySseEmitter.createServerSentEvent("null", "null", "stop"), Sinks.EmitFailureHandler.FAIL_FAST);
+
+        try {
+            final Sinks.EmitResult emitResult = this.mainSink.tryEmitComplete();
+
+            if (emitResult.isFailure()) {
+                log.error("mainSink.tryEmitComplete() failure");
+            }
+
+        } catch (Throwable t) {
+            log.error("", t);
+        }
+    }
+
     private Flux<@NonNull String> getFriends(final String userId) {
         return userRepository.getFriends(userId);
     }
 
     private Flux<@NonNull String> getOnlineFriends(final String userId) {
         //return getFriends(userId).filterWhen(this::isUserOnline);
-        return userRepository.getOnlineFriends(userId);
+        return userRepository.getOnlineFriends(userId).doOnNext(onlineFriend -> {
+                log.info("Found online friend for " + userId + ", fried: " + onlineFriend);
+        });
     }
 
     @Override
@@ -225,19 +247,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
             .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
             .flatMap(sseSessionRepository::save)
-            .doOnNext(sseSession -> {
-                log.info("Created new session");
-            })
             .thenMany(
         mainSink.asFlux()
             .timeout(Duration.ofSeconds(6))
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
             .mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
             .mergeWith(initCache(appIdentifier, userId))
-            .doOnSubscribe(signalType -> {
+            .doOnSubscribe(myServerSentEvent -> {
+                //if ("hello".equals(myServerSentEvent.serverSentEvent().event())) {
                 log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
+                //}
             })
             .doFinally(a -> {
                 log.info("{} doFinally() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());

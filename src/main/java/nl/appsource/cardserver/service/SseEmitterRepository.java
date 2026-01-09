@@ -17,7 +17,6 @@ public interface SseEmitterRepository {
 
     Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
-
     void updateGame(Game game);
 
     void updateUser(User user);

@@ -11,6 +11,8 @@ logging:
     ROOT: info
     nl.appsource: info
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 2s
   main:
     web-application-type: reactive
   application:

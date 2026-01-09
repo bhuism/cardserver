@@ -84,6 +84,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map(CardServerAuthentication::sseSession)
+            .map(SseSession::getId)
+            .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::ping)
             .flatMap(sseSessionRepository::save)
             .retryWhen(Retry.backoff(10, Duration.ofMillis(100)) // 3 attempts, exponential backoff
@@ -95,19 +97,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-
-//    @Override
-//    public Mono<Void> ping(final String appIdentifier) {
-//        return sseSessionRepository.findById(appIdentifier)
-//            .doOnNext(SseSession::ping)
-//            .flatMap(sseSessionRepository::save)
-//            .doOnNext(sseSession -> {
-//                send(MySseEmitter.createPongEvent(sseSession.getId(), null));
-//            })
-//            .then();
-//    }
-
-
     private boolean isOptimisticLockingError(final Throwable ex) {
         // Spring Data maps the Couchbase CAS mismatch to OptimisticLockingFailureException
         return ex instanceof OptimisticLockingFailureException;
@@ -118,6 +107,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map(CardServerAuthentication::sseSession)
+            .map(SseSession::getId)
+            .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
             .retryWhen(Retry.backoff(5, Duration.ofMillis(50)) // 3 attempts, exponential backoff
