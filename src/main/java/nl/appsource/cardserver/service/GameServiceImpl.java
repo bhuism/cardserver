@@ -204,7 +204,10 @@ public class GameServiceImpl implements GameService {
                         case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
                     };
 
-                    return result.doOnNext(_unused -> gameEngine.getGame().setUpdated(Instant.now())).flatMap(_unused -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
+                    return result
+                        .map(GameEngine::getGame)
+                        .doOnNext(game -> game.setUpdated(Instant.now()))
+                        .flatMap(gameRepository::save)
                         .doOnError(throwable -> {
                             sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
@@ -283,7 +286,13 @@ public class GameServiceImpl implements GameService {
                             .variant(UserMessage.VariantEnum.INFO));
 
                         if (result) {
-                            return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);
+
+                            return Mono.just(gameEngine)
+                                .map(GameEngine::getGame)
+                                .map(gameRepository::save)
+                                .then(sendMessageMono);
+
+                            //return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);
                         } else {
                             return sendMessageMono;
                         }

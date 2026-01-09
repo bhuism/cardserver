@@ -76,114 +76,82 @@ public class DcpConfiguration {
             final String key = MessageUtil.getKeyAsString(event);
             final long cas = MessageUtil.getCas(event);
 
-            if (!key.startsWith("_txn")) {
 
-                final long revSeq = DcpMutationMessage.revisionSeqno(event);
+            final long revSeq = DcpMutationMessage.revisionSeqno(event);
 
-                if (DcpMutationMessage.is(event)) {
+            if (DcpMutationMessage.is(event)) {
 
-                    String className = "";
-                    String version = "";
+                String className = "";
+                String version = "";
 
 //                    log.info("revSeq=" + revSeq + ", key="+key+", content=" + MessageUtil.getContentAsString(event));
 
-                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+                try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
 
-                        final JsonNode rootNode = jsonMapper.readTree(is);
+                    final JsonNode rootNode = jsonMapper.readTree(is);
 
-                        if (rootNode.isObject()) {
-                            className = rootNode.get("_class").stringValue();
-                            switch (className) {
-                                case "nl.appsource.cardserver.model.SseEvent" -> {
-                                    final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
-                                    sseEvent.setId(key);
-                                    version = "" + sseEvent.getVersion();
+                    if (rootNode.isObject()) {
+                        className = rootNode.get("_class").stringValue();
+                        switch (className) {
+                            case "nl.appsource.cardserver.model.SseEvent" -> {
+                                final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
+                                sseEvent.setId(key);
+                                version = "" + sseEvent.getVersion();
 
-                                    sseSessionRepository.eventLocalRelevance(sseEvent.getAppIdentifier(), sseEvent.getUserId(), HOSTNAME)
-                                        .filter(a -> a)
-                                        .subscribe(aBoolean -> {
-                                            final MyServerSentEvent myServerSentEvent = MySseEmitter.createServerSentEvent(sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent(), sseEvent.getData());
-                                            sseEmitterRepository.send(myServerSentEvent);
-                                        });
+                                sseSessionRepository.eventLocalRelevance(sseEvent.getAppIdentifier(), sseEvent.getUserId(), HOSTNAME)
+                                    .filter(a -> a)
+                                    .subscribe(aBoolean -> {
+                                        final MyServerSentEvent myServerSentEvent = MySseEmitter.createServerSentEvent(sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent(), sseEvent.getData());
+                                        sseEmitterRepository.send(myServerSentEvent);
+                                    });
 
-                                }
-                                case "nl.appsource.cardserver.model.SseSession" -> {
-                                    final SseSession sseSession = jsonMapper.treeToValue(rootNode, SseSession.class);
-                                    sseSession.setId(key);
-                                    version = "" + sseSession.getVersion();
-                                }
-                                case "nl.appsource.cardserver.model.Feedback" -> { }
-                                case "nl.appsource.cardserver.model.Boom" -> {
-                                    final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
-                                    boom.setId(key);
-                                    version = "" + boom.getVersion();
-                                    sseEmitterRepository.updateBoom(boom);
-                                }
-                                case "nl.appsource.cardserver.model.User" -> {
-                                    final User user = jsonMapper.treeToValue(rootNode, User.class);
-                                    user.setId(key);
-                                    version = "" + user.getVersion();
-                                    sseEmitterRepository.updateUser(user);
-                                }
-                                case "nl.appsource.cardserver.model.Game" -> {
-                                    final Game game = jsonMapper.treeToValue(rootNode, Game.class);
-                                    game.setId(key);
-                                    version = "" + game.getVersion();
-                                    sseEmitterRepository.updateGame(game);
-                                }
-                                default -> log.warn("Not handling unknown class mutation : " + className);
                             }
-
-                            jsonMapper.treeToValue(rootNode, Boom.class);
+                            case "nl.appsource.cardserver.model.SseSession" -> {
+                                final SseSession sseSession = jsonMapper.treeToValue(rootNode, SseSession.class);
+                                sseSession.setId(key);
+                                version = "" + sseSession.getVersion();
+                            }
+                            case "nl.appsource.cardserver.model.Feedback" -> { }
+                            case "nl.appsource.cardserver.model.Boom" -> {
+                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+                                boom.setId(key);
+                                version = "" + boom.getVersion();
+                                sseEmitterRepository.updateBoom(boom);
+                            }
+                            case "nl.appsource.cardserver.model.User" -> {
+                                final User user = jsonMapper.treeToValue(rootNode, User.class);
+                                user.setId(key);
+                                version = "" + user.getVersion();
+                                sseEmitterRepository.updateUser(user);
+                            }
+                            case "nl.appsource.cardserver.model.Game" -> {
+                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+                                game.setId(key);
+                                version = "" + game.getVersion();
+                                sseEmitterRepository.updateGame(game);
+                            }
+                            default -> log.warn("Not handling unknown class mutation : " + className);
                         }
 
-
-                    } catch (IOException e) {
-                        log.warn("Can not deserialize key: " + key);
+                        jsonMapper.treeToValue(rootNode, Boom.class);
                     }
 
-                    if (!SseSession.class.getName().equals(className) && !SseEvent.class.getName().equals(className)) {
-                        log.info("Mutation: key={} revSeq={} cas={} class={} version={}", key, revSeq, cas, className, version);
-                    }
 
-                } else if (DcpDeletionMessage.is(event)) {
-                    log.info("Deletion: key={} content={}", key, MessageUtil.getContentAsString(event));
-
-//                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
-//
-//                        final JsonNode rootNode = jsonMapper.readTree(is);
-//
-//                        if (rootNode.isObject()) {
-//                            final String className = rootNode.get("_class").stringValue();
-//                            log.info("Deletion: key={} className={}", key, className);
-//                        }
-//
-//                    } catch (IOException e) {
-//                        log.warn("Can not deserialize key: " + key);
-//                    }
-
-                } else if (DcpExpirationMessage.is(event)) {
-                    log.info("Expiration: key={} content={}", key, MessageUtil.getContentAsString(event));
-
-//                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
-//
-//                        final JsonNode rootNode = jsonMapper.readTree(is);
-//
-//                        if (rootNode.isObject()) {
-//                            final String className = rootNode.get("_class").stringValue();
-//                            log.info("Expiration: key={} className={}", key, className);
-//                        }
-//
-//
-//                    } catch (IOException e) {
-//                        log.warn("Can not deserialize key: " + key);
-//                    }
-
-                } else {
-                    log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
+                } catch (IOException e) {
+                    log.warn("Can not deserialize key: " + key);
                 }
 
-            }
+                if (!SseSession.class.getName().equals(className) && !SseEvent.class.getName().equals(className)) {
+                    log.info("Mutation: key={} revSeq={} cas={} class={} version={}", key, revSeq, cas, className, version);
+                }
+
+            } /* else if (DcpDeletionMessage.is(event)) {
+                log.info("Deletion: key={} content={}", key, MessageUtil.getContentAsString(event));
+            } else if (DcpExpirationMessage.is(event)) {
+                log.info("Expiration: key={} content={}", key, MessageUtil.getContentAsString(event));
+            } else {
+                log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
+            } */
 
             flowController.ack(event);
             event.release();
