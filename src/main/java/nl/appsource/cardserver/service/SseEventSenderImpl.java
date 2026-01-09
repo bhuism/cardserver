@@ -1,10 +1,12 @@
 package nl.appsource.cardserver.service;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.repository.SseEventRepository;
 import nl.appsource.cardserver.utils.IDTYPE;
 import org.openapitools.model.MessageEvent;
+import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -12,13 +14,14 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Service
 @RequiredArgsConstructor
-public class SseSenderImpl implements SseSender {
+public class SseEventSenderImpl implements SseEventSender {
 
     private final SseEventRepository sseEventRepository;
 
@@ -74,4 +77,11 @@ public class SseSenderImpl implements SseSender {
             .then();
     }
 
+    @Override
+    public Mono<Void> sendOnlineListTo(final String userId, final List<@NonNull String> onlineList) {
+        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList), Map.class)))
+            .flatMap(sseEventRepository::save)
+            .then();
+
+    }
 }

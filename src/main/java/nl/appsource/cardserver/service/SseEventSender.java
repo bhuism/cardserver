@@ -1,11 +1,13 @@
 package nl.appsource.cardserver.service;
 
+import lombok.NonNull;
 import org.openapitools.model.UserMessage;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
+import java.util.List;
 
-public interface SseSender {
+public interface SseEventSender {
 
     Mono<Void> sendAppIdentifierMessage(String appIdentifier, UserMessage userMessage);
 
@@ -21,4 +23,5 @@ public interface SseSender {
 
     Mono<Void> boomsChanged(Collection<String> userIds);
 
+    Mono<Void> sendOnlineListTo(String userId, List<@NonNull String> onlineList);
 }

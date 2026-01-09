@@ -61,7 +61,7 @@ public class GameServiceImpl implements GameService {
 
     private final UserRepository userRepository;
 
-    private final SseSender sseSender;
+    private final SseEventSender sseEventSender;
 
     boolean stop = false;
 
@@ -116,7 +116,7 @@ public class GameServiceImpl implements GameService {
                 game.setBoomId(boomId);
             })
             .flatMap(gameRepository::save)
-            .flatMap((game) -> sseSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
+            .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
             .doOnNext(sseEmitterRepository::newGame)
             .doOnNext(game -> {
                 if (new GameEngineImpl(game).isAiSay()) {
@@ -130,7 +130,7 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId)
             .filter(game -> game.getCreator().equals(userId))
             .filter(game -> game.getBoomId() == null)
-            .flatMap(game -> gameRepository.delete(game).then(sseSender.gamesChanged(game.getPlayers())))
+            .flatMap(game -> gameRepository.delete(game).then(sseEventSender.gamesChanged(game.getPlayers())))
             .thenReturn(true);
     }
 
@@ -206,7 +206,7 @@ public class GameServiceImpl implements GameService {
 
                     return result.doOnNext(_unused -> gameEngine.getGame().setUpdated(Instant.now())).flatMap(_unused -> gameRepository.save(gameEngine.getGame()).then(Mono.just(gameEngine)))
                         .doOnError(throwable -> {
-                            sseSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
+                            sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
                                 .message(throwable.getClass()
                                     .getName() + ":" + throwable.getMessage()))
@@ -278,7 +278,7 @@ public class GameServiceImpl implements GameService {
                             .getRoemGeklopt()
                             .add(gameEngine.calcTricksPlayed());
 
-                        final Mono<Void> sendMessageMono = sseSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId)
+                        final Mono<Void> sendMessageMono = sseEventSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId)
                             .message("Er is " + (result ? "" : "al ")  + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
                             .variant(UserMessage.VariantEnum.INFO));
 
@@ -288,7 +288,7 @@ public class GameServiceImpl implements GameService {
                             return sendMessageMono;
                         }
                     } else {
-                        return sseSender.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                        return sseEventSender.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
                             .message("Er is geen roem in slag " + (correctedSlagNr + 1))
                             .variant(UserMessage.VariantEnum.WARNING));
                     }
@@ -299,7 +299,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public Mono<Void> gameMessage(final String userId, final String gameId, final String message) {
         return gameRepository.findByUserIdAndGameId(userId, gameId)
-            .flatMap(game -> sseSender.sendUserIdMessage(game.getPlayers(), new UserMessage().userId(userId)
+            .flatMap(game -> sseEventSender.sendUserIdMessage(game.getPlayers(), new UserMessage().userId(userId)
                 .message(message)
                 .variant(UserMessage.VariantEnum.INFO)));
     }
@@ -319,13 +319,13 @@ public class GameServiceImpl implements GameService {
                             if (verzaakt) {
                                 return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
                                     .flatMap((player) -> {
-                                    return sseSender.sendUserIdMessage(gameEngine.getGame()
+                                    return sseEventSender.sendUserIdMessage(gameEngine.getGame()
                                         .getPlayers(), new UserMessage().userId(userId)
                                         .variant(UserMessage.VariantEnum.ERROR)
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
                                     });
                             } else {
-                                return sseSender.sendUserIdMessage(gameEngine.getGame()
+                                return sseEventSender.sendUserIdMessage(gameEngine.getGame()
                                     .getPlayers(), new UserMessage().userId(userId)
                                     .variant(UserMessage.VariantEnum.INFO)
                                     .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));

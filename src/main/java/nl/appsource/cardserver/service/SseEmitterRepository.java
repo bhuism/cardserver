@@ -9,9 +9,9 @@ import reactor.core.publisher.Mono;
 
 public interface SseEmitterRepository {
 
-    void sendOnlineListToFriendsOf(String userId);
+    Mono<Void> sendOnlineListToFriendsOf(String userId);
 
-    void sendOnlineListTo(String userId);
+    Mono<Void> sendOnlineListTo(String userId);
 
     void send(MyServerSentEvent myServerSentEvent);
 

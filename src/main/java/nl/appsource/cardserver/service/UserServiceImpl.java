@@ -25,7 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-    private final SseSender sseSender;
+    private final SseEventSender sseEventSender;
 
     @Override
     public Mono<User> findById(final String userId) {
@@ -76,11 +76,9 @@ public class UserServiceImpl implements UserService {
 
             })
             .flatMap(userRepository::save)
-            .flatMap(user -> sseSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(Mono.fromRunnable(() -> {
-                sseEmitterRepository.sendOnlineListTo(userId);
-                sseEmitterRepository.sendOnlineListTo(friendId);
-            }));
+            .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
+            .then(sseEmitterRepository.sendOnlineListTo(userId))
+            .then(sseEmitterRepository.sendOnlineListTo(friendId));
     }
 
     @Override
@@ -92,11 +90,9 @@ public class UserServiceImpl implements UserService {
                 return user;
             })
             .flatMap(userRepository::save)
-            .flatMap(user -> sseSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(Mono.fromRunnable(() -> {
-                sseEmitterRepository.sendOnlineListTo(userId);
-                sseEmitterRepository.sendOnlineListTo(friendId);
-            }));
+            .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
+            .then(sseEmitterRepository.sendOnlineListTo(userId))
+            .then(sseEmitterRepository.sendOnlineListTo(friendId));
     }
 
     @Override
@@ -113,10 +109,11 @@ public class UserServiceImpl implements UserService {
                     user.getInvites().addAll(newFriendIds);
                     return userRepository.save(user)
                         .flatMap(savedUser -> {
-                            newFriendIds.forEach(sseEmitterRepository::sendOnlineListTo);
-                            sseEmitterRepository.sendOnlineListTo(userId);
-                            return sseSender.friendsChanged(newFriendIds)
-                                .then(sseSender.friendsChanged(singleton(userId)));
+                            return Flux.fromIterable(newFriendIds)
+                                .flatMap(sseEmitterRepository::sendOnlineListTo)
+                                .then(sseEmitterRepository.sendOnlineListTo(userId))
+                                .then(sseEventSender.friendsChanged(newFriendIds))
+                                .then(sseEventSender.friendsChanged(singleton(userId)));
                         })
                         .thenReturn(newFriendIds.size());
                 }));

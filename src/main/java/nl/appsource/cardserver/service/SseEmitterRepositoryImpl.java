@@ -67,6 +67,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         HOSTNAME = host;
     }
 
+    private final SseEventSender sseEventSender;
+
 //    private Flux<@NonNull String> getFriends(final String userId) {
 //        return userRepository.findById(userId)
 //            .map(User::getInvites)
@@ -104,24 +106,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void sendOnlineListToFriendsOf(final String userId) {
-        getOnlineFriends(userId)
-            .subscribe(this::sendOnlineListTo);
+    public Mono<Void> sendOnlineListToFriendsOf(final String userId) {
+        return getOnlineFriends(userId).flatMap(this::sendOnlineListTo).then();
     }
-
-    private Mono<@NonNull MyServerSentEvent> createOnlineListTo(final String userId) {
-        return getOnlineFriends(userId)
-            .collectList()
-            .map(list -> MySseEmitter.createOnlineList(null, userId, list));
-    }
-
 
     @Override
-    public void sendOnlineListTo(final String userId) {
-        createOnlineListTo(userId).subscribe(this::send);
+    public Mono<Void> sendOnlineListTo(final String userId) {
+        return getOnlineFriends(userId)
+            .collectList()
+            .flatMap(onlineList -> sseEventSender.sendOnlineListTo(userId, onlineList));
     }
-
-
 
 //    @Override
 //    public void sendMessage(final Collection<String> userIds, final UserMessage userMessage) {
@@ -253,17 +247,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
             .mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
             .mergeWith(initCache(appIdentifier, userId))
-            .doOnSubscribe(myServerSentEvent -> {
-                //if ("hello".equals(myServerSentEvent.serverSentEvent().event())) {
-                log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-                sendOnlineListTo(userId);
-                sendOnlineListToFriendsOf(userId);
-                //}
+            .flatMap(myServerSentEvent -> {
+                if ("hello".equals(myServerSentEvent.serverSentEvent().event())) {
+                    log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
+                    return sendOnlineListTo(userId).then(sendOnlineListToFriendsOf(userId)).then(Mono.just(myServerSentEvent));
+                } else {
+                    return Mono.just(myServerSentEvent);
+                }
             })
             .doFinally(a -> {
                 log.info("{} doFinally() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
                 sseSessionRepository.deleteById(appIdentifier)
-                    .doOnSuccess(_ -> sendOnlineListToFriendsOf(userId))
+                    .then(sendOnlineListToFriendsOf(userId))
                     .subscribe();
             })
             .doOnCancel(() -> {

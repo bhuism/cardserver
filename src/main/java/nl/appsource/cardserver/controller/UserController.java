@@ -6,7 +6,7 @@ import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import nl.appsource.cardserver.service.SseSender;
+import nl.appsource.cardserver.service.SseEventSender;
 import nl.appsource.cardserver.service.UserService;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.UsersApi;
@@ -40,14 +40,14 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     private final SseSessionRepository sseSessionRepository;
 
-    private final SseSender sseSender;
+    private final SseEventSender sseEventSender;
 
-    public UserController(final SseSessionRepository sseSessionRepository, final UserRepository userRepositoryArg, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg, final SseSender sseSender) {
+    public UserController(final SseSessionRepository sseSessionRepository, final UserRepository userRepositoryArg, final UserService userServiceArg, final UserToOpenApiConverter userToOpenApiConverterArg, final SseEventSender sseEventSender) {
         super(userRepositoryArg, sseSessionRepository);
         this.userService = userServiceArg;
         this.userToOpenApiConverter = userToOpenApiConverterArg;
         this.sseSessionRepository = sseSessionRepository;
-        this.sseSender = sseSender;
+        this.sseEventSender = sseEventSender;
     }
 
     @Override
@@ -92,7 +92,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
                 .filter(this::isOptimisticLockingError)
                 .doBeforeRetry(signal -> log.warn("CAS mismatch retry: " + signal.totalRetries()))
             )
-            .flatMap(sseSession -> sseSender.sendPong(sseSession.getId()))
+            .flatMap(sseSession -> sseEventSender.sendPong(sseSession.getId()))
             .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
