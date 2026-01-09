@@ -4,8 +4,6 @@ import com.couchbase.client.core.deps.io.netty.buffer.ByteBufInputStream;
 import com.couchbase.client.dcp.Client;
 import com.couchbase.client.dcp.StreamFrom;
 import com.couchbase.client.dcp.StreamTo;
-import com.couchbase.client.dcp.message.DcpDeletionMessage;
-import com.couchbase.client.dcp.message.DcpExpirationMessage;
 import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
