@@ -15,6 +15,7 @@ import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -64,37 +65,40 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         HOSTNAME = host;
     }
 
+//    private Flux<@NonNull String> getFriends(final String userId) {
+//        return userRepository.findById(userId)
+//            .map(User::getInvites)
+//            .flatMapMany(list -> userRepository.findIncomingInvites(userId)
+//                .filter(list::contains));
+//    }
+
     private Flux<@NonNull String> getFriends(final String userId) {
-        return userRepository.findById(userId)
-            .map(User::getInvites)
-            .flatMapMany(list -> userRepository.findIncomingInvites(userId)
-                .filter(list::contains));
+        return userRepository.getFriends(userId);
+    }
+
+    private Flux<@NonNull String> getOnlineFriends(final String userId) {
+        //return getFriends(userId).filterWhen(this::isUserOnline);
+        return userRepository.getOnlineFriends(userId);
     }
 
     @Override
     public void sendOnlineListToFriendsOf(final String userId) {
-        createSendOnlineListToFriendsOf(userId)
+        getOnlineFriends(userId)
             .subscribe(this::sendOnlineListTo);
     }
 
-    private Flux<@NonNull String> createSendOnlineListToFriendsOf(final String userId) {
-        return getFriends(userId)
-            .filterWhen(this::isUserOnline);
+    private Mono<@NonNull MyServerSentEvent> createOnlineListTo(final String userId) {
+        return getOnlineFriends(userId)
+            .collectList()
+            .map(list -> MySseEmitter.createOnlineList(null, userId, list));
     }
+
 
     @Override
     public void sendOnlineListTo(final String userId) {
         createOnlineListTo(userId).subscribe(this::send);
-//        send(createOnlineListTo(userId).toStream().toList());
-//        doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
     }
 
-    private Mono<@NonNull MyServerSentEvent> createOnlineListTo(final String userId) {
-
-        return getFriends(userId).filterWhen(this::isUserOnline).collectList().map(list -> MySseEmitter.createOnlineList(null, userId, list));
-//        return MySseEmitter.createOnlineList(null, userId, getFriends(userId).filter(this::isUserOnline);
-//        doUserId(userId, mySseEmitter -> mySseEmitter.sendOnlineList(getFriends(userId).filter(this::isUserOnline)));
-    }
 
 
 //    @Override
@@ -125,7 +129,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         send(createServerSentEvent(null, user.getId(), convertedUser));
 
         // update friends
-        getFriends(user.getId()).subscribe(invite -> send(createServerSentEvent(null, invite, convertedUser)));
+        getOnlineFriends(user.getId()).subscribe(invite -> send(createServerSentEvent(null, invite, convertedUser)));
 //        doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
     }
 
@@ -204,9 +208,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postStruct() {
         log.info("Creating heartbeat");
-        Flux.interval(Duration.ofSeconds(15)).map(aLong -> {
-            return createServerSentEvent(null, null, "ping");
-        }).subscribe(this::send);
+        Flux.interval(Duration.ofSeconds(5)).map(aLong -> createServerSentEvent(null, null, "ping")).subscribe(this::send);
     }
 
     @Override
@@ -219,22 +221,35 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("{} subscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
-        return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
+        return
+            sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
+            .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
             .flatMap(sseSessionRepository::save)
+            .doOnNext(sseSession -> {
+                log.info("Created new session");
+            })
             .thenMany(
         mainSink.asFlux()
+            .timeout(Duration.ofSeconds(6))
             .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
             .mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
             .mergeWith(initCache(appIdentifier, userId))
             .doOnSubscribe(signalType -> {
+                log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
                 sendOnlineListTo(userId);
                 sendOnlineListToFriendsOf(userId);
             })
             .doFinally(a -> {
+                log.info("{} doFinally() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
                 sseSessionRepository.deleteById(appIdentifier)
                     .doOnSuccess(_ -> sendOnlineListToFriendsOf(userId))
                     .subscribe();
-                log.info("{} cancel() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
+            })
+            .doOnCancel(() -> {
+                log.info("{} doOnCancel() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
+            })
+            .doOnTerminate(() -> {
+                log.info("{} doOnTerminate() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
             })
             );
 

@@ -15,14 +15,17 @@ import org.openapitools.model.CreateInviteResponse;
 import org.openapitools.model.InvitesResponse;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 
 import static reactor.core.publisher.Mono.just;
@@ -83,6 +86,10 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .map(CardServerAuthentication::sseSession)
             .doOnNext(SseSession::ping)
             .flatMap(sseSessionRepository::save)
+            .retryWhen(Retry.backoff(10, Duration.ofMillis(100)) // 3 attempts, exponential backoff
+                .filter(this::isOptimisticLockingError)
+                .doBeforeRetry(signal -> log.warn("CAS mismatch retry: " + signal.totalRetries()))
+            )
             .flatMap(sseSession -> sseSender.sendPong(sseSession.getId()))
             .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
@@ -100,6 +107,12 @@ public class UserController extends GenericController implements UsersApi, V1Api
 //            .then();
 //    }
 
+
+    private boolean isOptimisticLockingError(final Throwable ex) {
+        // Spring Data maps the Couchbase CAS mismatch to OptimisticLockingFailureException
+        return ex instanceof OptimisticLockingFailureException;
+    }
+
     @Override
     public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
@@ -107,6 +120,10 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .map(CardServerAuthentication::sseSession)
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
+            .retryWhen(Retry.backoff(5, Duration.ofMillis(50)) // 3 attempts, exponential backoff
+                .filter(this::isOptimisticLockingError)
+                .doBeforeRetry(signal -> log.warn("CAS mismatch retry: " + signal.totalRetries()))
+            )
             .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
