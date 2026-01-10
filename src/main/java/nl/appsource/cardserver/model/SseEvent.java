@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Setter
 @ToString
-@Expiry(expiry = 30, expiryUnit = TimeUnit.SECONDS)
+@Expiry(expiry = 5, expiryUnit = TimeUnit.SECONDS)
 public class SseEvent {
 
     @Id
