@@ -15,6 +15,7 @@ import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.HelloEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -221,7 +222,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(userToOpenApiConverter::convert)
             .map(user -> createServerSentEvent(appIdentifier, userId, user));
 
-        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent(appIdentifier, null, "hello", HOSTNAME));
+        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent(appIdentifier, null, "hello", new HelloEvent().hostName(HOSTNAME)));
 
         return Flux.concat(me, friends, games, booms, hello);
 

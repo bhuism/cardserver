@@ -803,6 +803,13 @@ components:
             type: string
       required:
         - players
+    HelloEvent:
+      type: object
+      properties:
+        hostName:
+          type: string
+      required:
+        - hostName
     OnlineListEvent:
       type: object
       properties:
