@@ -97,9 +97,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
     }
 
-//    private Flux<@NonNull String> getFriends(final String userId) {
-//        return userRepository.getFriends(userId);
-//    }
+    private Flux<@NonNull User> getFriends(final String userId) {
+        return userRepository.getFriends(userId);
+    }
 
     private Flux<@NonNull String> getOnlineFriends(final String userId) {
         //return getFriends(userId).filterWhen(this::isUserOnline);
@@ -178,14 +178,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .collect(Collectors.toSet()), mySseEmitter -> mySseEmitter.newGame(requireNonNull(gameToOpenApiConverter.convert(game))));
     }
 
-    @Override
-    public Mono<Boolean> isUserOnline(final String userId) {
-        return sseSessionRepository.existsByCreator(userId);
-//            .any(sseSession -> sseSession.getPingReceived() != null
-//            && sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
-//            && sseSession.getPongReceived() != null
-//            && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15))));
-    }
+//    @Override
+//    public Mono<Boolean> isUserOnline(final String userId) {
+//        return sseSessionRepository.existsByCreator(userId);
+////            .any(sseSession -> sseSession.getPingReceived() != null
+////            && sseSession.getPingReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15)))
+////            && sseSession.getPongReceived() != null
+////            && sseSession.getPongReceived().isAfter(Instant.now().minus(Duration.ofSeconds(15))));
+//    }
 
 //    @Override
 //    public void newFriend(final String userId, final String friendId) {
@@ -196,24 +196,27 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private Flux<@NonNull MyServerSentEvent> initCache(final String appIdentifier, final String userId) {
 
-        final Flux<@NonNull String> friendIds = userRepository.findById(userId)
-            .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
-            .mergeWith(userRepository.findIncomingInvites(userId))
-            .distinct();
+//        final Flux<@NonNull String> friendIds = userRepository.findById(userId)
+//            .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
+//            .mergeWith(userRepository.findIncomingInvites(userId))
+//            .distinct();
 
-        final Flux<@NonNull MyServerSentEvent> friends = friendIds.collectList()
-            .flatMapMany(userRepository::findAllById)
+        // users
+        final Flux<@NonNull MyServerSentEvent> friends = getFriends(userId)
             .map(userToOpenApiConverter::convert)
             .map(user -> createServerSentEvent(appIdentifier, userId, user));
 
+        // games
         final Flux<@NonNull MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
             .map(gameToOpenApiConverter::convert)
             .map(game -> createServerSentEvent(appIdentifier, userId, game));
 
+        // forest
         final Flux<@NonNull MyServerSentEvent> booms = boomRepository.findByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
             .map(boom -> createServerSentEvent(appIdentifier, userId, boom));
 
+        // users
         final Flux<@NonNull MyServerSentEvent> me = Flux.from(userRepository.findById(userId))
             .map(userToOpenApiConverter::convert)
             .map(user -> createServerSentEvent(appIdentifier, userId, user));

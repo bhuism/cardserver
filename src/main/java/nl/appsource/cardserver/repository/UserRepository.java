@@ -21,18 +21,23 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
 
     Mono<Boolean> existsByDisplayNameAndIdNot(String displayName, String id);
 
-    String FRIENDS = "SELECT meta(#{#n1ql.bucket}).id"
+    String FRIENDS = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter}"
+        + " AND ARRAY_CONTAINS(invites, $userId)"
+        + " AND ARRAY_CONTAINS((SELECT RAW t.invites FROM #{#n1ql.bucket} AS t USE KEYS $userId)[0], meta(#{#n1ql.bucket}).id)";
+
+    @Query(FRIENDS)
+    Flux<User> getFriends(String userId);
+
+    String FRIENDIDS = "SELECT meta(#{#n1ql.bucket}).id"
         + " FROM #{#n1ql.bucket}"
         + " WHERE #{#n1ql.filter}"
         + " AND ARRAY_CONTAINS(invites, $userId)"
         + " AND ARRAY_CONTAINS((SELECT RAW t.invites FROM #{#n1ql.bucket} AS t USE KEYS $userId)[0], meta(#{#n1ql.bucket}).id)";
 
-    @Query(FRIENDS)
-    Flux<String> getFriends(String userId);
 
-    String ONLINE_FRIENDS = FRIENDS + " AND ARRAY_CONTAINS((SELECT RAW s.creator FROM  #{#n1ql.bucket} AS s WHERE s._class='nl.appsource.cardserver.model.SseSession'), meta(#{#n1ql.bucket}).id)";
+    String ONLINE_FRIENDIDS = FRIENDIDS + " AND ARRAY_CONTAINS((SELECT RAW s.creator FROM  #{#n1ql.bucket} AS s WHERE s._class='nl.appsource.cardserver.model.SseSession'), meta(#{#n1ql.bucket}).id)";
 
-    @Query(ONLINE_FRIENDS)
+    @Query(ONLINE_FRIENDIDS)
     Flux<String> getOnlineFriends(String userId);
 
 }

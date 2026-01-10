@@ -30,6 +30,6 @@ public interface SseEmitterRepository {
 
     void reloadCache(String appIdentifier, String userId);
 
-    Mono<Boolean> isUserOnline(String userId);
+    //Mono<Boolean> isUserOnline(String userId);
 
 }
