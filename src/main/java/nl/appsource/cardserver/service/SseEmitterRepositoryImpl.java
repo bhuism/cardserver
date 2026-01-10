@@ -221,7 +221,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(userToOpenApiConverter::convert)
             .map(user -> createServerSentEvent(appIdentifier, userId, user));
 
-        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent(null, null, "hello", null));
+        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent(appIdentifier, null, "hello", HOSTNAME));
 
         return Flux.concat(me, friends, games, booms, hello);
 

@@ -23,7 +23,6 @@ public interface SseEmitterRepository {
 
     void updateBoom(Boom boom);
 
-
     void updateGameForId(String appIdentifier, Game game);
 
     void newGame(Game game);
