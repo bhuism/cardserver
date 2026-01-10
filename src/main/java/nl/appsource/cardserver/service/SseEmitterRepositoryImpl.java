@@ -26,6 +26,9 @@ import reactor.core.publisher.Sinks;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static nl.appsource.cardserver.service.MySseEmitter.createServerSentEvent;
 
@@ -53,7 +56,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final SseSessionRepository sseSessionRepository;
 
-    private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
+    private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
+
+    private final Map<String, UserChannel> userChannels = new ConcurrentHashMap<>();
 
     private static final String HOSTNAME;
 
@@ -92,9 +97,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
     }
 
-    private Flux<@NonNull String> getFriends(final String userId) {
-        return userRepository.getFriends(userId);
-    }
+//    private Flux<@NonNull String> getFriends(final String userId) {
+//        return userRepository.getFriends(userId);
+//    }
 
     private Flux<@NonNull String> getOnlineFriends(final String userId) {
         //return getFriends(userId).filterWhen(this::isUserOnline);
@@ -222,52 +227,71 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postStruct() {
         log.info("Creating heartbeat");
-        Flux.interval(Duration.ofSeconds(5)).map(aLong -> createServerSentEvent(null, null, "ping")).subscribe(this::send);
+        Flux.interval(Duration.ofSeconds(5))
+            .map(aLong -> createServerSentEvent(null, null, "ping"))
+            .subscribe(myServerSentEvent -> {
+                mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
+            });
     }
 
     @Override
     public void send(final MyServerSentEvent myServerSentEvent) {
-        mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
+        //mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
+
+        if (myServerSentEvent.appIdentifier() != null) {
+            Optional.ofNullable(userChannels.get(myServerSentEvent.appIdentifier()))
+                .ifPresent(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000))));
+        } else if (myServerSentEvent.userId() != null) {
+            userChannels.values()
+                .stream()
+                .filter(userChannel -> userChannel.userId.equals(myServerSentEvent.userId()))
+                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000))));
+        } else {
+            log.error("MyServerSentEvent has no appIdentifier or userId, event=" + myServerSentEvent.serverSentEvent().event());
+        }
     }
 
     @Override
     public Flux<@NonNull MyServerSentEvent> subscribe(final String appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
 
-        log.info("{} subscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
+        log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+
+        final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
+
+        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
+            .mergeWith(initCache(appIdentifier, userId))
+            .flatMap(myServerSentEvent -> {
+                if ("hello".equals(myServerSentEvent.serverSentEvent().event())) {
+                    log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+                    return sendOnlineListTo(userId).then(sendOnlineListToFriendsOf(userId)).then(Mono.just(myServerSentEvent));
+                } else {
+                    return Mono.just(myServerSentEvent);
+                }
+            });
 
         return
             sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
             .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
             .flatMap(sseSessionRepository::save)
             .thenMany(
-        mainSink.asFlux()
-            .timeout(Duration.ofSeconds(6))
-            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
-            .mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
-            .mergeWith(initCache(appIdentifier, userId))
-            .flatMap(myServerSentEvent -> {
-                if ("hello".equals(myServerSentEvent.serverSentEvent().event())) {
-                    log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-                    return sendOnlineListTo(userId).then(sendOnlineListToFriendsOf(userId)).then(Mono.just(myServerSentEvent));
-                } else {
-                    return Mono.just(myServerSentEvent);
-                }
-            })
-            .doFinally(a -> {
-                log.info("{} doFinally() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-                sseSessionRepository.deleteById(appIdentifier)
-                    .then(sendOnlineListToFriendsOf(userId))
-                    .subscribe();
-            })
-            .doOnCancel(() -> {
-                log.info("{} doOnCancel() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-            })
-            .doOnTerminate(() -> {
-                log.info("{} doOnTerminate() appIdentifier={} userId={}, subscriber={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-            })
+                Flux.merge(mainSink.asFlux(), userFlux)
+                .timeout(Duration.ofSeconds(6))
+//            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
+                .onBackpressureDrop(dropped -> System.out.println("Dropping msg for slow client: appIdentifier=" + dropped.appIdentifier()  + ", userId=" + dropped.userId()  + ", event=" + dropped.serverSentEvent().event()))
+                .doFinally(a -> {
+                    log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+                    userChannels.remove(appIdentifier);
+                    sseSessionRepository.deleteById(appIdentifier)
+                        .then(sendOnlineListToFriendsOf(userId))
+                        .subscribe();
+                })
             );
+    }
 
-
+    @RequiredArgsConstructor
+    private static class UserChannel {
+        public final Sinks.Many<@NonNull MyServerSentEvent> sink = Sinks.many().multicast().directBestEffort();
+        public final String userId;
     }
 
     @Override
