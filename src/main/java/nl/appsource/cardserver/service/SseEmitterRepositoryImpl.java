@@ -16,6 +16,7 @@ import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.HelloEvent;
+import org.openapitools.model.OnlineListEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -129,28 +130,20 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @Override
     public void updateGame(final Game game) {
-//        doSelectedUserIds(game.getPlayers(), mySseEmitter -> mySseEmitter.sendUpdateGame(gameToOpenApiConverter.convert(game)));
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-        game.getPlayers().forEach(player -> send(createServerSentEvent(null, player, convertedGame)));
+        game.getPlayers().forEach(player -> send(null, player, createServerSentEvent(convertedGame)));
     }
 
-    @Override
-    public void updateGameForId(final String appIdentifier, final Game game) {
-//        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
-        send(createServerSentEvent(appIdentifier, null, gameToOpenApiConverter.convert(game)));
-    }
+//    @Override
+//    public void updateGameForId(final String appIdentifier, final Game game) {
+////        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
+//        send(createServerSentEvent(appIdentifier, null, gameToOpenApiConverter.convert(game)));
+//    }
 
     @Override
     public void updateUser(final User user) {
-
         final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);
-
-        // update self
-        send(createServerSentEvent(null, user.getId(), convertedUser));
-
-        // update friends
-        getOnlineFriends(user.getId()).subscribe(invite -> send(createServerSentEvent(null, invite, convertedUser)));
-//        doSelectedUserIds(user.getInvites(), mySseEmitter -> mySseEmitter.sendUpdateUser(userToOpenApiConverter.convert(user)));
+        getOnlineFriends(user.getId()).mergeWith(Mono.just(user.getId())).subscribe(friend -> send(null, friend, createServerSentEvent(convertedUser)));
     }
 
     @Override
@@ -158,23 +151,26 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //        doSelectedUserIds(boom.getPlayers(), mySseEmitter -> mySseEmitter.sendupdateBoom(boomToOpenApiConverter.convert(boom)));
 
         final org.openapitools.model.Boom convertedBoom = boomToOpenApiConverter.convert(boom);
+//        convertedBoom.getPlayers().forEach(player -> send(null, player, createServerSentEvent(convertedBoom)));
 
         Flux.fromIterable(boom.getPlayers())
             .concatWith(Flux.just(boom.getCreator()))
             .distinct()
-            .subscribe(player -> send(createServerSentEvent(null, player, convertedBoom)));
+            .subscribe(player -> send(null, player, createServerSentEvent(convertedBoom)));
 
     }
 
     @Override
-    public void newGame(final Game game) {
+    public Mono<Game> newGame(final Game game) {
 
-        final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
+        //final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
 
-        game.getPlayers()
-            .stream()
+        return Flux.fromIterable(game.getPlayers())
             .filter(player -> !player.equals(game.getCreator()))
-            .forEach(player -> send(MySseEmitter.createNewGame(null, player, convertedGame)));
+            .flatMap(player -> sseEventSender.newGame(player, game))
+            .then(Mono.just(game));
+
+//        return Flux.fromIterable(game.getPlayers())
 
 //            .collect(Collectors.toSet()), mySseEmitter -> mySseEmitter.newGame(requireNonNull(gameToOpenApiConverter.convert(game))));
     }
@@ -197,6 +193,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private Flux<@NonNull MyServerSentEvent> initCache(final String appIdentifier, final String userId) {
 
+        final Mono<@NonNull MyServerSentEvent> ping = Mono.just(createServerSentEvent("ping"));
+
 //        final Flux<@NonNull String> friendIds = userRepository.findById(userId)
 //            .flatMapMany(user -> Flux.fromIterable(user.getInvites()))
 //            .mergeWith(userRepository.findIncomingInvites(userId))
@@ -205,51 +203,59 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         // users
         final Flux<@NonNull MyServerSentEvent> friends = getFriends(userId)
             .map(userToOpenApiConverter::convert)
-            .map(user -> createServerSentEvent(appIdentifier, userId, user));
+            .map(MySseEmitter::createServerSentEvent);
 
         // games
         final Flux<@NonNull MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
             .map(gameToOpenApiConverter::convert)
-            .map(game -> createServerSentEvent(appIdentifier, userId, game));
+            .map(MySseEmitter::createServerSentEvent);
 
         // forest
         final Flux<@NonNull MyServerSentEvent> booms = boomRepository.findByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
-            .map(boom -> createServerSentEvent(appIdentifier, userId, boom));
+            .map(MySseEmitter::createServerSentEvent);
 
         // users
         final Flux<@NonNull MyServerSentEvent> me = Flux.from(userRepository.findById(userId))
             .map(userToOpenApiConverter::convert)
-            .map(user -> createServerSentEvent(appIdentifier, userId, user));
+            .map(MySseEmitter::createServerSentEvent);
 
-        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent(appIdentifier, null, "hello", new HelloEvent().hostName(HOSTNAME)));
+        final Mono<@NonNull MyServerSentEvent> onlineList = createOnlineListForUser(userId);
 
-        return Flux.concat(me, friends, games, booms, hello);
+        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent("hello", new HelloEvent().hostName(HOSTNAME)));
 
+        return Flux.concat(ping, me, friends, games, booms, onlineList, hello);
+
+    }
+
+    @Override
+    public Mono<@NonNull MyServerSentEvent> createOnlineListForUser(final String userId) {
+        return userRepository.getOnlineFriends(userId).collectList()
+            .map(onlineFriends ->  createServerSentEvent("onlineList", new OnlineListEvent().onlineList(onlineFriends)));
     }
 
     @PostConstruct
     public void postStruct() {
         log.info("Creating heartbeat");
         Flux.interval(Duration.ofSeconds(5))
-            .map(aLong -> createServerSentEvent(null, null, "ping"))
+            .map(aLong -> createServerSentEvent("ping"))
             .subscribe(myServerSentEvent -> {
                 mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
             });
     }
 
     @Override
-    public void send(final MyServerSentEvent myServerSentEvent) {
+    public void send(final String appIdentifier, final String userId, final MyServerSentEvent myServerSentEvent) {
         //mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
 
-        if (myServerSentEvent.appIdentifier() != null) {
-            Optional.ofNullable(userChannels.get(myServerSentEvent.appIdentifier()))
-                .ifPresent(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000))));
-        } else if (myServerSentEvent.userId() != null) {
+        if (appIdentifier != null) {
+            Optional.ofNullable(userChannels.get(appIdentifier))
+                .ifPresent(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(3000))));
+        } else if (userId != null) {
             userChannels.values()
                 .stream()
-                .filter(userChannel -> userChannel.userId.equals(myServerSentEvent.userId()))
-                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000))));
+                .filter(userChannel -> userChannel.userId.equals(userId))
+                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(3000))));
         } else {
             log.error("MyServerSentEvent has no appIdentifier or userId, event=" + myServerSentEvent.serverSentEvent().event());
         }
@@ -262,26 +268,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
 
-        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().mergeWith(Mono.just(createServerSentEvent(appIdentifier, userId, "ping", null)))
-            .mergeWith(initCache(appIdentifier, userId))
-            .flatMap(myServerSentEvent -> {
-                if ("hello".equals(myServerSentEvent.serverSentEvent().event())) {
-                    log.info("{} doOnSubscribe() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
-                    return sendOnlineListTo(userId).then(sendOnlineListToFriendsOf(userId)).then(Mono.just(myServerSentEvent));
-                } else {
-                    return Mono.just(myServerSentEvent);
-                }
-            });
+        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().mergeWith(initCache(appIdentifier, userId));
 
-        return
-            sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
+        return sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
             .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
             .flatMap(sseSessionRepository::save)
+            .then(sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.merge(mainSink.asFlux(), userFlux)
                 .timeout(Duration.ofSeconds(6))
-//            .filter(myServerSentEvent -> appIdentifier.equals(myServerSentEvent.appIdentifier()) || userId.equals(myServerSentEvent.userId()) || (myServerSentEvent.appIdentifier() == null && myServerSentEvent.userId() == null))
-                .onBackpressureDrop(dropped -> System.out.println("Dropping msg for slow client: appIdentifier=" + dropped.appIdentifier()  + ", userId=" + dropped.userId()  + ", event=" + dropped.serverSentEvent().event()))
+                .onBackpressureDrop(dropped -> System.out.println("Dropping msg for slow client, event=" + dropped.serverSentEvent().event()))
                 .doFinally(a -> {
                     log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
                     userChannels.remove(appIdentifier);

@@ -5,7 +5,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.model.Boom;
 import org.openapitools.model.Game;
-import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.User;
 import org.springframework.http.codec.ServerSentEvent;
 
@@ -79,38 +78,38 @@ public final class MySseEmitter {
 //        emitNext(serverSentEvent);
 //    }
 
-    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final String event) {
-        return createServerSentEvent(appIdentifier, userId, event, null);
+    public static MyServerSentEvent createServerSentEvent(final String event) {
+        return createServerSentEvent(event, null);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final User user) {
-        return createServerSentEvent(appIdentifier, userId, "updateUser", user);
+    public static MyServerSentEvent createServerSentEvent(final User user) {
+        return createServerSentEvent("updateUser", user);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final Game game) {
-        return createServerSentEvent(appIdentifier, userId, "updateGame", game);
+    public static MyServerSentEvent createServerSentEvent(final Game game) {
+        return createServerSentEvent("updateGame", game);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final Boom boom) {
-        return createServerSentEvent(appIdentifier, userId, "updateBoom", boom);
+    public static MyServerSentEvent createServerSentEvent(final Boom boom) {
+        return createServerSentEvent("updateBoom", boom);
     }
 
-    public static MyServerSentEvent createServerSentEvent(final String appIdentifier, final String userId, final String event, final Object data) {
+    public static MyServerSentEvent createServerSentEvent(final String event, final Object data) {
 
         final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder().event(event).id("id:" + ATOMIC_LONG.getAndIncrement());
 
         builder.data(Objects.requireNonNullElse(data, "{}"));
 
-        return new MyServerSentEvent(appIdentifier, userId, builder.build());
+        return new MyServerSentEvent(builder.build());
     }
 
 //    public static MyServerSentEvent createOnlineList(final String appIdentifier, final String userId, final List<String> onlineList) {
 //        return createServerSentEvent(appIdentifier, userId, "online", new OnlineListEvent().onlineList(onlineList));
 //    }
 
-    public static MyServerSentEvent createNewGame(final String appIdentifier, final String userId, final Game game) {
-        return createServerSentEvent(appIdentifier, userId, "newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
-    }
+//    public static MyServerSentEvent createNewGame(final Game game) {
+//        return createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()));
+//    }
 
 //    public static MyServerSentEvent newFriend(final String appIdentifier, final String userId, final String newFriendId) {
 //        return createServerSentEvent(appIdentifier, userId, "newFriend", new NewFriendEvent().newFriendId(newFriendId));

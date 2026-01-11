@@ -151,14 +151,14 @@ public class GameController extends GenericController implements GamesApi, V1Api
     }
 
 
-    @Override
-    public Mono<ResponseEntity<Void>> reloadGame(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} reloadGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
-            .flatMap(auth -> gameService.reload(appIdentifier, auth.user().getId(), gameId))
-            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-    }
+//    @Override
+//    public Mono<ResponseEntity<Void>> reloadGame(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {
+//        return authorize(appIdentifier, exchange)
+//            .doOnNext(auth -> log.info("{} reloadGame() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
+//            .flatMap(auth -> gameService.reload(appIdentifier, auth.user().getId(), gameId))
+//            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+//    }
 
     @Override
     public Mono<ResponseEntity<Void>> claimRoem(final String appIdentifier, final String gameId, final ServerWebExchange exchange) {

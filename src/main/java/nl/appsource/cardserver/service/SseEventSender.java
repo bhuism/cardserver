@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import lombok.NonNull;
+import nl.appsource.cardserver.model.Game;
 import org.openapitools.model.UserMessage;
 import reactor.core.publisher.Mono;
 
@@ -23,5 +24,8 @@ public interface SseEventSender {
 
     Mono<Void> boomsChanged(Collection<String> userIds);
 
+    Mono<Void> newGame(String userId, Game game);
+
     Mono<Void> sendOnlineListTo(String userId, List<@NonNull String> onlineList);
+
 }

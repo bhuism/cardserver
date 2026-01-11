@@ -117,7 +117,7 @@ public class GameServiceImpl implements GameService {
             })
             .flatMap(gameRepository::save)
             .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
-            .doOnNext(sseEmitterRepository::newGame)
+            .flatMap(sseEmitterRepository::newGame)
             .doOnNext(game -> {
                 if (new GameEngineImpl(game).isAiSay()) {
                     scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
@@ -259,12 +259,12 @@ public class GameServiceImpl implements GameService {
         return cards;
     }
 
-    @Override
-    public Mono<Void> reload(final String appIdentifier, final String userId, final String gameId) {
-        return gameRepository.findByUserIdAndGameId(userId, gameId)
-            .doOnNext(game -> sseEmitterRepository.updateGameForId(appIdentifier, game))
-            .then();
-    }
+//    @Override
+//    public Mono<Void> reload(final String appIdentifier, final String userId, final String gameId) {
+//        return gameRepository.findByUserIdAndGameId(userId, gameId)
+//            .doOnNext(game -> sseEmitterRepository.updateGameForId(appIdentifier, game))
+//            .then();
+//    }
 
     @Override
     public Mono<Void> claimRoem(final String appIdentifier, final String userId, final String gameId) {

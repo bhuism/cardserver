@@ -13,7 +13,10 @@ public interface SseEmitterRepository {
 
     Mono<Void> sendOnlineListTo(String userId);
 
-    void send(MyServerSentEvent myServerSentEvent);
+    Mono<@NonNull MyServerSentEvent> createOnlineListForUser(String userId);
+
+//    void send(MyServerSentEvent myServerSentEvent);
+    void send(String appIdentifier, String userId, MyServerSentEvent myServerSentEvent);
 
     Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
@@ -23,9 +26,9 @@ public interface SseEmitterRepository {
 
     void updateBoom(Boom boom);
 
-    void updateGameForId(String appIdentifier, Game game);
+    // void updateGameForId(String appIdentifier, Game game);
 
-    void newGame(Game game);
+    Mono<Game> newGame(Game game);
 
     void reloadCache(String appIdentifier, String userId);
 

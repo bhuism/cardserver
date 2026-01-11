@@ -2,10 +2,12 @@ package nl.appsource.cardserver.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.repository.SseEventRepository;
 import nl.appsource.cardserver.utils.IDTYPE;
 import org.openapitools.model.MessageEvent;
+import org.openapitools.model.NewGameEvent;
 import org.openapitools.model.OnlineListEvent;
 import org.openapitools.model.UserMessage;
 import org.springframework.stereotype.Service;
@@ -78,10 +80,19 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
+    public Mono<Void> newGame(final String userId, final Game game) {
+        //retrurn createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()))
+
+        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "newGame", jsonMapper.convertValue(new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()), Map.class)))
+            .flatMap(sseEventRepository::save)
+            .then();
+
+    }
+
+    @Override
     public Mono<Void> sendOnlineListTo(final String userId, final List<@NonNull String> onlineList) {
         return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList), Map.class)))
             .flatMap(sseEventRepository::save)
             .then();
-
     }
 }

@@ -14,8 +14,6 @@ import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.SseSessionRepository;
-import nl.appsource.cardserver.service.MyServerSentEvent;
-import nl.appsource.cardserver.service.MySseEmitter;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import static nl.appsource.cardserver.service.MySseEmitter.createServerSentEvent;
 
 @Slf4j
 @Configuration
@@ -99,8 +99,7 @@ public class DcpConfiguration {
                                 sseSessionRepository.eventLocalRelevance(sseEvent.getAppIdentifier(), sseEvent.getUserId(), HOSTNAME)
                                     .filter(a -> a)
                                     .subscribe(aBoolean -> {
-                                        final MyServerSentEvent myServerSentEvent = MySseEmitter.createServerSentEvent(sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent(), sseEvent.getData());
-                                        sseEmitterRepository.send(myServerSentEvent);
+                                        sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), createServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
                                     });
 
                             }

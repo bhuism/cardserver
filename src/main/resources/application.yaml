@@ -18,7 +18,7 @@ spring:
   application:
     name: Card Server
   jackson:
-    default-property-inclusion: non_absent
+    default-property-inclusion: always
     time-zone: Europe/Amsterdam
 #  mvc:
 #    servlet:

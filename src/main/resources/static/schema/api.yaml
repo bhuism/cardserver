@@ -219,16 +219,6 @@ paths:
           description: some application error
         "404":
           description: not found
-  /games/{gameId}/reload:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      operationId: reloadGame
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      responses:
-        "200":
-          description: ok
   /games/{gameId}/kickAi:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
