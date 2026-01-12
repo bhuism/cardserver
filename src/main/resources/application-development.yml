@@ -3,6 +3,7 @@ server:
     accesslog:
       enabled: true
   port: 8080
+  shutdown: immediate
 logging:
   level:
     ROOT: info
