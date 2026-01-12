@@ -220,8 +220,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(userToOpenApiConverter::convert)
             .map(MySseEmitter::createServerSentEvent);
 
+        // online list
         final Mono<@NonNull MyServerSentEvent> onlineList = createOnlineListForUser(userId);
 
+        // hello
         final Mono<@NonNull MyServerSentEvent> hello = Mono.just(createServerSentEvent("hello", new HelloEvent().hostName(HOSTNAME)));
 
         return Flux.concat(ping, me, friends, games, booms, onlineList, hello);
