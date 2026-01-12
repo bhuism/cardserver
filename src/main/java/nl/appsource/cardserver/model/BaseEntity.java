@@ -6,11 +6,9 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
-import org.springframework.data.couchbase.core.mapping.Field;
 
 import java.time.Instant;
 
@@ -26,8 +24,6 @@ public abstract class BaseEntity {
     @CreatedDate
     private Instant created;
 
-    @LastModifiedDate
-    @Field
     private Instant updated;
 
     @QueryIndexed
