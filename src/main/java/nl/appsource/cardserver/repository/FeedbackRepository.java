@@ -5,6 +5,6 @@ import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FeedbackRepository extends ReactiveCouchbaseRepository<Feedback, String> {
+public interface FeedbackRepository extends ReactiveCouchbaseRepository<Feedback, String>, GenericRepository<Feedback, String> {
 
 }

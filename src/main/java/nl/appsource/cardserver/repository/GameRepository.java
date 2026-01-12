@@ -8,7 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface GameRepository extends ReactiveCouchbaseRepository<Game, String> {
+public interface GameRepository extends ReactiveCouchbaseRepository<Game, String>, GenericRepository<Game, String> {
 
 //    @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND creator = $creator")
 //    Set<String> findIdByCreator(@Param("creator") String creator);

@@ -62,7 +62,7 @@ public class CalcAiCardController implements AiApi {
                 game.setDealCounter(0);
                 return game;
             })
-            .flatMap(gameRepository::save)
+            .flatMap(gameRepository::updatedSave)
             .map(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
     }
@@ -78,7 +78,7 @@ public class CalcAiCardController implements AiApi {
                     .flatMap(gameEngine -> gameEngine.playCard(aiPlayCardRequest.getPlayerId(), convertCard(aiPlayCardRequest.getCard())))
                     .map(GameEngine::getGame);
             })
-            .flatMap(gameRepository::save)
+            .flatMap(gameRepository::updatedSave)
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok);
     }

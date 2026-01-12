@@ -69,7 +69,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
                         final Flux<String> incoming = invites.incoming();
                         final Flux<String> outgoing = invites.outgoing();
                         final Flux<String> friends = invites.friends();
-                        return Mono.zip(arr -> new InvitesResponse().incoming((List<String>) arr[0])
+                        return Mono.zip(arr -> new InvitesResponse()
+                            .incoming((List<String>) arr[0])
                             .friends((List<String>) arr[1])
                             .outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
                     })
@@ -87,10 +88,10 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .map(SseSession::getId)
             .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::ping)
-            .flatMap(sseSessionRepository::save)
+            .flatMap(sseSessionRepository::updatedSave)
             .retryWhen(Retry.backoff(10, Duration.ofMillis(100)) // 3 attempts, exponential backoff
                 .filter(this::isOptimisticLockingError)
-                .doBeforeRetry(signal -> log.warn("CAS mismatch retry: " + signal.totalRetries()))
+                .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
             )
             .flatMap(sseSession -> sseEventSender.sendPong(sseSession.getId()))
             .then(just(ResponseEntity.ok().<Void>build()))
@@ -110,10 +111,10 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .map(SseSession::getId)
             .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::pong)
-            .flatMap(sseSessionRepository::save)
+            .flatMap(sseSessionRepository::updatedSave)
             .retryWhen(Retry.backoff(5, Duration.ofMillis(50)) // 3 attempts, exponential backoff
                 .filter(this::isOptimisticLockingError)
-                .doBeforeRetry(signal -> log.warn("CAS mismatch retry: " + signal.totalRetries()))
+                .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
             )
             .then(just(ResponseEntity.ok().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

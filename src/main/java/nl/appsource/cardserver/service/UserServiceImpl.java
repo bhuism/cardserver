@@ -59,11 +59,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<User> save(final User user) {
-        return userRepository.save(user);
-    }
-
-    @Override
     public Mono<Void> removeInvite(final String userId, final String friendId) {
         return userRepository.findById(userId)
             .flatMap(user -> {
@@ -75,7 +70,7 @@ public class UserServiceImpl implements UserService {
                 }
 
             })
-            .flatMap(userRepository::save)
+            .flatMap(userRepository::updatedSave)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
             .then(sseEmitterRepository.sendOnlineListTo(userId))
             .then(sseEmitterRepository.sendOnlineListTo(friendId));
@@ -89,7 +84,7 @@ public class UserServiceImpl implements UserService {
                     .add(friendId);
                 return user;
             })
-            .flatMap(userRepository::save)
+            .flatMap(userRepository::updatedSave)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
             .then(sseEmitterRepository.sendOnlineListTo(userId))
             .then(sseEmitterRepository.sendOnlineListTo(friendId));
@@ -107,7 +102,7 @@ public class UserServiceImpl implements UserService {
                         return Mono.just(0);
                     }
                     user.getInvites().addAll(newFriendIds);
-                    return userRepository.save(user)
+                    return userRepository.updatedSave(user)
                         .flatMap(savedUser -> {
                             return Flux.fromIterable(newFriendIds)
                                 .flatMap(sseEmitterRepository::sendOnlineListTo)
@@ -131,7 +126,7 @@ public class UserServiceImpl implements UserService {
                     user.setGameVariant(updatePreferences.getGameVariant());
                     user.setScreenOrientation(updatePreferences.getScreenOrientation());
                     user.setTheme(updatePreferences.getTheme());
-                    return userRepository.save(user);
+                    return userRepository.updatedSave(user);
                 }));
     }
 

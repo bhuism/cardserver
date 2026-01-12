@@ -115,7 +115,7 @@ public class GameServiceImpl implements GameService {
                 game.setDealCounter(0);
                 game.setBoomId(boomId);
             })
-            .flatMap(gameRepository::save)
+            .flatMap(gameRepository::updatedSave)
             .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
             .flatMap(sseEmitterRepository::newGame)
             .doOnNext(game -> {
@@ -207,7 +207,7 @@ public class GameServiceImpl implements GameService {
                     return result
                         .map(GameEngine::getGame)
                         .doOnNext(game -> game.setUpdated(Instant.now()))
-                        .flatMap(gameRepository::save)
+                        .flatMap(gameRepository::updatedSave)
                         .doOnError(throwable -> {
                             sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
@@ -289,7 +289,7 @@ public class GameServiceImpl implements GameService {
 
                             return Mono.just(gameEngine)
                                 .map(GameEngine::getGame)
-                                .map(gameRepository::save)
+                                .map(gameRepository::updatedSave)
                                 .then(sendMessageMono);
 
                             //return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);

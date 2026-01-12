@@ -16,8 +16,6 @@ public interface UserService {
 
     Mono<UserServiceImpl.InvitesResponse> getInvites(String userId);
 
-    Mono<User> save(User user);
-
     Flux<User> getUsers(List<String> userIds);
 
     Mono<Void> removeInvite(String userId, String friendId);

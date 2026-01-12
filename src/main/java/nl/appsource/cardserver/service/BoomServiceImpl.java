@@ -57,7 +57,7 @@ public class BoomServiceImpl implements BoomService {
                 boom.setDealer(RAND.nextInt(4));
                 boom.setGameVariant(gameVariant);
             })
-            .flatMap(boomRepository::save)
+            .flatMap(boomRepository::updatedSave)
             .flatMap((boom) -> sseEventSender.boomsChanged(boom.getPlayers()).then(Mono.just(boom)));
     }
 
