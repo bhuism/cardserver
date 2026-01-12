@@ -38,13 +38,8 @@ paths:
       operationId: getBooms
       responses:
         "200":
-          description: get all booms
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Boom"
+          description: BoomsResponse
+          $ref: "#/components/responses/BoomsResponse"
     post:
       tags:
         - boom
@@ -397,94 +392,94 @@ paths:
       responses:
         "200":
           description: ok
-  /ai/createGame:
-    post:
-      tags:
-        - aiapi
-      operationId: aiCreateGame
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                gameVariant:
-                  $ref: '#/components/schemas/GameVariant'
-              required:
-                - gameVariant
-      responses:
-        "200":
-          description: Boomresponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Game"
-  /ai/playCard:
-    post:
-      tags:
-        - aiapi
-      operationId: aiPlayCard
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                gameId:
-                  type: string
-                playerId:
-                  type: string
-                card:
-                  $ref: '#/components/schemas/Card'
-              required:
-                - gameId
-                - playerId
-                - card
-      responses:
-        "200":
-          description: Boomresponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Game"
-  /ai/caldAiCard:
-    post:
-      tags:
-        - aiapi
-      operationId: calcAiCard
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                currentTrick:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/Card"
-                trumpSuit:
-                  $ref: "#/components/schemas/Suit"
-                hand:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/Card"
-                gameVariant:
-                  $ref: '#/components/schemas/GameVariant'
-              required:
-                - currentTrick
-                - trumpSuit
-                - hand
-                - gameVariant
-      responses:
-        "200":
-          description: Boomresponse
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Card"
+#  /ai/createGame:
+#    post:
+#      tags:
+#        - aiapi
+#      operationId: aiCreateGame
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              type: object
+#              properties:
+#                gameVariant:
+#                  $ref: '#/components/schemas/GameVariant'
+#              required:
+#                - gameVariant
+#      responses:
+#        "200":
+#          description: Game Response
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Game"
+#  /ai/playCard:
+#    post:
+#      tags:
+#        - aiapi
+#      operationId: aiPlayCard
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              type: object
+#              properties:
+#                gameId:
+#                  type: string
+#                playerId:
+#                  type: string
+#                card:
+#                  $ref: '#/components/schemas/Card'
+#              required:
+#                - gameId
+#                - playerId
+#                - card
+#      responses:
+#        "200":
+#          description: Boomresponse
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Game"
+#  /ai/caldAiCard:
+#    post:
+#      tags:
+#        - aiapi
+#      operationId: calcAiCard
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              type: object
+#              properties:
+#                currentTrick:
+#                  type: array
+#                  items:
+#                    $ref: "#/components/schemas/Card"
+#                trumpSuit:
+#                  $ref: "#/components/schemas/Suit"
+#                hand:
+#                  type: array
+#                  items:
+#                    $ref: "#/components/schemas/Card"
+#                gameVariant:
+#                  $ref: '#/components/schemas/GameVariant'
+#              required:
+#                - currentTrick
+#                - trumpSuit
+#                - hand
+#                - gameVariant
+#      responses:
+#        "200":
+#          description: Boomresponse
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Card"
 components:
   requestBodies:
     sayRequest:
@@ -563,6 +558,17 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
+    BoomsResponse:
+      description: all booms
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              booms:
+                type: array
+                items:
+                  type: string
     GamesResponse:
       description: all games
       content:

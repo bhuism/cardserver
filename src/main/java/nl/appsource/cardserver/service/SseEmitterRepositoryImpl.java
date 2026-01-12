@@ -183,7 +183,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(MyServerSentEvent::updateGame);
 
         // forest
-        final Flux<@NonNull MyServerSentEvent> booms = boomRepository.findByUserId(userId, Integer.MAX_VALUE)
+        final Flux<@NonNull MyServerSentEvent> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
             .map(MyServerSentEvent::updateBoom);
 

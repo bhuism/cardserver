@@ -13,5 +13,5 @@ public interface BoomService {
 
     Mono<Boom> createBoom(String userI, List<String> players, GameVariant gameVariant);
 
-    Flux<Boom> getBooms(String userId);
+    Flux<String> getBooms(String userId);
 }

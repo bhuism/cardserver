@@ -16,6 +16,8 @@ import org.openapitools.api.BoomApi;
 import org.openapitools.model.Boom;
 import org.openapitools.model.CreateBoom;
 import org.openapitools.model.Game;
+import org.openapitools.model.GetBooms200Response;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -64,8 +66,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
             .flatMap(auth -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.user().getId(), createBoom.getPlayers(), auth.user().getGameVariant())))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
     @Override
@@ -86,14 +87,18 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<Boom>>> getBooms(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<GetBooms200Response>> getBooms(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((auth) -> log.info("{} getBooms() userId={}", exchange.getRequest()
                 .getRemoteAddress(), auth.user().getId()))
-            .mapNotNull(auth -> boomService.getBooms(auth.user().getId()).mapNotNull(boomToOpenApiConverter::convert))
-            .mapNotNull(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound()
-                .build());
+            .flatMap(auth -> boomService.getBooms(auth.user().getId())
+                .collectList()
+                .map(booms -> new GetBooms200Response().booms(booms))
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build())
+            )
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+
     }
 
     private Mono<Integer> calcDealer(final nl.appsource.cardserver.model.Boom boom) {
