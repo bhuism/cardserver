@@ -172,6 +172,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Mono<@NonNull MyServerSentEvent> ping = Mono.just(MyServerSentEvent.ping());
 
+        // hello
+        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MyServerSentEvent.hello(new HelloEvent().hostName(HOSTNAME)));
+
         // users
         final Flux<@NonNull MyServerSentEvent> friends = getFriends(userId)
             .map(userToOpenApiConverter::convert)
@@ -196,9 +199,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final Mono<@NonNull MyServerSentEvent> onlineList = createOnlineListForUser(userId);
 
         // hello
-        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MyServerSentEvent.hello(new HelloEvent().hostName(HOSTNAME)));
+        final Mono<@NonNull MyServerSentEvent> end = Mono.just(MyServerSentEvent.end());
 
-        return Flux.concat(ping, me, friends, games, booms, onlineList, hello);
+        return Flux.concat(ping, hello, me, friends, games, booms, onlineList, end);
 
     }
 
