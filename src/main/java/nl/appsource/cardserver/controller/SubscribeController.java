@@ -4,7 +4,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -40,7 +39,7 @@ public class SubscribeController extends GenericController implements V1Api {
             .flatMapMany(user -> sseEmitterRepository.subscribe(appIdentifier,
                 user.getId(), "" + exchange.getRequest().getRemoteAddress(),
                 userAgent
-            ).map(MyServerSentEvent::serverSentEvent));
+            ));
     }
 
 }

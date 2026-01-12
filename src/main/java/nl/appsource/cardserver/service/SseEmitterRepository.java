@@ -4,6 +4,7 @@ import lombok.NonNull;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -18,7 +19,7 @@ public interface SseEmitterRepository {
 //    void send(MyServerSentEvent myServerSentEvent);
     void send(String appIdentifier, String userId, MyServerSentEvent myServerSentEvent);
 
-    Flux<@NonNull MyServerSentEvent> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
+    Flux<@NonNull ServerSentEvent<Object>> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
     void updateGame(Game game);
 

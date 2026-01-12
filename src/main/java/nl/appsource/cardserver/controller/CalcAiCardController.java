@@ -13,6 +13,7 @@ import org.openapitools.api.AiApi;
 import org.openapitools.model.AiCreateGameRequest;
 import org.openapitools.model.AiPlayCardRequest;
 import org.openapitools.model.CalcAiCardRequest;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -33,6 +34,7 @@ import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Slf4j
 @RestController
+@Profile("never")
 @RequiredArgsConstructor
 public class CalcAiCardController implements AiApi {
 
