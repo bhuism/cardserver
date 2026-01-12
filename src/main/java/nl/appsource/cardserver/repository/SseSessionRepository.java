@@ -8,7 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface SseSessionRepository extends ReactiveCouchbaseRepository<SseSession, String>, GenericRepository<SseSession, String> {
+public interface SseSessionRepository extends ReactiveCouchbaseRepository<SseSession, String> {
 
     Flux<SseSession> findByCreator(String userId);
 

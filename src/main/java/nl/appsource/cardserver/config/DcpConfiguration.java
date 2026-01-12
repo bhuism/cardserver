@@ -6,6 +6,7 @@ import com.couchbase.client.dcp.StreamFrom;
 import com.couchbase.client.dcp.StreamTo;
 import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Boom;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -35,7 +37,7 @@ public class DcpConfiguration {
 
     private final CardServerCouchbaseProperties cardServerCouchbaseProperties;
 
-    private final JsonMapper jsonMapper;
+    private JsonMapper jsonMapper;
 
     private final SseEmitterRepository sseEmitterRepository;
 
@@ -49,6 +51,13 @@ public class DcpConfiguration {
             host = "unknown";
         }
         HOSTNAME = host;
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        jsonMapper = JsonMapper.builder()
+            .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
+            .build();
     }
 
     @Bean
@@ -70,7 +79,7 @@ public class DcpConfiguration {
 
         client.dataEventHandler((flowController, event) -> {
 
-            final String key = MessageUtil.getKeyAsString(event);
+            final String id = MessageUtil.getKeyAsString(event);
             final long cas = MessageUtil.getCas(event);
 
 
@@ -88,11 +97,11 @@ public class DcpConfiguration {
                     final JsonNode rootNode = jsonMapper.readTree(is);
 
                     if (rootNode.isObject()) {
-                        className = rootNode.get("_class").stringValue();
+                        className = rootNode.get("_class").asString();
                         switch (className) {
                             case "nl.appsource.cardserver.model.SseEvent" -> {
                                 final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
-                                sseEvent.setId(key);
+                                sseEvent.setId(id);
                                 version = "" + sseEvent.getVersion();
 
                                 sseSessionRepository.eventLocalRelevance(sseEvent.getAppIdentifier(), sseEvent.getUserId(), HOSTNAME)
@@ -104,41 +113,39 @@ public class DcpConfiguration {
                             }
                             case "nl.appsource.cardserver.model.SseSession" -> {
                                 final SseSession sseSession = jsonMapper.treeToValue(rootNode, SseSession.class);
-                                sseSession.setId(key);
+                                sseSession.setId(id);
                                 version = "" + sseSession.getVersion();
                             }
                             case "nl.appsource.cardserver.model.Feedback" -> { }
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
-                                boom.setId(key);
+                                boom.setId(id);
                                 version = "" + boom.getVersion();
                                 sseEmitterRepository.updateBoom(boom);
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
-                                user.setId(key);
+                                user.setId(id);
                                 version = "" + user.getVersion();
                                 sseEmitterRepository.updateUser(user);
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
-                                game.setId(key);
+                                game.setId(id);
                                 version = "" + game.getVersion();
                                 sseEmitterRepository.updateGame(game);
                             }
                             default -> log.warn("Not handling unknown class mutation : " + className);
                         }
 
-                        jsonMapper.treeToValue(rootNode, Boom.class);
                     }
 
-
                 } catch (IOException e) {
-                    log.warn("Can not deserialize key: " + key);
+                    log.warn("Can not deserialize key: " + id);
                 }
 
                 if (!SseSession.class.getName().equals(className) && !SseEvent.class.getName().equals(className)) {
-                    log.info("Mutation: key={} revSeq={} cas={} class={} version={}", key, revSeq, cas, className, version);
+                    log.info("Mutation: key={} revSeq={} cas={} class={} version={}", id, revSeq, cas, className, version);
                 }
 
             } /* else if (DcpDeletionMessage.is(event)) {

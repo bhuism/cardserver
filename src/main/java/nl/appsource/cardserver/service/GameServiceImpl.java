@@ -20,7 +20,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -115,7 +114,7 @@ public class GameServiceImpl implements GameService {
                 game.setDealCounter(0);
                 game.setBoomId(boomId);
             })
-            .flatMap(gameRepository::updatedSave)
+            .flatMap(gameRepository::save)
             .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
             .flatMap(sseEmitterRepository::newGame)
             .doOnNext(game -> {
@@ -206,8 +205,7 @@ public class GameServiceImpl implements GameService {
 
                     return result
                         .map(GameEngine::getGame)
-                        .doOnNext(game -> game.setUpdated(Instant.now()))
-                        .flatMap(gameRepository::updatedSave)
+                        .flatMap(gameRepository::save)
                         .doOnError(throwable -> {
                             sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
@@ -289,7 +287,7 @@ public class GameServiceImpl implements GameService {
 
                             return Mono.just(gameEngine)
                                 .map(GameEngine::getGame)
-                                .map(gameRepository::updatedSave)
+                                .map(gameRepository::save)
                                 .then(sendMessageMono);
 
                             //return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);

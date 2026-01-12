@@ -52,7 +52,7 @@ public class CacheController extends GenericController implements ReloadCacheApi
                 feedBack.setId(idGen(FEED, 20));
                 feedBack.setText(fb.getMessage());
 
-                return feedBackRepository.updatedSave(feedBack);
+                return feedBackRepository.save(feedBack);
 
                 }))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))

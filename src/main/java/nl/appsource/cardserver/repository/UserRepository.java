@@ -9,7 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface UserRepository extends ReactiveCouchbaseRepository<User, String>, GenericRepository<User, String> {
+public interface UserRepository extends ReactiveCouchbaseRepository<User, String> {
 
     Mono<User> findByEmail(String email);
 

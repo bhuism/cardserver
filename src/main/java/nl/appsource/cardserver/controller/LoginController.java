@@ -96,7 +96,7 @@ public class LoginController extends GenericController implements LoginApi, Load
 
                         return Mono.just(user);
                     }))
-                    .flatMap(userRepository::updatedSave)
+                    .flatMap(userRepository::save)
                     .mapNotNull(userToOpenApiConverter::convert)
                     .flatMap(
                         (user) -> {
@@ -121,7 +121,7 @@ public class LoginController extends GenericController implements LoginApi, Load
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
         return getUserId(exchange)
             .doOnNext(user -> user.setLastLogin(Instant.now()))
-            .flatMap(userRepository::updatedSave)
+            .flatMap(userRepository::save)
             .mapNotNull(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());

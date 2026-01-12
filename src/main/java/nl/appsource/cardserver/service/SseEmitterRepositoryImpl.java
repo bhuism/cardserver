@@ -251,7 +251,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
             .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
-            .flatMap(sseSessionRepository::updatedSave)
+            .flatMap(sseSessionRepository::save)
             .then(sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.merge(mainSink.asFlux(), userFlux)

@@ -130,7 +130,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
                                         return calcDealer(boom).flatMap(dealer -> {
                                             return gameService.createGame(auth.user().getId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
                                                 .doOnNext(game -> boom.getGames().add(game.getId()))
-                                                .flatMap(game -> boomRepository.updatedSave(boom).thenReturn(game));
+                                                .flatMap(game -> boomRepository.save(boom).thenReturn(game));
                                         });
                                     } else {
                                         return Mono.empty();

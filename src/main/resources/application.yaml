@@ -20,9 +20,6 @@ spring:
   jackson:
     default-property-inclusion: always
     time-zone: Europe/Amsterdam
-#  mvc:
-#    servlet:
-#      load-on-startup: 1
   output:
     ansi:
       enabled: ALWAYS

@@ -48,7 +48,7 @@ public class BoomServiceImpl implements BoomService {
             throw new IllegalArgumentException("creator needs to be a player");
         }
 
-        log.info("Creating a new game with players {}", players);
+        log.info("Creating a new boom with players {}", players);
 
         return Mono.just(new Boom())
             .doOnNext((boom) -> {
@@ -57,7 +57,7 @@ public class BoomServiceImpl implements BoomService {
                 boom.setDealer(RAND.nextInt(4));
                 boom.setGameVariant(gameVariant);
             })
-            .flatMap(boomRepository::updatedSave)
+            .flatMap(boomRepository::save)
             .flatMap((boom) -> sseEventSender.boomsChanged(boom.getPlayers()).then(Mono.just(boom)));
     }
 

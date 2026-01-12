@@ -70,7 +70,7 @@ public class UserServiceImpl implements UserService {
                 }
 
             })
-            .flatMap(userRepository::updatedSave)
+            .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
             .then(sseEmitterRepository.sendOnlineListTo(userId))
             .then(sseEmitterRepository.sendOnlineListTo(friendId));
@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
                     .add(friendId);
                 return user;
             })
-            .flatMap(userRepository::updatedSave)
+            .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
             .then(sseEmitterRepository.sendOnlineListTo(userId))
             .then(sseEmitterRepository.sendOnlineListTo(friendId));
@@ -102,7 +102,7 @@ public class UserServiceImpl implements UserService {
                         return Mono.just(0);
                     }
                     user.getInvites().addAll(newFriendIds);
-                    return userRepository.updatedSave(user)
+                    return userRepository.save(user)
                         .flatMap(savedUser -> {
                             return Flux.fromIterable(newFriendIds)
                                 .flatMap(sseEmitterRepository::sendOnlineListTo)
@@ -126,7 +126,7 @@ public class UserServiceImpl implements UserService {
                     user.setGameVariant(updatePreferences.getGameVariant());
                     user.setScreenOrientation(updatePreferences.getScreenOrientation());
                     user.setTheme(updatePreferences.getTheme());
-                    return userRepository.updatedSave(user);
+                    return userRepository.save(user);
                 }));
     }
 

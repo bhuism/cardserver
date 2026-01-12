@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 
 @Repository
-public interface BoomRepository extends ReactiveCouchbaseRepository<Boom, String>, GenericRepository<Boom, String> {
+public interface BoomRepository extends ReactiveCouchbaseRepository<Boom, String> {
 
     @Query("SELECT META(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit")
     Flux<String> findByUserId(String userId, Integer limit);
