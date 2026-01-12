@@ -105,10 +105,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     private Flux<@NonNull String> getOnlineFriends(final String userId) {
-        //return getFriends(userId).filterWhen(this::isUserOnline);
-        return userRepository.getOnlineFriends(userId).doOnNext(onlineFriend -> {
-                log.info("Found online friend for " + userId + ", fried: " + onlineFriend);
-        });
+        return userRepository.getOnlineFriends(userId);
     }
 
     @Override

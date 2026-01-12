@@ -264,8 +264,8 @@ public class Migrator {
                     if (gameRepository.existsById(game.getId()).block()) {
                         gameRepository.deleteById(game.getId()).block();
                     }
-                    gameRepository.save(game)
-                        .subscribe();
+
+                    gameRepository.save(game).subscribe();
 
                 });
         }
