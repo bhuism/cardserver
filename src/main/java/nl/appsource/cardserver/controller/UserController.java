@@ -112,7 +112,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
             .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
-            .retryWhen(Retry.backoff(5, Duration.ofMillis(50)) // 3 attempts, exponential backoff
+            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
                 .filter(this::isOptimisticLockingError)
                 .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
             )
