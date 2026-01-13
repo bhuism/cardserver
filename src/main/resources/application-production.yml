@@ -3,6 +3,8 @@ server:
 logging:
   level:
     ROOT: info
+    com:
+      couchbase: warn
 
 cardserver:
   couchbase:
