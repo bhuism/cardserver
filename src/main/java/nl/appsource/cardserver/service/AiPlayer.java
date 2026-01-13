@@ -541,7 +541,7 @@ public record AiPlayer(GameEngine gameEngine) {
         }
 
         final boolean decision = handStrength >= BIDDING_THRESHOLD;
-        log.info("{}: evaluates their hand for trump: {}, with strength: {}, decision={}", userId, trumpSuit, handStrength, decision);
+        log.trace("{}: evaluates their hand for trump: {}, with strength: {}, decision={}", userId, trumpSuit, handStrength, decision);
         return decision;
     }
 
