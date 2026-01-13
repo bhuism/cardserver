@@ -53,7 +53,7 @@ public class GenericController {
 //                .flatMap(sseSessionRepository::save)
                 .map(sseSession -> new CardServerAuthentication(user, sseSession))
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier.toString(), user.getDisplayName());
+                    log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier, user.getDisplayName());
                     return Mono.empty();
                 }))
             );

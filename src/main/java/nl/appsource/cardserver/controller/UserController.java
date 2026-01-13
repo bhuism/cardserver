@@ -85,8 +85,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map(CardServerAuthentication::sseSession)
-            .map(SseSession::getId)
-            .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::ping)
             .flatMap(sseSessionRepository::save)
             .retryWhen(Retry.backoff(10, Duration.ofMillis(100)) // 3 attempts, exponential backoff
@@ -108,8 +106,6 @@ public class UserController extends GenericController implements UsersApi, V1Api
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map(CardServerAuthentication::sseSession)
-            .map(SseSession::getId)
-            .flatMap(sseSessionRepository::findById)
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
