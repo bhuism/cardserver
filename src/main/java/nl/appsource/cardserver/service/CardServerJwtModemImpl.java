@@ -26,6 +26,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -97,16 +98,16 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
         log.info("Creating a new jwt for user {} with id {}", userId, jwtId);
 
-        final long now = new Date().getTime();
+        final Instant now = Instant.now();
 
         final JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
             .subject(userId)
             .jwtID(jwtId)
             .audience("https://klaversjassen.nl")
-            .notBeforeTime(new Date(now - Duration.ofMinutes(5).toSeconds()))
+            .notBeforeTime(Date.from(now.minus(Duration.ofMinutes(5))))
             .issuer(ISSUER)
-            .issueTime(new Date(now))
-            .expirationTime(new Date(now + Duration.ofDays(356 * 69).toSeconds()))
+            .issueTime(Date.from(now))
+            .expirationTime(Date.from(now.plus(Duration.ofDays(365L * 69))))
             .claim("scp", "USER")
             .build();
 
