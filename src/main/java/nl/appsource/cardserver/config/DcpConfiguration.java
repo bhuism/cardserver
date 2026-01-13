@@ -73,9 +73,9 @@ public class DcpConfiguration {
             event.release();
         });
 
-        client.systemEventHandler(event -> {
-            log.info("system event: keys: " + event.toMap().keySet());
-        });
+//        client.systemEventHandler(event -> {
+//            log.info("system event: keys: " + event.toMap().keySet());
+//        });
 
         client.dataEventHandler((flowController, event) -> {
 
@@ -144,9 +144,9 @@ public class DcpConfiguration {
                     log.warn("Can not deserialize key: " + id);
                 }
 
-                if (!SseSession.class.getName().equals(className) && !SseEvent.class.getName().equals(className)) {
-                    log.info("Mutation: key={} revSeq={} cas={} class={} version={}", id, revSeq, cas, className, version);
-                }
+//                if (!SseSession.class.getName().equals(className) && !SseEvent.class.getName().equals(className)) {
+//                    log.info("Mutation: key={} revSeq={} cas={} class={} version={}", id, revSeq, cas, className, version);
+//                }
 
             } /* else if (DcpDeletionMessage.is(event)) {
                 log.info("Deletion: key={} content={}", key, MessageUtil.getContentAsString(event));
