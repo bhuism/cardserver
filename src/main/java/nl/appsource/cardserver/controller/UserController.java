@@ -91,8 +91,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
                 .filter(this::isOptimisticLockingError)
                 .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
             )
-            .flatMap(sseSession -> sseEventSender.sendPong(sseSession.getId()))
-            .thenReturn(ResponseEntity.ok().<Void>build())
+            .delayUntil(sseSession -> sseEventSender.sendPong(sseSession.getId()))
+            .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
@@ -112,7 +112,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
                 .filter(this::isOptimisticLockingError)
                 .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
             )
-            .thenReturn(ResponseEntity.ok().<Void>build())
+            .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
