@@ -183,39 +183,39 @@ public class GameServiceImpl implements GameService {
 
     public void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-            eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
-            Mono.just(gameId)
-                .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
-                .doOnNext(game -> {
-                    log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
-                })
-                .map(GameEngineImpl::new)
-                .filter(gameEngine -> !gameEngine.isCompleted())
-                .flatMap(gameEngine -> {
+        eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
+        Mono.just(gameId)
+            .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
+            .doOnNext(game -> {
+                log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
+            })
+            .map(GameEngineImpl::new)
+            .filter(gameEngine -> !gameEngine.isCompleted())
+            .flatMap(gameEngine -> {
 
-                    final Mono<GameEngine> result = switch (gameEventType) {
-                        case AI_SAY -> catchException(gameEngine::sayAi);
-                        case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
-                        case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
-                        case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
-                        case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
-                        case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
-                        case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
-                    };
+                final Mono<GameEngine> result = switch (gameEventType) {
+                    case AI_SAY -> catchException(gameEngine::sayAi);
+                    case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
+                    case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
+                    case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
+                    case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
+                    case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+                    case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
+                };
 
-                    return result
-                        .map(GameEngine::getGame)
-                        .flatMap(gameRepository::save)
-                        .doOnError(throwable -> {
-                            sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
+                return result
+                    .map(GameEngine::getGame)
+                    .flatMap(gameRepository::save)
+                    .doOnError(throwable -> {
+                        sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
                                 .message(throwable.getClass()
                                     .getName() + ":" + throwable.getMessage()))
-                                .subscribe();
-                        })
-                        .doFinally((_unused) -> this.scheduleNext(gameEngine));
-                })
-                .subscribe();
+                            .subscribe();
+                    })
+                    .doFinally((_unused) -> this.scheduleNext(gameEngine));
+            })
+            .subscribe();
     }
 
     private void scheduleNext(final GameEngine gameEngine) {
@@ -266,41 +266,41 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimRoem(final String appIdentifier, final String userId, final String gameId) {
-            return gameRepository.findById(gameId)
-                .map(GameEngineImpl::new)
-                .flatMap(gameEngine -> {
-                    final int slagNr = gameEngine.calcTricksPlayed();
+        return gameRepository.findById(gameId)
+            .map(GameEngineImpl::new)
+            .flatMap(gameEngine -> {
+                final int slagNr = gameEngine.calcTricksPlayed();
 
-                    final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
+                final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
-                    final int roem = gameEngine.calculateTrickRoem(correctedSlagNr);
-                    if (roem > 0) {
-                        final boolean result = gameEngine.getGame()
-                            .getRoemGeklopt()
-                            .add(gameEngine.calcTricksPlayed());
+                final int roem = gameEngine.calculateTrickRoem(correctedSlagNr);
+                if (roem > 0) {
+                    final boolean result = gameEngine.getGame()
+                        .getRoemGeklopt()
+                        .add(gameEngine.calcTricksPlayed());
 
-                        final Mono<Void> sendMessageMono = sseEventSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId)
-                            .message("Er is " + (result ? "" : "al ")  + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
-                            .variant(UserMessage.VariantEnum.INFO));
+                    final Mono<Void> sendMessageMono = sseEventSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId)
+                        .message("Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
+                        .variant(UserMessage.VariantEnum.INFO));
 
-                        if (result) {
+                    if (result) {
 
-                            return Mono.just(gameEngine)
-                                .map(GameEngine::getGame)
-                                .map(gameRepository::save)
-                                .then(sendMessageMono);
+                        return Mono.just(gameEngine)
+                            .map(GameEngine::getGame)
+                            .map(gameRepository::save)
+                            .then(sendMessageMono);
 
-                            //return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);
-                        } else {
-                            return sendMessageMono;
-                        }
+                        //return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);
                     } else {
-                        return sseEventSender.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
-                            .message("Er is geen roem in slag " + (correctedSlagNr + 1))
-                            .variant(UserMessage.VariantEnum.WARNING));
+                        return sendMessageMono;
                     }
-                })
-                .then();
+                } else {
+                    return sseEventSender.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                        .message("Er is geen roem in slag " + (correctedSlagNr + 1))
+                        .variant(UserMessage.VariantEnum.WARNING));
+                }
+            })
+            .then();
     }
 
     @Override
@@ -313,33 +313,33 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Void> claimVerzaken(final String appIdentifier, final String userId, final String gameId) {
-            return gameRepository.findById(gameId)
-                .map(GameEngineImpl::new)
-                .flatMap(gameEngine -> {
-                    final int slagNr = gameEngine.calcTricksPlayed();
+        return gameRepository.findById(gameId)
+            .map(GameEngineImpl::new)
+            .flatMap(gameEngine -> {
+                final int slagNr = gameEngine.calcTricksPlayed();
 
-                    final int laatsteCompleteSlag = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
+                final int laatsteCompleteSlag = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
-                    return Flux.just(0, 1, 2, 3)
-                        .flatMap(playerNr -> {
-                            final Boolean verzaakt = gameEngine.verzaakt(laatsteCompleteSlag, playerNr);
-                            if (verzaakt) {
-                                return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap((player) -> {
+                return Flux.just(0, 1, 2, 3)
+                    .flatMap(playerNr -> {
+                        final Boolean verzaakt = gameEngine.verzaakt(laatsteCompleteSlag, playerNr);
+                        if (verzaakt) {
+                            return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
+                                .flatMap((player) -> {
                                     return sseEventSender.sendUserIdMessage(gameEngine.getGame()
                                         .getPlayers(), new UserMessage().userId(userId)
                                         .variant(UserMessage.VariantEnum.ERROR)
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
-                                    });
-                            } else {
-                                return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                    .getPlayers(), new UserMessage().userId(userId)
-                                    .variant(UserMessage.VariantEnum.INFO)
-                                    .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
-                            }
-                        })
-                        .then();
-                });
+                                });
+                        } else {
+                            return sseEventSender.sendUserIdMessage(gameEngine.getGame()
+                                .getPlayers(), new UserMessage().userId(userId)
+                                .variant(UserMessage.VariantEnum.INFO)
+                                .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
+                        }
+                    })
+                    .then();
+            });
     }
 
 

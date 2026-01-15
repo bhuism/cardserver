@@ -33,16 +33,12 @@ paths:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     get:
-      tags:
-        - boom
       operationId: getBooms
       responses:
         "200":
           description: BoomsResponse
           $ref: "#/components/responses/BoomsResponse"
     post:
-      tags:
-        - boom
       operationId: createBoom
       requestBody:
         required: true
@@ -61,8 +57,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     post:
-      tags:
-        - boom
       operationId: playBoom
       parameters:
         - $ref: "#/components/parameters/boomId"
@@ -77,8 +71,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     get:
-      tags:
-        - boom
       operationId: getBoom
       parameters:
         - $ref: "#/components/parameters/boomId"
@@ -92,8 +84,6 @@ paths:
         '404':
           description: Todo item not found.
     delete:
-      tags:
-        - boom
       operationId: deleteBoom
       parameters:
         - $ref: "#/components/parameters/boomId"
@@ -115,6 +105,14 @@ paths:
       tags:
         - login
       operationId: login
+      responses:
+        "200":
+          $ref: "#/components/responses/LoginResponse"
+  /rotateJwt:
+    post:
+      tags:
+        - rotateJwt
+      operationId: rotateJwt
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"

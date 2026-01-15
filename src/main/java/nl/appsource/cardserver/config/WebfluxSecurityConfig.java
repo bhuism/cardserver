@@ -36,6 +36,7 @@ public class WebfluxSecurityConfig {
     @Order(1)
     public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) {
 
+        // allowed with a valid Google Jwt
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
@@ -60,6 +61,8 @@ public class WebfluxSecurityConfig {
     @Bean
     @Order(2)
     public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) {
+
+        // allowed with a valid KlaversJassen Jwt
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
@@ -73,6 +76,8 @@ public class WebfluxSecurityConfig {
     @Bean
     @Order(3)
     public SecurityWebFilterChain securityFilterChainRest(final ServerHttpSecurity http) {
+
+        // allow from everywhere
         http.csrf(ServerHttpSecurity.CsrfSpec::disable)
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
