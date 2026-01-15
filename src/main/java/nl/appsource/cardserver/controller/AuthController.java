@@ -36,6 +36,7 @@ public class AuthController extends GenericController implements LoadUserApi, Ro
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
         return getUserId(exchange)
+            .doOnNext((user) -> log.info("{} loadUser() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .doOnNext(user -> user.setLastLogin(Instant.now()))
             .flatMap(userRepository::save)
             .mapNotNull(userToOpenApiConverter::convert)
@@ -46,6 +47,7 @@ public class AuthController extends GenericController implements LoadUserApi, Ro
     @Override
     public Mono<ResponseEntity<LoginResponse>> rotateJwt(final ServerWebExchange exchange) {
         return getUserId(exchange)
+            .doOnNext((user) -> log.info("{} rotateJwt() userId={}", exchange.getRequest().getRemoteAddress(), user.getId()))
             .map(userToOpenApiConverter::convert)
             .flatMap(user -> {
                 try {
