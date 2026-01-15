@@ -67,7 +67,7 @@ public class WebfluxSecurityConfig {
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
-            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**"), new PathPatternParserServerWebExchangeMatcher("/loadUser")))
+            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**")))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwtDecoder(cardServerJwtModem)));
         return http.build();

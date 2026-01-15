@@ -1,18 +1,14 @@
 package nl.appsource.cardserver.controller;
 
 import com.nimbusds.jose.JOSEException;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.CardServerJwtModem;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
-import org.openapitools.api.LoadUserApi;
 import org.openapitools.api.LoginApi;
 import org.openapitools.model.LoginResponse;
-import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -29,15 +25,14 @@ import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Slf4j
 @RestController
-public class LoginController extends GenericController implements LoginApi, LoadUserApi {
+public class LoginController implements LoginApi {
 
     private final UserService userService;
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
     private final UserRepository userRepository;
 
-    public LoginController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepository, final UserService userService, final CardServerJwtModem cardServerJwtModem, final UserToOpenApiConverter userToOpenApiConverterArg, final SseSessionRepository sseSessionRepository) {
-        super(userRepository, sseSessionRepository);
+    public LoginController(final UserRepository userRepository, final UserService userService, final CardServerJwtModem cardServerJwtModem, final UserToOpenApiConverter userToOpenApiConverterArg, final SseSessionRepository sseSessionRepository) {
         this.userService = userService;
         this.cardServerJwtModem = cardServerJwtModem;
         this.userToOpenApiConverter = userToOpenApiConverterArg;
@@ -117,13 +112,4 @@ public class LoginController extends GenericController implements LoginApi, Load
 
     }
 
-    @Override
-    public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
-        return getUserId(exchange)
-            .doOnNext(user -> user.setLastLogin(Instant.now()))
-            .flatMap(userRepository::save)
-            .mapNotNull(userToOpenApiConverter::convert)
-            .map(ResponseEntity::ok)
-            .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
 }

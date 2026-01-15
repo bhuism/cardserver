@@ -110,16 +110,12 @@ paths:
           $ref: "#/components/responses/LoginResponse"
   /rotateJwt:
     post:
-      tags:
-        - rotateJwt
       operationId: rotateJwt
       responses:
         "200":
           $ref: "#/components/responses/LoginResponse"
   /loadUser:
     post:
-      tags:
-        - login
       operationId: loadUser
       responses:
         "200":
