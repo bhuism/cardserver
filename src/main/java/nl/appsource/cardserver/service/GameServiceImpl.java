@@ -304,14 +304,6 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> gameMessage(final String userId, final String gameId, final String message) {
-        return gameRepository.findByUserIdAndGameId(userId, gameId)
-            .flatMap(game -> sseEventSender.sendUserIdMessage(game.getPlayers(), new UserMessage().userId(userId)
-                .message(message)
-                .variant(UserMessage.VariantEnum.INFO)));
-    }
-
-    @Override
     public Mono<Void> claimVerzaken(final String appIdentifier, final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)

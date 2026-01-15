@@ -222,18 +222,6 @@ paths:
           description: some application error
         "404":
           description: not found
-  /games/{gameId}/message:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      operationId: gameMessage
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      requestBody:
-        $ref: "#/components/requestBodies/postMessage"
-      responses:
-        "200":
-          description: ok
   /games:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
@@ -378,6 +366,16 @@ paths:
           description: ok
         "404":
           description: not found
+  /users/message:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+    post:
+      operationId: usersMessage
+      requestBody:
+        $ref: "#/components/requestBodies/postMessage"
+      responses:
+        "200":
+          description: ok
   /reloadCache:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
@@ -759,9 +757,14 @@ components:
     postMessage:
       type: object
       properties:
+        recipients:
+          type: array
+          items:
+            type: string
         message:
           type: string
       required:
+        - recipients
         - message
     updatePreferences:
       type: object

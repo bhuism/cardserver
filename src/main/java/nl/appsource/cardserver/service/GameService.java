@@ -32,7 +32,5 @@ public interface GameService {
 
     Mono<Void> claimRoem(String appIdentifier, String userId, String gameId);
 
-    Mono<Void> gameMessage(String userId, String gameId, String message);
-
     Mono<Void> claimVerzaken(String appIdentifier, String userId, String gameId);
 }

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.UpdatePreferences;
+import org.openapitools.model.UserMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -128,6 +129,14 @@ public class UserServiceImpl implements UserService {
                     user.setTheme(updatePreferences.getTheme());
                     return userRepository.save(user);
                 }));
+    }
+
+
+    @Override
+    public Mono<Void> usersMessage(final String userId, final List<String> recipients, final String message) {
+        return sseEventSender.sendUserIdMessage(recipients, new UserMessage().userId(userId)
+            .message(message)
+            .variant(UserMessage.VariantEnum.INFO));
     }
 
 }

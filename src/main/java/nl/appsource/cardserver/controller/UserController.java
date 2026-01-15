@@ -13,6 +13,7 @@ import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInviteResponse;
 import org.openapitools.model.InvitesResponse;
+import org.openapitools.model.PostMessage;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.User;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -81,7 +82,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<@NonNull  ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             //.doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map(CardServerAuthentication::sseSession)
@@ -166,6 +167,15 @@ public class UserController extends GenericController implements UsersApi, V1Api
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(just(ResponseEntity.notFound().build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> usersMessage(final String appIdentifier, final Mono<PostMessage> postMessageMono, final ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .doOnNext(auth -> log.info("{} usersMessage() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
+            .delayUntil(auth -> postMessageMono.flatMap(postMessage -> userService.usersMessage(auth.user().getId(), postMessage.getRecipients(), postMessage.getMessage())))
+            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+            .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
 
 }

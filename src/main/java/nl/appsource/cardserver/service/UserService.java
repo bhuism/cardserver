@@ -26,5 +26,7 @@ public interface UserService {
 
     Mono<User> updatePreferences(String userId, @NotNull UpdatePreferences updatePreferences);
 
+    Mono<Void> usersMessage(String userId, List<String> recipients, String message);
+
 }
 

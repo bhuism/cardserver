@@ -13,7 +13,6 @@ import org.openapitools.model.Game;
 import org.openapitools.model.GetGames200Response;
 import org.openapitools.model.PlayCard;
 import org.openapitools.model.PlayerSay;
-import org.openapitools.model.PostMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -91,10 +90,10 @@ public class GameController extends GenericController implements GamesApi, V1Api
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} createGame() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> createGameMono.flatMap(createGame -> gameService.createGame(auth.user().getId(), createGame.getPlayers(), auth.user().getGameVariant())))
-                .mapNotNull(gameToOpenApiConverter::convert)
-                .map(ResponseEntity::ok)
-                .defaultIfEmpty(ResponseEntity.notFound()
-                    .build())
+            .mapNotNull(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .defaultIfEmpty(ResponseEntity.notFound()
+                .build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
@@ -171,16 +170,6 @@ public class GameController extends GenericController implements GamesApi, V1Api
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} claimVerzaken() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
             .flatMap(auth -> gameService.claimVerzaken(appIdentifier, auth.user().getId(), gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
-            .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
-    }
-
-    @Override
-    public Mono<ResponseEntity<Void>> gameMessage(final String appIdentifier, final String gameId, final Mono<PostMessage> arg, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} gameMessage() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
-            .flatMap(auth -> arg.flatMap((message -> gameService.gameMessage(auth.user().getId(), gameId, message.getMessage())))
-                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-                .defaultIfEmpty(ResponseEntity.<Void>notFound().build()))
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
 
