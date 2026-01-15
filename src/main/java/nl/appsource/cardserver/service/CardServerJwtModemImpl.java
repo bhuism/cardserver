@@ -108,6 +108,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
             .issuer(ISSUER)
             .issueTime(Date.from(now))
             .expirationTime(Date.from(now.plus(Duration.ofDays(365L * 69))))
+//            .expirationTime(Date.from(now.plus(Duration.ofDays(1))))
             .claim("scp", "USER")
             .build();
 

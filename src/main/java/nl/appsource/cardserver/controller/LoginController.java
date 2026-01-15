@@ -42,8 +42,6 @@ public class LoginController implements LoginApi {
     @Override
     public Mono<ResponseEntity<LoginResponse>> login(final ServerWebExchange exchange) {
 
-        log.info("/login");
-
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .mapNotNull(Authentication::getPrincipal)

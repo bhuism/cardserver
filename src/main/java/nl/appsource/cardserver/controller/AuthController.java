@@ -20,7 +20,7 @@ import java.time.Instant;
 
 @Slf4j
 @RestController
-public class AuthController extends GenericController implements LoadUserApi, RotateJwtApi {
+public class AuthController extends GenericController implements LoadUserApi, RotateJwtApi, V1Api {
 
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
