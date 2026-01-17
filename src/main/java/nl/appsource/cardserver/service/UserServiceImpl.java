@@ -127,6 +127,7 @@ public class UserServiceImpl implements UserService {
                     user.setGameVariant(updatePreferences.getGameVariant());
                     user.setScreenOrientation(updatePreferences.getScreenOrientation());
                     user.setTheme(updatePreferences.getTheme());
+                    user.setAiRisc(updatePreferences.getAiRisc());
                     return userRepository.save(user);
                 }));
     }

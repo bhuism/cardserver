@@ -787,6 +787,7 @@ components:
         - gameVariant
         - screenOrientation
         - theme
+        - aiRisc
     createGame:
       type: object
       properties:
@@ -1153,6 +1154,8 @@ components:
           $ref: "#/components/schemas/ScreenOrientation"
         theme:
           $ref: "#/components/schemas/Theme"
+        aiRisc:
+          $ref: '#/components/schemas/AiRisc'
       required:
         - id
         - updated
@@ -1163,7 +1166,7 @@ components:
         - gameVariant
         - screenOrientation
         - theme
-
+        - aiRisc
 security:
   - bearerAuth:
       - openid

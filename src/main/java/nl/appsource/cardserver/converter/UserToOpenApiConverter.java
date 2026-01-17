@@ -24,6 +24,7 @@ public class UserToOpenApiConverter implements Converter<User, org.openapitools.
         target.setGameVariant(source.getGameVariant());
         target.setScreenOrientation(source.getScreenOrientation());
         target.setTheme(source.getTheme());
+        target.setAiRisc(source.getAiRisc());
 
         return target;
     }
