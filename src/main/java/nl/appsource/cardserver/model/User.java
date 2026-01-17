@@ -69,4 +69,8 @@ public class User extends BaseEntity {
     @Field
     private AiRisc aiRisc = AiRisc.MEDIUM;
 
+    @NotNull
+    @Field
+    private Boolean autoKnock = Boolean.FALSE;
+
 }

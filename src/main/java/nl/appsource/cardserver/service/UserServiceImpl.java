@@ -128,6 +128,7 @@ public class UserServiceImpl implements UserService {
                     user.setScreenOrientation(updatePreferences.getScreenOrientation());
                     user.setTheme(updatePreferences.getTheme());
                     user.setAiRisc(updatePreferences.getAiRisc());
+                    user.setAutoKnock(updatePreferences.getAutoKnock());
                     return userRepository.save(user);
                 }));
     }

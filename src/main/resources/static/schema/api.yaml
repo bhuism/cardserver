@@ -781,6 +781,8 @@ components:
           $ref: '#/components/schemas/Theme'
         aiRisc:
           $ref: '#/components/schemas/AiRisc'
+        autoKnock:
+          type: boolean
       required:
         - displayName
         - skipAnimation
@@ -788,6 +790,7 @@ components:
         - screenOrientation
         - theme
         - aiRisc
+        - autoKnock
     createGame:
       type: object
       properties:
@@ -1156,6 +1159,8 @@ components:
           $ref: "#/components/schemas/Theme"
         aiRisc:
           $ref: '#/components/schemas/AiRisc'
+        autoKnock:
+          type: boolean
       required:
         - id
         - updated
@@ -1167,6 +1172,7 @@ components:
         - screenOrientation
         - theme
         - aiRisc
+        - autoKnock
 security:
   - bearerAuth:
       - openid
