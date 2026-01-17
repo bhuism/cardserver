@@ -779,6 +779,8 @@ components:
           $ref: '#/components/schemas/ScreenOrientation'
         theme:
           $ref: '#/components/schemas/Theme'
+        aiRisc:
+          $ref: '#/components/schemas/AiRisc'
       required:
         - displayName
         - skipAnimation
