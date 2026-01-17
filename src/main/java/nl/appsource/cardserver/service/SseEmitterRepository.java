@@ -31,7 +31,7 @@ public interface SseEmitterRepository {
 
     Mono<Game> newGame(Game game);
 
-    void reloadCache(String appIdentifier, String userId);
+    // void reloadCache(String appIdentifier, String userId);
 
     //Mono<Boolean> isUserOnline(String userId);
 

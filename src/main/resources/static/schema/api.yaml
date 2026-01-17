@@ -376,14 +376,14 @@ paths:
       responses:
         "200":
           description: ok
-  /reloadCache:
-    parameters:
-      - $ref: "#/components/parameters/AppIdentifier"
-    post:
-      operationId: reloadCache
-      responses:
-        "200":
-          description: ok
+#  /reloadCache:
+#    parameters:
+#      - $ref: "#/components/parameters/AppIdentifier"
+#    post:
+#      operationId: reloadCache
+#      responses:
+#        "200":
+#          description: ok
 #  /ai/createGame:
 #    post:
 #      tags:
@@ -486,6 +486,17 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
+#    pingPongRequestBody:
+#      required: true
+#      content:
+#        application/json:
+#          schema:
+#            type: object
+#            properties:
+#              appIdentifier:
+#                type: string
+#            required:
+#              - appIdentifier
     updatePreferences:
       required: true
       content:
@@ -504,7 +515,7 @@ components:
       in: header
       schema:
         type: string
-      required: true
+      required: false
     gameId:
       name: gameId
       in: path

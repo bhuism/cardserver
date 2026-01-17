@@ -282,13 +282,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         public final String userId;
     }
 
-    @Override
-    public void reloadCache(final String appIdentifier, final String userId) {
-        initCache(appIdentifier, userId).subscribe(
-            msg -> mainSink.emitNext(msg, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
-            err -> mainSink.emitError(err, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
-            () -> { /* Don't close sink if you want to reuse it */ }
-        );
-    }
+//    @Override
+//    public void reloadCache(final String appIdentifier, final String userId) {
+//        initCache(appIdentifier, userId).subscribe(
+//            msg -> mainSink.emitNext(msg, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
+//            err -> mainSink.emitError(err, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1000))),
+//            () -> { /* Don't close sink if you want to reuse it */ }
+//        );
+//    }
 
 }

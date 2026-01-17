@@ -266,7 +266,7 @@ public class GameServiceImpl implements GameService {
 //    }
 
     @Override
-    public Mono<Void> claimRoem(final String appIdentifier, final String userId, final String gameId) {
+    public Mono<Void> claimRoem(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
@@ -296,7 +296,7 @@ public class GameServiceImpl implements GameService {
                         return sendMessageMono;
                     }
                 } else {
-                    return sseEventSender.sendAppIdentifierMessage(appIdentifier, new UserMessage().userId(userId)
+                    return sseEventSender.sendAppIdentifierMessage(null, new UserMessage().userId(userId)
                         .message("Er is geen roem in slag " + (correctedSlagNr + 1))
                         .variant(UserMessage.VariantEnum.WARNING));
                 }
@@ -305,7 +305,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> claimVerzaken(final String appIdentifier, final String userId, final String gameId) {
+    public Mono<Void> claimVerzaken(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {

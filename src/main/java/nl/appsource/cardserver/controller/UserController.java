@@ -8,7 +8,6 @@ import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEventSender;
 import nl.appsource.cardserver.service.UserService;
-import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInviteResponse;
@@ -28,6 +27,7 @@ import reactor.util.retry.Retry;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 import static reactor.core.publisher.Mono.just;
 
@@ -52,7 +52,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<User>> getUser(final String appIdentifier, final String userIdParam, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<User>> getUser(final String userIdParam, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} getUser({}) userId={}", exchange.getRequest().getRemoteAddress(), userIdParam, auth.user().getId()))
             .flatMap(auth -> userService.findById(userIdParam)
@@ -63,7 +63,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<InvitesResponse>> getInvites(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<InvitesResponse>> getInvites(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} getInvites() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> userService.getInvites(auth.user().getId()).flatMap(invites -> {
@@ -82,10 +82,11 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
+            .filter(ca -> ca.appIdentifier().isPresent())
             //.doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-            .map(CardServerAuthentication::sseSession)
+            .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
             .doOnNext(SseSession::ping)
             .flatMap(sseSessionRepository::save)
             .retryWhen(Retry.backoff(10, Duration.ofMillis(100)) // 3 attempts, exponential backoff
@@ -103,10 +104,11 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> pong(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
+            .filter(ca -> ca.appIdentifier().isPresent())
             //.doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-            .map(CardServerAuthentication::sseSession)
+            .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
@@ -118,7 +120,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final String appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final List<String> userIds, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} getUserByIds() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map((_user) -> ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)))
@@ -126,7 +128,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> removeInvite(final String appIdentifier, final String friendId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> removeInvite(final String friendId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} removeInvites() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> userService.removeInvite(auth.user().getId(), friendId).then(just(ResponseEntity.ok().<Void>build())))
@@ -135,7 +137,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> acceptInvite(final String appIdentifier, final String friendId, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> acceptInvite(final String friendId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} acceptInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), auth.user().getId()))
@@ -144,7 +146,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final String appIdentifier, final Mono<CreateInvite> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} createInvite() userId={}", exchange.getRequest()
                 .getRemoteAddress(), auth.user().getId()))
@@ -159,7 +161,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
 
     @Override
-    public Mono<ResponseEntity<User>> updatePreferences(final String appIdentifier, final Mono<UpdatePreferences> arg, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<User>> updatePreferences(final Mono<UpdatePreferences> arg, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} updatePreferences() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> arg.flatMap(updatePreferences -> userService.updatePreferences(auth.user().getId(), updatePreferences))
@@ -170,7 +172,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> usersMessage(final String appIdentifier, final Mono<PostMessage> postMessageMono, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> usersMessage(final Mono<PostMessage> postMessageMono, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} usersMessage() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .delayUntil(auth -> postMessageMono.flatMap(postMessage -> userService.usersMessage(auth.user().getId(), postMessage.getRecipients(), postMessage.getMessage())))

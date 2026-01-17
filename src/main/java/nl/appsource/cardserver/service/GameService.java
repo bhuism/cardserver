@@ -31,7 +31,7 @@ public interface GameService {
 
     //Mono<Void> reload(String appIdentifier, String userId, String gameId);
 
-    Mono<Void> claimRoem(String appIdentifier, String userId, String gameId);
+    Mono<Void> claimRoem(String userId, String gameId);
 
-    Mono<Void> claimVerzaken(String appIdentifier, String userId, String gameId);
+    Mono<Void> claimVerzaken(String userId, String gameId);
 }
