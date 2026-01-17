@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.repository.BoomRepository;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -35,7 +36,7 @@ public class BoomServiceImpl implements BoomService {
     }
 
     @Override
-    public Mono<Boom> createBoom(final String creator, final List<String> players, final GameVariant gameVariant) {
+    public Mono<Boom> createBoom(final String creator, final List<String> players, final GameVariant gameVariant, final AiRisc aiRisc) {
         if (players.size() != 4) {
             throw new IllegalArgumentException("need 4 players");
         }
@@ -56,6 +57,7 @@ public class BoomServiceImpl implements BoomService {
                 boom.setPlayers(new ArrayList<>(players));
                 boom.setDealer(RAND.nextInt(4));
                 boom.setGameVariant(gameVariant);
+                boom.setAiRisc(aiRisc);
             })
             .flatMap(boomRepository::save)
             .flatMap((boom) -> sseEventSender.boomsChanged(boom.getPlayers()).then(Mono.just(boom)));

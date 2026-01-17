@@ -231,6 +231,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             target.setVerzaakt(verzakenResult);
         }
 
+        target.setAiRisc(source.getAiRisc());
+
         return target;
 
     }

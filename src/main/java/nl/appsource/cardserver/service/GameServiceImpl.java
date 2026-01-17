@@ -10,6 +10,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
 import org.springframework.core.env.Environment;
@@ -79,12 +80,12 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant) {
-        return createGame(creator, players, gameVariant, null, null);
+    public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant, final AiRisc aiRisc) {
+        return createGame(creator, players, gameVariant, null, null, aiRisc);
     }
 
     @Override
-    public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant, final String boomId, final Integer dealer) {
+    public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant, final String boomId, final Integer dealer, final AiRisc aiRisc) {
 
         if (players.size() != 4) {
             throw new IllegalArgumentException("need 4 players");
@@ -113,6 +114,7 @@ public class GameServiceImpl implements GameService {
                 game.setGameVariant(gameVariant);
                 game.setDealCounter(0);
                 game.setBoomId(boomId);
+                game.setAiRisc(aiRisc);
             })
             .flatMap(gameRepository::save)
             .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
@@ -209,8 +211,7 @@ public class GameServiceImpl implements GameService {
                     .doOnError(throwable -> {
                         sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
-                                .message(throwable.getClass()
-                                    .getName() + ":" + throwable.getMessage()))
+                                .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
                             .subscribe();
                     })
                     .doFinally((_unused) -> this.scheduleNext(gameEngine));

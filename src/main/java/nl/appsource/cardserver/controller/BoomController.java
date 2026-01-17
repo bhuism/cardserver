@@ -63,7 +63,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     public Mono<ResponseEntity<Boom>> createBoom(final String appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext((auth) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-            .flatMap(auth -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.user().getId(), createBoom.getPlayers(), auth.user().getGameVariant())))
+            .flatMap(auth -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.user().getId(), createBoom.getPlayers(), auth.user().getGameVariant(), auth.user().getAiRisc())))
             .mapNotNull(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -128,7 +128,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
                                 .switchIfEmpty(Mono.defer(() -> {
                                     if (boom.getGames().size() < 16) {
                                         return calcDealer(boom).flatMap(dealer -> {
-                                            return gameService.createGame(auth.user().getId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer)
+                                            return gameService.createGame(auth.user().getId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
                                                 .doOnNext(game -> boom.getGames().add(game.getId()))
                                                 .flatMap(game -> boomRepository.save(boom).thenReturn(game));
                                         });

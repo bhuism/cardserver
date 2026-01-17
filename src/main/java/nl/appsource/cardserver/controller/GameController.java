@@ -89,7 +89,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     public Mono<ResponseEntity<Game>> createGame(final String appIdentifier, final Mono<CreateGame> createGameMono, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} createGame() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-            .flatMap(auth -> createGameMono.flatMap(createGame -> gameService.createGame(auth.user().getId(), createGame.getPlayers(), auth.user().getGameVariant())))
+            .flatMap(auth -> createGameMono.flatMap(createGame -> gameService.createGame(auth.user().getId(), createGame.getPlayers(), auth.user().getGameVariant(), auth.user().getAiRisc())))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound()

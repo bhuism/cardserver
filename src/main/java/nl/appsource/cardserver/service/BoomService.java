@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Boom;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -11,7 +12,7 @@ public interface BoomService {
 
     Mono<Boom> getBoom(String userId, String boomId);
 
-    Mono<Boom> createBoom(String userI, List<String> players, GameVariant gameVariant);
+    Mono<Boom> createBoom(String userI, List<String> players, GameVariant gameVariant, AiRisc aiRisc);
 
     Flux<String> getBooms(String userId);
 }

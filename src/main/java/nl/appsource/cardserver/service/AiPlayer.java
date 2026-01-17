@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.exception.GameEngineException;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 
 import java.util.Comparator;
@@ -417,7 +418,14 @@ public record AiPlayer(GameEngine gameEngine) {
     // A typical game has 162 points available, so a team needs 82 to win.
     // A bid is a commitment to take more than half the points.
     // This threshold represents confidence in the hand's strength. A value around 35-40 is common.
-    private static final int BIDDING_THRESHOLD = 38;
+
+    static final Map<AiRisc, Integer> AI_RISC_BIDDING_THRESHOLD_MAP = Map.of(
+        AiRisc.VERYLOW, 44,
+        AiRisc.LOW, 40,
+        AiRisc.MEDIUM, 37,
+        AiRisc.HIGH, 35,
+        AiRisc.VERYHIGH, 31
+    );
 
     public boolean decideBid(final String userId) {
         final List<Card> hand = getHand(userId);
@@ -540,7 +548,7 @@ public record AiPlayer(GameEngine gameEngine) {
             }
         }
 
-        final boolean decision = handStrength >= BIDDING_THRESHOLD;
+        final boolean decision = handStrength >= AI_RISC_BIDDING_THRESHOLD_MAP.get(gameEngine.getGame().getAiRisc());
         log.trace("{}: evaluates their hand for trump: {}, with strength: {}, decision={}", userId, trumpSuit, handStrength, decision);
         return decision;
     }

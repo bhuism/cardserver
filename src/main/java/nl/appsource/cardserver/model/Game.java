@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
@@ -67,5 +68,9 @@ public class Game extends BaseEntity  {
 
     @Field
     private String boomId;
+
+    @Field
+    @NotNull
+    private AiRisc aiRisc = AiRisc.MEDIUM;
 
 }
