@@ -9,6 +9,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.ScreenOrientation;
 import org.openapitools.model.Theme;
@@ -93,8 +94,6 @@ public class Migrator {
                     changed = true;
                 }
 
-                log.info("Handling game {}", game.getId());
-
                 if (changed) {
                     log.info("Migrated game {}", game.getId());
                     return gameRepository.save(game);
@@ -137,6 +136,11 @@ public class Migrator {
 
                 if (user.getCreator() == null) {
                     user.setCreator(user.getId());
+                    changed = true;
+                }
+
+                if (user.getAiRisc() == null) {
+                    user.setAiRisc(AiRisc.MEDIUM);
                     changed = true;
                 }
 

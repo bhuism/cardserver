@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.ScreenOrientation;
 import org.openapitools.model.Theme;
@@ -63,5 +64,9 @@ public class User extends BaseEntity {
     @NotNull
     @Field
     private Theme theme = Theme.DARK;
+
+    @NotNull
+    @Field
+    private AiRisc aiRisc = AiRisc.MEDIUM;
 
 }
