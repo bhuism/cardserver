@@ -891,6 +891,13 @@ components:
         - auto
         - light
         - dark
+    AiRisc:
+      enum:
+        - verylow
+        - low
+        - medium
+        - high
+        - veryhigh
     Game:
       type: object
       properties:
