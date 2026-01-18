@@ -210,7 +210,8 @@ public class GameServiceImpl implements GameService {
                     .map(GameEngine::getGame)
                     .flatMap(gameRepository::save)
                     .doOnError(throwable -> {
-                        sseEventSender.sendUserIdMessage(userId, new UserMessage().userId(userId)
+                        sseEventSender.sendUserIdMessage(userId, new UserMessage()
+                                .userId(userId)
                                 .variant(UserMessage.VariantEnum.ERROR)
                                 .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
                             .subscribe();
@@ -298,6 +299,7 @@ public class GameServiceImpl implements GameService {
                     }
                 } else {
                     return sseEventSender.sendAppIdentifierMessage(auth.appIdentifier().orElse(null), new UserMessage()
+                        .userId(auth.user().getId())
                         .message("Er is geen roem in slag " + (correctedSlagNr + 1))
                         .variant(UserMessage.VariantEnum.WARNING));
                 }
@@ -321,13 +323,15 @@ public class GameServiceImpl implements GameService {
                             return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
                                 .flatMap((player) -> {
                                     return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                        .getPlayers(), new UserMessage().userId(auth.user().getId())
+                                        .getPlayers(), new UserMessage()
+                                        .userId(auth.user().getId())
                                         .variant(UserMessage.VariantEnum.ERROR)
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
                                 });
                         } else {
                             return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                .getPlayers(), new UserMessage().userId(auth.user().getId())
+                                .getPlayers(), new UserMessage()
+                                .userId(auth.user().getId())
                                 .variant(UserMessage.VariantEnum.INFO)
                                 .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
                         }

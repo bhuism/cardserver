@@ -31,7 +31,6 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -123,9 +122,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //    @Override
 //    public void sendMessage(final Collection<String> userIds, final UserMessage userMessage) {
 //        userIds.forEach(userId -> send(MySseEmitter.createMessageEvent(null, userId, userMessage)));
-////        doSelectedUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
-//    }
 
+    /// /        doSelectedUserIds(userIds, mySseEmitter -> mySseEmitter.message(userMessage));
+//    }
     @Override
     public void updateGame(final Game game) {
         final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
@@ -134,10 +133,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 //    @Override
 //    public void updateGameForId(final String appIdentifier, final Game game) {
-////        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
+
+    /// /        doId(appIdentifier, mySseEmitter -> mySseEmitter.sendUpdateGame(requireNonNull(gameToOpenApiConverter.convert(game))));
 //        send(createServerSentEvent(appIdentifier, null, gameToOpenApiConverter.convert(game)));
 //    }
-
     @Override
     public void updateUser(final User user) {
         final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);
@@ -165,7 +164,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(player -> sseEventSender.newGame(player, game))
             .then(Mono.just(game));
     }
-
 
 
     private Flux<@NonNull MyServerSentEvent> initCache(final String appIdentifier, final String userId) {
@@ -208,7 +206,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public Mono<@NonNull MyServerSentEvent> createOnlineListForUser(final String userId) {
         return userRepository.getOnlineFriends(userId).collectList()
-            .map(onlineFriends ->  MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
+            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
     }
 
     @PostConstruct
@@ -226,8 +224,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         //mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
 
         if (appIdentifier != null) {
-            Optional.ofNullable(userChannels.get(appIdentifier))
-                .ifPresent(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(3000))));
+
+            final UserChannel userChannel = userChannels.get(appIdentifier);
+
+            if (userChannel != null) {
+                userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(3000)));
+            }
+
         } else if (userId != null) {
             userChannels.values()
                 .stream()
@@ -255,24 +258,24 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.merge(mainSink.asFlux(), userFlux)
-                .timeout(Duration.ofSeconds(6))
-                .onBackpressureDrop(dropped -> System.out.println("Dropping msg for slow client, event=" + dropped.event()))
-                .doFinally(a -> {
-                    log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
-                    userChannels.remove(appIdentifier);
-                    sseSessionRepository.deleteById(appIdentifier)
-                        .then(sendOnlineListToFriendsOf(userId))
-                        .subscribe();
-                })
-                .map(myServerSentEvent -> {
+                    .timeout(Duration.ofSeconds(6))
+                    .onBackpressureDrop(dropped -> System.out.println("Dropping msg for slow client, event=" + dropped.event()))
+                    .doFinally(a -> {
+                        log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+                        userChannels.remove(appIdentifier);
+                        sseSessionRepository.deleteById(appIdentifier)
+                            .then(sendOnlineListToFriendsOf(userId))
+                            .subscribe();
+                    })
+                    .map(myServerSentEvent -> {
 
-                    final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder()
-                        .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
+                        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder()
+                            .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
 
-                    builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
+                        builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
 
-                    return builder.build();
-                })
+                        return builder.build();
+                    })
             );
     }
 

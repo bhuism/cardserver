@@ -136,7 +136,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Void> usersMessage(final String userId, final List<String> recipients, final String message) {
-        return sseEventSender.sendUserIdMessage(recipients, new UserMessage().userId(userId)
+        return sseEventSender.sendUserIdMessage(recipients, new UserMessage()
+            .userId(userId)
             .message(message)
             .variant(UserMessage.VariantEnum.INFO));
     }
