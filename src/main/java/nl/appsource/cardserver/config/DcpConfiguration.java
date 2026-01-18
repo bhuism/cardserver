@@ -88,9 +88,6 @@ public class DcpConfiguration {
             if (DcpMutationMessage.is(event)) {
 
                 String className = "";
-                String version = "";
-
-//                    log.info("revSeq=" + revSeq + ", key="+key+", content=" + MessageUtil.getContentAsString(event));
 
                 try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
 
@@ -102,37 +99,30 @@ public class DcpConfiguration {
                             case "nl.appsource.cardserver.model.SseEvent" -> {
                                 final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
                                 sseEvent.setId(id);
-                                version = "" + sseEvent.getVersion();
 
-                                sseSessionRepository.eventLocalRelevance(sseEvent.getAppIdentifier(), sseEvent.getUserId(), HOSTNAME)
-                                    .filter(a -> a)
-                                    .subscribe(aBoolean -> {
-                                        sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
-                                    });
+                                log.info("Received SseEvent from db: appIdentifier: {}, userId: {}, event: {} ", sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent());
+                                sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
 
                             }
                             case "nl.appsource.cardserver.model.SseSession" -> {
                                 final SseSession sseSession = jsonMapper.treeToValue(rootNode, SseSession.class);
                                 sseSession.setId(id);
-                                version = "" + sseSession.getVersion();
                             }
-                            case "nl.appsource.cardserver.model.Feedback" -> { }
+                            case "nl.appsource.cardserver.model.Feedback" -> {
+                            }
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
-                                version = "" + boom.getVersion();
                                 sseEmitterRepository.updateBoom(boom);
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
-                                version = "" + user.getVersion();
                                 sseEmitterRepository.updateUser(user);
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
-                                version = "" + game.getVersion();
                                 sseEmitterRepository.updateGame(game);
                             }
                             default -> log.warn("Not handling unknown class mutation : " + className);

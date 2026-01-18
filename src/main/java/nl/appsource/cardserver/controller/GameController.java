@@ -159,7 +159,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     public Mono<ResponseEntity<Void>> claimRoem(final String gameId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} claimRoem() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
-            .flatMap(auth -> gameService.claimRoem(auth.user().getId(), gameId))
+            .flatMap(auth -> gameService.claimRoem(auth, gameId))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -168,7 +168,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     public Mono<ResponseEntity<Void>> claimVerzaken(final String gameId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .doOnNext(auth -> log.info("{} claimVerzaken() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId(), gameId))
-            .flatMap(auth -> gameService.claimVerzaken(auth.user().getId(), gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
+            .flatMap(auth -> gameService.claimVerzaken(auth, gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
 

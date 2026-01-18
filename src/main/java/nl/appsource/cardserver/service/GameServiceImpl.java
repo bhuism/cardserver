@@ -10,6 +10,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
@@ -266,7 +267,7 @@ public class GameServiceImpl implements GameService {
 //    }
 
     @Override
-    public Mono<Void> claimRoem(final String userId, final String gameId) {
+    public Mono<Void> claimRoem(final CardServerAuthentication auth, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
@@ -280,7 +281,7 @@ public class GameServiceImpl implements GameService {
                         .getRoemGeklopt()
                         .add(gameEngine.calcTricksPlayed());
 
-                    final Mono<Void> sendMessageMono = sseEventSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(userId)
+                    final Mono<Void> sendMessageMono = sseEventSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(auth.user().getId())
                         .message("Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
                         .variant(UserMessage.VariantEnum.INFO));
 
@@ -296,7 +297,7 @@ public class GameServiceImpl implements GameService {
                         return sendMessageMono;
                     }
                 } else {
-                    return sseEventSender.sendAppIdentifierMessage(null, new UserMessage().userId(userId)
+                    return sseEventSender.sendAppIdentifierMessage(auth.appIdentifier().orElse(null), new UserMessage()
                         .message("Er is geen roem in slag " + (correctedSlagNr + 1))
                         .variant(UserMessage.VariantEnum.WARNING));
                 }
@@ -305,7 +306,7 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Mono<Void> claimVerzaken(final String userId, final String gameId) {
+    public Mono<Void> claimVerzaken(final CardServerAuthentication auth, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
@@ -320,13 +321,13 @@ public class GameServiceImpl implements GameService {
                             return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
                                 .flatMap((player) -> {
                                     return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                        .getPlayers(), new UserMessage().userId(userId)
+                                        .getPlayers(), new UserMessage().userId(auth.user().getId())
                                         .variant(UserMessage.VariantEnum.ERROR)
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
                                 });
                         } else {
                             return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                .getPlayers(), new UserMessage().userId(userId)
+                                .getPlayers(), new UserMessage().userId(auth.user().getId())
                                 .variant(UserMessage.VariantEnum.INFO)
                                 .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
                         }

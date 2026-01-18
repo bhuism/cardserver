@@ -2,6 +2,7 @@ package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Flux;
@@ -31,7 +32,7 @@ public interface GameService {
 
     //Mono<Void> reload(String appIdentifier, String userId, String gameId);
 
-    Mono<Void> claimRoem(String userId, String gameId);
+    Mono<Void> claimRoem(CardServerAuthentication auth, String gameId);
 
-    Mono<Void> claimVerzaken(String userId, String gameId);
+    Mono<Void> claimVerzaken(CardServerAuthentication auth, String gameId);
 }
