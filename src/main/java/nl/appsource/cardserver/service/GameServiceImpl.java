@@ -316,6 +316,7 @@ public class GameServiceImpl implements GameService {
 
                 final int laatsteCompleteSlag = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
+
                 return Flux.just(0, 1, 2, 3)
                     .flatMap(playerNr -> {
                         final Boolean verzaakt = gameEngine.verzaakt(laatsteCompleteSlag, playerNr);
@@ -329,13 +330,15 @@ public class GameServiceImpl implements GameService {
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
                                 });
                         } else {
-                            return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                .getPlayers(), new UserMessage()
-                                .userId(auth.user().getId())
-                                .variant(UserMessage.VariantEnum.INFO)
-                                .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
+                            return Mono.<Void>empty();
                         }
                     })
+                    .switchIfEmpty(sseEventSender.sendUserIdMessage(gameEngine.getGame()
+                        .getPlayers(), new UserMessage()
+                        .userId(auth.user().getId())
+                        .variant(UserMessage.VariantEnum.INFO)
+                        .message("Er is niet verzaakt in slag " + laatsteCompleteSlag))
+                    )
                     .then();
             });
     }
