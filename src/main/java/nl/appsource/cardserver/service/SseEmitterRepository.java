@@ -10,5 +10,4 @@ public interface SseEmitterRepository {
 
     Flux<@NonNull ServerSentEvent<Object>> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
 
-
 }
