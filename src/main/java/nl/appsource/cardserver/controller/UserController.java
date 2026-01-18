@@ -95,12 +95,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
             )
             .delayUntil(sseSession -> sseEventSender.sendPong(sseSession.getId()))
             .map(_ -> ResponseEntity.ok().<Void>build())
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-    }
-
-    private boolean isOptimisticLockingError(final Throwable ex) {
-        // Spring Data maps the Couchbase CAS mismatch to OptimisticLockingFailureException
-        return ex instanceof OptimisticLockingFailureException;
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @Override
@@ -116,7 +111,12 @@ public class UserController extends GenericController implements UsersApi, V1Api
                 .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
             )
             .map(_ -> ResponseEntity.ok().<Void>build())
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    private boolean isOptimisticLockingError(final Throwable ex) {
+        // Spring Data maps the Couchbase CAS mismatch to OptimisticLockingFailureException
+        return ex instanceof OptimisticLockingFailureException;
     }
 
     @Override
