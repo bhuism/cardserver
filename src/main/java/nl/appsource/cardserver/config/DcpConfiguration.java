@@ -9,25 +9,28 @@ import com.couchbase.client.dcp.message.MessageUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converter.GameToOpenApiConverter;
+import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SseEvent;
-import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.SseSessionRepository;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 @Slf4j
 @Configuration
@@ -41,17 +44,13 @@ public class DcpConfiguration {
 
     private final SseEmitterRepository sseEmitterRepository;
 
-    private static final String HOSTNAME;
+    private final BoomToOpenApiConverter boomToOpenApiConverter;
 
-    static {
-        String host;
-        try {
-            host = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            host = "unknown";
-        }
-        HOSTNAME = host;
-    }
+    private final UserToOpenApiConverter userToOpenApiConverter;
+
+    private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final UserRepository userRepository;
 
     @PostConstruct
     public void postConstruct() {
@@ -73,17 +72,9 @@ public class DcpConfiguration {
             event.release();
         });
 
-//        client.systemEventHandler(event -> {
-//            log.info("system event: keys: " + event.toMap().keySet());
-//        });
-
         client.dataEventHandler((flowController, event) -> {
 
             final String id = MessageUtil.getKeyAsString(event);
-            final long cas = MessageUtil.getCas(event);
-
-
-            final long revSeq = DcpMutationMessage.revisionSeqno(event);
 
             if (DcpMutationMessage.is(event)) {
 
@@ -104,28 +95,35 @@ public class DcpConfiguration {
                                 sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
 
                             }
-                            case "nl.appsource.cardserver.model.SseSession" -> {
-                                final SseSession sseSession = jsonMapper.treeToValue(rootNode, SseSession.class);
-                                sseSession.setId(id);
-                            }
-                            case "nl.appsource.cardserver.model.Feedback" -> {
-                            }
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
-                                sseEmitterRepository.updateBoom(boom);
+
+                                final org.openapitools.model.Boom convertedBoom = boomToOpenApiConverter.convert(boom);
+
+                                Flux.fromIterable(boom.getPlayers())
+                                    .concatWith(Flux.just(boom.getCreator()))
+                                    .distinct()
+                                    .subscribe(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateBoom(convertedBoom)));
+
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
-                                sseEmitterRepository.updateUser(user);
+
+                                final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);
+                                userRepository.getOnlineFriends(user.getId()).mergeWith(Mono.just(user.getId())).subscribe(friend -> sseEmitterRepository.send(null, friend, MyServerSentEvent.updateUser(convertedUser)));
+
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
-                                sseEmitterRepository.updateGame(game);
+
+                                final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
+                                game.getPlayers().forEach(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateGame(convertedGame)));
+
                             }
-                            default -> log.warn("Not handling unknown class mutation : " + className);
+                            default -> { }
                         }
 
                     }
@@ -134,17 +132,7 @@ public class DcpConfiguration {
                     log.warn("Can not deserialize key: " + id);
                 }
 
-//                if (!SseSession.class.getName().equals(className) && !SseEvent.class.getName().equals(className)) {
-//                    log.info("Mutation: key={} revSeq={} cas={} class={} version={}", id, revSeq, cas, className, version);
-//                }
-
-            } /* else if (DcpDeletionMessage.is(event)) {
-                log.info("Deletion: key={} content={}", key, MessageUtil.getContentAsString(event));
-            } else if (DcpExpirationMessage.is(event)) {
-                log.info("Expiration: key={} content={}", key, MessageUtil.getContentAsString(event));
-            } else {
-                log.warn("Unknown opcode opcode={}", MessageUtil.getShortOpcodeName(event));
-            } */
+            }
 
             flowController.ack(event);
             event.release();
@@ -157,12 +145,5 @@ public class DcpConfiguration {
 
         return client;
     }
-
-//    @PreDestroy
-//    public void destroy(final Client client) {
-//        log.info("Stopping");
-//        client.stopStreaming(Collections.emptyList()).block();
-//        client.disconnect().block();
-//    }
 
 }

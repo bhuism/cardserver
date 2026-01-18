@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.repository.SseEventRepository;
+import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.utils.IDTYPE;
 import org.openapitools.model.MessageEvent;
 import org.openapitools.model.NewGameEvent;
@@ -28,6 +29,8 @@ public class SseEventSenderImpl implements SseEventSender {
     private final SseEventRepository sseEventRepository;
 
     private final JsonMapper jsonMapper;
+
+    private final UserRepository userRepository;
 
     @Override
     public Mono<Void> sendAppIdentifierMessage(final String appIdentifier, final UserMessage userMessage) {
@@ -80,13 +83,15 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
-    public Mono<Void> newGame(final String userId, final Game game) {
-        //retrurn createServerSentEvent("newGame", new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()))
-
-        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "newGame", jsonMapper.convertValue(new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()), Map.class)))
-            .flatMap(sseEventRepository::save)
+    public Mono<Void> newGame(final Game game) {
+        return Flux.fromIterable(game.getPlayers())
+            .filter(player -> !player.equals(game.getCreator()))
+            .flatMap(player -> {
+                return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, player, "newGame", jsonMapper.convertValue(new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()), Map.class)))
+                    .flatMap(sseEventRepository::save)
+                    .then();
+            })
             .then();
-
     }
 
     @Override
@@ -94,5 +99,17 @@ public class SseEventSenderImpl implements SseEventSender {
         return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList), Map.class)))
             .flatMap(sseEventRepository::save)
             .then();
+    }
+
+    @Override
+    public Mono<Void> sendOnlineListToFriendsOf(final String userId) {
+        return userRepository.getOnlineFriends(userId).flatMap(this::sendOnlineListTo).then();
+    }
+
+    @Override
+    public Mono<Void> sendOnlineListTo(final String userId) {
+        return userRepository.getOnlineFriends(userId)
+            .collectList()
+            .flatMap(onlineList -> sendOnlineListTo(userId, onlineList));
     }
 }

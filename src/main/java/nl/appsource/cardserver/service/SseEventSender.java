@@ -24,8 +24,11 @@ public interface SseEventSender {
 
     Mono<Void> boomsChanged(Collection<String> userIds);
 
-    Mono<Void> newGame(String userId, Game game);
+    Mono<Void> newGame(Game game);
 
     Mono<Void> sendOnlineListTo(String userId, List<@NonNull String> onlineList);
 
+    Mono<Void> sendOnlineListToFriendsOf(String userId);
+
+    Mono<Void> sendOnlineListTo(String userId);
 }
