@@ -205,11 +205,19 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
                         .getEastWest() ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
                 }
 
+                if (target.getPit().orElseThrow()) {
+                    if (target.getWinner().orElseThrow() == Teams.NORTH_SOUTH) {
+                        target.setTotalPoints(Optional.of(new NorthSouthNumber(162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100, 0)));
+                    } else {
+                        target.setTotalPoints(Optional.of(new NorthSouthNumber(0, 162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100)));
+                    }
+                } else {
+                    target.setTotalPoints(Optional.of(new NorthSouthNumber(target.getAllPoints().getNorthSouth() + target.getAllRoem().getNorthSouth(), target.getAllPoints().getEastWest() + target.getAllRoem().getEastWest())));
+                }
             }
         }
 
         target.setBoomId(Optional.ofNullable(source.getBoomId()));
-
 
         final List<List<Integer>> verzakenResult = new ArrayList<>();
 

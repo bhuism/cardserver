@@ -1008,6 +1008,8 @@ components:
             $ref: "#/components/schemas/NorthSouthNumber"
         allPoints:
           $ref: "#/components/schemas/NorthSouthNumber"
+        totalPoints:
+          $ref: "#/components/schemas/NorthSouthNumber"
         trickRoem:
           type: array
           items:
