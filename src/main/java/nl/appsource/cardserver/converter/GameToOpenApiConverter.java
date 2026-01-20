@@ -177,15 +177,6 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
             }
 
-
-//            if (target.getAllPoints().getNorthSouth() == 162 && target.getAllPoints().getEastWest() == 0) {
-//                target.getAllPoints().setNorthSouth(262);
-//            }
-//
-//            if (target.getAllPoints().getNorthSouth() == 0 && target.getAllPoints().getEastWest() == 162) {
-//                target.getAllPoints().setEastWest(262);
-//            }
-
             final int elder = source.getSay().entrySet().stream().filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true)).map(Map.Entry::getKey).findFirst().get();
 
             target.setElder(Optional.of(elder));
@@ -217,7 +208,6 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
                     } else {
                         target.setTotalPoints(Optional.of(new NorthSouthNumber(0, 162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100)));
                         target.getTotalString().setNorthSouth("0");
-//                        target.getTotalString().setEastWest("162" + "+"  + target.getAllRoem().getEastWest() + "+" + target.getAllRoem().getNorthSouth() + "+100");
                         target.getTotalString().setEastWest("162" + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + "+100p");
                     }
                 } else {
@@ -238,7 +228,6 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
                     if (target.getAllRoem().getEastWest() > 0) {
                         target.getTotalString().setEastWest(target.getTotalString().getEastWest() + "+" + target.getAllRoem().getEastWest());
                     }
-
 
                 }
             } else {
