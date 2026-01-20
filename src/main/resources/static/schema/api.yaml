@@ -657,6 +657,8 @@ components:
           $ref: '#/components/schemas/GameVariant'
         aiRisc:
           $ref: "#/components/schemas/AiRisc"
+        isCompleted:
+          type: boolean
       required:
         - id
         - created
@@ -667,6 +669,7 @@ components:
         - games
         - gameVariant
         - aiRisc
+        - isCompleted
     CreateBoom:
       type: object
       properties:

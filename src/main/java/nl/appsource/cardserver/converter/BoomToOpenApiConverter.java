@@ -24,6 +24,7 @@ public class BoomToOpenApiConverter implements Converter<@NonNull Boom, org.open
         target.setGames(source.getGames());
         target.setGameVariant(source.getGameVariant());
         target.setAiRisc(source.getAiRisc());
+        target.setIsCompleted(false);
 
         return target;
 
