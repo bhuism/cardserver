@@ -1016,6 +1016,8 @@ components:
             $ref: "#/components/schemas/NorthSouthNumber"
         allRoem:
           $ref: "#/components/schemas/NorthSouthNumber"
+        totalString:
+          $ref: "#/components/schemas/NorthSouthString"
         winner:
           $ref: "#/components/schemas/Teams"
         erIsGegaan:
@@ -1097,6 +1099,7 @@ components:
         - roemGeklopt
         - verzaakt
         - aiRisc
+        - totalString
     Suit:
       type: string
       enum:
@@ -1118,6 +1121,16 @@ components:
         eastWest:
           type: integer
           default: 0
+      required:
+        - northSouth
+        - eastWest
+    NorthSouthString:
+      type: object
+      properties:
+        northSouth:
+          type: string
+        eastWest:
+          type: string
       required:
         - northSouth
         - eastWest

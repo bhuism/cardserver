@@ -9,6 +9,7 @@ import nl.appsource.cardserver.service.GameEngineImpl;
 import org.openapitools.model.Card;
 import org.openapitools.model.GamePlayerCardInner;
 import org.openapitools.model.NorthSouthNumber;
+import org.openapitools.model.NorthSouthString;
 import org.openapitools.model.Teams;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -121,6 +122,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
         var numberOfTrickWinsNorthSouthCounter = 0;
         var numberOfTrickWinsEastWestCounter = 0;
 
+        target.setTotalString(new NorthSouthString().northSouth("").eastWest(""));
+
         if (gameEngine.getErIsGegaan()) {
 
             for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
@@ -174,6 +177,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
             }
 
+
 //            if (target.getAllPoints().getNorthSouth() == 162 && target.getAllPoints().getEastWest() == 0) {
 //                target.getAllPoints().setNorthSouth(262);
 //            }
@@ -208,12 +212,52 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
                 if (target.getPit().orElseThrow()) {
                     if (target.getWinner().orElseThrow() == Teams.NORTH_SOUTH) {
                         target.setTotalPoints(Optional.of(new NorthSouthNumber(162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100, 0)));
+                        target.getTotalString().setNorthSouth("162" + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + "+100p");
+                        target.getTotalString().setEastWest("0");
                     } else {
                         target.setTotalPoints(Optional.of(new NorthSouthNumber(0, 162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100)));
+                        target.getTotalString().setNorthSouth("0");
+//                        target.getTotalString().setEastWest("162" + "+"  + target.getAllRoem().getEastWest() + "+" + target.getAllRoem().getNorthSouth() + "+100");
+                        target.getTotalString().setEastWest("162" + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + "+100p");
                     }
                 } else {
                     target.setTotalPoints(Optional.of(new NorthSouthNumber(target.getAllPoints().getNorthSouth() + target.getAllRoem().getNorthSouth(), target.getAllPoints().getEastWest() + target.getAllRoem().getEastWest())));
+
+                    if (target.getAllPoints().getNorthSouth() > 0) {
+                        target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + target.getAllPoints().getNorthSouth());
+                    }
+
+                    if (target.getAllRoem().getNorthSouth() > 0) {
+                        target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + "+" + target.getAllRoem().getNorthSouth());
+                    }
+
+                    if (target.getAllPoints().getEastWest() > 0) {
+                        target.getTotalString().setEastWest(target.getTotalString().getEastWest() + target.getAllPoints().getEastWest());
+                    }
+
+                    if (target.getAllRoem().getEastWest() > 0) {
+                        target.getTotalString().setEastWest(target.getTotalString().getEastWest() + "+" + target.getAllRoem().getEastWest());
+                    }
+
+
                 }
+            } else {
+                if (target.getAllPoints().getNorthSouth() > 0) {
+                    target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + target.getAllPoints().getNorthSouth());
+                }
+
+                if (target.getAllRoem().getNorthSouth() > 0) {
+                    target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + "+" + target.getAllRoem().getNorthSouth());
+                }
+
+                if (target.getAllPoints().getEastWest() > 0) {
+                    target.getTotalString().setEastWest(target.getTotalString().getEastWest() + target.getAllPoints().getEastWest());
+                }
+
+                if (target.getAllRoem().getEastWest() > 0) {
+                    target.getTotalString().setEastWest(target.getTotalString().getEastWest() + "+" + target.getAllRoem().getEastWest());
+                }
+
             }
         }
 
