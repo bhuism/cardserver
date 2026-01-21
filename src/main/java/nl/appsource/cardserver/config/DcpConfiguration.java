@@ -16,7 +16,6 @@ import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -60,7 +59,7 @@ public class DcpConfiguration {
     }
 
     @Bean
-    public Client dcpClient(final SseSessionRepository sseSessionRepository) {
+    public Client dcpClient() {
         final Client client = Client.builder()
             .connectionString(cardServerCouchbaseProperties.getConnectionString())
             .bucket(cardServerCouchbaseProperties.getBucketName())

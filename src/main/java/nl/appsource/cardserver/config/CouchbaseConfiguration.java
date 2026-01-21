@@ -11,8 +11,6 @@ import org.springframework.data.couchbase.repository.config.EnableReactiveCouchb
 import org.springframework.data.domain.ReactiveAuditorAware;
 import tools.jackson.databind.json.JsonMapper;
 
-import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
-
 
 @Configuration
 @RequiredArgsConstructor
@@ -47,7 +45,7 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
     @Override
     public QueryScanConsistency getDefaultConsistency() {
-        return REQUEST_PLUS;
+        return QueryScanConsistency.REQUEST_PLUS;
     }
 
     @Bean
