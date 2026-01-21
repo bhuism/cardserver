@@ -6,6 +6,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseEventRepository;
@@ -66,6 +67,9 @@ public class GameControllerTests {
 
     @MockitoBean
     private SseEventRepository sseEventRepository;
+
+    @MockitoBean
+    private BoomRepository boomRepository;
 
     @Test
     @WithMockUser(username = "user-abc")
