@@ -99,12 +99,11 @@ public class DcpConfiguration {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
 
-                                final org.openapitools.model.Boom convertedBoom = boomToOpenApiConverter.convert(boom);
-
-                                Flux.fromIterable(boom.getPlayers())
-                                    .concatWith(Flux.just(boom.getCreator()))
-                                    .distinct()
-                                    .subscribe(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateBoom(convertedBoom)));
+                                boomToOpenApiConverter.convert(boom).subscribe(convertedBoom ->
+                                    Flux.fromIterable(boom.getPlayers())
+                                        .concatWith(Flux.just(boom.getCreator()))
+                                        .distinct()
+                                        .subscribe(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateBoom(convertedBoom))));
 
                             }
                             case "nl.appsource.cardserver.model.User" -> {
@@ -123,7 +122,8 @@ public class DcpConfiguration {
                                 game.getPlayers().forEach(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateGame(convertedGame)));
 
                             }
-                            default -> { }
+                            default -> {
+                            }
                         }
 
                     }

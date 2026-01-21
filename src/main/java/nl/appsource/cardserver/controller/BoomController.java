@@ -65,7 +65,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
         return authorize(appIdentifier, exchange)
             .doOnNext((auth) -> log.info("{} createBoom() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.user().getId(), createBoom.getPlayers(), auth.user().getGameVariant(), auth.user().getAiRisc())))
-            .mapNotNull(boomToOpenApiConverter::convert)
+            .flatMap(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
@@ -76,7 +76,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
             .doOnNext((auth) -> log.info("{} getBoom() userId={} boomId={}", exchange.getRequest()
                 .getRemoteAddress(), auth.user().getId(), boomId))
             .flatMap(auth -> boomService.getBoom(auth.user().getId(), boomId))
-            .mapNotNull(boomToOpenApiConverter::convert)
+            .flatMap(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} getBoom({}), boom not found", exchange.getRequest()
