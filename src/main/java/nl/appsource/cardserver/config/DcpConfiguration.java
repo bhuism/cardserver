@@ -14,8 +14,10 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SingleEvent;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.repository.SingleEventRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -30,6 +32,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 @Slf4j
 @Configuration
@@ -50,6 +54,20 @@ public class DcpConfiguration {
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
     private final UserRepository userRepository;
+
+    private final SingleEventRepository singleEventRepository;
+
+    private static final String HOSTNAME;
+
+    static {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            host = "unknown";
+        }
+        HOSTNAME = host;
+    }
 
     @PostConstruct
     public void postConstruct() {
@@ -90,7 +108,7 @@ public class DcpConfiguration {
                                 final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
                                 sseEvent.setId(id);
 
-                                log.info("Received SseEvent from db: appIdentifier: {}, userId: {}, event: {} ", sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent());
+//                                log.info("Received SseEvent from db: appIdentifier: {}, userId: {}, event: {} ", sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent());
                                 sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
 
                             }
@@ -120,6 +138,23 @@ public class DcpConfiguration {
                                 final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
                                 game.getPlayers().forEach(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateGame(convertedGame)));
 
+                            }
+
+                            case "nl.appsource.cardserver.model.SingleEvent" -> {
+                                final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);
+                                singleEvent.setId(id);
+
+  //                              log.info("Got SingleEvent " + id + ", lockedBy: " + singleEvent.getLockedBy() + ", handledBy: " + singleEvent.getHandledBy() + " raw=" + MessageUtil.getContentAsString(event));
+
+                                if (singleEvent.isUnlocked()) {
+//                                    log.info("Got SingleEvent unlocked, trying to lock " + id);
+                                    // try to get the lock
+                                    singleEventRepository.lockById(singleEvent.getId(), HOSTNAME).subscribe();
+                                } else if (singleEvent.isLockedBy(HOSTNAME)) {
+                                    // we can process it
+                                    log.info("Processing SingleEvent id=" + id + " in host=" + HOSTNAME + ", event=" + singleEvent.getEvent());
+                                    singleEventRepository.handledBy(singleEvent.getId(), HOSTNAME).subscribe();
+                                }
                             }
                             default -> {
                             }

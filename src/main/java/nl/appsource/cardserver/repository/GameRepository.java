@@ -20,20 +20,19 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
 //    List<Game> findByEmail(@Param("email") String email);
     //@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC")
 
-    @Query("SELECT meta(#{#n1ql.bucket}).id "
+    @Query(value = "SELECT meta(#{#n1ql.bucket}).id "
         + "FROM #{#n1ql.bucket} "
         + "WHERE #{#n1ql.filter} "
         + "AND (creator=$userId OR ANY p IN players SATISFIES p=$userId END) "
         + "AND ($includeBoom OR boomId IS NOT VALUED) "
         + "AND ($includeFinished OR ARRAY_LENGTH(turns) != 32) "
-        + "ORDER BY updated DESC LIMIT $limit")
+        + "ORDER BY updated DESC LIMIT $limit", readonly = true)
     Flux<String> findGameIdsByUserId(String userId, Boolean includeBoom, Boolean includeFinished, Integer limit);
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit")
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit", readonly = true)
     Flux<Game> findGamesByUserId(String userId, Integer limit);
 
-    @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC")
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC", readonly = true)
     Mono<Game> findByUserIdAndGameId(String userId, String gameId);
-
 
 }

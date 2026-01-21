@@ -170,7 +170,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final AtomicLong atomicLong = new AtomicLong(1);
 
-        return sseSessionRepository.deleteById(appIdentifier).onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
+        return sseSessionRepository.deleteById(appIdentifier)
+            .onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
             .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
             .flatMap(sseSessionRepository::save)
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))

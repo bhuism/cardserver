@@ -3,6 +3,7 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.SingleEventRepository;
 import nl.appsource.cardserver.repository.SseEventRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -49,6 +50,9 @@ public class HttpRequestTests {
 
     @MockitoBean
     private SseEventRepository sseEventRepository;
+
+    @MockitoBean
+    private SingleEventRepository singleEventRepository;
 
     @Test
     void greetingShouldReturnDefaultMessage() {

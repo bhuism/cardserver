@@ -6,11 +6,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SingleEvent;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.GameRepository;
+import nl.appsource.cardserver.repository.SingleEventRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
+import nl.appsource.cardserver.utils.IDTYPE;
 import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.UserMessage;
@@ -63,6 +66,8 @@ public class GameServiceImpl implements GameService {
     private final UserRepository userRepository;
 
     private final SseEventSender sseEventSender;
+
+    private final SingleEventRepository singleEventRepository;
 
     boolean stop = false;
 
@@ -248,6 +253,14 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void scheduleGameEvent(final ScheduledGameEvent scheduledGameEvent) {
+
+        final SingleEvent singleEvent = new SingleEvent();
+
+        singleEvent.setId(idGen(IDTYPE.SVNT, 20));
+        singleEvent.setEvent(scheduledGameEvent.getGameEventType().name());
+
+        singleEventRepository.save(singleEvent).subscribe();
+
         eventQueue.add(scheduledGameEvent);
     }
 
