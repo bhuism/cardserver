@@ -144,12 +144,16 @@ public class DcpConfiguration {
                                 final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);
                                 singleEvent.setId(id);
 
-  //                              log.info("Got SingleEvent " + id + ", lockedBy: " + singleEvent.getLockedBy() + ", handledBy: " + singleEvent.getHandledBy() + " raw=" + MessageUtil.getContentAsString(event));
+                                //                              log.info("Got SingleEvent " + id + ", lockedBy: " + singleEvent.getLockedBy() + ", handledBy: " + singleEvent.getHandledBy() + " raw=" + MessageUtil.getContentAsString(event));
 
                                 if (singleEvent.isUnlocked()) {
 //                                    log.info("Got SingleEvent unlocked, trying to lock " + id);
                                     // try to get the lock
-                                    singleEventRepository.lockById(singleEvent.getId(), HOSTNAME).subscribe();
+                                    singleEventRepository.lockById(singleEvent.getId(), HOSTNAME)
+                                        .subscribe(unused -> {
+                                        }, throwable -> {
+                                            log.info("Got excetion locking SingleEvent " + id + ", exception=: " + throwable.getClass().getName());
+                                        });
                                 } else if (singleEvent.isLockedBy(HOSTNAME)) {
                                     // we can process it
                                     log.info("Processing SingleEvent id=" + id + " in host=" + HOSTNAME + ", event=" + singleEvent.getEvent());
