@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.config;
 
 import com.couchbase.client.core.deps.io.netty.buffer.ByteBufInputStream;
+import com.couchbase.client.core.error.CasMismatchException;
 import com.couchbase.client.dcp.Client;
 import com.couchbase.client.dcp.StreamFrom;
 import com.couchbase.client.dcp.StreamTo;
@@ -150,10 +151,8 @@ public class DcpConfiguration {
 //                                    log.info("Got SingleEvent unlocked, trying to lock " + id);
                                     // try to get the lock
                                     singleEventRepository.lockById(singleEvent.getId(), HOSTNAME)
-                                        .subscribe(unused -> {
-                                        }, throwable -> {
-                                            log.info("Got excetion locking SingleEvent " + id + ", exception=: " + throwable.getClass().getName());
-                                        });
+                                        .onErrorComplete(throwable -> throwable.getClass().equals(CasMismatchException.class))
+                                        .subscribe();
                                 } else if (singleEvent.isLockedBy(HOSTNAME)) {
                                     // we can process it
                                     log.info("Processing SingleEvent id=" + id + " in host=" + HOSTNAME + ", event=" + singleEvent.getEvent());
