@@ -679,7 +679,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
 
             if (highestTrumpOnTable != null) {
                 final boolean partnerHasHighestTrump = currentWinner != null && isPartner(speler, currentWinner) && whoHasCard(highestTrumpOnTable) == currentWinner;
-                
+
                 // In Amsterdam, you don't have to over-trump your partner.
                 // In Rotterdam, you DO have to over-trump your partner.
                 boolean mustOverTrump = true;
