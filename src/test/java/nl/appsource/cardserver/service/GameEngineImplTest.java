@@ -104,13 +104,7 @@ class GameEngineImplTest {
     @Test
     void testVerzaakt_NoTrump_Amsterdam_PartnerWinning() {
         // Amsterdam: No need to trump if partner is winning.
-        // P0 leads CLUBS ACE.
-        // P1 (Partner of P3) plays CLUBS KING.
-        // P2 (Partner of P0) plays CLUBS QUEEN.
-        // P3 (Partner of P1) has no CLUBS, has HEARTS SEVEN.
-        // P1 is currently winning (ACE > KING > QUEEN? No wait, P0 is winning).
-
-        // Let's adjust: P0 leads CLUBS 7.
+        // P0 leads CLUBS 7.
         // P1 plays CLUBS ACE (Winning).
         // P2 plays CLUBS 8.
         // P3 has no CLUBS, has HEARTS 7.
@@ -227,5 +221,70 @@ class GameEngineImplTest {
         setHand(0, List.of(c0));
         playCard(0, c0);
         assertFalse(gameEngine.verzaakt(0, 0));
+    }
+
+    @Test
+    void testVerzaakt_OverTrumpPartner_Amsterdam_NotRequired() {
+        // Amsterdam: Not required to overtrump partner.
+        // P0 leads CLUBS ACE.
+        // P1 (Partner of P3) trumps with HEARTS 9.
+        // P2 plays CLUBS 7.
+        // P3 (Partner of P1) has HEARTS JACK (higher) and HEARTS 7 (lower).
+        // P3 plays HEARTS 7.
+        // Should NOT be verzaakt.
+
+        game.setGameVariant(GameVariant.AMSTERDAMS);
+
+        Card c0 = Card.Ac;
+        Card c1 = Card.Nh;
+        Card c2 = Card.Sc;
+
+        Card highTrump = Card.Jh;
+        Card lowTrump = Card.Sh;
+
+        setHand(0, List.of(c0));
+        setHand(1, List.of(c1));
+        setHand(2, List.of(c2));
+        setHand(3, List.of(highTrump, lowTrump));
+
+        playCard(0, c0);
+        playCard(1, c1);
+        playCard(2, c2);
+        playCard(3, lowTrump);
+
+        assertFalse(gameEngine.verzaakt(0, 3));
+    }
+
+    @Test
+    void testVerzaakt_OverTrumpPartner_Rotterdam_Required() {
+        // Rotterdam: Required to overtrump partner.
+        // Same scenario as above.
+        // P0 leads CLUBS ACE.
+        // P1 (Partner of P3) trumps with HEARTS 9.
+        // P2 plays CLUBS 7.
+        // P3 (Partner of P1) has HEARTS JACK (higher) and HEARTS 7 (lower).
+        // P3 plays HEARTS 7.
+        // Should be verzaakt.
+
+        game.setGameVariant(GameVariant.ROTTERDAMS);
+
+        Card c0 = Card.Ac;
+        Card c1 = Card.Nh;
+        Card c2 = Card.Sc;
+
+        Card highTrump = Card.Jh;
+        Card lowTrump = Card.Sh;
+
+        setHand(0, List.of(c0));
+        setHand(1, List.of(c1));
+        setHand(2, List.of(c2));
+        setHand(3, List.of(highTrump, lowTrump));
+
+        playCard(0, c0);
+        playCard(1, c1);
+        playCard(2, c2);
+        playCard(3, lowTrump);
+
+        assertTrue(gameEngine.verzaakt(0, 3));
     }
 }

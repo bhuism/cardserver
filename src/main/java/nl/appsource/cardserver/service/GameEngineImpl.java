@@ -678,12 +678,23 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 .orElse(null);
 
             if (highestTrumpOnTable != null) {
-                final boolean couldOverTrump = handAtTimeOfPlay.stream()
-                    .filter(c -> c.getSuit() == trumpSuit)
-                    .anyMatch(c -> TRUMP_SORTER.compare(c, highestTrumpOnTable) > 0);
+                final boolean partnerHasHighestTrump = currentWinner != null && isPartner(speler, currentWinner) && whoHasCard(highestTrumpOnTable) == currentWinner;
+                
+                // In Amsterdam, you don't have to over-trump your partner.
+                // In Rotterdam, you DO have to over-trump your partner.
+                boolean mustOverTrump = true;
+                if (!isRotterdams && partnerHasHighestTrump) {
+                    mustOverTrump = false;
+                }
 
-                if (couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0) {
-                    return true; // Verzaakt: Did not over-trump when possible.
+                if (mustOverTrump) {
+                    final boolean couldOverTrump = handAtTimeOfPlay.stream()
+                        .filter(c -> c.getSuit() == trumpSuit)
+                        .anyMatch(c -> TRUMP_SORTER.compare(c, highestTrumpOnTable) > 0);
+
+                    if (couldOverTrump && TRUMP_SORTER.compare(playedCard, highestTrumpOnTable) < 0) {
+                        return true; // Verzaakt: Did not over-trump when possible.
+                    }
                 }
             }
         }
