@@ -31,6 +31,9 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static nl.appsource.cardserver.service.MyServerSentEvent.ping;
+import static reactor.core.publisher.Mono.just;
+
 /**
  * The type Sse emitter repository.
  *
@@ -91,10 +94,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private Flux<@NonNull MyServerSentEvent> initCache(final String userId) {
 
-        final Mono<@NonNull MyServerSentEvent> ping = Mono.just(MyServerSentEvent.ping());
-
         // hello
-        final Mono<@NonNull MyServerSentEvent> hello = Mono.just(MyServerSentEvent.hello(new HelloEvent().hostName(HOSTNAME)));
+        final Mono<@NonNull MyServerSentEvent> hello = just(MyServerSentEvent.hello(new HelloEvent().hostName(HOSTNAME)));
 
         // users
         final Flux<@NonNull MyServerSentEvent> friends = userRepository.getFriends(userId)
@@ -122,16 +123,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
         // hello
-        final Mono<@NonNull MyServerSentEvent> end = Mono.just(MyServerSentEvent.end());
+        final Mono<@NonNull MyServerSentEvent> end = just(MyServerSentEvent.end());
 
-        return Flux.concat(ping, hello, me, friends, games, booms, onlineList, end);
+        return Flux.concat(hello, Flux.merge(me, friends, games, booms, onlineList), end);
 
     }
 
     @PostConstruct
     public void postStruct() {
         Flux.interval(Duration.ofSeconds(5))
-            .map(aLong -> MyServerSentEvent.ping())
+            .map(aLong -> ping())
             .subscribe(myServerSentEvent -> {
                 mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
             });
@@ -166,13 +167,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
 
-        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().mergeWith(initCache(userId));
+        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().mergeWith(just(ping())).mergeWith(initCache(userId));
 
         final AtomicLong atomicLong = new AtomicLong(1);
 
         return sseSessionRepository.deleteById(appIdentifier)
             .onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
-            .then(Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
+            .then(just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
             .flatMap(sseSessionRepository::save)
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
