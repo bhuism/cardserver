@@ -178,7 +178,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.merge(mainSink.asFlux(), userFlux)
-                    .timeout(Duration.ofSeconds(10))
+                    .timeout(Duration.ofSeconds(5))
                     .onBackpressureDrop(dropped -> System.out.println("Dropping msg for slow client, event=" + dropped.event()))
                     .doFinally(a -> {
                         log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
