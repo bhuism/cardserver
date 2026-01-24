@@ -167,7 +167,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
 
-        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().mergeWith(just(ping())).mergeWith(initCache(userId));
+        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().concatWith(just(ping())).concatWith(initCache(userId));
 
         final AtomicLong atomicLong = new AtomicLong(1);
 
