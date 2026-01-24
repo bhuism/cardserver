@@ -60,7 +60,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final SseEventSender sseEventSender;
 
-    private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer();
 
     private final Map<String, UserChannel> userChannels = new ConcurrentHashMap<>();
 
@@ -202,7 +202,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @RequiredArgsConstructor
     private static class UserChannel {
-        public final Sinks.Many<@NonNull MyServerSentEvent> sink = Sinks.many().multicast().directBestEffort();
+        public final Sinks.Many<@NonNull MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer();
         public final String userId;
     }
 
