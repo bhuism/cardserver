@@ -85,7 +85,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .filter(ca -> ca.appIdentifier().isPresent())
-            .doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
+//            .doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
             .doOnNext(SseSession::ping)
             .flatMap(sseSessionRepository::save)
@@ -102,7 +102,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
     public Mono<ResponseEntity<Void>> pong(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return authorize(appIdentifier, exchange)
             .filter(ca -> ca.appIdentifier().isPresent())
-            .doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
+//            .doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
