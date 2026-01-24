@@ -176,9 +176,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.concat(just(ping()), initCache(userId), userChannel.sink.asFlux(), mainSink.asFlux())
-                    .doOnNext(sseSession -> {
-                        log.info("new event");
-                    })
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.info("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })
