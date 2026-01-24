@@ -178,6 +178,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.merge(mainSink.asFlux(), userFlux)
+                    .onBackpressureDrop(myServerSentEvent -> {
+                        log.info("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
+                    })
                     .doFinally(a -> {
                         log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
                         userChannels.remove(appIdentifier);
