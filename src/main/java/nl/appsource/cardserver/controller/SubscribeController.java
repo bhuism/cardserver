@@ -39,9 +39,7 @@ public class SubscribeController extends GenericController implements V1Api {
             .flatMapMany(user -> sseEmitterRepository.subscribe(appIdentifier,
                 user.getId(), "" + exchange.getRequest().getRemoteAddress(),
                 userAgent
-            ))
-            .log()
-            ;
+            ));
     }
 
 }
