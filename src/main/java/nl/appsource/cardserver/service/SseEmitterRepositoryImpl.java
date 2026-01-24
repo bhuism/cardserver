@@ -125,7 +125,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         // hello
         final Mono<@NonNull MyServerSentEvent> end = just(MyServerSentEvent.end());
 
-        return Flux.concat(hello, Flux.merge(me, friends, games, booms, onlineList), end).limitRate(10);
+        return Flux.concat(hello, Flux.merge(me, friends, games, booms, onlineList), end);
 
     }
 
