@@ -7,7 +7,7 @@ import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -29,7 +29,7 @@ public class SubscribeController extends GenericController implements V1Api {
         this.sseEmitterRepository = sseEmitterRepository;
     }
 
-    @GetMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PostMapping(path = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final ServerWebExchange exchange, @RequestHeader(name = APP_IDENTIFIER_HEADER_NAME) final String appIdentifier) {
 
         final List<String> userAgentList = exchange.getRequest().getHeaders().get("user-agent");
@@ -39,7 +39,9 @@ public class SubscribeController extends GenericController implements V1Api {
             .flatMapMany(user -> sseEmitterRepository.subscribe(appIdentifier,
                 user.getId(), "" + exchange.getRequest().getRemoteAddress(),
                 userAgent
-            ));
+            ))
+            .log()
+            ;
     }
 
 }

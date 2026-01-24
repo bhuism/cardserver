@@ -167,8 +167,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
 
-        final Flux<@NonNull MyServerSentEvent> userFlux = userChannel.sink.asFlux().concatWith(just(ping())).concatWith(initCache(userId));
-
         final AtomicLong atomicLong = new AtomicLong(1);
 
         return sseSessionRepository.deleteById(appIdentifier)
@@ -177,7 +175,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(sseSessionRepository::save)
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
-                Flux.merge(mainSink.asFlux(), userFlux)
+                Flux.concat(just(ping()), initCache(userId), userChannel.sink.asFlux(), mainSink.asFlux())
+                    .doOnNext(sseSession -> {
+                        log.info("new event");
+                    })
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.info("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })
