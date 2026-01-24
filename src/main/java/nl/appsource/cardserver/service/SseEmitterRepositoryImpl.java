@@ -202,7 +202,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @RequiredArgsConstructor
     private static class UserChannel {
-        public final Sinks.Many<@NonNull MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer();
+        public final Sinks.Many<@NonNull MyServerSentEvent> sink = Sinks.many().multicast().onBackpressureBuffer();
         public final String userId;
     }
 
