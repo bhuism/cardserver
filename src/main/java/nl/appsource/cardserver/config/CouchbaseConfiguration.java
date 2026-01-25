@@ -53,6 +53,11 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
         return QueryScanConsistency.NOT_BOUNDED;
     }
 
+    @Override
+    protected boolean autoIndexCreation() {
+        return true;
+    }
+
     @Bean
     public ReactiveAuditorAware<String> reactiveAuditorAware() {
         return new ReactiveAuditorAwareImpl();
