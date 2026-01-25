@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static nl.appsource.cardserver.service.MyServerSentEvent.ping;
 import static reactor.core.publisher.Mono.just;
+import static reactor.core.publisher.Sinks.EmitFailureHandler.busyLooping;
 
 /**
  * The type Sse emitter repository.
@@ -134,7 +135,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Flux.interval(Duration.ofSeconds(5))
             .map(aLong -> ping())
             .subscribe(myServerSentEvent -> {
-                mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(5000)));
+                mainSink.emitNext(myServerSentEvent, busyLooping(Duration.ofMillis(5000)));
             });
     }
 
@@ -147,14 +148,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             final UserChannel userChannel = userChannels.get(appIdentifier);
 
             if (userChannel != null) {
-                userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(3000)));
+                userChannel.sink.emitNext(myServerSentEvent, busyLooping(Duration.ofMillis(3000)));
             }
 
         } else if (userId != null) {
             userChannels.values()
                 .stream()
                 .filter(userChannel -> userChannel.userId.equals(userId))
-                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(3000))));
+                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, busyLooping(Duration.ofMillis(10000))));
         } else {
             log.error("MyServerSentEvent has no appIdentifier or userId, event=" + myServerSentEvent.event());
         }
@@ -167,6 +168,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
 
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                initCache(userId).subscribe(a -> userChannel.sink.emitNext(a, busyLooping(Duration.ofMillis(10000))));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+
         final AtomicLong atomicLong = new AtomicLong(1);
 
         return sseSessionRepository.deleteById(appIdentifier)
@@ -175,7 +185,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(sseSessionRepository::save)
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
-                Flux.concat(just(ping()), initCache(userId), userChannel.sink.asFlux(), mainSink.asFlux())
+                Flux.concat(just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.info("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })
