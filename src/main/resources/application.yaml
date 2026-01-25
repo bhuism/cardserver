@@ -11,6 +11,11 @@ logging:
     ROOT: info
     nl.appsource: info
 spring:
+  data:
+    couchbase:
+      repositories:
+        type: reactive
+      auto-index: true
   lifecycle:
     timeout-per-shutdown-phase: 2s
   main:
