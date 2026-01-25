@@ -11,6 +11,7 @@ import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
 import org.openapitools.model.ScreenOrientation;
 import org.openapitools.model.Theme;
+import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
@@ -32,6 +33,7 @@ public class User extends BaseEntity {
 
     @Field
     @NotEmpty
+    @QueryIndexed
     private String email;
 
     private List<String> invites = new ArrayList<>();
