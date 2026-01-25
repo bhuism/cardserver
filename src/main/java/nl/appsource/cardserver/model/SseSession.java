@@ -2,7 +2,6 @@ package nl.appsource.cardserver.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Expiry;
 
@@ -19,7 +18,6 @@ public class SseSession extends BaseEntity {
 
     private final String userAgent;
 
-    @QueryIndexed
     private final String host;
 
     private Instant pingReceived;
