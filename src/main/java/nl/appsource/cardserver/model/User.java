@@ -36,6 +36,7 @@ public class User extends BaseEntity {
     @QueryIndexed
     private String email;
 
+    @QueryIndexed
     private List<String> invites = new ArrayList<>();
 
     private Instant lastLogin;

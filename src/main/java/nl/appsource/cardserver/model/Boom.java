@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.openapitools.model.AiRisc;
 import org.openapitools.model.GameVariant;
+import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
 
@@ -32,6 +33,7 @@ public class Boom extends BaseEntity {
 
     @Field
     @NotNull
+    @QueryIndexed
     private List<String> players = new ArrayList<>();
 
     @Field
