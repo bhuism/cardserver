@@ -8,14 +8,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
-import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
 
 import java.time.Instant;
 
 @Getter
 @Setter
-@CompositeQueryIndex(fields = {"id", "creator"})
 @NoArgsConstructor
 public abstract class BaseEntity {
 

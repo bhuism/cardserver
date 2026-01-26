@@ -179,13 +179,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final AtomicLong atomicLong = new AtomicLong(1);
 
-        return sseSessionRepository.deleteById(appIdentifier)
-            .onErrorResume(DataRetrievalFailureException.class, e -> Mono.empty())
-            .then(just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId)))
-            .flatMap(sseSessionRepository::save)
+        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
+            .map(sseSessionRepository::save)
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
-                Flux.merge(just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
+                Flux.concat(just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.info("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })
@@ -193,7 +191,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         log.info("{} doFinally() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
                         userChannels.remove(appIdentifier);
                         sseSessionRepository.deleteById(appIdentifier)
-                            .then(sseEventSender.sendOnlineListToFriendsOf(userId))
+                            .onErrorComplete(throwable -> throwable.getClass().equals(DataRetrievalFailureException.class))
+                                .then(sseEventSender.sendOnlineListToFriendsOf(userId))
                             .subscribe();
                     })
                     .map(myServerSentEvent -> {

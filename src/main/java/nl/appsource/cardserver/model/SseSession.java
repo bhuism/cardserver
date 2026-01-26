@@ -2,6 +2,11 @@ package nl.appsource.cardserver.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Expiry;
 
@@ -12,7 +17,10 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Setter
 @Expiry(expiry = 30, expiryUnit = TimeUnit.SECONDS)
-public class SseSession extends BaseEntity {
+public class SseSession {
+
+    @Id
+    private String id;
 
     private final String remoteAddress;
 
@@ -28,12 +36,22 @@ public class SseSession extends BaseEntity {
 
     private int pongReceivedCount = 0;
 
+    @CreatedDate
+    private Instant created;
+
+    @LastModifiedDate
+    private Instant updated;
+
+    @QueryIndexed
+    @CreatedBy
+    private String creator;
+
     public SseSession(final String id, final String remoteAddress, final String userAgent, final String host, final String creator) {
-        setId(id);
+        this.id = id;
         this.remoteAddress = remoteAddress;
         this.userAgent = userAgent;
         this.host = host;
-        this.setCreator(creator);
+        this.creator = creator;
     }
 
     public void ping() {
