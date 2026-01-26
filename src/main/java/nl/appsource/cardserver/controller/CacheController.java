@@ -29,19 +29,10 @@ public class CacheController extends GenericController implements V1Api, Feedbac
         this.feedBackRepository = feedbackRepositoryArg;
     }
 
-//    @Override
-//    public Mono<ResponseEntity<Void>> reloadCache(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
-//        return authorize(appIdentifier, exchange)
-//            .doOnNext((auth) -> log.info("{} reloadCache() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
-//            .doOnNext(auth -> sseEmitterRepository.reloadCache(appIdentifier, auth.user().getId()))
-//            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-
     @Override
     public Mono<ResponseEntity<Void>> feedback(final Mono<FeedbackRequest> feedbackRequest, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} feedback() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext((auth) -> log.info("{} feedback() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(user -> feedbackRequest.flatMap((fb) -> {
 
                 final Feedback feedBack = new Feedback();
@@ -51,7 +42,7 @@ public class CacheController extends GenericController implements V1Api, Feedbac
 
                 return feedBackRepository.save(feedBack);
 
-                }))
+            }))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }

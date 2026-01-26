@@ -53,8 +53,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<User>> getUser(final String userIdParam, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} getUser({}) appIdentifier={}", exchange.getRequest().getRemoteAddress(), userIdParam, appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} getUser({}) userId={}", exchange.getRequest().getRemoteAddress(), userIdParam, auth.user().getId()))
             .flatMap(auth -> userService.findById(userIdParam)
                 .mapNotNull(userToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
@@ -64,8 +64,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<InvitesResponse>> getInvites(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} getInvites() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} getInvites() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> userService.getInvites(auth.user().getId()).flatMap(invites -> {
                         final Flux<String> incoming = invites.incoming();
                         final Flux<String> outgoing = invites.outgoing();
@@ -83,9 +83,9 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+//        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .filter(ca -> ca.appIdentifier().isPresent())
-//            .doOnNext(auth -> log.info("{} ping() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
             .doOnNext(SseSession::ping)
             .flatMap(sseSessionRepository::save)
@@ -100,9 +100,9 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .filter(ca -> ca.appIdentifier().isPresent())
-//            .doOnNext(auth -> log.info("{} pong() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
             .doOnNext(SseSession::pong)
             .flatMap(sseSessionRepository::save)
@@ -121,16 +121,16 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<Flux<User>>> getUserByIds(final List<String> userIds, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} getUserByIds() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} getUserByIds() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .map((_user) -> ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> removeInvite(final String friendId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} removeInvites() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} removeInvites() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> userService.removeInvite(auth.user().getId(), friendId).then(just(ResponseEntity.ok().<Void>build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
 
@@ -138,18 +138,16 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<Void>> acceptInvite(final String friendId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} acceptInvite() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} acceptInvite() userId={}", exchange.getRequest()
-                .getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> userService.acceptInvite(auth.user().getId(), friendId).then(just(ResponseEntity.ok().<Void>build())))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @Override
     public Mono<ResponseEntity<CreateInviteResponse>> createInvite(final Mono<CreateInvite> arg, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} createInvite() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} createInvite() userId={}", exchange.getRequest()
-                .getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> arg.flatMap(createInvite -> userService.createInvite(auth.user().getId(), createInvite.getSearchString()))
                 .map(BigDecimal::new)
                 .map(count -> new CreateInviteResponse().count(count))
@@ -162,8 +160,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<User>> updatePreferences(final Mono<UpdatePreferences> arg, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} updatePreferences() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} updatePreferences() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .flatMap(auth -> arg.flatMap(updatePreferences -> userService.updatePreferences(auth.user().getId(), updatePreferences))
                 .mapNotNull(userToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
@@ -173,8 +171,8 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<Void>> usersMessage(final Mono<PostMessage> postMessageMono, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+        log.info("{} usersMessage() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .doOnNext(auth -> log.info("{} usersMessage() userId={}", exchange.getRequest().getRemoteAddress(), auth.user().getId()))
             .delayUntil(auth -> postMessageMono.flatMap(postMessage -> userService.usersMessage(auth.user().getId(), postMessage.getRecipients(), postMessage.getMessage())))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
