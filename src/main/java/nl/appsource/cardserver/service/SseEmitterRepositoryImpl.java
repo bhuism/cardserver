@@ -155,7 +155,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             userChannels.values()
                 .stream()
                 .filter(userChannel -> userChannel.userId.equals(userId))
-                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, busyLooping(Duration.ofMillis(10000))));
+                .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, busyLooping(Duration.ofMillis(1000))));
         } else {
             log.error("MyServerSentEvent has no appIdentifier or userId, event=" + myServerSentEvent.event());
         }
@@ -181,8 +181,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .flatMap(sseSessionRepository::save)
-            .doOnNext(sseSessionMono -> {
-                log.info("{} doOnNext() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+            .doOnNext(sseSession -> {
+                log.info("{} subscribe() appIdentifier={} userId={}, subscribers={} userChannels={} created={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), sseSession.getCreated());
             })
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(

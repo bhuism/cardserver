@@ -7,6 +7,7 @@ import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +30,7 @@ public class SubscribeController extends GenericController implements V1Api {
         this.sseEmitterRepository = sseEmitterRepository;
     }
 
+    @GetMapping(path = "/subscribe/{appIdentifier}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @PostMapping(path = "/subscribe/{appIdentifier}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final ServerWebExchange exchange, @PathVariable final String appIdentifier) {
 
