@@ -16,7 +16,15 @@ public interface BoomRepository extends ReactiveCouchbaseRepository<Boom, String
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit", readonly = true)
     Flux<Boom> findBoomsByUserId(String userId, Integer limit);
 
-    @Query(value = "SELECT EXISTS (SELECT 1 FROM #{#n1ql.bucket} b WHERE #{#n1ql.filter} AND META(b).id == $boomId AND ARRAY_LENGTH(b.games) == 16) AND NOT EXISTS(SELECT 1 FROM #{#n1ql.bucket} g WHERE g IN b.games AND ARRAY_LENGTH(g.turns) == 16)", readonly = true)
+    @Query(value = "SELECT EXISTS(SELECT RAW true " +
+        "FROM #{#n1ql.bucket} AS b USE KEYS $1 " +
+        "WHERE b._class = 'nl.appsource.cardserver.model.Boom' " +
+        "AND ARRAY_LENGTH(b.games) = 16 " +
+        "AND NOT EXISTS (" +
+        "    SELECT 1 " +
+        "    FROM #{#n1ql.bucket} AS g USE KEYS b.games " +
+        "    WHERE ARRAY_LENGTH(g.turns) = 16" +
+        "))", readonly = true)
     Mono<Boolean> isBoomComplete(String boomId);
 
 }
