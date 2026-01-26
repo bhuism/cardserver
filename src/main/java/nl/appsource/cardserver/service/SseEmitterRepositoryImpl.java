@@ -180,7 +180,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final AtomicLong atomicLong = new AtomicLong(1);
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
-            .map(sseSessionRepository::save)
+            .flatMap(sseSessionRepository::save)
+            .doOnNext(sseSessionMono -> {
+                log.info("{} doOnNext() appIdentifier={} userId={}, subscribers={} userChannels={}", remoteAddress, appIdentifier, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+            })
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.concat(just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
@@ -192,7 +195,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         userChannels.remove(appIdentifier);
                         sseSessionRepository.deleteById(appIdentifier)
                             .onErrorComplete(throwable -> throwable.getClass().equals(DataRetrievalFailureException.class))
-                                .then(sseEventSender.sendOnlineListToFriendsOf(userId))
+                            .then(sseEventSender.sendOnlineListToFriendsOf(userId))
                             .subscribe();
                     })
                     .map(myServerSentEvent -> {
