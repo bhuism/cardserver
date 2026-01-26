@@ -186,7 +186,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             })
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
-                Flux.concat(just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
+                Flux.merge(just(ping()), just(ping()), just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.warn("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })
@@ -199,12 +199,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                             .subscribe();
                     })
                     .map(myServerSentEvent -> {
-
                         final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder()
                             .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
-
                         builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
-
                         return builder.build();
                     })
             );
