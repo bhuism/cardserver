@@ -8,6 +8,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.SingleEvent;
 import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SingleEventRepository;
 import nl.appsource.cardserver.repository.UserRepository;
@@ -68,6 +69,7 @@ public class GameServiceImpl implements GameService {
     private final SseEventSender sseEventSender;
 
     private final SingleEventRepository singleEventRepository;
+    private final BoomRepository boomRepository;
 
     boolean stop = false;
 
@@ -209,11 +211,21 @@ public class GameServiceImpl implements GameService {
                     case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                     case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
                     case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
+                    case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId, sseEventSender));
                 };
 
                 return result
                     .map(GameEngine::getGame)
                     .flatMap(gameRepository::save)
+                    .flatMap(game -> {
+                        if (game.getBoomId() != null) {
+                            return boomRepository.findById(game.getBoomId())
+                                .map(boomRepository::save)
+                                .then(Mono.just(game));
+                        } else {
+                            return Mono.just(game);
+                        }
+                    })
                     .doOnError(throwable -> {
                         sseEventSender.sendUserIdMessage(userId, new UserMessage()
                                 .userId(userId)
@@ -279,46 +291,6 @@ public class GameServiceImpl implements GameService {
 //            .doOnNext(game -> sseEmitterRepository.updateGameForId(appIdentifier, game))
 //            .then();
 //    }
-
-    @Override
-    public Mono<Void> claimRoem(final CardServerAuthentication auth, final String gameId) {
-        return gameRepository.findById(gameId)
-            .map(GameEngineImpl::new)
-            .flatMap(gameEngine -> {
-                final int slagNr = gameEngine.calcTricksPlayed();
-
-                final int correctedSlagNr = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
-
-                final int roem = gameEngine.calculateTrickRoem(correctedSlagNr);
-                if (roem > 0) {
-                    final boolean result = gameEngine.getGame()
-                        .getRoemGeklopt()
-                        .add(gameEngine.calcTricksPlayed());
-
-                    final Mono<Void> sendMessageMono = sseEventSender.sendUserIdMessage(gameEngine.getGame().getPlayers(), new UserMessage().userId(auth.user().getId())
-                        .message("Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
-                        .variant(UserMessage.VariantEnum.INFO));
-
-                    if (result) {
-
-                        return Mono.just(gameEngine)
-                            .map(GameEngine::getGame)
-                            .map(gameRepository::save)
-                            .then(sendMessageMono);
-
-                        //return gameRepository.save(gameEngine.getGame()).then(sendMessageMono);
-                    } else {
-                        return sendMessageMono;
-                    }
-                } else {
-                    return sseEventSender.sendAppIdentifierMessage(auth.appIdentifier().orElse(null), new UserMessage()
-                        .userId(auth.user().getId())
-                        .message("Er is geen roem in slag " + (correctedSlagNr + 1))
-                        .variant(UserMessage.VariantEnum.WARNING));
-                }
-            })
-            .then();
-    }
 
     @Override
     public Mono<Void> claimVerzaken(final CardServerAuthentication auth, final String gameId) {

@@ -13,6 +13,7 @@ import nl.appsource.cardserver.service.exception.LastTrickOpenException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
 import org.openapitools.model.GameVariant;
+import org.openapitools.model.UserMessage;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
@@ -29,7 +30,6 @@ import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
 
 @Slf4j
 public record GameEngineImpl(Game game) implements GameEngine {
-
 
     public static final List<String> AI_USER_ID = List.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9", "2ab5fd69a2796c4740380cd98eba");
 
@@ -700,6 +700,32 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         return false;
+    }
+
+    @Override
+    public Mono<GameEngine> claimRoem(final String userId, final SseEventSender sseEventSender) {
+        final int slagNr = calcTricksPlayed();
+
+        final int correctedSlagNr = slagNr - (slagNr > 0 && getTurnCount() % 4 == 0 ? 1 : 0);
+
+        final int roem = calculateTrickRoem(correctedSlagNr);
+        if (roem > 0) {
+            final boolean result = getGame()
+                .getRoemGeklopt()
+                .add(calcTricksPlayed());
+
+            return sseEventSender.sendUserIdMessage(getGame().getPlayers(), new UserMessage().userId(userId)
+                    .message("Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
+                    .variant(UserMessage.VariantEnum.INFO))
+                .then(Mono.just(this));
+
+        } else {
+            return sseEventSender.sendUserIdMessage(getGame().getPlayers(), new UserMessage()
+                    .userId(userId)
+                    .message("Er is geen roem in slag " + (correctedSlagNr + 1))
+                    .variant(UserMessage.VariantEnum.WARNING))
+                .then(Mono.just(this));
+        }
     }
 
     private boolean isPartner(final int p1, final int p2) {

@@ -7,5 +7,6 @@ public enum GameEventType {
     AI_SAY,
     OPEN_LAST_TRICK,
     CLOSE_LAST_TRICK,
-    CHECK_ROTATE
+    CHECK_ROTATE,
+    CLAIM_ROEM
 }

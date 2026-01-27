@@ -28,6 +28,8 @@ public interface GameEngine {
 
     Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd();
 
+    Mono<GameEngine> claimRoem(String userId, SseEventSender sseEventSender);
+
     boolean isCompleted();
 
     int calcTricksPlayed();
@@ -66,5 +68,5 @@ public interface GameEngine {
 
     List<Card> getHuidigeTableCards();
 
-    Boolean verzaakt(int correctedSlagNr, int speler);
+    Boolean verzaakt(int correctedSlagNr, int spelerId);
 }

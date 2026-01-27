@@ -32,7 +32,7 @@ public interface GameService {
 
     //Mono<Void> reload(String appIdentifier, String userId, String gameId);
 
-    Mono<Void> claimRoem(CardServerAuthentication auth, String gameId);
+//    Mono<Void> claimRoem(CardServerAuthentication auth, String gameId);
 
     Mono<Void> claimVerzaken(CardServerAuthentication auth, String gameId);
 }

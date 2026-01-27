@@ -25,8 +25,6 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RestController
 public class SubscribeController extends GenericController implements V1Api {
 
-    public static final String APP_IDENTIFIER_HEADER_NAME = "App-Identifier";
-
     private final SseEmitterRepository sseEmitterRepository;
 
     public SubscribeController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepository, final SseSessionRepository sseSessionRepository) {

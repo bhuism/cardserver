@@ -148,7 +148,7 @@ public class GameController extends GenericController implements GamesApi, V1Api
     public Mono<ResponseEntity<Void>> claimRoem(final String gameId, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         log.info("{} claimRoem() appIdentifier={} gameId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, gameId);
         return authorize(appIdentifier, exchange)
-            .flatMap(auth -> gameService.claimRoem(auth, gameId))
+            .doOnNext(auth -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, auth.user().getId(), GameEventType.CLAIM_ROEM, gameId)))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
