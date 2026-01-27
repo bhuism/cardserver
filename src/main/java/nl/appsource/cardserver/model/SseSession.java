@@ -2,10 +2,7 @@ package nl.appsource.cardserver.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Expiry;
@@ -36,14 +33,11 @@ public class SseSession {
 
     private int pongReceivedCount = 0;
 
-    @CreatedDate
-    private Instant created;
+    private Instant created = Instant.now();
 
-    @LastModifiedDate
-    private Instant updated;
+    private Instant updated = Instant.now();
 
     @QueryIndexed
-    @CreatedBy
     private String creator;
 
     public SseSession(final String id, final String remoteAddress, final String userAgent, final String host, final String creator) {
