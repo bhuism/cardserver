@@ -100,7 +100,7 @@ public class UserController extends GenericController implements UsersApi, V1Api
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
-        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
+//        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .filter(ca -> ca.appIdentifier().isPresent())
             .flatMap(cardServerAuthentication -> sseSessionRepository.findByIdAndCreator(cardServerAuthentication.appIdentifier().orElseThrow(), cardServerAuthentication.user().getId()))
