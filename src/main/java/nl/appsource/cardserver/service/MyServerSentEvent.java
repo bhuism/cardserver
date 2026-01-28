@@ -30,10 +30,6 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("hello", helloEvent);
     }
 
-    public static MyServerSentEvent end() {
-        return new MyServerSentEvent("end", null);
-    }
-
     public static MyServerSentEvent onlineList(final OnlineListEvent onlineListEvent) {
         return new MyServerSentEvent("onlineList", onlineListEvent);
     }

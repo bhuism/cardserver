@@ -123,10 +123,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .collectList()
             .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        // hello
-        final Mono<@NonNull MyServerSentEvent> end = just(MyServerSentEvent.end());
-
-        return Flux.concat(hello, me, friends, games, booms, onlineList, end);
+        return Flux.concat(hello, me, friends, games, booms, onlineList);
 
     }
 
