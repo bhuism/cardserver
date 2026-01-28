@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static nl.appsource.cardserver.service.MyServerSentEvent.hello;
 import static nl.appsource.cardserver.service.MyServerSentEvent.ping;
 import static reactor.core.publisher.Mono.just;
 import static reactor.core.publisher.Sinks.EmitFailureHandler.busyLooping;
@@ -95,9 +96,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private Flux<@NonNull MyServerSentEvent> initCache(final String userId) {
 
-        // hello
-        final Mono<@NonNull MyServerSentEvent> hello = just(MyServerSentEvent.hello(new HelloEvent().hostName(HOSTNAME)));
-
         // users
         final Flux<@NonNull MyServerSentEvent> friends = userRepository.getFriends(userId)
             .map(userToOpenApiConverter::convert)
@@ -123,7 +121,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .collectList()
             .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return Flux.concat(hello, me, friends, games, booms, onlineList);
+        return Flux.concat(me, friends, games, booms, onlineList);
 
     }
 
@@ -180,7 +178,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(sseSessionRepository::save)
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
-                Flux.merge(just(ping()), just(ping()), just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
+                Flux.merge(just(ping()), just(ping()), just(ping()), just(hello(new HelloEvent().hostName(HOSTNAME))), userChannel.sink.asFlux(), mainSink.asFlux())
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.warn("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })
