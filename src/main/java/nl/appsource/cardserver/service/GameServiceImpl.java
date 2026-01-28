@@ -303,28 +303,26 @@ public class GameServiceImpl implements GameService {
 
 
                 return Flux.just(0, 1, 2, 3)
-                    .flatMap(playerNr -> {
-                        final Boolean verzaakt = gameEngine.verzaakt(laatsteCompleteSlag, playerNr);
-                        if (verzaakt) {
-                            return userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                .flatMap((player) -> {
-                                    return sseEventSender.sendUserIdMessage(gameEngine.getGame()
+                    .filter(playerNr -> gameEngine.verzaakt(laatsteCompleteSlag, playerNr))
+                    .collectList()
+                    .flatMap(verzaakteSpelers -> {
+                        if (verzaakteSpelers.isEmpty()) {
+                            return sseEventSender.sendUserIdMessage(gameEngine.getGame()
+                                .getPlayers(), new UserMessage()
+                                .userId(auth.user().getId())
+                                .variant(UserMessage.VariantEnum.INFO)
+                                .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
+                        } else {
+                            return Flux.fromIterable(verzaakteSpelers)
+                                .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
+                                    .flatMap(player -> sseEventSender.sendUserIdMessage(gameEngine.getGame()
                                         .getPlayers(), new UserMessage()
                                         .userId(auth.user().getId())
                                         .variant(UserMessage.VariantEnum.ERROR)
-                                        .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()));
-                                });
-                        } else {
-                            return Mono.<Void>empty();
+                                        .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName())))
+                                ).then();
                         }
-                    })
-                    .switchIfEmpty(sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                        .getPlayers(), new UserMessage()
-                        .userId(auth.user().getId())
-                        .variant(UserMessage.VariantEnum.INFO)
-                        .message("Er is niet verzaakt in slag " + laatsteCompleteSlag))
-                    )
-                    .then();
+                    });
             });
     }
 

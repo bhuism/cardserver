@@ -181,9 +181,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .flatMap(sseSessionRepository::save)
-            .doOnNext(sseSession -> {
-                log.info("{} subscribe() appIdentifier={} userId={}, subscribers={} userChannels={} created={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), sseSession.getCreated());
-            })
             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
                 Flux.merge(just(ping()), just(ping()), just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
