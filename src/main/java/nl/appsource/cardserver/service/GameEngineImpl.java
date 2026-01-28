@@ -583,12 +583,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
     @Override
     public Boolean verzaakt(final int slagNr, final int speler) {
 
-        boolean logEnabled = this.game.getId().equals("gameHAWHexQrPplVIGc0o9OA") && slagNr == 1 && speler == 0;
-
-        if (logEnabled) {
-            log.info("game: " + this.game.getId() + ", slagNr: " + slagNr + ", speler: " + speler);
-        }
-
         final List<Card> trick = getTrickCards(slagNr);
 
         final Card playedCard = trick.stream()
