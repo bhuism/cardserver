@@ -28,7 +28,7 @@ public class GenericController {
             .filter(Authentication::isAuthenticated)
             .map(Authentication::getName)
             .flatMap(userId -> {
-                //log.info("Looking for userId: {}", userId);
+                    //log.info("Looking for userId: {}", userId);
                     return userRepository.findById(userId)
                         .switchIfEmpty(Mono.defer(() -> {
                             log.warn("{} {} user not found, userId={}", exchange.getRequest()
@@ -48,10 +48,14 @@ public class GenericController {
     }
 
 
-
     protected Mono<CardServerAuthentication> authorize(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
-                .map(user -> new CardServerAuthentication(user, appIdentifier));
+            .map(user -> new CardServerAuthentication(user, appIdentifier))
+            .switchIfEmpty(Mono.defer(() -> {
+                log.warn("{} {} user not found, appIdentifier={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier);
+                return Mono.empty();
+            }));
+
 //                .switchIfEmpty(Mono.defer(() -> {
 //                    log.warn("{} {} session not found, appIdentifier={} userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier, user.getDisplayName());
 //                    return Mono.empty();
