@@ -35,4 +35,8 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC", readonly = true)
     Mono<Game> findByUserIdAndGameId(String userId, String gameId);
 
+
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId", readonly = true)
+    Mono<Game> findByIdPessimistic(String gameId);
+
 }

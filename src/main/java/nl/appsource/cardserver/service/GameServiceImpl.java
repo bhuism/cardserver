@@ -45,7 +45,6 @@ import static java.util.Collections.shuffle;
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.IDTYPE.GAME;
 import static nl.appsource.cardserver.utils.Utils.idGen;
-import static nl.appsource.cardserver.utils.Utils.isAdmin;
 
 @Slf4j
 @Service
@@ -75,11 +74,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
-        if (isAdmin(userId)) {
-            return gameRepository.findById(gameId);
-        } else {
-            return gameRepository.findByUserIdAndGameId(userId, gameId);
-        }
+        return gameRepository.findByUserIdAndGameId(userId, gameId);
     }
 
     @Override
@@ -195,7 +190,8 @@ public class GameServiceImpl implements GameService {
 
         eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
         Mono.just(gameId)
-            .flatMap(gid -> userId == null || isAiPlayer(userId) ? gameRepository.findById(gid) : gameRepository.findByUserIdAndGameId(userId, gid))
+            .flatMap(gameRepository::findByIdPessimistic)
+            .filter(game -> isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
             .doOnNext(game -> {
                 log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
             })
