@@ -222,16 +222,16 @@ public class GameServiceImpl implements GameService {
                             return Mono.just(game);
                         }
                     })
-                    .doOnError(throwable -> {
-                        sseEventSender.sendUserIdMessage(userId, new UserMessage()
-                                .userId(userId)
-                                .variant(UserMessage.VariantEnum.ERROR)
-                                .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
-                            .subscribe();
-                    })
+
                     .doFinally((_unused) -> this.scheduleNext(gameEngine));
             })
-            .subscribe();
+            .doOnError(throwable -> {
+                sseEventSender.sendUserIdMessage(userId, new UserMessage()
+                        .userId(userId)
+                        .variant(UserMessage.VariantEnum.ERROR)
+                        .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
+                    .subscribe();
+            }).subscribe();
     }
 
     private void scheduleNext(final GameEngine gameEngine) {
