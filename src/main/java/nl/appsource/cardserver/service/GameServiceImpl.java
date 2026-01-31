@@ -190,8 +190,8 @@ public class GameServiceImpl implements GameService {
 
         eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
         Mono.just(gameId)
-            .filter(game -> isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
             .flatMap(gameRepository::findByIdPessimistic)
+            .filter(game -> isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
             .doOnNext(game -> {
                 log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
             })
