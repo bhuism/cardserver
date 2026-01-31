@@ -24,8 +24,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -225,6 +227,7 @@ public class GameServiceImpl implements GameService {
 
                     .doFinally((_unused) -> this.scheduleNext(gameEngine));
             })
+            .retryWhen(Retry.backoff(10, Duration.ofMillis(100)))
             .doOnError(throwable -> {
                 sseEventSender.sendUserIdMessage(userId, new UserMessage()
                         .userId(userId)
