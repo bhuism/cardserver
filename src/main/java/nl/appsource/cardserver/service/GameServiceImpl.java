@@ -184,6 +184,10 @@ public class GameServiceImpl implements GameService {
 
     public void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
+        if (userId == null) {
+            log.error("userId === null", new RuntimeException("userId == null"));
+        }
+
         eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
         Mono.just(gameId)
             .flatMap(gameRepository::findByIdPessimistic)
