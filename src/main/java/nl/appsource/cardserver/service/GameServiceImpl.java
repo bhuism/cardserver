@@ -269,7 +269,6 @@ public class GameServiceImpl implements GameService {
 //        singleEvent.setEvent(scheduledGameEvent.getGameEventType().name());
 //        singleEventRepository.save(singleEvent).subscribe();
 
-        if (scheduledGameEvent.getUserId() == null && scheduledGameEvent.get)
 
         eventQueue.add(scheduledGameEvent);
     }
