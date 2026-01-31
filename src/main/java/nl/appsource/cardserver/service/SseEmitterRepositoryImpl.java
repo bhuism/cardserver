@@ -152,7 +152,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 .filter(userChannel -> userChannel.userId.equals(userId))
                 .forEach(userChannel -> userChannel.sink.emitNext(myServerSentEvent, busyLooping(Duration.ofMillis(1000))));
         } else {
-            log.error("MyServerSentEvent has no appIdentifier or userId, event=" + myServerSentEvent.event());
+            log.error("MyServerSentEvent has no appIdentifier or userId, event=" + myServerSentEvent.event(), new RuntimeException());
         }
     }
 
