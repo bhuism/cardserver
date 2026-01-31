@@ -227,6 +227,7 @@ public class GameServiceImpl implements GameService {
             })
             .retryWhen(Retry.backoff(10, Duration.ofMillis(100)))
             .doOnError(throwable -> {
+                log.error("executeSynchronious()", throwable);
                 sseEventSender.sendUserIdMessage(userId, new UserMessage()
                         .userId(userId)
                         .variant(UserMessage.VariantEnum.ERROR)
