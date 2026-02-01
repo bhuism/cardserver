@@ -9,16 +9,13 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
-
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 
 @Slf4j
@@ -32,8 +29,8 @@ public class SubscribeController extends GenericController implements V1Api {
         this.sseEmitterRepository = sseEmitterRepository;
     }
 
-    @RequestMapping(method = {GET, POST}, path = "/subscribe/{appIdentifier}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>> subscribe(final ServerWebExchange exchange, @PathVariable final String appIdentifier) {
+    @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>> subscribe(@RequestBody final String _body, final ServerWebExchange exchange) {
 
         final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
         final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
@@ -43,7 +40,7 @@ public class SubscribeController extends GenericController implements V1Api {
         return ResponseEntity.ok()
             .cacheControl(CacheControl.noCache())
             .body(getUserId(exchange)
-                .flatMapMany(user -> sseEmitterRepository.subscribe(appIdentifier,
+                .flatMapMany(user -> sseEmitterRepository.subscribe(
                     user.getId(), "" + exchange.getRequest().getRemoteAddress(),
                     userAgent
                 )));

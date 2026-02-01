@@ -8,6 +8,6 @@ public interface SseEmitterRepository {
 
     void send(String appIdentifier, String userId, MyServerSentEvent myServerSentEvent);
 
-    Flux<@NonNull ServerSentEvent<Object>> subscribe(String appIdentifier, String userId, String remoteAddress, String userAgent);
+    Flux<@NonNull ServerSentEvent<Object>> subscribe(String userId, String remoteAddress, String userAgent);
 
 }

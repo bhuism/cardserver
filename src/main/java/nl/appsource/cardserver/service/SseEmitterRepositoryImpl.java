@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static nl.appsource.cardserver.service.MyServerSentEvent.hello;
 import static nl.appsource.cardserver.service.MyServerSentEvent.ping;
+import static nl.appsource.cardserver.utils.IDTYPE.SESS;
+import static nl.appsource.cardserver.utils.Utils.idGen;
 import static reactor.core.publisher.Mono.just;
 import static reactor.core.publisher.Sinks.EmitFailureHandler.busyLooping;
 
@@ -157,11 +159,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final String appIdentifier, final String userId, final String remoteAddress, final String userAgent) {
+    public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
+
+        final String appIdentifier = idGen(SESS, 8);
+
+        final AtomicLong atomicLong = new AtomicLong(1);
 
         log.info("{} subscribe() appIdentifier={} userId={}, subscriber={} userChannels={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
 
-        final UserChannel userChannel = userChannels.computeIfAbsent(appIdentifier, id -> new UserChannel(userId));
+        final UserChannel userChannel = new UserChannel(userId);
+
+        userChannels.put(appIdentifier, userChannel);
 
         new Thread(() -> {
             try {
@@ -172,8 +180,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 throw new RuntimeException(e);
             }
         }).start();
-
-        final AtomicLong atomicLong = new AtomicLong(1);
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .flatMap(sseSessionRepository::save)
