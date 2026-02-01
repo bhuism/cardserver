@@ -165,8 +165,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         new Thread(() -> {
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
                 initCache(userId).subscribe(a -> userChannel.sink.emitNext(a, busyLooping(Duration.ofMillis(10000))));
+                sseEventSender.sendOnlineListToFriendsOf(userId).subscribe();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -176,9 +177,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .flatMap(sseSessionRepository::save)
-            .then(sseEventSender.sendOnlineListToFriendsOf(userId))
             .thenMany(
-                Flux.merge(just(ping()), just(ping()), just(ping()), just(hello(new HelloEvent().hostName(HOSTNAME))), userChannel.sink.asFlux(), mainSink.asFlux())
+                Flux.merge(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())
                     .onBackpressureDrop(myServerSentEvent -> {
                         log.warn("{} onBackpressureDrop() appIdentifier={} userId={}, subscribers={} userChannels={}, event={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size(), myServerSentEvent.event());
                     })

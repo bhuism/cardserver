@@ -486,17 +486,17 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playCard"
-#    pingPongRequestBody:
-#      required: true
-#      content:
-#        application/json:
-#          schema:
-#            type: object
-#            properties:
-#              appIdentifier:
-#                type: string
-#            required:
-#              - appIdentifier
+    #    pingPongRequestBody:
+    #      required: true
+    #      content:
+    #        application/json:
+    #          schema:
+    #            type: object
+    #            properties:
+    #              appIdentifier:
+    #                type: string
+    #            required:
+    #              - appIdentifier
     updatePreferences:
       required: true
       content:
@@ -824,8 +824,11 @@ components:
       properties:
         hostName:
           type: string
+        appIdentifier:
+          type: string
       required:
         - hostName
+        - appIdentifier
     OnlineListEvent:
       type: object
       properties:
@@ -885,13 +888,13 @@ components:
       required:
         - gameId
         - displayNameCreator
-#    NewFriendEvent:
-#      type: object
-#      properties:
-#        newFriendId:
-#          type: string
-#      required:
-#        - newFriendId
+    #    NewFriendEvent:
+    #      type: object
+    #      properties:
+    #        newFriendId:
+    #          type: string
+    #      required:
+    #        - newFriendId
     MessageEvent:
       type: object
       properties:
