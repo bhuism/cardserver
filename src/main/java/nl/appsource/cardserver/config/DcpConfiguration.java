@@ -109,6 +109,10 @@ public class DcpConfiguration {
                                 final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
                                 sseEvent.setId(id);
 
+                                if (sseEvent.getAppIdentifier() == null && sseEvent.getUserId() == null) {
+                                    log.warn("received sse event without userId and appIdentifier");
+                                }
+
 //                                log.info("Received SseEvent from db: appIdentifier: {}, userId: {}, event: {} ", sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent());
                                 sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
 
