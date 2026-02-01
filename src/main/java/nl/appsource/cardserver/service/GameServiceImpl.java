@@ -118,11 +118,7 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::save)
             .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
             .flatMap(game -> sseEventSender.newGame(game).then(Mono.just(game)))
-            .doOnNext(game -> {
-                if (new GameEngineImpl(game).isAiSay()) {
-                    scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 5000, null, GameEventType.AI_SAY, game.getId()));
-                }
-            });
+            .doOnNext(game -> scheduleNext(new GameEngineImpl(game)));
     }
 
     @Override
