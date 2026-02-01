@@ -185,7 +185,8 @@ public class GameServiceImpl implements GameService {
     public void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
         if (userId == null) {
-            log.error("userId === null", new RuntimeException("userId == null"));
+            log.error("userId === null, gameEventType=" + gameEventType.name(), new RuntimeException("userId == null"));
+            return;
         }
 
         eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
@@ -225,14 +226,16 @@ public class GameServiceImpl implements GameService {
 
                     .doFinally((_unused) -> this.scheduleNext(gameEngine));
             })
-            .retryWhen(Retry.backoff(10, Duration.ofMillis(100)))
+            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)))
             .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
-                sseEventSender.sendUserIdMessage(userId, new UserMessage()
-                        .userId(userId)
-                        .variant(UserMessage.VariantEnum.ERROR)
-                        .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
-                    .subscribe();
+                if (userId != null && !isAiPlayer(userId)) {
+                    sseEventSender.sendUserIdMessage(userId, new UserMessage()
+                            .userId(userId)
+                            .variant(UserMessage.VariantEnum.ERROR)
+                            .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
+                        .subscribe();
+                }
             }).subscribe();
     }
 
@@ -263,6 +266,10 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void scheduleGameEvent(final ScheduledGameEvent scheduledGameEvent) {
+
+        if (scheduledGameEvent.getUserId() == null) {
+            log.error("userId = null , not scheduling ", new RuntimeException("not scheduling exmpty userId"));
+        }
 
 //        final SingleEvent singleEvent = new SingleEvent();
 //        singleEvent.setId(idGen(IDTYPE.SVNT, 20));
