@@ -35,7 +35,7 @@ public class SubscribeController extends GenericController implements V1Api {
     @RequestMapping(method = {GET, POST}, path = "/subscribe/{appIdentifier}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>> subscribe(final ServerWebExchange exchange, @PathVariable final String appIdentifier) {
 
-        final List<String> userAgentList = exchange.getRequest().getHeaders().get("user-agent");
+        final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
         final String userAgent = userAgentList != null && userAgentList.isEmpty() ? userAgentList.getFirst() : null;
 
         exchange.getResponse().getHeaders().add("X-Accel-Buffering", "no");
