@@ -28,5 +28,7 @@ public interface UserService {
 
     Mono<Void> usersMessage(String userId, List<String> recipients, String message);
 
+    Mono<String> updateUpdated(String userId);
+
 }
 

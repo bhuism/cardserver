@@ -15,10 +15,12 @@ import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
+import nl.appsource.cardserver.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -71,6 +73,12 @@ public class GameControllerTests {
     @MockitoBean
     private BoomRepository boomRepository;
 
+    @MockitoBean
+    private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
+
+    @MockitoBean
+    private UserService userService;
+
     @Test
     @WithMockUser(username = "user-abc")
     void getGame_whenGameNotFound_shouldReturnNotFound() {
@@ -83,6 +91,8 @@ public class GameControllerTests {
 
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
+        when(userService.updateUpdated("user-abc")).thenReturn(Mono.just("user-abc"));
+        when(userService.updateUpdated("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")).thenReturn(Mono.just("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"));
 
         final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "hostname", "user-abc");
         when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
@@ -116,6 +126,8 @@ public class GameControllerTests {
 
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
+        when(userService.updateUpdated("user-abc")).thenReturn(Mono.just("user-abc"));
+        when(userService.updateUpdated("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")).thenReturn(Mono.just("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"));
 
         final Game mockGame = new Game();
         mockGame.setId("myid");

@@ -309,7 +309,7 @@ public class GameServiceImpl implements GameService {
                         if (verzaakteSpelers.isEmpty()) {
                             return sseEventSender.sendUserIdMessage(gameEngine.getGame()
                                 .getPlayers(), new UserMessage()
-                                .userId(auth.user().getId())
+                                .userId(auth.userId())
                                 .variant(UserMessage.VariantEnum.INFO)
                                 .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
                         } else {
@@ -317,7 +317,7 @@ public class GameServiceImpl implements GameService {
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
                                     .flatMap(player -> sseEventSender.sendUserIdMessage(gameEngine.getGame()
                                         .getPlayers(), new UserMessage()
-                                        .userId(auth.user().getId())
+                                        .userId(auth.userId())
                                         .variant(UserMessage.VariantEnum.ERROR)
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName())))
                                 ).then();

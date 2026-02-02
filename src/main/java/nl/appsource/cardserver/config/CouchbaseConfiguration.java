@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
-import org.springframework.data.couchbase.repository.config.EnableReactiveCouchbaseRepositories;
 import org.springframework.data.domain.ReactiveAuditorAware;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -20,7 +19,7 @@ import java.time.Duration;
 @Configuration
 @RequiredArgsConstructor
 @Profile("!citest")
-@EnableReactiveCouchbaseRepositories(basePackages = "nl.appsource.cardserver.repository")
+//@EnableReactiveCouchbaseRepositories(basePackages = "nl.appsource.cardserver.repository")
 @EnableReactiveCouchbaseAuditing(auditorAwareRef = "reactiveAuditorAware")
 public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 

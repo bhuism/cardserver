@@ -39,4 +39,7 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
     @Query(value = ONLINE_FRIENDIDS, readonly = true)
     Flux<String> getOnlineFriends(String userId);
 
+    @Query("UPDATE #{#n1ql.bucket} USE KEYS $userId SET lastLogin=NOW_MILLIS() RETURNING *")
+    Mono<User> updateLastLogin(String userId);
+
 }

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -54,6 +55,9 @@ public class HttpRequestTests {
     @MockitoBean
     private SingleEventRepository singleEventRepository;
 
+    @MockitoBean
+    private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
+
     @Test
     void greetingShouldReturnDefaultMessage() {
         assertThat(this.webTestClient.get().uri("http://localhost:" + port + "/", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
@@ -75,6 +79,6 @@ public class HttpRequestTests {
     @Test
     public void actuatorHealthReadinessShouldReturnDefaultMessage() {
         assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health/readiness", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
-        .isEqualTo("{\"status\":\"UP\"}");
+            .isEqualTo("{\"status\":\"UP\"}");
     }
 }

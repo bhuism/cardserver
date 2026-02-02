@@ -9,6 +9,7 @@ import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -36,6 +37,9 @@ class CardServerApplicationTests {
 
     @MockitoBean
     private SingleEventRepository singleEventRepository;
+
+    @MockitoBean
+    private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
     @Test
     void contextLoads() {

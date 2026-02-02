@@ -515,7 +515,7 @@ components:
       in: header
       schema:
         type: string
-      required: false
+      required: true
     gameId:
       name: gameId
       in: path

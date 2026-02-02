@@ -5,6 +5,7 @@ import nl.appsource.cardserver.model.Feedback;
 import nl.appsource.cardserver.repository.FeedbackRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.FeedbackApi;
 import org.openapitools.model.FeedbackRequest;
 import org.springframework.http.HttpStatus;
@@ -12,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-
-import java.util.Optional;
 
 import static nl.appsource.cardserver.utils.IDTYPE.FEED;
 import static nl.appsource.cardserver.utils.Utils.idGen;
@@ -24,13 +23,13 @@ public class CacheController extends GenericController implements V1Api, Feedbac
 
     private final FeedbackRepository feedBackRepository;
 
-    public CacheController(final SseSessionRepository sseSessionRepository, final UserRepository userRepositoryArg, final FeedbackRepository feedbackRepositoryArg) {
-        super(userRepositoryArg, sseSessionRepository);
-        this.feedBackRepository = feedbackRepositoryArg;
+    public CacheController(final SseSessionRepository sseSessionRepository, final UserRepository userRepository, final FeedbackRepository feedbackRepository, final UserService userService) {
+        super(userRepository, sseSessionRepository, userService);
+        this.feedBackRepository = feedbackRepository;
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> feedback(final Mono<FeedbackRequest> feedbackRequest, final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> feedback(final String appIdentifier, final Mono<FeedbackRequest> feedbackRequest, final ServerWebExchange exchange) {
         log.info("{} feedback() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .flatMap(user -> feedbackRequest.flatMap((fb) -> {

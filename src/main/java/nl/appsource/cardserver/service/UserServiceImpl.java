@@ -1,12 +1,14 @@
 package nl.appsource.cardserver.service;
 
 
+import com.couchbase.client.core.error.DocumentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
 import org.openapitools.model.UpdatePreferences;
 import org.openapitools.model.UserMessage;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -15,7 +17,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.couchbase.client.java.kv.MutateInSpec.upsert;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,8 @@ public class UserServiceImpl implements UserService {
     private final SseEmitterRepository sseEmitterRepository;
 
     private final SseEventSender sseEventSender;
+
+    private final ReactiveCouchbaseTemplate template;
 
     @Override
     public Mono<User> findById(final String userId) {
@@ -140,6 +146,18 @@ public class UserServiceImpl implements UserService {
             .userId(userId)
             .message(message)
             .variant(UserMessage.VariantEnum.INFO));
+    }
+
+
+    @Override
+    public Mono<String> updateUpdated(final String userId) {
+        return template.getCouchbaseClientFactory()
+            .getBucket()
+            .defaultCollection()
+            .reactive()
+            .mutateIn(userId, singletonList(upsert("updated", System.currentTimeMillis())))
+            .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
+            .map(_mutateInResult -> userId);
     }
 
 }

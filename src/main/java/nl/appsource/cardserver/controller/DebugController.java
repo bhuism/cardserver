@@ -29,7 +29,7 @@ public class DebugController implements DebugApi, V1Api {
     private final SseSessionRepository sseSessionRepository;
 
     @Override
-    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final Optional<String> appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final String appIdentifier, final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .map(Authentication::getName)
