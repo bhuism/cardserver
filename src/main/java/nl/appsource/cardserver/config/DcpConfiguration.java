@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.config;
 
 import com.couchbase.client.core.deps.io.netty.buffer.ByteBufInputStream;
-import com.couchbase.client.core.error.CasMismatchException;
 import com.couchbase.client.dcp.Client;
 import com.couchbase.client.dcp.StreamFrom;
 import com.couchbase.client.dcp.StreamTo;
@@ -15,10 +14,8 @@ import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.SingleEvent;
 import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.SingleEventRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.MyServerSentEvent;
 import nl.appsource.cardserver.service.SseEmitterRepository;
@@ -56,7 +53,7 @@ public class DcpConfiguration {
 
     private final UserRepository userRepository;
 
-    private final SingleEventRepository singleEventRepository;
+//    private final SingleEventRepository singleEventRepository;
 
     private static final String HOSTNAME;
 
@@ -145,24 +142,24 @@ public class DcpConfiguration {
 
                             }
 
-                            case "nl.appsource.cardserver.model.SingleEvent" -> {
-                                final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);
-                                singleEvent.setId(id);
-
-                                //                              log.info("Got SingleEvent " + id + ", lockedBy: " + singleEvent.getLockedBy() + ", handledBy: " + singleEvent.getHandledBy() + " raw=" + MessageUtil.getContentAsString(event));
-
-                                if (singleEvent.isUnlocked()) {
-//                                    log.info("Got SingleEvent unlocked, trying to lock " + id);
-                                    // try to get the lock
-                                    singleEventRepository.lockById(singleEvent.getId(), HOSTNAME)
-                                        .onErrorComplete(throwable -> throwable.getClass().equals(CasMismatchException.class))
-                                        .subscribe();
-                                } else if (singleEvent.isLockedBy(HOSTNAME)) {
-                                    // we can process it
-                                    log.info("Processing SingleEvent id=" + id + " in host=" + HOSTNAME + ", event=" + singleEvent.getEvent());
-                                    singleEventRepository.handledBy(singleEvent.getId(), HOSTNAME).subscribe();
-                                }
-                            }
+//                            case "nl.appsource.cardserver.model.SingleEvent" -> {
+//                                final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);
+//                                singleEvent.setId(id);
+//
+//                                //                              log.info("Got SingleEvent " + id + ", lockedBy: " + singleEvent.getLockedBy() + ", handledBy: " + singleEvent.getHandledBy() + " raw=" + MessageUtil.getContentAsString(event));
+//
+//                                if (singleEvent.isUnlocked()) {
+////                                    log.info("Got SingleEvent unlocked, trying to lock " + id);
+//                                    // try to get the lock
+//                                    singleEventRepository.lockById(singleEvent.getId(), HOSTNAME)
+//                                        .onErrorComplete(throwable -> throwable.getClass().equals(CasMismatchException.class))
+//                                        .subscribe();
+//                                } else if (singleEvent.isLockedBy(HOSTNAME)) {
+//                                    // we can process it
+//                                    log.info("Processing SingleEvent id=" + id + " in host=" + HOSTNAME + ", event=" + singleEvent.getEvent());
+//                                    singleEventRepository.handledBy(singleEvent.getId(), HOSTNAME).subscribe();
+//                                }
+//                            }
                             default -> {
                             }
                         }

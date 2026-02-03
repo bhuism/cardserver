@@ -8,7 +8,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface BoomRepository extends ReactiveCouchbaseRepository<Boom, String> {
+public interface BoomRepository extends ReactiveCouchbaseRepository<Boom, String>, ReactiveBaseEntityRepository<Boom> {
 
     @Query(value = "SELECT META(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit", readonly = true)
     Flux<String> findByUserId(String userId, Integer limit);
