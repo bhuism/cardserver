@@ -87,7 +87,7 @@ public class GameServiceImpl implements GameService {
     public Mono<Game> createGame(final String creator, final List<String> players, final GameVariant gameVariant, final String boomId, final Integer dealer, final AiRisc aiRisc) {
 
         if (players.size() != 4) {
-            throw new IllegalArgumentException("need 4 players");
+            throw new IllegalArgumentException("need 4 players: " + players);
         }
 
         if (!StringUtils.hasText(creator)) {

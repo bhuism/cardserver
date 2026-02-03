@@ -73,7 +73,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Boom>> getBoom(final String boomId, final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Boom>> getBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         log.info("{} getBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> boomService.getBoom(auth.userId(), boomId))
@@ -116,7 +116,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
 
 
     @Override
-    public Mono<ResponseEntity<Game>> playBoom(final String boomId, final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Game>> playBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         log.info("{} playBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> {
@@ -128,11 +128,13 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
                             .next()
                             .switchIfEmpty(Mono.defer(() -> {
                                 if (boom.getGames().size() < 16) {
-                                    return calcDealer(boom).flatMap(dealer -> {
-                                        return gameService.createGame(auth.userId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
-                                            .doOnNext(game -> boom.getGames().add(game.getId()))
-                                            .flatMap(game -> boomRepository.save(boom).thenReturn(game));
-                                    });
+                                    return calcDealer(boom)
+                                        .flatMap(dealer -> {
+                                            log.info("Boom " + boomId + ", player=" + boom.getPlayers());
+                                            return gameService.createGame(auth.userId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
+                                                .doOnNext(game -> boom.getGames().add(game.getId()))
+                                                .flatMap(game -> boomRepository.save(boom).thenReturn(game));
+                                        });
                                 } else {
                                     return Mono.empty();
                                 }
@@ -147,7 +149,7 @@ public class BoomController extends GenericController implements BoomApi, V1Api 
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteBoom(final String boomId, final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> deleteBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
         log.info("{} deleteBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::userId)
