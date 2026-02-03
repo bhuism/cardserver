@@ -12,12 +12,12 @@ import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
 @Repository
 public interface SingleEventRepository extends ReactiveCouchbaseRepository<SingleEvent, String> {
 
-    @Query(value = "UPDATE #{#n1ql.bucket} USE KEYS $id SET lockedBy = $lockedBy WHERE META().id==$id AND lockedBy IS MISSING AND handledBy IS MISSING", readonly = false)
     @ScanConsistency(query = REQUEST_PLUS)
+    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET lockedBy = $lockedBy WHERE META().id==$id AND lockedBy IS MISSING AND handledBy IS MISSING")
     Mono<Void> lockById(String id, String lockedBy);
 
-    @Query(value = "UPDATE #{#n1ql.bucket} USE KEYS $id SET handledBy = $handledBy WHERE META().id==$id AND lockedBy=$handledBy AND handledBy IS MISSING", readonly = false)
     @ScanConsistency(query = REQUEST_PLUS)
+    @Query(value = "UPDATE #{#n1ql.bucket} USE KEYS $id SET handledBy = $handledBy WHERE META().id==$id AND lockedBy=$handledBy AND handledBy IS MISSING")
     Mono<Void> handledBy(String id, String handledBy);
 
 }
