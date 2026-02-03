@@ -28,28 +28,11 @@ public class SseSession extends BaseEntity {
 
     private int pongReceivedCount = 0;
 
-//    private Instant created = Instant.now();
-//
-//    private Instant updated = Instant.now();
-
-//    @QueryIndexed
-//    private String creator;
-
     public SseSession(final String id, final String remoteAddress, final String userAgent, final String host, final String creator) {
         super(id);
         this.remoteAddress = remoteAddress;
         this.userAgent = userAgent;
         this.host = host;
     }
-
-//    public void ping() {
-//        pingReceived = Instant.now();
-//        pingReceivedCount++;
-//    }
-//
-//    public void pong() {
-//        pongReceived = Instant.now();
-//        pongReceivedCount++;
-//    }
 
 }
