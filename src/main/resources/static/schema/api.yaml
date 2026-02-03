@@ -100,6 +100,17 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/SseConnectionsResponse"
+  /debug/sseconnections/{sessionIdentifier}:
+    parameters:
+      - $ref: "#/components/parameters/AppIdentifier"
+      - $ref: "#/components/parameters/sessionIdentifier"
+    delete:
+      tags:
+        - debug
+      operationId: deleteSseSession
+      responses:
+        "200":
+          description: ok
   /login:
     post:
       tags:
@@ -518,6 +529,12 @@ components:
       required: true
     gameId:
       name: gameId
+      in: path
+      schema:
+        type: string
+      required: true
+    sessionIdentifier:
+      name: sessionIdentifier
       in: path
       schema:
         type: string

@@ -63,4 +63,14 @@ public class DebugController extends AbstractBaseController implements DebugApi,
                     .build()
             );
     }
+
+    @Override
+    public Mono<ResponseEntity<Void>> deleteSseSession(String appIdentifier, String sessionIdentifier, ServerWebExchange exchange) {
+        return authorize(appIdentifier, exchange)
+            .filter(auth -> isAdmin(auth.userId()))
+            .flatMap(_s -> sseSessionRepository.deleteById(sessionIdentifier).thenReturn(true))
+            .map(_s -> ResponseEntity.ok().<Void>build())
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
 }
+
