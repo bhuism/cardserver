@@ -181,7 +181,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             }
         }).start();
 
-        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
+        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
                 Flux.merge(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping()), userChannel.sink.asFlux(), mainSink.asFlux())

@@ -28,7 +28,7 @@ public class SseSession extends BaseEntity {
 
     private int pongReceivedCount = 0;
 
-    public SseSession(final String id, final String remoteAddress, final String userAgent, final String host, final String creator) {
+    public SseSession(final String id, final String remoteAddress, final String userAgent, final String host) {
         super(id);
         this.remoteAddress = remoteAddress;
         this.userAgent = userAgent;

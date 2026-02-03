@@ -31,7 +31,6 @@ public class DebugController extends AbstractBaseController implements DebugApi,
         return authorize(appIdentifier, exchange)
             .filter(auth -> isAdmin(auth.userId()))
             .flatMap(_s -> {
-
                 final Flux<SseConnection> connections = sseSessionRepository.findAll()
                     .map(mySseEmitterEntry -> {
                         final SseConnection sseConnection = new SseConnection();
@@ -48,8 +47,6 @@ public class DebugController extends AbstractBaseController implements DebugApi,
                         sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());
                         return sseConnection;
                     });
-
-
                 return Mono.zip(arr -> new SseConnections().connections(
                         (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
                     connections.collectList(),
