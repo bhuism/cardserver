@@ -103,10 +103,11 @@ paths:
   /debug/sseconnections/{sessionIdentifier}:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
-      - $ref: "#/components/parameters/sessionIdentifier"
     delete:
       tags:
         - debug
+      parameters:
+        - $ref: "#/components/parameters/sessionIdentifier"
       operationId: deleteSseSession
       responses:
         "200":
