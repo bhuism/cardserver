@@ -65,7 +65,7 @@ public class SubscribeController extends AbstractBaseController implements V1Api
 //        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
-            .map(sseSessionRepository::pong)
+            .flatMap(sseSessionRepository::pong)
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
