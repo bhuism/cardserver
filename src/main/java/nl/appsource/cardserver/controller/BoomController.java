@@ -29,7 +29,7 @@ import java.util.Random;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class BoomController extends GenericController implements BoomApi, V1Api {
+public class BoomController extends AbstractBaseController implements BoomApi, V1Api {
 
     private final BoomService boomService;
     private final BoomToOpenApiConverter boomToOpenApiConverter;

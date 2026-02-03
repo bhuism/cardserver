@@ -26,7 +26,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class SubscribeController extends GenericController implements V1Api, PingApi, PongApi {
+public class SubscribeController extends AbstractBaseController implements V1Api, PingApi, PongApi {
 
     private final SseEmitterRepository sseEmitterRepository;
     private final SseSessionRepository sseSessionRepository;

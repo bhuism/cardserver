@@ -24,7 +24,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class GameController extends GenericController implements GamesApi, V1Api {
+public class GameController extends AbstractBaseController implements GamesApi, V1Api {
 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;

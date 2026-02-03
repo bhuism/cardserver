@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @RequiredArgsConstructor
-public class GenericController {
+public abstract class AbstractBaseController {
 
     @Autowired
     private UserRepository userRepository;

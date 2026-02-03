@@ -18,7 +18,7 @@ import static nl.appsource.cardserver.utils.Utils.idGen;
 @RequiredArgsConstructor
 @RestController
 @Slf4j
-public class CacheController extends GenericController implements V1Api, FeedbackApi {
+public class CacheController extends AbstractBaseController implements V1Api, FeedbackApi {
 
     private final FeedbackRepository feedBackRepository;
 

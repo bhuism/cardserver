@@ -21,7 +21,7 @@ import java.time.Instant;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class AuthController extends GenericController implements LoadUserApi, RotateJwtApi, V1Api {
+public class AuthController extends AbstractBaseController implements LoadUserApi, RotateJwtApi, V1Api {
 
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
