@@ -34,8 +34,6 @@ public class SubscribeController extends GenericController implements V1Api {
     @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(@RequestBody final String body, final ServerWebExchange exchange) {
 
-        log.info("subscribe()");
-
         final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
         final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
 
