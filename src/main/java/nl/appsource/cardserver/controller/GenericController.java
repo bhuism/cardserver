@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import nl.appsource.cardserver.service.UserService;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -16,25 +16,29 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class GenericController {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    private final SseSessionRepository sseSessionRepository;
-
-    private final UserService userService;
+    @Autowired
+    private SseSessionRepository sseSessionRepository;
 
     public Mono<String> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
             .map(Authentication::getName)
-            .flatMap(userRepository::updateUpdated);
+            .flatMap(userId -> userRepository.updateUpdated(userId).switchIfEmpty(Mono.defer(() -> {
+                    log.warn("{} {} user not found, userId={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), userId);
+                    return Mono.empty();
+                })
+            ));
     }
 
     protected Mono<CardServerAuthentication> authorize(final String appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
             .flatMap(userId -> sseSessionRepository.updateUpdated(appIdentifier).map(_unused -> new CardServerAuthentication(userId, appIdentifier)))
             .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} user not found, appIdentifier={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier);
+                log.warn("{} {} session not found, appIdentifier={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier);
                 return Mono.empty();
             }));
 

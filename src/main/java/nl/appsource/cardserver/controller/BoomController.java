@@ -1,16 +1,15 @@
 package nl.appsource.cardserver.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converter.GameToOpenApiConverter;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.service.UserService;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.BoomApi;
 import org.openapitools.model.Boom;
@@ -29,34 +28,18 @@ import java.util.Random;
 
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class BoomController extends GenericController implements BoomApi, V1Api {
 
     private final BoomService boomService;
-
     private final BoomToOpenApiConverter boomToOpenApiConverter;
-
     private final BoomRepository boomRepository;
-
     private final GameRepository gameRepository;
-
     private final GameService gameService;
-
     private final GameToOpenApiConverter gameToOpenApiConverter;
-
     private final UserRepository userRepository;
 
     private static final Random RAND = new SecureRandom();
-
-    public BoomController(final SseSessionRepository sseSessionRepository, final BoomService boolService, final BoomToOpenApiConverter boomToOpenApiConverter, final GameRepository gameRepository, final BoomRepository boomRepository, final GameService gameService, final GameToOpenApiConverter gameToOpenApiConverter, final UserRepository userRepository, final UserService userService) {
-        super(userRepository, sseSessionRepository, userService);
-        this.userRepository = userRepository;
-        this.boomService = boolService;
-        this.boomToOpenApiConverter = boomToOpenApiConverter;
-        this.gameRepository = gameRepository;
-        this.boomRepository = boomRepository;
-        this.gameService = gameService;
-        this.gameToOpenApiConverter = gameToOpenApiConverter;
-    }
 
     @Override
     public Mono<ResponseEntity<Boom>> createBoom(final String appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {

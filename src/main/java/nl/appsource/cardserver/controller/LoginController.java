@@ -1,9 +1,9 @@
 package nl.appsource.cardserver.controller;
 
 import com.nimbusds.jose.JOSEException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
-import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.CardServerJwtModem;
 import nl.appsource.cardserver.service.UserService;
@@ -23,6 +23,7 @@ import java.time.Instant;
 import static nl.appsource.cardserver.utils.IDTYPE.USER;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
+@RequiredArgsConstructor
 @Slf4j
 @RestController
 public class LoginController implements LoginApi {
@@ -31,13 +32,6 @@ public class LoginController implements LoginApi {
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
     private final UserRepository userRepository;
-
-    public LoginController(final UserRepository userRepository, final UserService userService, final CardServerJwtModem cardServerJwtModem, final UserToOpenApiConverter userToOpenApiConverter, final SseSessionRepository sseSessionRepository) {
-        this.userService = userService;
-        this.cardServerJwtModem = cardServerJwtModem;
-        this.userToOpenApiConverter = userToOpenApiConverter;
-        this.userRepository = userRepository;
-    }
 
     @Override
     public Mono<ResponseEntity<LoginResponse>> login(final ServerWebExchange exchange) {

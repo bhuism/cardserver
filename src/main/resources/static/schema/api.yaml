@@ -286,7 +286,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/UsersResponse"
-  /users/ping:
+  /ping:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     post:
@@ -294,7 +294,7 @@ paths:
       responses:
         "200":
           description: ok
-  /users/pong:
+  /pong:
     parameters:
       - $ref: "#/components/parameters/AppIdentifier"
     post:

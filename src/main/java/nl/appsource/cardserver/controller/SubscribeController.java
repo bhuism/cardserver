@@ -1,11 +1,14 @@
 package nl.appsource.cardserver.controller;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.repository.SseSessionRepository;
-import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEmitterRepository;
-import nl.appsource.cardserver.service.UserService;
+import nl.appsource.cardserver.service.SseEventSender;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
+import org.openapitools.api.PingApi;
+import org.openapitools.api.PongApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +25,12 @@ import java.util.List;
 
 @Slf4j
 @RestController
-public class SubscribeController extends GenericController implements V1Api {
+@RequiredArgsConstructor
+public class SubscribeController extends GenericController implements V1Api, PingApi, PongApi {
 
     private final SseEmitterRepository sseEmitterRepository;
-
-    public SubscribeController(final SseEmitterRepository sseEmitterRepository, final UserRepository userRepository, final SseSessionRepository sseSessionRepository, final UserService userService) {
-        super(userRepository, sseSessionRepository, userService);
-        this.sseEmitterRepository = sseEmitterRepository;
-    }
+    private final SseSessionRepository sseSessionRepository;
+    private final SseEventSender sseEventSender;
 
     @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(@RequestBody final String body, final ServerWebExchange exchange) {
@@ -46,6 +47,27 @@ public class SubscribeController extends GenericController implements V1Api {
             )))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Flux.empty()));
 
+    }
+
+    @Override
+    public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
+//        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
+        return authorize(appIdentifier, exchange)
+            .map(CardServerAuthentication::appIdentifier)
+            .flatMap(sseSessionRepository::ping)
+            .delayUntil(sseEventSender::sendPong)
+            .map(_ -> ResponseEntity.ok().<Void>build())
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
+//        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
+        return authorize(appIdentifier, exchange)
+            .map(CardServerAuthentication::appIdentifier)
+            .map(sseSessionRepository::pong)
+            .map(_ -> ResponseEntity.ok().<Void>build())
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
 }

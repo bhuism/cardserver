@@ -55,7 +55,7 @@ public class DebugController implements DebugApi, V1Api {
 
 
                 return Mono.zip(arr -> new SseConnections().connections(
-                    (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
+                        (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
                     connections.collectList(),
                     Mono.just(Instant.now())
                 );

@@ -2,12 +2,11 @@ package nl.appsource.cardserver.controller;
 
 import com.nimbusds.jose.JOSEException;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
-import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.CardServerJwtModem;
-import nl.appsource.cardserver.service.UserService;
 import org.openapitools.api.LoadUserApi;
 import org.openapitools.api.RotateJwtApi;
 import org.openapitools.model.LoginResponse;
@@ -21,20 +20,12 @@ import java.time.Instant;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 public class AuthController extends GenericController implements LoadUserApi, RotateJwtApi, V1Api {
 
     private final CardServerJwtModem cardServerJwtModem;
     private final UserToOpenApiConverter userToOpenApiConverter;
     private final UserRepository userRepository;
-    private final UserService userService;
-
-    public AuthController(final UserRepository userRepository, final CardServerJwtModem cardServerJwtModem, final UserToOpenApiConverter userToOpenApiConverter, final SseSessionRepository sseSessionRepository, final UserService userService) {
-        super(userRepository, sseSessionRepository, userService);
-        this.cardServerJwtModem = cardServerJwtModem;
-        this.userToOpenApiConverter = userToOpenApiConverter;
-        this.userRepository = userRepository;
-        this.userService = userService;
-    }
 
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
