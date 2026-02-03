@@ -17,7 +17,7 @@ public interface SingleEventRepository extends ReactiveCouchbaseRepository<Singl
     Mono<Void> lockById(String id, String lockedBy);
 
     @ScanConsistency(query = REQUEST_PLUS)
-    @Query(value = "UPDATE #{#n1ql.bucket} USE KEYS $id SET handledBy = $handledBy WHERE META().id==$id AND lockedBy=$handledBy AND handledBy IS MISSING")
+    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET handledBy = $handledBy WHERE META().id==$id AND lockedBy=$handledBy AND handledBy IS MISSING")
     Mono<Void> handledBy(String id, String handledBy);
 
 }

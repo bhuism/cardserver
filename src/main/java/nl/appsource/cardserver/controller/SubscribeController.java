@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.controller;
 
+import com.couchbase.client.core.error.CasMismatchException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 
 
@@ -55,6 +58,7 @@ public class SubscribeController extends AbstractBaseController implements V1Api
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
             .flatMap(sseSessionRepository::ping)
+            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
             .delayUntil(sseEventSender::sendPong)
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
@@ -66,6 +70,7 @@ public class SubscribeController extends AbstractBaseController implements V1Api
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
             .flatMap(sseSessionRepository::pong)
+            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
