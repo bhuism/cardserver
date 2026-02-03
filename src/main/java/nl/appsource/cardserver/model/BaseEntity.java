@@ -33,4 +33,8 @@ public abstract class BaseEntity {
     @Version
     private long version;
 
+    public BaseEntity(final String id) {
+        this.id = id;
+    }
+
 }

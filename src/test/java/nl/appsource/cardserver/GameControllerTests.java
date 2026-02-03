@@ -3,7 +3,6 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.controller.BoomController;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.BoomRepository;
@@ -16,6 +15,7 @@ import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -79,29 +79,38 @@ public class GameControllerTests {
     @MockitoBean
     private UserService userService;
 
-    @Test
-    @WithMockUser(username = "user-abc")
-    void getGame_whenGameNotFound_shouldReturnNotFound() {
+    @BeforeEach
+    void setUp() {
+        when(gameService.getGame("user-abc", "game-notfound")).thenReturn(Mono.empty());
 
-        when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.empty());
-//        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
+        final Game mockGame = new Game();
+        mockGame.setId("game-found");
+        mockGame.setPlayerCard(Map.of(Card.As, 0));
+        mockGame.setTurns(Collections.emptyList());
+        mockGame.setPlayers(List.of("a", "b", "c", "d"));
+        mockGame.setDealer(0);
+        mockGame.setSay(new HashMap<>());
+        mockGame.setTrump(Suit.Spades);
+
+        when(gameService.getGame("user-abc", "game-found")).thenReturn(Mono.just(mockGame));
 
         final User user = new User();
         user.setId("user-abc");
 
         when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
         when(userRepository.save(user)).thenReturn(Mono.just(user));
-        when(userService.updateUpdated("user-abc")).thenReturn(Mono.just("user-abc"));
-        when(userService.updateUpdated("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")).thenReturn(Mono.just("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"));
+        when(userRepository.updateUpdated("user-abc")).thenReturn(Mono.just("user-abc"));
+        when(sseSessionRepository.updateUpdated("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")).thenReturn(Mono.just("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"));
+    }
 
-        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "hostname", "user-abc");
-        when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
+
+    @Test
+    @WithMockUser(username = "user-abc")
+    void getGame_whenGameNotFound_shouldReturnNotFound() {
 
         webTestClient
-            // Set up a mock authenticated user for the request
-//            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
             .get()
-            .uri("/api/v1/games/game-123")
+            .uri("/api/v1/games/game-notfound")
             .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
@@ -112,43 +121,11 @@ public class GameControllerTests {
     @WithMockUser(username = "user-abc")
     void getGame_whenGameFound_shouldReturnGame() {
 
-
-//        final org.openapitools.model.Game expectedGame = new org.openapitools.model.Game();
-//        expectedGame.setId("myid");
-//        expectedGame.setPlayerCard(List.of(new GamePlayerCardInner(org.openapitools.model.Card.AS, 0)));
-//        expectedGame.setTurns(Collections.emptyList());
-//        expectedGame.setPlayers(List.of("a", "b", "c", "d"));
-//        expectedGame.setDealer(0);
-//        expectedGame.setWhoSay(Optional.of(1));
-
-        final User user = new User();
-        user.setId("user-abc");
-
-        when(userRepository.findById("user-abc")).thenReturn(Mono.just(user));
-        when(userRepository.save(user)).thenReturn(Mono.just(user));
-        when(userService.updateUpdated("user-abc")).thenReturn(Mono.just("user-abc"));
-        when(userService.updateUpdated("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")).thenReturn(Mono.just("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"));
-
-        final Game mockGame = new Game();
-        mockGame.setId("myid");
-        mockGame.setPlayerCard(Map.of(Card.As, 0));
-        mockGame.setTurns(Collections.emptyList());
-        mockGame.setPlayers(List.of("a", "b", "c", "d"));
-        mockGame.setDealer(0);
-        mockGame.setSay(new HashMap<>());
-        mockGame.setTrump(Suit.Spades);
-
-        when(gameService.getGame("user-abc", "game-123")).thenReturn(Mono.just(mockGame));
-//        when(sseEmitterRepository.validate(UUID.fromString("0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90"), "user-abc")).thenReturn(true);
-
-        final SseSession sseSession = new SseSession("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "remoteadrews", "userAgent", "hostname", "user-abc");
-        when(sseSessionRepository.findByIdAndCreator("sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90", "user-abc")).thenReturn(Mono.just(sseSession));
-
         webTestClient
             // Set up a mock authenticated user for the request
 //            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
             .get()
-            .uri("/api/v1/games/game-123")
+            .uri("/api/v1/games/game-found")
             .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()

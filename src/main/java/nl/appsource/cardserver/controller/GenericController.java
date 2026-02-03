@@ -27,13 +27,12 @@ public class GenericController {
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
             .map(Authentication::getName)
-            .flatMap(userService::updateUpdated);
+            .flatMap(userRepository::updateUpdated);
     }
-
 
     protected Mono<CardServerAuthentication> authorize(final String appIdentifier, final ServerWebExchange exchange) {
         return getUserId(exchange)
-            .flatMap(userId -> userService.updateUpdated(appIdentifier).map(_unused -> new CardServerAuthentication(userId, appIdentifier)))
+            .flatMap(userId -> sseSessionRepository.updateUpdated(appIdentifier).map(_unused -> new CardServerAuthentication(userId, appIdentifier)))
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} {} user not found, appIdentifier={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier);
                 return Mono.empty();

@@ -3,11 +3,11 @@ package nl.appsource.cardserver.controller;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
-import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.SseEventSender;
 import nl.appsource.cardserver.service.UserService;
+import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.UsersApi;
 import org.openapitools.model.CreateInvite;
 import org.openapitools.model.CreateInviteResponse;
@@ -22,10 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 
 import static reactor.core.publisher.Mono.just;
@@ -85,14 +83,16 @@ public class UserController extends GenericController implements UsersApi, V1Api
 //        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
 //            .filter(ca -> ca.appIdentifier().isPresent())
-            .flatMap(auth -> sseSessionRepository.findByIdAndCreator(auth.appIdentifier(), auth.userId()))
-            .doOnNext(SseSession::ping)
-            .flatMap(sseSessionRepository::save)
-            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
-                .filter(this::isOptimisticLockingError)
-                .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
-            )
-            .delayUntil(sseSession -> sseEventSender.sendPong(sseSession.getId()))
+            //          .flatMap(auth -> sseSessionRepository.findByIdAndCreator(auth.appIdentifier(), auth.userId()))
+//            .doOnNext(SseSession::ping)
+
+            .map(CardServerAuthentication::appIdentifier)
+            .flatMap(sseSessionRepository::ping)
+//            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
+//                .filter(this::isOptimisticLockingError)
+//                .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
+//            )
+            .delayUntil(sseEventSender::sendPong)
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -102,13 +102,14 @@ public class UserController extends GenericController implements UsersApi, V1Api
 //        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
 //            .filter(ca -> ca.appIdentifier().isPresent())
-            .flatMap(auth -> sseSessionRepository.findByIdAndCreator(auth.appIdentifier(), auth.userId()))
-            .doOnNext(SseSession::pong)
-            .flatMap(sseSessionRepository::save)
-            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
-                .filter(this::isOptimisticLockingError)
-                .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
-            )
+//            .flatMap(auth -> sseSessionRepository.findByIdAndCreator(auth.appIdentifier(), auth.userId()))
+//            .doOnNext(sse::pong)
+            .map(CardServerAuthentication::appIdentifier)
+            .map(sseSessionRepository::pong)
+//            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)) // 3 attempts, exponential backoff
+//                .filter(this::isOptimisticLockingError)
+//                .doBeforeRetry(signal -> log.warn("Retry saving session, retry: " + signal.totalRetries()))
+//            )
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }

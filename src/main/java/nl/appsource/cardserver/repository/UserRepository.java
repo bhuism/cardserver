@@ -9,7 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface UserRepository extends ReactiveCouchbaseRepository<User, String> {
+public interface UserRepository extends ReactiveCouchbaseRepository<User, String>, ReactiveBaseEntityRepository<User> {
 
     Mono<User> findByEmail(String email);
 
@@ -39,7 +39,7 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
     @Query(value = ONLINE_FRIENDIDS, readonly = true)
     Flux<String> getOnlineFriends(String userId);
 
-    @Query("UPDATE #{#n1ql.bucket} USE KEYS $userId SET lastLogin=NOW_MILLIS() RETURNING *")
-    Mono<User> updateLastLogin(String userId);
+//    @Query("UPDATE #{#n1ql.bucket} SET lastLogin=NOW_MILLIS(), updated=NOW_MILLIS() WHERE meta(#{#n1ql.bucket}).id=$userId RETURNING #{#n1ql.bucket}.*")
+//    Mono<User> updateLastLogin(String userId);
 
 }

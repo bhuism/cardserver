@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+
 @Slf4j
 @RestController
 public class AuthController extends GenericController implements LoadUserApi, RotateJwtApi, V1Api {
@@ -37,8 +39,9 @@ public class AuthController extends GenericController implements LoadUserApi, Ro
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
         return getUserId(exchange)
-            .doOnNext((userId) -> log.info("{} loadUser() userId={}", exchange.getRequest().getRemoteAddress(), userId))
-            .flatMap(userRepository::updateLastLogin)
+            .flatMap(userRepository::findById)
+            .doOnNext(user -> user.setLastLogin(Instant.now()))
+            .flatMap(userRepository::save)
             .map(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
