@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.controller;
 
 import com.couchbase.client.core.error.CasMismatchException;
+import com.couchbase.client.core.error.DocumentNotFoundException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +59,7 @@ public class SubscribeController extends AbstractBaseController implements V1Api
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
             .flatMap(sseSessionRepository::ping)
+            .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
             .delayUntil(sseEventSender::sendPong)
             .map(_ -> ResponseEntity.ok().<Void>build())
@@ -70,6 +72,7 @@ public class SubscribeController extends AbstractBaseController implements V1Api
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
             .flatMap(sseSessionRepository::pong)
+            .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());

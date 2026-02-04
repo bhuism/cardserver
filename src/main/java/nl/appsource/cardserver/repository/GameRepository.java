@@ -3,12 +3,15 @@ package nl.appsource.cardserver.repository;
 import nl.appsource.cardserver.model.Game;
 import org.springframework.data.couchbase.repository.Query;
 import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository;
+import org.springframework.data.couchbase.repository.ScanConsistency;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
+
 @Repository
-public interface GameRepository extends ReactiveCouchbaseRepository<Game, String> {
+public interface GameRepository extends ReactiveCouchbaseRepository<Game, String>, ReactiveBaseEntityRepository<Game> {
 
 //    @Query("SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND creator = $creator")
 //    Set<String> findIdByCreator(@Param("creator") String creator);
@@ -36,6 +39,8 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
     Mono<Game> findByUserIdAndGameId(String userId, String gameId);
 
 
+
+    @ScanConsistency(query = REQUEST_PLUS)
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId", readonly = true)
     Mono<Game> findByIdPessimistic(String gameId);
 

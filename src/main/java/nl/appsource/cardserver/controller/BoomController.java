@@ -104,7 +104,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> {
                 return boomRepository.findById(boomId)
-                    .map((boom) -> {
+                    .flatMap((boom) -> {
                         return Flux.fromIterable(boom.getGames())
                             .flatMap(gameRepository::findById)
                             .filter(game -> !new GameEngineImpl(game).isCompleted())
@@ -113,7 +113,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
                                 if (boom.getGames().size() < 16) {
                                     return calcDealer(boom)
                                         .flatMap(dealer -> {
-                                            log.info("Boom " + boomId + ", player=" + boom.getPlayers());
+                                            log.info("Creating new game for Boom " + boomId + ", player=" + boom.getPlayers() + ", dealer:" + dealer);
                                             return gameService.createGame(auth.userId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
                                                 .doOnNext(game -> boom.getGames().add(game.getId()))
                                                 .flatMap(game -> boomRepository.save(boom).thenReturn(game));
@@ -128,7 +128,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
                                 .build());
                     });
             })
-            .flatMap(responseEntityMono -> responseEntityMono);
+            .map(responseEntityMono -> responseEntityMono);
     }
 
     @Override

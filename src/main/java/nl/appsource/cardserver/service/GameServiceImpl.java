@@ -185,9 +185,17 @@ public class GameServiceImpl implements GameService {
             return;
         }
 
+        log.info("executeSynchronious() gameEventType:" + gameEventType.name() + ", userId=" + userId + ", gameId=" + gameId + ", card=" + card + ", say=" + say);
+
         eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
+
         Mono.just(gameId)
-            .flatMap(gameRepository::findByIdPessimistic)
+            .flatMap(id -> gameRepository.lock(id, Duration.ofMillis(500), Game.class)
+                .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).doAfterRetry(retrySignal -> {
+                    log.info("Retrying lock because of: " + retrySignal.toString());
+                }))
+                .flatMap(cas -> gameRepository.findById(gameId).doOnNext(game -> game.setVersion(cas)))
+            )
             .filter(game -> isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
             .doOnNext(game -> {
                 log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
@@ -222,7 +230,8 @@ public class GameServiceImpl implements GameService {
 
                     .doFinally((_unused) -> this.scheduleNext(gameEngine));
             })
-            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)))
+
+//            .flatMap(game -> gameRepository.unLockNoSave(gameId, game.getVersion()))
             .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
                 if (userId != null && !isAiPlayer(userId)) {
@@ -232,7 +241,8 @@ public class GameServiceImpl implements GameService {
                             .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
                         .subscribe();
                 }
-            }).subscribe();
+            })
+            .subscribe();
     }
 
     private void scheduleNext(final GameEngine gameEngine) {
