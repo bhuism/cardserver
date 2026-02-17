@@ -101,10 +101,10 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             );
         }
 
-//        target.setTrickPoints(new ArrayList<>());
+        target.setTrickPoints(new ArrayList<>());
         target.setAllPoints(new NorthSouthNumber());
 
-        //      target.setTrickRoem(new ArrayList<>());
+        target.setTrickRoem(new ArrayList<>());
         target.setAllRoem(new NorthSouthNumber());
 
         target.setErIsGegaan(gameEngine.getErIsGegaan());
@@ -124,7 +124,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
         target.setTotalString(new NorthSouthString().northSouth("").eastWest(""));
 
-        if (gameEngine.getErIsGegaan()) {
+        if (gameEngine.calcTricksPlayed() > 0) {
 
             for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
 
