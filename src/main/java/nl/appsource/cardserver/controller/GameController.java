@@ -98,10 +98,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
             .flatMap(auth -> gameService.deleteGame(auth.userId(), gameId)
                 .defaultIfEmpty(false)
                 .map(deleted -> deleted
-                    ? ResponseEntity.noContent()
-                    .<Void>build()
-                    : ResponseEntity.notFound()
-                    .<Void>build()))
+                    ? ResponseEntity.ok().<Void>build()
+                    : ResponseEntity.notFound().<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
