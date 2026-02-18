@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import static reactor.core.publisher.Mono.just;
 
@@ -66,7 +67,7 @@ public class UserController extends AbstractBaseController implements UsersApi, 
     public Mono<ResponseEntity<Flux<User>>> getUserByIds(final String appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
         log.info("{} getUserByIds() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .map((_user) -> ResponseEntity.ok(userService.getUsers(userIds).mapNotNull(userToOpenApiConverter::convert)))
+            .map((_user) -> ResponseEntity.ok(userService.getUsers(Set.copyOf(userIds)).mapNotNull(userToOpenApiConverter::convert)))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
@@ -116,7 +117,7 @@ public class UserController extends AbstractBaseController implements UsersApi, 
     public Mono<ResponseEntity<Void>> usersMessage(final String appIdentifier, final Mono<PostMessage> postMessageMono, final ServerWebExchange exchange) {
         log.info("{} usersMessage() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
-            .delayUntil(auth -> postMessageMono.flatMap(postMessage -> userService.usersMessage(auth.userId(), postMessage.getRecipients(), postMessage.getMessage())))
+            .delayUntil(auth -> postMessageMono.flatMap(postMessage -> userService.usersMessage(auth.userId(), Set.copyOf(postMessage.getRecipients()), postMessage.getMessage())))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }

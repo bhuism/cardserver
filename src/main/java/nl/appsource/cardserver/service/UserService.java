@@ -6,7 +6,7 @@ import org.openapitools.model.UpdatePreferences;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
+import java.util.Set;
 
 public interface UserService {
 
@@ -16,7 +16,7 @@ public interface UserService {
 
     Mono<UserServiceImpl.InvitesResponse> getInvites(String userId);
 
-    Flux<User> getUsers(List<String> userIds);
+    Flux<User> getUsers(Set<String> userIds);
 
     Mono<Void> removeInvite(String userId, String friendId);
 
@@ -26,7 +26,7 @@ public interface UserService {
 
     Mono<User> updatePreferences(String userId, @NotNull UpdatePreferences updatePreferences);
 
-    Mono<Void> usersMessage(String userId, List<String> recipients, String message);
+    Mono<Void> usersMessage(String userId, Set<String> recipients, String message);
 
 }
 

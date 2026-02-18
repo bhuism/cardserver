@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,7 +36,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Flux<User> getUsers(final List<String> userIds) {
+    public Flux<User> getUsers(final Set<String> userIds) {
         return userRepository.findAllById(userIds);
     }
 
@@ -138,7 +137,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public Mono<Void> usersMessage(final String userId, final List<String> recipients, final String message) {
+    public Mono<Void> usersMessage(final String userId, final Set<String> recipients, final String message) {
         return sseEventSender.sendUserIdMessage(recipients, new UserMessage()
             .userId(userId)
             .message(message)

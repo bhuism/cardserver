@@ -33,14 +33,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
 import static java.util.Collections.shuffle;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.concat;
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.IDTYPE.GAME;
 import static nl.appsource.cardserver.utils.Utils.idGen;
@@ -116,7 +120,7 @@ public class GameServiceImpl implements GameService {
                 game.setAiRisc(aiRisc);
             })
             .flatMap(gameRepository::save)
-            .flatMap((game) -> sseEventSender.gamesChanged(game.getPlayers()).then(Mono.just(game)))
+            .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet())).then(Mono.just(game)))
             .flatMap(game -> sseEventSender.newGame(game).then(Mono.just(game)))
             .doOnNext(game -> scheduleNext(new GameEngineImpl(game)));
     }
@@ -126,7 +130,7 @@ public class GameServiceImpl implements GameService {
         return gameRepository.findById(gameId)
             .filter(game -> game.getCreator().equals(userId))
             .filter(game -> game.getBoomId() == null)
-            .flatMap(game -> gameRepository.delete(game).then(sseEventSender.gamesChanged(game.getPlayers())))
+            .flatMap(game -> gameRepository.delete(game).then(sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet()))))
             .thenReturn(true);
     }
 
@@ -317,16 +321,16 @@ public class GameServiceImpl implements GameService {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                .getPlayers(), new UserMessage()
+                            return sseEventSender.sendUserIdMessage(Set.copyOf(gameEngine.getGame()
+                                .getPlayers()), new UserMessage()
                                 .userId(auth.userId())
                                 .variant(UserMessage.VariantEnum.INFO)
                                 .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> sseEventSender.sendUserIdMessage(gameEngine.getGame()
-                                        .getPlayers(), new UserMessage()
+                                    .flatMap(player -> sseEventSender.sendUserIdMessage(Set.copyOf(gameEngine.getGame()
+                                        .getPlayers()), new UserMessage()
                                         .userId(auth.userId())
                                         .variant(UserMessage.VariantEnum.ERROR)
                                         .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName())))

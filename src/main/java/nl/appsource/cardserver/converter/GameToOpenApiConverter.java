@@ -2,6 +2,7 @@ package nl.appsource.cardserver.converter;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.GameEngine;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class GameToOpenApiConverter implements Converter<@NonNull Game, org.openapitools.model.Game> {

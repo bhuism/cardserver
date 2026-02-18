@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
@@ -708,13 +709,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 .getRoemGeklopt()
                 .add(calcTricksPlayed());
 
-            return sseEventSender.sendUserIdMessage(getGame().getPlayers(), new UserMessage().userId(userId)
+            return sseEventSender.sendUserIdMessage(Set.copyOf(getGame().getPlayers()), new UserMessage().userId(userId)
                     .message("Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
                     .variant(UserMessage.VariantEnum.INFO))
                 .then(Mono.just(this));
 
         } else {
-            return sseEventSender.sendUserIdMessage(getGame().getPlayers(), new UserMessage()
+            return sseEventSender.sendUserIdMessage(Set.copyOf(getGame().getPlayers()), new UserMessage()
                     .userId(userId)
                     .message("Er is geen roem in slag " + (correctedSlagNr + 1))
                     .variant(UserMessage.VariantEnum.WARNING))

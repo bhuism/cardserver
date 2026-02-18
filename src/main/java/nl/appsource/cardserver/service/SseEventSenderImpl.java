@@ -16,10 +16,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Service
@@ -47,7 +48,7 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
-    public Mono<Void> sendUserIdMessage(final Collection<String> userIds, final UserMessage userMessage) {
+    public Mono<Void> sendUserIdMessage(final Set<String> userIds, final UserMessage userMessage) {
         return Flux.fromIterable(userIds).flatMap(userId -> sendUserIdMessage(userId, userMessage)).then();
     }
 
@@ -59,24 +60,27 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
-    public Mono<Void> boomsChanged(final Collection<String> userIds) {
+    public Mono<Void> boomsChanged(final Set<String> userIds) {
         return Flux.fromIterable(userIds)
+            .filter(userId -> !isAiPlayer(userId))
             .map(userId -> new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "updateBooms", null))
             .flatMap(sseEventRepository::save)
             .then();
     }
 
     @Override
-    public Mono<Void> gamesChanged(final Collection<String> userIds) {
+    public Mono<Void> gamesChanged(final Set<String> userIds) {
         return Flux.fromIterable(userIds)
+            .filter(userId -> !isAiPlayer(userId))
             .map(userId -> new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "updateGames", null))
             .flatMap(sseEventRepository::save)
             .then();
     }
 
     @Override
-    public Mono<Void> friendsChanged(final Collection<String> userIds) {
+    public Mono<Void> friendsChanged(final Set<String> userIds) {
         return Flux.fromIterable(userIds)
+            .filter(userId -> !isAiPlayer(userId))
             .map(userId -> new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "updateFriends", null))
             .flatMap(sseEventRepository::save)
             .then();
@@ -85,6 +89,7 @@ public class SseEventSenderImpl implements SseEventSender {
     @Override
     public Mono<Void> newGame(final Game game) {
         return Flux.fromIterable(game.getPlayers())
+            .filter(userId -> !isAiPlayer(userId))
             .filter(player -> !player.equals(game.getCreator()))
             .flatMap(player -> {
                 return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, player, "newGame", jsonMapper.convertValue(new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()), Map.class)))

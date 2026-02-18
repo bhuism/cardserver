@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import static nl.appsource.cardserver.utils.IDTYPE.BOOM;
 import static nl.appsource.cardserver.utils.Utils.idGen;
@@ -60,7 +61,7 @@ public class BoomServiceImpl implements BoomService {
                 boom.setAiRisc(aiRisc);
             })
             .flatMap(boomRepository::save)
-            .flatMap((boom) -> sseEventSender.boomsChanged(boom.getPlayers()).then(Mono.just(boom)));
+            .flatMap((boom) -> sseEventSender.boomsChanged(Set.copyOf(boom.getPlayers())).then(Mono.just(boom)));
     }
 
     @Override
