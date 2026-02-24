@@ -199,7 +199,7 @@ public class GameServiceImpl implements GameService {
                 }))
                 .flatMap(cas -> gameRepository.findById(gameId).doOnNext(game -> game.setVersion(cas)))
             )
-            .filter(game -> isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
+            .filter(game -> userId == null || isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
             .doOnNext(game -> {
                 log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
             })
