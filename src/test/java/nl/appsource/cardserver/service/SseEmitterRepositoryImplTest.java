@@ -133,4 +133,28 @@ public class SseEmitterRepositoryImplTest {
             .thenCancel()
             .verify(Duration.ofSeconds(5));
     }
+
+    @Test
+    void testBroadcast() {
+        when(userRepository.findById(anyString())).thenReturn(Mono.empty());
+        when(userRepository.getFriends(anyString())).thenReturn(Flux.empty());
+        when(gameRepository.findGamesByUserId(anyString(), anyInt())).thenReturn(Flux.empty());
+        when(boomRepository.findBoomsByUserId(anyString(), anyInt())).thenReturn(Flux.empty());
+        when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
+        when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
+        when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
+        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
+
+        Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
+
+        MyServerSentEvent event = new MyServerSentEvent("broadcastEvent", "broadcastData");
+
+        StepVerifier.create(result)
+            .expectNextMatches(sse -> sse.event().equals("hello"))
+            .expectNextMatches(sse -> sse.event().equals("ping"))
+            .then(() -> sseEmitterRepository.send(null, null, event))
+            .expectNextMatches(sse -> sse.event().equals("broadcastEvent"))
+            .thenCancel()
+            .verify();
+    }
 }
