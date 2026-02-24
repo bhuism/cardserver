@@ -111,6 +111,18 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
         target.setErIsGegaan(gameEngine.getErIsGegaan());
 
+        final Optional<Integer> optionalElder = source.getSay()
+            .entrySet()
+            .stream()
+            .filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true))
+            .map(Map.Entry::getKey)
+            .findFirst();
+
+        if (optionalElder.isPresent()) {
+            target.setElder(optionalElder);
+            target.setElderTeam(Optional.of(optionalElder.get() % 2 == 0 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+        }
+
         target.setPlayerPoints(new ArrayList<>(List.of(0, 0, 0, 0)));
 
         gameEngine.getGame().getSay().forEach((playerIndex, gegaan) -> {
@@ -179,11 +191,6 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
             }
 
-            final int elder = source.getSay().entrySet().stream().filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true)).map(Map.Entry::getKey).findFirst().get();
-
-            target.setElder(Optional.of(elder));
-            target.setElderTeam(Optional.of(elder % 2 == 0 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
-
             if (gameEngine.isCompleted()) {
 
                 target.setPit(Optional.of(numberOfTrickWinsNorthSouthCounter == 8 || numberOfTrickWinsEastWestCounter == 8));
@@ -193,7 +200,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
                     .getNorthSouth() == target.getAllPoints()
                     .getEastWest() + target.getAllRoem()
                     .getEastWest()) {
-                    target.setWinner(Optional.of(elder == 1 || elder == 3 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+                    target.setWinner(Optional.of(optionalElder.get() == 1 || optionalElder.get() == 3 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
                 } else {
                     target.setWinner(Optional.of(target.getAllPoints()
                         .getNorthSouth() + target.getAllRoem()
