@@ -30,6 +30,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
     @NonNull
     @Override
+    @SuppressWarnings("MethodLength")
     public org.openapitools.model.Game convert(final Game source) {
 
         final org.openapitools.model.Game target = new org.openapitools.model.Game();
