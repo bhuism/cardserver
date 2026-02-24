@@ -137,7 +137,7 @@ public class GameServiceImpl implements GameService {
     @PostConstruct
     public void init() {
         log.info("init()");
-        if (environment.acceptsProfiles(Profiles.of("production"))) {
+        if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
@@ -184,57 +184,69 @@ public class GameServiceImpl implements GameService {
 
     public void executeSynchronious(final GameEventType gameEventType, final String userId, final String gameId, final Card card, final Boolean say) {
 
-        if (userId == null) {
-            log.error("userId === null, gameEventType=" + gameEventType.name(), new RuntimeException("userId == null"));
+        if (userId == null && gameEventType != GameEventType.CHECK_ROTATE && gameEventType != GameEventType.CLOSE_LAST_TRICK) {
+            log.error("userId === null, gameEventType=" + gameEventType.name());
         }
 
-        log.info("executeSynchronious() gameEventType:" + gameEventType.name() + ", userId=" + userId + ", gameId=" + gameId + ", card=" + card + ", say=" + say);
 
         eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameId));
 
         Mono.just(gameId)
-            .flatMap(id -> gameRepository.lock(id, Duration.ofMillis(500), Game.class)
-                .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).doAfterRetry(retrySignal -> {
-                    log.info("Retrying lock because of: " + retrySignal.toString());
-                }))
-                .flatMap(cas -> gameRepository.findById(gameId).doOnNext(game -> game.setVersion(cas)))
+            .flatMap(id -> gameRepository.lock(id, Duration.ofMillis(500), Game.class))
+            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).doAfterRetry(retrySignal -> {
+                log.info("Retrying lock because of: " + retrySignal.toString());
+            }))
+            .flatMap(entry -> {
+                    return Mono.just(entry.getKey())
+                        .filter(game -> userId == null || isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
+                        //                .doOnNext(game -> {
+                        //                    log.info("Executing event: {} for game {} userId: {}", gameEventType, gameId, userId);
+                        //                })
+                        .map(GameEngineImpl::new)
+                        .filter(gameEngine -> !gameEngine.isCompleted())
+                        .flatMap(gameEngine -> {
+
+                            final Mono<GameEngine> result = switch (gameEventType) {
+                                case AI_SAY -> catchException(gameEngine::sayAi);
+                                case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
+                                case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
+                                case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
+                                case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
+                                case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
+                                case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
+                                case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId, sseEventSender));
+                            };
+
+                            return result
+                                .map(GameEngine::getGame)
+                                .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
+                                .onErrorResume(error -> {
+                                    log.error("Error during update, attempting to unlock game: {}", gameId);
+                                    return gameRepository.unLockNoSave(gameId, entry.getValue())
+                                        // Swallow unlock-specific errors so we don't mask the original error
+                                        .onErrorResume(unlockError -> {
+                                            log.warn("Failed to cleanly unlock document: {}", gameId);
+                                            return Mono.empty();
+                                        })
+                                        // Re-throw the original error to the subscriber
+                                        .then(Mono.error(error));
+                                })
+                                .doOnNext(game -> log.info("executeSynchronious() executed gameEventType:" + gameEventType.name() + ", userId=" + userId + ", gameId=" + gameId + ", card=" + card + ", say=" + say))
+                                .flatMap(game -> {
+                                    if (game.getBoomId() != null) {
+                                        return boomRepository.findById(game.getBoomId())
+                                            .map(boomRepository::save)
+                                            .then(Mono.just(game));
+                                    } else {
+                                        return Mono.just(game);
+                                    }
+                                })
+
+                                .doFinally((_unused) -> this.scheduleNext(gameEngine));
+                        });
+                }
             )
-            .filter(game -> userId == null || isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
-            .doOnNext(game -> {
-                log.info("Executing event: {} for game {} userId: {} version: {}", gameEventType, gameId, userId, game.getVersion());
-            })
-            .map(GameEngineImpl::new)
-            .filter(gameEngine -> !gameEngine.isCompleted())
-            .flatMap(gameEngine -> {
 
-                final Mono<GameEngine> result = switch (gameEventType) {
-                    case AI_SAY -> catchException(gameEngine::sayAi);
-                    case AI_PLAY_CARD -> catchException(gameEngine::playAiCard);
-                    case OPEN_LAST_TRICK -> catchException(gameEngine::openLastTrick);
-                    case CLOSE_LAST_TRICK -> catchException(gameEngine::closeLastTrick);
-                    case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
-                    case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
-                    case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
-                    case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId, sseEventSender));
-                };
-
-                return result
-                    .map(GameEngine::getGame)
-                    .flatMap(gameRepository::save)
-                    .flatMap(game -> {
-                        if (game.getBoomId() != null) {
-                            return boomRepository.findById(game.getBoomId())
-                                .map(boomRepository::save)
-                                .then(Mono.just(game));
-                        } else {
-                            return Mono.just(game);
-                        }
-                    })
-
-                    .doFinally((_unused) -> this.scheduleNext(gameEngine));
-            })
-
-//            .flatMap(game -> gameRepository.unLockNoSave(gameId, game.getVersion()))
             .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
                 if (userId != null && !isAiPlayer(userId)) {

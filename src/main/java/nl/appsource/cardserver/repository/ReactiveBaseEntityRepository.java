@@ -1,23 +1,20 @@
 package nl.appsource.cardserver.repository;
 
+import com.couchbase.client.java.kv.MutationResult;
 import nl.appsource.cardserver.model.BaseEntity;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Map;
 
 public interface ReactiveBaseEntityRepository<T extends BaseEntity> {
 
     Mono<String> updateUpdated(String documentId);
 
-    Mono<Long> lock(String documentId, Duration duration, Class<T> clazz);
+    Mono<Map.Entry<T, Long>> lock(String documentId, Duration duration, Class<T> clazz);
 
-//    Mono<Void> unLockSave(T document);
+    Mono<MutationResult> updateLocked(String id, T document, long cas);
 
     Mono<Void> unLockNoSave(String documentId, long cas);
-
-//    @ScanConsistency(query = REQUEST_PLUS)
-//    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET updated=NOW_MILLIS() RETURNING meta().id")
-//    Mono<String> updateUpdated(String id);
-
 
 }
