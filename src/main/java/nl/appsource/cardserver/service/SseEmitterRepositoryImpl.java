@@ -207,8 +207,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         );
 
         final Flux<MyServerSentEvent> liveSinks = Flux.merge(
-            userChannel.sink.asFlux().onBackpressureError(),
-            mainSink.asFlux().onBackpressureError()
+            userChannel.sink.asFlux().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE),
+            mainSink.asFlux().onBackpressureBuffer(Queues.SMALL_BUFFER_SIZE)
         );
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
