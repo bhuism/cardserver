@@ -68,7 +68,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
 
-    private final Map<String, UserChannel> userChannels = new ConcurrentHashMap<>();
+    private final Map<String, UserChannel> userChannelsByApplicationId = new ConcurrentHashMap<>();
 
     private final Map<String, Set<UserChannel>> userChannelsByUserId = new ConcurrentHashMap<>();
 
@@ -103,7 +103,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             log.error("Error closing mainSink", t);
         }
 
-        userChannels.values().forEach(userChannel -> {
+        userChannelsByApplicationId.values().forEach(userChannel -> {
             try {
                 userChannel.sink.tryEmitComplete();
             } catch (final Throwable t) {
@@ -172,7 +172,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @Override
     public void send(final String appIdentifier, final String userId, final MyServerSentEvent myServerSentEvent) {
         if (appIdentifier != null) {
-            final UserChannel userChannel = userChannels.get(appIdentifier);
+            final UserChannel userChannel = userChannelsByApplicationId.get(appIdentifier);
             if (userChannel != null) {
                 tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true);
             }
@@ -193,10 +193,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final String appIdentifier = idGen(SESS, 8);
         final AtomicLong atomicLong = new AtomicLong(1);
 
-        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
 
         final UserChannel userChannel = new UserChannel(userId);
-        userChannels.put(appIdentifier, userChannel);
+        userChannelsByApplicationId.put(appIdentifier, userChannel);
         userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
 
         final Flux<MyServerSentEvent> helloFlux = Flux.just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier)));
@@ -216,20 +216,21 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .thenMany(
                 Flux.concat(helloFlux, Flux.merge(restFlux, liveSinks))
                     .doFinally(signalType -> {
-                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannels.size());
+                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
 
-                        userChannels.remove(appIdentifier);
+                        userChannelsByApplicationId.remove(appIdentifier);
                         userChannelsByUserId.computeIfPresent(userId, (k, channels) -> {
                             channels.remove(userChannel);
                             return channels.isEmpty() ? null : channels;
                         });
 
-                        userChannel.sink.tryEmitComplete();
-
                         sseSessionRepository.deleteById(appIdentifier)
                             .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
                             .then(sseEventSender.sendOnlineListToFriendsOf(userId))
                             .subscribe();
+
+                        userChannel.sink.tryEmitComplete();
+
                     })
                     .map(myServerSentEvent -> {
                         final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder()
