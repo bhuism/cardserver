@@ -101,7 +101,7 @@ public class SseEventSenderImpl implements SseEventSender {
 
     @Override
     public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
-        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList), Map.class)))
+        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList.stream().toList()), Map.class)))
             .flatMap(sseEventRepository::save)
             .then();
     }

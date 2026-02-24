@@ -33,7 +33,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import static nl.appsource.cardserver.service.MyServerSentEvent.hello;
 import static nl.appsource.cardserver.service.MyServerSentEvent.ping;
@@ -138,7 +137,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         // online list
         final Mono<@NonNull MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
-            .collect(Collectors.toSet())
+            .collectList()
             .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
         return Flux.concat(me, friends, games, booms, onlineList);
