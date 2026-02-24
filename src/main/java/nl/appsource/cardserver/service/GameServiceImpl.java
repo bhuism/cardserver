@@ -186,7 +186,6 @@ public class GameServiceImpl implements GameService {
 
         if (userId == null) {
             log.error("userId === null, gameEventType=" + gameEventType.name(), new RuntimeException("userId == null"));
-            return;
         }
 
         log.info("executeSynchronious() gameEventType:" + gameEventType.name() + ", userId=" + userId + ", gameId=" + gameId + ", card=" + card + ", say=" + say);
