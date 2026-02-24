@@ -17,9 +17,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -132,7 +134,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             }
         });
 
-        target.setRoemGeklopt(source.getRoemGeklopt().stream().toList());
+        target.setRoemGeklopt(source.getRoemGeklopt());
 
         var numberOfTrickWinsNorthSouthCounter = 0;
         var numberOfTrickWinsEastWestCounter = 0;
@@ -192,7 +194,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
             }
 
-            if (gameEngine.isCompleted()) {
+            if (gameEngine.isCompleted() && optionalElder.isPresent()) {
 
                 target.setPit(Optional.of(numberOfTrickWinsNorthSouthCounter == 8 || numberOfTrickWinsEastWestCounter == 8));
 
@@ -262,11 +264,11 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
 
         target.setBoomId(Optional.ofNullable(source.getBoomId()));
 
-        final List<List<Integer>> verzakenResult = new ArrayList<>();
+        final List<Set<Integer>> verzakenResult = new ArrayList<>();
 
         IntStream.range(0, gameEngine.calcTricksPlayed()).forEach(vtrick -> {
 
-            final ArrayList<Integer> verzakers = new ArrayList<>();
+            final Set<Integer> verzakers = new HashSet<>();
 
             IntStream.range(0, 3).forEach(speler -> {
                 if (gameEngine.verzaakt(vtrick, speler)) {

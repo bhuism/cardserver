@@ -64,7 +64,7 @@ public class UserController extends AbstractBaseController implements UsersApi, 
     }
 
     @Override
-    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final String appIdentifier, final List<String> userIds, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<User>>> getUserByIds(final String appIdentifier, final Set<String> userIds, final ServerWebExchange exchange) {
         log.info("{} getUserByIds() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .map((_user) -> ResponseEntity.ok(userService.getUsers(Set.copyOf(userIds)).mapNotNull(userToOpenApiConverter::convert)))

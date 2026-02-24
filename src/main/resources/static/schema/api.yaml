@@ -559,7 +559,7 @@ components:
         type: array
         items:
           type: string
-          uniqueItems: true
+        uniqueItems: true
       required: true
   securitySchemes:
     openId:
@@ -797,7 +797,7 @@ components:
           type: array
           items:
             type: string
-            uniqueItems: true
+          uniqueItems: true
         message:
           type: string
       required:
@@ -856,7 +856,7 @@ components:
           type: array
           items:
             type: string
-            uniqueItems: true
+          uniqueItems: true
       required:
         - onlineList
     SseConnection:
@@ -1072,7 +1072,7 @@ components:
           type: array
           items:
             type: integer
-            uniqueItems: true
+          uniqueItems: true
         pit:
           type: boolean
         boomId:
@@ -1083,7 +1083,7 @@ components:
             type: array
             items:
               type: integer
-              uniqueItems: true
+            uniqueItems: true
         tricksWonNorthSouth:
           type: integer
         tricksWonEastWest:

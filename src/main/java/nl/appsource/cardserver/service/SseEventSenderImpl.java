@@ -16,9 +16,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.Utils.idGen;
@@ -100,7 +100,7 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
-    public Mono<Void> sendOnlineListTo(final String userId, final List<@NonNull String> onlineList) {
+    public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
         return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList), Map.class)))
             .flatMap(sseEventRepository::save)
             .then();
@@ -114,7 +114,7 @@ public class SseEventSenderImpl implements SseEventSender {
     @Override
     public Mono<Void> sendOnlineListTo(final String userId) {
         return userRepository.getOnlineFriends(userId)
-            .collectList()
+            .collect(Collectors.toSet())
             .flatMap(onlineList -> sendOnlineListTo(userId, onlineList));
     }
 }
