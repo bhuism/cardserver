@@ -1,10 +1,4 @@
 server:
-  error:
-    whitelabel:
-      enabled: false
-  tomcat:
-    accesslog:
-      enabled: true
   port: 8080
 logging:
   level:

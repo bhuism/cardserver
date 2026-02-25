@@ -36,7 +36,6 @@ paths:
       operationId: getBooms
       responses:
         "200":
-          description: BoomsResponse
           $ref: "#/components/responses/BoomsResponse"
     post:
       operationId: createBoom
