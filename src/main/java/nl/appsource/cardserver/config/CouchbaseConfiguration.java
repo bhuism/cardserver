@@ -6,10 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
+import org.springframework.data.couchbase.config.BeanNames;
+import org.springframework.data.couchbase.core.mapping.CouchbaseMappingContext;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
 import org.springframework.data.domain.ReactiveAuditorAware;
 
@@ -95,6 +99,12 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
         objectMapper.disable(WRITE_DATES_AS_TIMESTAMPS);
 
         return objectMapper;
+    }
+
+    @Override
+    @Bean(name = BeanNames.COUCHBASE_MAPPING_CONTEXT)
+    public CouchbaseMappingContext couchbaseMappingContext(@Qualifier(BeanNames.COUCHBASE_CUSTOM_CONVERSIONS) CustomConversions customConversions) throws Exception {
+        return super.couchbaseMappingContext(customConversions);
     }
 
     //    @Bean

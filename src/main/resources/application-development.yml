@@ -15,6 +15,10 @@ management:
       exposure:
         include: '*'
 spring:
+  data:
+    redis:
+      host: 10.103.71.147
+      port: 6379
   web:
     error:
       whitelabel:
