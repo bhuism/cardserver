@@ -11,11 +11,11 @@ import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
+import nl.appsource.generated.openapi.model.Boom;
+import nl.appsource.generated.openapi.model.CreateBoom;
+import nl.appsource.generated.openapi.model.Game;
+import nl.appsource.generated.openapi.model.GetBooms200Response;
 import org.openapitools.api.BoomApi;
-import org.openapitools.model.Boom;
-import org.openapitools.model.CreateBoom;
-import org.openapitools.model.Game;
-import org.openapitools.model.GetBooms200Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,7 +78,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> boomService.getBooms(auth.userId())
                 .collectList()
-                .map(booms -> new GetBooms200Response().booms(booms))
+                .map(booms -> GetBooms200Response.builder().booms(booms).build())
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
             )

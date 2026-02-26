@@ -4,17 +4,17 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
-import org.openapitools.model.AiRisc;
-import org.openapitools.model.GameVariant;
-import org.openapitools.model.UserMessage;
+import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -250,11 +250,7 @@ public class GameServiceImpl implements GameService {
             .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
                 if (userId != null && !isAiPlayer(userId)) {
-                    sseEventSender.sendUserIdMessage(userId, new UserMessage()
-                            .userId(userId)
-                            .variant(UserMessage.VariantEnum.ERROR)
-                            .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
-                        .subscribe();
+                    sseEventSender.sendUserIdMessage(userId, throwable.getClass().getName() + ":" + throwable.getMessage(), UserMessage.VariantEnum.ERROR).subscribe();
                 }
             })
             .subscribe();
@@ -332,19 +328,12 @@ public class GameServiceImpl implements GameService {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return sseEventSender.sendUserIdMessage(Set.copyOf(gameEngine.getGame()
-                                .getPlayers()), new UserMessage()
-                                .userId(auth.userId())
-                                .variant(UserMessage.VariantEnum.INFO)
-                                .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
+                            return sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame()
+                                .getPlayers()), "Er is niet verzaakt in slag " + laatsteCompleteSlag, UserMessage.VariantEnum.INFO);
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> sseEventSender.sendUserIdMessage(Set.copyOf(gameEngine.getGame()
-                                        .getPlayers()), new UserMessage()
-                                        .userId(auth.userId())
-                                        .variant(UserMessage.VariantEnum.ERROR)
-                                        .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName())))
+                                    .flatMap(player -> sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame().getPlayers()), "Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName(), UserMessage.VariantEnum.ERROR))
                                 ).then();
                         }
                     });

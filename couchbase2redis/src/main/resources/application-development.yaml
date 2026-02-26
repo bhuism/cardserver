@@ -3,3 +3,9 @@ spring:
     redis:
       host: 10.103.71.147
       port: 6379
+cardserver:
+  couchbase:
+    connection-string: couchbase://192.168.1.86
+    username: root
+    password: killer
+    bucket-name: cardserver

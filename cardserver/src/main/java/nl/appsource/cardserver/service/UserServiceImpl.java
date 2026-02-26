@@ -3,10 +3,14 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.model.AiRisc;
+import nl.appsource.cardserver.model.GameVariant;
+import nl.appsource.cardserver.model.ScreenOrientation;
+import nl.appsource.cardserver.model.Theme;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.repository.UserRepository;
-import org.openapitools.model.UpdatePreferences;
-import org.openapitools.model.UserMessage;
+import nl.appsource.generated.openapi.model.UpdatePreferences;
+import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -126,10 +130,10 @@ public class UserServiceImpl implements UserService {
                 .flatMap(user -> {
                     user.setDisplayName(updatePreferences.getDisplayName());
                     user.setSkipAnimation(updatePreferences.getSkipAnimation());
-                    user.setGameVariant(updatePreferences.getGameVariant());
-                    user.setScreenOrientation(updatePreferences.getScreenOrientation());
-                    user.setTheme(updatePreferences.getTheme());
-                    user.setAiRisc(updatePreferences.getAiRisc());
+                    user.setGameVariant(GameVariant.valueOf(updatePreferences.getGameVariant().name()));
+                    user.setScreenOrientation(ScreenOrientation.valueOf(updatePreferences.getScreenOrientation().name()));
+                    user.setTheme(Theme.valueOf(updatePreferences.getTheme().name()));
+                    user.setAiRisc(AiRisc.valueOf(updatePreferences.getAiRisc().name()));
                     user.setAutoKnock(updatePreferences.getAutoKnock());
                     return userRepository.save(user);
                 }));
@@ -138,10 +142,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Void> usersMessage(final String userId, final Set<String> recipients, final String message) {
-        return sseEventSender.sendUserIdMessage(recipients, new UserMessage()
-            .userId(userId)
-            .message(message)
-            .variant(UserMessage.VariantEnum.INFO));
+        return sseEventSender.sendUserIdsMessage(recipients, message, UserMessage.VariantEnum.INFO);
     }
 
 }

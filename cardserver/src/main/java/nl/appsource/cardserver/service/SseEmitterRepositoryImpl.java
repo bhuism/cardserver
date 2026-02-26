@@ -12,8 +12,8 @@ import nl.appsource.cardserver.repository.BoomRepository;
 import nl.appsource.cardserver.repository.GameRepository;
 import nl.appsource.cardserver.repository.SseSessionRepository;
 import nl.appsource.cardserver.repository.UserRepository;
-import org.openapitools.model.HelloEvent;
-import org.openapitools.model.OnlineListEvent;
+import nl.appsource.generated.openapi.model.HelloEvent;
+import nl.appsource.generated.openapi.model.OnlineListEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataRetrievalFailureException;
@@ -138,7 +138,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         // online list
         final Mono<@NonNull MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
             .collectList()
-            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
+            .map(onlineFriends -> MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
 
         return Flux.concat(me, friends, games, booms, onlineList);
 
@@ -199,7 +199,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userChannelsByApplicationId.put(appIdentifier, userChannel);
         userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
 
-        final Flux<MyServerSentEvent> helloFlux = Flux.just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier)));
+        final Flux<MyServerSentEvent> helloFlux = Flux.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
         final Flux<MyServerSentEvent> restFlux = Flux.concat(
             Flux.just(ping()),
             Mono.delay(Duration.ofSeconds(1)).thenMany(initCache(userId))

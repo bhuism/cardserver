@@ -747,7 +747,7 @@ components:
         count:
           type: number
       required:
-        - invitees
+        - count
     invitesResponse:
       type: object
       properties:

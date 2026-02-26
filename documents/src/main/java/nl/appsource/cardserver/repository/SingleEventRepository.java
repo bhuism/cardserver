@@ -1,4 +1,4 @@
-//package nl.appsource.cardserver.repository;
+package nl.appsource.cardserver.repository;//package nl.appsource.cardserver.repository;
 //
 //import nl.appsource.cardserver.model.SingleEvent;
 //import org.springframework.data.couchbase.repository.Query;

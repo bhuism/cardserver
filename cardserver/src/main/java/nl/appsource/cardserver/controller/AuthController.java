@@ -7,10 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converter.UserToOpenApiConverter;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.CardServerJwtModem;
+import nl.appsource.generated.openapi.model.LoginResponse;
+import nl.appsource.generated.openapi.model.User;
 import org.openapitools.api.LoadUserApi;
 import org.openapitools.api.RotateJwtApi;
-import org.openapitools.model.LoginResponse;
-import org.openapitools.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
@@ -46,10 +46,10 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
             .map(userToOpenApiConverter::convert)
             .flatMap(user -> {
                 try {
-                    return Mono.just(
-                        new LoginResponse()
-                            .user(user)
-                            .jwt(cardServerJwtModem.encode(user.getId()).serialize())
+                    return Mono.just(LoginResponse.builder()
+                        .user(user)
+                        .jwt(cardServerJwtModem.encode(user.getId()).serialize())
+                        .build()
                     );
                 } catch (JOSEException e) {
                     return Mono.error(e);

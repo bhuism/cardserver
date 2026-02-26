@@ -7,12 +7,12 @@ import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import nl.appsource.generated.openapi.model.CreateGame;
+import nl.appsource.generated.openapi.model.Game;
+import nl.appsource.generated.openapi.model.GetGames200Response;
+import nl.appsource.generated.openapi.model.PlayCard;
+import nl.appsource.generated.openapi.model.PlayerSay;
 import org.openapitools.api.GamesApi;
-import org.openapitools.model.CreateGame;
-import org.openapitools.model.Game;
-import org.openapitools.model.GetGames200Response;
-import org.openapitools.model.PlayCard;
-import org.openapitools.model.PlayerSay;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,7 +72,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> gameService.getGames(auth.userId(), boom.orElse(true), finished.orElse(true), limit.orElse(10))
                 .collectList()
-                .map(games -> new GetGames200Response().games(games))
+                .map(games -> GetGames200Response.builder().games(games).build())
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
             )

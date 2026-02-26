@@ -12,8 +12,7 @@ import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.cardserver.service.exception.LastTrickOpenException;
 import nl.appsource.cardserver.service.exception.NotAPlayerException;
 import nl.appsource.cardserver.service.exception.NotPlayersTurnException;
-import org.openapitools.model.GameVariant;
-import org.openapitools.model.UserMessage;
+import nl.appsource.generated.openapi.model.UserMessage;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
@@ -27,6 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
+import static nl.appsource.cardserver.model.GameVariant.ROTTERDAMS;
 import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
 
 @Slf4j
@@ -644,7 +644,7 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
 
         final boolean partnerIsWinning = currentWinner != null && isPartner(speler, currentWinner);
-        final boolean isRotterdams = game.getGameVariant() == GameVariant.ROTTERDAMS;
+        final boolean isRotterdams = game.getGameVariant() == ROTTERDAMS;
 
         // Check for trumping rules (Troefplicht)
         if (!couldFollowSuit) {
@@ -709,16 +709,13 @@ public record GameEngineImpl(Game game) implements GameEngine {
                 .getRoemGeklopt()
                 .add(calcTricksPlayed());
 
-            return sseEventSender.sendUserIdMessage(Set.copyOf(getGame().getPlayers()), new UserMessage().userId(userId)
-                    .message("Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1))
-                    .variant(UserMessage.VariantEnum.INFO))
+            return sseEventSender.sendUserIdsMessage(Set.copyOf(getGame().getPlayers()), "Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1),
+                    UserMessage.VariantEnum.INFO)
                 .then(Mono.just(this));
 
         } else {
-            return sseEventSender.sendUserIdMessage(Set.copyOf(getGame().getPlayers()), new UserMessage()
-                    .userId(userId)
-                    .message("Er is geen roem in slag " + (correctedSlagNr + 1))
-                    .variant(UserMessage.VariantEnum.WARNING))
+            return sseEventSender.sendUserIdsMessage(Set.copyOf(getGame().getPlayers()), "Er is geen roem in slag " + (correctedSlagNr + 1),
+                    UserMessage.VariantEnum.WARNING)
                 .then(Mono.just(this));
         }
     }

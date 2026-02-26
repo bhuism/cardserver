@@ -2,10 +2,10 @@ package nl.appsource.cardserver.service;
 
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openapitools.model.GameVariant;
 
 import java.util.ArrayList;
 import java.util.HashMap;

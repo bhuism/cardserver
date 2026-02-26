@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openapitools.model.AiRisc;
-import org.openapitools.model.GameVariant;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
@@ -25,7 +23,7 @@ import java.util.Set;
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
-public class Game extends BaseEntity  {
+public class Game extends BaseEntity {
 
     @NotNull
     @Field
@@ -74,5 +72,4 @@ public class Game extends BaseEntity  {
     @Field
     @NotNull
     private AiRisc aiRisc = AiRisc.MEDIUM;
-
 }

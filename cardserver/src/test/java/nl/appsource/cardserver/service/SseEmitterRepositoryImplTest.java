@@ -120,7 +120,8 @@ public class SseEmitterRepositoryImplTest {
         User user = new User();
         user.setId("userId");
         when(userRepository.findById("userId")).thenReturn(Mono.just(user));
-        org.openapitools.model.User openApiUser = new org.openapitools.model.User().id("userId");
+
+        nl.appsource.generated.openapi.model.User openApiUser = nl.appsource.generated.openapi.model.User.builder().id("userId").build();
         when(userToOpenApiConverter.convert(user)).thenReturn(openApiUser);
 
         Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");

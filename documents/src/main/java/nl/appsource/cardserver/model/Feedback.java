@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.model;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,8 +15,8 @@ import org.springframework.data.couchbase.core.mapping.Field;
 @ToString
 public class Feedback extends BaseEntity {
 
-    @NotNull
     @Field
+    @NotEmpty
     private String text;
 
 }

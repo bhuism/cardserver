@@ -1,10 +1,10 @@
 package nl.appsource.cardserver.service;
 
-import org.openapitools.model.Boom;
-import org.openapitools.model.Game;
-import org.openapitools.model.HelloEvent;
-import org.openapitools.model.OnlineListEvent;
-import org.openapitools.model.User;
+import nl.appsource.generated.openapi.model.Boom;
+import nl.appsource.generated.openapi.model.Game;
+import nl.appsource.generated.openapi.model.HelloEvent;
+import nl.appsource.generated.openapi.model.OnlineListEvent;
+import nl.appsource.generated.openapi.model.User;
 
 import java.io.Serializable;
 

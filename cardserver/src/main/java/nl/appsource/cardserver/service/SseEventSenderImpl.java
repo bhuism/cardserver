@@ -7,10 +7,10 @@ import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.repository.SseEventRepository;
 import nl.appsource.cardserver.repository.UserRepository;
 import nl.appsource.cardserver.utils.IDTYPE;
-import org.openapitools.model.MessageEvent;
-import org.openapitools.model.NewGameEvent;
-import org.openapitools.model.OnlineListEvent;
-import org.openapitools.model.UserMessage;
+import nl.appsource.generated.openapi.model.MessageEvent;
+import nl.appsource.generated.openapi.model.NewGameEvent;
+import nl.appsource.generated.openapi.model.OnlineListEvent;
+import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,23 +33,23 @@ public class SseEventSenderImpl implements SseEventSender {
 
     private final UserRepository userRepository;
 
+//    @Override
+//    public Mono<Void> sendAppIdentifierMessage(final String appIdentifier, final String userId, final String message, final UserMessage.VariantEnum variant) {
+//        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), appIdentifier, null, "messageEvent", jsonMapper.convertValue(new MessageEvent().message(new UserMessage().userId(userId).message(message).variant(variant)), Map.class)))
+//            .flatMap(sseEventRepository::save)
+//            .then();
+//    }
+
     @Override
-    public Mono<Void> sendAppIdentifierMessage(final String appIdentifier, final UserMessage userMessage) {
-        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), appIdentifier, null, "messageEvent", jsonMapper.convertValue(new MessageEvent().message(userMessage), Map.class)))
+    public Mono<Void> sendUserIdMessage(final String userId, final String message, final UserMessage.VariantEnum variant) {
+        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "messageEvent", jsonMapper.convertValue(MessageEvent.builder().message(UserMessage.builder().userId(userId).message(message).variant(variant).build()), Map.class)))
             .flatMap(sseEventRepository::save)
             .then();
     }
 
     @Override
-    public Mono<Void> sendUserIdMessage(final String userId, final UserMessage userMessage) {
-        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "messageEvent", jsonMapper.convertValue(new MessageEvent().message(userMessage), Map.class)))
-            .flatMap(sseEventRepository::save)
-            .then();
-    }
-
-    @Override
-    public Mono<Void> sendUserIdMessage(final Set<String> userIds, final UserMessage userMessage) {
-        return Flux.fromIterable(userIds).flatMap(userId -> sendUserIdMessage(userId, userMessage)).then();
+    public Mono<Void> sendUserIdsMessage(final Set<String> userIds, final String message, final UserMessage.VariantEnum variant) {
+        return Flux.fromIterable(userIds).flatMap(userId -> sendUserIdMessage(userId, message, variant)).then();
     }
 
     @Override
@@ -92,7 +92,7 @@ public class SseEventSenderImpl implements SseEventSender {
             .filter(userId -> !isAiPlayer(userId))
             .filter(player -> !player.equals(game.getCreator()))
             .flatMap(player -> {
-                return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, player, "newGame", jsonMapper.convertValue(new NewGameEvent().displayNameCreator(game.getCreator()).gameId(game.getId()), Map.class)))
+                return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, player, "newGame", jsonMapper.convertValue(NewGameEvent.builder().displayNameCreator(game.getCreator()).gameId(game.getId()).build(), Map.class)))
                     .flatMap(sseEventRepository::save)
                     .then();
             })
@@ -101,7 +101,7 @@ public class SseEventSenderImpl implements SseEventSender {
 
     @Override
     public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
-        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(new OnlineListEvent().onlineList(onlineList.stream().toList()), Map.class)))
+        return Mono.just(new SseEvent(idGen(IDTYPE.EVNT, 16), null, userId, "onlineList", jsonMapper.convertValue(OnlineListEvent.builder().onlineList(onlineList.stream().toList()).build(), Map.class)))
             .flatMap(sseEventRepository::save)
             .then();
     }

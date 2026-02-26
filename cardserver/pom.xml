@@ -48,11 +48,6 @@
             <artifactId>spring-boot-starter-data-couchbase-reactive</artifactId>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>com.couchbase.client</groupId>
             <artifactId>dcp-client</artifactId>
@@ -75,12 +70,6 @@
             <version>0.2.9</version>
         </dependency>
 
-        <!--        <dependency>-->
-        <!--            <groupId>com.querydsl</groupId>-->
-        <!--            <artifactId>querydsl-core</artifactId>-->
-        <!--            <version>${querydsl.version}</version>-->
-        <!--        </dependency>-->
-
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
@@ -102,6 +91,16 @@
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>webjars-locator-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.appsource.cardserver</groupId>
+            <artifactId>documents</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.appsource.cardserver</groupId>
+            <artifactId>openapi</artifactId>
         </dependency>
 
     </dependencies>
@@ -140,9 +139,15 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/static/schema/api.yaml</inputSpec>
+                            <inputSpec>/static/schema/api.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <typeMappings>AnyType=java.io.Serializable</typeMappings>
+                            <generateApis>true</generateApis>
+                            <generateModels>false</generateModels>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <modelPackage>nl.appsource.generated.openapi.model</modelPackage>
                             <configOptions>
                                 <library>spring-boot</library>
                                 <reactive>true</reactive>
@@ -167,6 +172,17 @@
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.appsource.cardserver</groupId>
+                        <artifactId>openapi</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

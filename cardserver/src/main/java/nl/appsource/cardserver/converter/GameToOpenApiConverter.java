@@ -7,11 +7,13 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.GameEngine;
 import nl.appsource.cardserver.service.GameEngineImpl;
-import org.openapitools.model.Card;
-import org.openapitools.model.GamePlayerCardInner;
-import org.openapitools.model.NorthSouthNumber;
-import org.openapitools.model.NorthSouthString;
-import org.openapitools.model.Teams;
+import nl.appsource.generated.openapi.model.AiRisc;
+import nl.appsource.generated.openapi.model.Card;
+import nl.appsource.generated.openapi.model.GamePlayerCardInner;
+import nl.appsource.generated.openapi.model.GameVariant;
+import nl.appsource.generated.openapi.model.NorthSouthNumber;
+import nl.appsource.generated.openapi.model.NorthSouthString;
+import nl.appsource.generated.openapi.model.Teams;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
@@ -28,14 +30,14 @@ import java.util.stream.IntStream;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class GameToOpenApiConverter implements Converter<@NonNull Game, org.openapitools.model.Game> {
+public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appsource.generated.openapi.model.Game> {
 
     @NonNull
     @Override
     @SuppressWarnings("MethodLength")
-    public org.openapitools.model.Game convert(final Game source) {
+    public nl.appsource.generated.openapi.model.Game convert(final Game source) {
 
-        final org.openapitools.model.Game target = new org.openapitools.model.Game();
+        final nl.appsource.generated.openapi.model.Game target = new nl.appsource.generated.openapi.model.Game();
 
         target.setId(source.getId());
         target.setCreated(source.getCreated());
@@ -79,7 +81,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
         }
 
         target.setLastTrickOpen(source.getLastTrickOpen());
-        target.setVariant(source.getGameVariant());
+        target.setVariant(GameVariant.valueOf(source.getGameVariant().name()));
         target.setDealCounter(source.getDealCounter());
 
         target.setNumberOfTurns(gameEngine.getTurnCount());
@@ -139,7 +141,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
         var numberOfTrickWinsNorthSouthCounter = 0;
         var numberOfTrickWinsEastWestCounter = 0;
 
-        target.setTotalString(new NorthSouthString().northSouth("").eastWest(""));
+        target.setTotalString(NorthSouthString.builder().northSouth("").eastWest("").build());
 
         if (gameEngine.calcTricksPlayed() > 0) {
 
@@ -284,7 +286,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             target.setVerzaakt(verzakenResult);
         }
 
-        target.setAiRisc(source.getAiRisc());
+        target.setAiRisc(AiRisc.valueOf(source.getAiRisc().name()));
 
         return target;
 
@@ -302,30 +304,30 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, org.open
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static org.openapitools.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
-        return org.openapitools.model.Card.fromValue(source.name());
+    public static nl.appsource.generated.openapi.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
+        return nl.appsource.generated.openapi.model.Card.fromValue(source.name());
     }
 
-    public static nl.appsource.cardserver.model.Card convertCard(final org.openapitools.model.Card source) {
+    public static nl.appsource.cardserver.model.Card convertCard(final nl.appsource.generated.openapi.model.Card source) {
         return nl.appsource.cardserver.model.Card.valueOf(source.getValue());
     }
 
 
-    public static org.openapitools.model.Suit convertSuit(final Suit suit) {
+    public static nl.appsource.generated.openapi.model.Suit convertSuit(final Suit suit) {
         return switch (suit) {
-            case Clubs -> org.openapitools.model.Suit.CLUBS;
-            case Hearts -> org.openapitools.model.Suit.HEARTS;
-            case Spades -> org.openapitools.model.Suit.SPADES;
-            case Diamonds -> org.openapitools.model.Suit.DIAMONDS;
+            case Clubs -> nl.appsource.generated.openapi.model.Suit.CLUBS;
+            case Hearts -> nl.appsource.generated.openapi.model.Suit.HEARTS;
+            case Spades -> nl.appsource.generated.openapi.model.Suit.SPADES;
+            case Diamonds -> nl.appsource.generated.openapi.model.Suit.DIAMONDS;
         };
     }
 
-    public static Suit convertSuit(final org.openapitools.model.Suit suit) {
+    public static Suit convertSuit(final nl.appsource.generated.openapi.model.Suit suit) {
         return switch (suit) {
-            case org.openapitools.model.Suit.CLUBS -> Suit.Clubs;
-            case org.openapitools.model.Suit.HEARTS -> Suit.Hearts;
-            case org.openapitools.model.Suit.SPADES -> Suit.Spades;
-            case org.openapitools.model.Suit.DIAMONDS -> Suit.Diamonds;
+            case nl.appsource.generated.openapi.model.Suit.CLUBS -> Suit.Clubs;
+            case nl.appsource.generated.openapi.model.Suit.HEARTS -> Suit.Hearts;
+            case nl.appsource.generated.openapi.model.Suit.SPADES -> Suit.Spades;
+            case nl.appsource.generated.openapi.model.Suit.DIAMONDS -> Suit.Diamonds;
         };
     }
 

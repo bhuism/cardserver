@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.config;
+package nl.appsource.cardserver.couchbase2redis;
 
 import com.couchbase.client.core.deps.io.netty.buffer.ByteBufInputStream;
 import com.couchbase.client.dcp.Client;
@@ -6,26 +6,12 @@ import com.couchbase.client.dcp.StreamFrom;
 import com.couchbase.client.dcp.StreamTo;
 import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
-import nl.appsource.cardserver.converter.GameToOpenApiConverter;
-import nl.appsource.cardserver.converter.UserToOpenApiConverter;
-import nl.appsource.cardserver.model.Boom;
-import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.SseEvent;
-import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.UserRepository;
-import nl.appsource.cardserver.service.MyServerSentEvent;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -41,17 +27,19 @@ public class DcpConfiguration {
 
     private final CardServerCouchbaseProperties cardServerCouchbaseProperties;
 
-    private JsonMapper jsonMapper;
+    private final JsonMapper jsonMapper;
 
-    private final SseEmitterRepository sseEmitterRepository;
+    private final RedisPublisher redisPublisher;
 
-    private final BoomToOpenApiConverter boomToOpenApiConverter;
-
-    private final UserToOpenApiConverter userToOpenApiConverter;
-
-    private final GameToOpenApiConverter gameToOpenApiConverter;
-
-    private final UserRepository userRepository;
+//    private final SseEmitterRepository sseEmitterRepository;
+//
+//    private final BoomToOpenApiConverter boomToOpenApiConverter;
+//
+//    private final UserToOpenApiConverter userToOpenApiConverter;
+//
+//    private final GameToOpenApiConverter gameToOpenApiConverter;
+//
+//    private final UserRepository userRepository;
 
 //    private final SingleEventRepository singleEventRepository;
 
@@ -67,12 +55,12 @@ public class DcpConfiguration {
         HOSTNAME = host;
     }
 
-    @PostConstruct
-    public void postConstruct() {
-        jsonMapper = JsonMapper.builder()
-            .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
-            .build();
-    }
+//    @PostConstruct
+//    public void postConstruct() {
+//        jsonMapper = JsonMapper.builder()
+//            .disable(DateTimeFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
+//            .build();
+//    }
 
     @Bean
     public Client dcpClient() {
@@ -100,47 +88,51 @@ public class DcpConfiguration {
                     final JsonNode rootNode = jsonMapper.readTree(is);
 
                     if (rootNode.isObject()) {
+
                         className = rootNode.get("_class").asString();
+
+                        redisPublisher.publish("dcpupdates", jsonMapper.writeValueAsString(rootNode)).subscribe();
+
                         switch (className) {
-                            case "nl.appsource.cardserver.model.SseEvent" -> {
-                                final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
-                                sseEvent.setId(id);
-
-                                if (sseEvent.getAppIdentifier() == null && sseEvent.getUserId() == null) {
-                                    log.warn("received sse event without userId and appIdentifier");
-                                }
-
-//                                log.info("Received SseEvent from db: appIdentifier: {}, userId: {}, event: {} ", sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent());
-                                sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
-
-                            }
-                            case "nl.appsource.cardserver.model.Boom" -> {
-                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
-                                boom.setId(id);
-
-                                boomToOpenApiConverter.convert(boom).subscribe(convertedBoom ->
-                                    Flux.fromIterable(boom.getPlayers())
-                                        .concatWith(Flux.just(boom.getCreator()))
-                                        .distinct()
-                                        .subscribe(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateBoom(convertedBoom))));
-
-                            }
-                            case "nl.appsource.cardserver.model.User" -> {
-                                final User user = jsonMapper.treeToValue(rootNode, User.class);
-                                user.setId(id);
-
-                                final org.openapitools.model.User convertedUser = userToOpenApiConverter.convert(user);
-                                userRepository.getOnlineFriends(user.getId()).mergeWith(Mono.just(user.getId())).subscribe(friend -> sseEmitterRepository.send(null, friend, MyServerSentEvent.updateUser(convertedUser)));
-
-                            }
-                            case "nl.appsource.cardserver.model.Game" -> {
-                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
-                                game.setId(id);
-
-                                final org.openapitools.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-                                game.getPlayers().forEach(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateGame(convertedGame)));
-
-                            }
+//                            case "nl.appsource.cardserver.model.SseEvent" -> {
+//                                final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
+//                                sseEvent.setId(id);
+//
+//                                if (sseEvent.getAppIdentifier() == null && sseEvent.getUserId() == null) {
+//                                    log.warn("received sse event without userId and appIdentifier");
+//                                }
+//
+////                                log.info("Received SseEvent from db: appIdentifier: {}, userId: {}, event: {} ", sseEvent.getAppIdentifier(), sseEvent.getUserId(), sseEvent.getEvent());
+//                                sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
+//
+//                            }
+//                            case "nl.appsource.cardserver.model.Boom" -> {
+//                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+//                                boom.setId(id);
+//
+//                                boomToOpenApiConverter.convert(boom).subscribe(convertedBoom ->
+//                                    Flux.fromIterable(boom.getPlayers())
+//                                        .concatWith(Flux.just(boom.getCreator()))
+//                                        .distinct()
+//                                        .subscribe(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateBoom(convertedBoom))));
+//
+//                            }
+//                            case "nl.appsource.cardserver.model.User" -> {
+//                                final User user = jsonMapper.treeToValue(rootNode, User.class);
+//                                user.setId(id);
+//
+//                                final nl.appsource.generated.openapi.model.User convertedUser = userToOpenApiConverter.convert(user);
+//                                userRepository.getOnlineFriends(user.getId()).mergeWith(Mono.just(user.getId())).subscribe(friend -> sseEmitterRepository.send(null, friend, MyServerSentEvent.updateUser(convertedUser)));
+//
+//                            }
+//                            case "nl.appsource.cardserver.model.Game" -> {
+//                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+//                                game.setId(id);
+//
+//                                final nl.appsource.generated.openapi.model.Game convertedGame = gameToOpenApiConverter.convert(game);
+//                                game.getPlayers().forEach(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateGame(convertedGame)));
+//
+//                            }
 
 //                            case "nl.appsource.cardserver.model.SingleEvent" -> {
 //                                final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);

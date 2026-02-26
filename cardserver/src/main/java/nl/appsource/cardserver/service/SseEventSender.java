@@ -2,18 +2,18 @@ package nl.appsource.cardserver.service;
 
 import lombok.NonNull;
 import nl.appsource.cardserver.model.Game;
-import org.openapitools.model.UserMessage;
+import nl.appsource.generated.openapi.model.UserMessage;
 import reactor.core.publisher.Mono;
 
 import java.util.Set;
 
 public interface SseEventSender {
 
-    Mono<Void> sendAppIdentifierMessage(String appIdentifier, UserMessage userMessage);
+    // Mono<Void> sendAppIdentifierMessage(String appIdentifier, UserMessage userMessage);
 
-    Mono<Void> sendUserIdMessage(String userId, UserMessage userMessage);
+    Mono<Void> sendUserIdMessage(String userId, String message, UserMessage.VariantEnum variant);
 
-    Mono<Void> sendUserIdMessage(Set<String> userIds, UserMessage userMessage);
+    Mono<Void> sendUserIdsMessage(Set<String> userIds, String message, UserMessage.VariantEnum variant);
 
     Mono<Void> sendPong(String id);
 
