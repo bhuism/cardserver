@@ -6,7 +6,6 @@
         <groupId>nl.appsource.cardserver</groupId>
         <artifactId>root</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath/>
     </parent>
 
     <artifactId>couchbase2redis</artifactId>
