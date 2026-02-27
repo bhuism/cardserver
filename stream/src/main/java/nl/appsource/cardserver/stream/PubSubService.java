@@ -13,12 +13,12 @@ public class PubSubService {
     private final ReactiveRedisMessageListenerContainer container;
     private Disposable topicSubscription;
 
-    public PubSubService(ReactiveRedisMessageListenerContainer container) {
+    public PubSubService(final ReactiveRedisMessageListenerContainer container) {
         this.container = container;
     }
 
     // Start listening to the topic
-    public void listenTo(String topicName) {
+    public void listenTo(final String topicName) {
         // Prevent multiple active subscriptions if called multiple times
         if (topicSubscription != null && !topicSubscription.isDisposed()) {
             return;

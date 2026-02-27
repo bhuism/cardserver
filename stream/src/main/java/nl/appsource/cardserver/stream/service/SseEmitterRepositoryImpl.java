@@ -169,7 +169,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void sendAppIdentifier(final String appIdentifier, MyServerSentEvent myServerSentEvent) {
+    public void sendAppIdentifier(final String appIdentifier, final MyServerSentEvent myServerSentEvent) {
 
         Optional.ofNullable(userChannelsByApplicationId.get(appIdentifier))
             .ifPresent(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true));

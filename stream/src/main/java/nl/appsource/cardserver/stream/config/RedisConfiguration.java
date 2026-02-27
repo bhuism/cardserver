@@ -12,7 +12,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfiguration {
 
     @Bean
-    public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(ReactiveRedisConnectionFactory factory) {
+    public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(final ReactiveRedisConnectionFactory factory) {
         StringRedisSerializer serializer = new StringRedisSerializer();
         RedisSerializationContext<String, String> context = RedisSerializationContext
             .<String, String>newSerializationContext(serializer)
@@ -22,7 +22,7 @@ public class RedisConfiguration {
     }
 
     @Bean
-    public ReactiveRedisMessageListenerContainer container(ReactiveRedisConnectionFactory connectionFactory) {
+    public ReactiveRedisMessageListenerContainer container(final ReactiveRedisConnectionFactory connectionFactory) {
         return new ReactiveRedisMessageListenerContainer(connectionFactory);
     }
 
