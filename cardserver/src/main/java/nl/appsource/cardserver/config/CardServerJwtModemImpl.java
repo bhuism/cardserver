@@ -48,28 +48,18 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     private JWSSigner signer;
 
-    //private OctetKeyPair okp;
-
     private ECKey es512eckey;
 
     @PostConstruct
     public void init() throws JOSEException, ParseException {
-        //okp = OctetKeyPair.parse(cardServerProperties.getJwtEd25519Secret());
+
         es512eckey = ECKey.parse(cardServerProperties.getJwtEs512Secret());
 
         verifier = new ECDSAVerifier(es512eckey.toPublicJWK());
 
         signer = new ECDSASigner(es512eckey);
 
-        //verifier = new Ed25519Verifier(okp.toPublicJWK());
-        //signer = new Ed25519Signer(okp);
     }
-
-//    @Override
-//    public OctetKeyPair getPublicKey() {
-//        return okp.toPublicJWK();
-//    }
-
 
     @Override
     public List<JWK> getJKSKets() {
