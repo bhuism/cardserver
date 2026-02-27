@@ -48,11 +48,11 @@ jobs:
         run: |
           mvn -ntp -B -Dspring-boot.build-image.imageName=ghcr.io/bhuism/cardserver:latest clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image
 
-      - name: Push
-        id: push
-        if: success() && github.event_name != 'pull_request'
-        run: |
-          docker push ghcr.io/bhuism/cardserver:latest
+#      - name: Push
+#        id: push
+#        if: success() && github.event_name != 'pull_request'
+#        run: |
+#          docker push ghcr.io/bhuism/cardserver:latest
 
   rollout-restart:
     name: Rollout Restart
