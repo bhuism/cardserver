@@ -1,0 +1,22 @@
+spring:
+  data:
+    redis:
+      host: redis-stack.redis-stack.svc.cluster.local
+      port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://api.klaversjassen.nl"
+cardserver:
+  couchbase:
+    connection-string: couchbase://couchbase.couchbase.svc.cluster.local
+    username: root
+    password: killer
+    bucket-name: cardserver
+
+logging:
+  level:
+    ROOT: info
+#    org.springframework.security: trace
+    nl.appsource: debug
