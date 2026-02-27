@@ -27,3 +27,4 @@ spring:
 cardserver:
   auth:
     jwt-ed25519-secret: '{"kty":"OKP","d":"HIC-_XuJgk2q_esYxsvYhe1sGp7d6iA04N2-IXUGPTg","use":"sig","crv":"Ed25519","kid":"citest-8-key-A-745992","x":"4iTqtvdXsVs6FjUU39rDPCYVrIhpSO9os3McyffAOHE","alg":"EdDSA"}'
+    jwt-es512-secret: '{"kty":"EC","d":"ALjr1TqvNbOR_HxHwJlBnJ5MybU1Dz8Gbu4arEoJIrJ76eVdpQTpBwAmAu7ODhW39Lu-iZqp2qFE_TER6Lb7ZyH6","crv":"P-521","kid":"es512-key-1","x":"ACtrVUN1XroGXBxVpnuQpKijmIrEIv0-i8ySfR_Kdj9mWzcz75ztTVmEC_llfZLXYavNcYoo4hzPLRV554oBclmk","y":"AU3GODl2efwvg5clz5Wen3Qrv6XHwcaVUgJaXrxmItVzBPjsEbJR4j8HC4ho2-8o1NRhh9x0zhqUjWyW5to5ydpf"}'

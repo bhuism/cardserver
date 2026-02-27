@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.config;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.OctetKeyPair;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -11,7 +12,7 @@ public interface CardServerJwtModem extends ReactiveJwtDecoder {
 
     OctetKeyPair getPublicKey();
 
-    OctetKeyPair getPublicKeyEs512();
+    ECKey getPublicKeyEs512();
 
     Mono<Jwt> decode(String token);
 
