@@ -69,4 +69,4 @@ jobs:
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
-          args: -n cardserver rollout restart deployment cardserver-cardservercontroller cardserver-couchbase2rediscontroller deployment cardserver-streamcontroller
+          args: -n cardserver rollout restart deployment cardserver-cardservercontroller cardserver-couchbase2rediscontroller cardserver-streamcontroller
