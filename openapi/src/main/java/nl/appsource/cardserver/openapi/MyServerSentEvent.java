@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.stream.service;
+package nl.appsource.cardserver.openapi;
 
 import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.Game;

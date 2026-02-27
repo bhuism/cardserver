@@ -3,12 +3,10 @@ package nl.appsource.cardserver;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.OctetKeyPair;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator;
 import org.junit.jupiter.api.Test;
 
-public class OKPTest {
+public class ECTest {
 
     @Test
     void testAll() throws JOSEException {
@@ -16,7 +14,7 @@ public class OKPTest {
         ECKey ecKey = new ECKeyGenerator(Curve.P_521).generate();
 
         // 2. Print the full key pair
-        System.out.println("Generated Ed25519 Key Pair:");
+        System.out.println("Generated ES512 Key Pair:");
         System.out.println(ecKey.toJSONString());
 
         // 3. Get public and private key components

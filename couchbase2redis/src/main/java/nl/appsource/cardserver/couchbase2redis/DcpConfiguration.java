@@ -14,6 +14,7 @@ import nl.appsource.cardserver.converters.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.model.Boom;
 import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -26,6 +27,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGame;
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateUser;
 
 @Slf4j
 @Configuration
@@ -118,14 +122,14 @@ public class DcpConfiguration {
 
                                 redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
                                     .mergeWith(Flux.just(boom.getCreator()))
-                                    .distinct(), jsonMapper.writeValueAsString(boomToOpenApiConverter.convert(boom))).subscribe();
+                                    .distinct(), jsonMapper.writeValueAsString(MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)))).subscribe();
 
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
 
-                                redisPublisher.publish(user.getId(), jsonMapper.writeValueAsString(userToOpenApiConverter.convert(user))).subscribe();
+                                redisPublisher.publish(user.getId(), jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)))).subscribe();
 
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
@@ -134,8 +138,7 @@ public class DcpConfiguration {
 
                                 redisPublisher.publish(Flux.fromIterable(game.getPlayers())
                                     .mergeWith(Flux.just(game.getCreator()))
-                                    .distinct(), jsonMapper.writeValueAsString(gameToOpenApiConverter.convert(game))).subscribe();
-
+                                    .distinct(), jsonMapper.writeValueAsString(updateGame(gameToOpenApiConverter.convert(game)))).subscribe();
                             }
 
 //                            case "nl.appsource.cardserver.model.SingleEvent" -> {

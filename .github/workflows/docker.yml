@@ -9,7 +9,6 @@ on:
 jobs:
 
   build:
-    #runs-on: buildjet-2vcpu-ubuntu-2204-arm
     runs-on: ubuntu-22.04-arm
 
     permissions:
@@ -35,7 +34,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
-          images: ghcr.io/bhuism/cardserver
+          images: |
+            ghcr.io/bhuism/cardserver
+            ghcr.io/bhuism/couchbase2redis
+            ghcr.io/bhuism/stream
 
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
@@ -48,10 +50,12 @@ jobs:
         run: |
           mvn -ntp -B -Dspring-boot.build-image.imageName=ghcr.io/bhuism/cardserver:latest clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image
 
-#      - name: Push
-#        id: push
-#        if: success() && github.event_name != 'pull_request'
-#        run: |
+      - name: Push
+        id: push
+        if: success() && github.event_name != 'pull_request'
+        run: |
+          docker push ghcr.io/bhuism/stream:latest
+          docker push ghcr.io/bhuism/couchbase2redis:latest
 #          docker push ghcr.io/bhuism/cardserver:latest
 
   rollout-restart:

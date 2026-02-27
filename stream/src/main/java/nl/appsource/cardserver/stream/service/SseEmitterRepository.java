@@ -6,7 +6,7 @@ import reactor.core.publisher.Flux;
 
 public interface SseEmitterRepository {
 
-    void sendAppIdentifier(String appIdentifier, MyServerSentEvent myServerSentEvent);
+    void sendAppIdentifier(String appIdentifier, nl.appsource.cardserver.openapi.MyServerSentEvent myServerSentEvent);
 
     Flux<@NonNull ServerSentEvent<Object>> subscribe(String userId, String remoteAddress, String userAgent);
 

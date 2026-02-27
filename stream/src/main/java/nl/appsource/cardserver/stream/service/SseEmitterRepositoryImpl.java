@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.stream.service;
 
 import jakarta.annotation.PostConstruct;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.BoomToOpenApiConverter;
@@ -65,7 +64,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     //private final SseEventSender sseEventSender;
 
-    private final Sinks.Many<@NonNull MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
+    private final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
 
     private final Map<String, UserChannel> userChannelsByApplicationId = new ConcurrentHashMap<>();
 
@@ -111,33 +110,33 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         });
     }
 
-    private Flux<@NonNull MyServerSentEvent> initCache(final String userId) {
+    private Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> initCache(final String userId) {
 
         // users
-        final Flux<@NonNull MyServerSentEvent> friends = userRepository.getFriends(userId)
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> friends = userRepository.getFriends(userId)
             .map(userToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateUser);
+            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateUser);
 
         // games
-        final Flux<@NonNull MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
             .map(gameToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateGame);
+            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateGame);
 
         // forest
-        final Flux<@NonNull MyServerSentEvent> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateBoom);
+            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateBoom);
 
         // users
-        final Flux<@NonNull MyServerSentEvent> me = userRepository.findById(userId)
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> me = userRepository.findById(userId)
             .map(userToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateUser)
+            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateUser)
             .flux();
 
         // online list
-        final Mono<@NonNull MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
+        final Mono<nl.appsource.cardserver.openapi.MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
             .collectList()
-            .map(onlineFriends -> MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
+            .map(onlineFriends -> nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
 
         return Flux.concat(me, friends, games, booms, onlineList);
 
@@ -146,13 +145,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
-            .map(aLong -> MyServerSentEvent.ping())
+            .map(aLong -> nl.appsource.cardserver.openapi.MyServerSentEvent.ping())
             .subscribe(myServerSentEvent -> {
                 tryEmit(mainSink, myServerSentEvent, "mainSink", false);
             });
     }
 
-    private void tryEmit(final Sinks.Many<MyServerSentEvent> sink, final MyServerSentEvent event, final String context, final boolean disconnectOnOverflow) {
+    private void tryEmit(final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> sink, final nl.appsource.cardserver.openapi.MyServerSentEvent event, final String context, final boolean disconnectOnOverflow) {
         final Sinks.EmitResult result = sink.tryEmitNext(event);
         if (result.isFailure()) {
             if (result == Sinks.EmitResult.FAIL_OVERFLOW) {
@@ -169,7 +168,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public void sendAppIdentifier(final String appIdentifier, final MyServerSentEvent myServerSentEvent) {
+    public void sendAppIdentifier(final String appIdentifier, final nl.appsource.cardserver.openapi.MyServerSentEvent myServerSentEvent) {
 
         Optional.ofNullable(userChannelsByApplicationId.get(appIdentifier))
             .ifPresent(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true));
@@ -187,7 +186,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Flux<@NonNull ServerSentEvent<@NonNull Object>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
+    public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
 
         final String appIdentifier = Utils.idGen(IDTYPE.SESS, 8);
         final AtomicLong atomicLong = new AtomicLong(1);
@@ -198,15 +197,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userChannelsByApplicationId.put(appIdentifier, userChannel);
         userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
 
-        final Flux<MyServerSentEvent> helloFlux = Flux.just(MyServerSentEvent.hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> helloFlux = Flux.just(nl.appsource.cardserver.openapi.MyServerSentEvent.hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
 
-        final Flux<MyServerSentEvent> restFlux = Flux.concat(
-            Flux.just(MyServerSentEvent.ping()),
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux = Flux.concat(
+            Flux.just(nl.appsource.cardserver.openapi.MyServerSentEvent.ping()),
             Mono.delay(Duration.ofSeconds(1)).thenMany(initCache(userId))
                 //.doOnComplete(() -> sseEventSender.sendOnlineListToFriendsOf(userId).subscribe())
         );
 
-        final Flux<MyServerSentEvent> liveSinks = Flux.merge(
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> liveSinks = Flux.merge(
             userChannel.sink.asFlux().onBackpressureBuffer(2048),
             mainSink.asFlux().onBackpressureBuffer(8192)
         );
@@ -233,7 +232,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                     })
                     .map(myServerSentEvent -> {
-                        final ServerSentEvent.Builder<@NonNull Object> builder = ServerSentEvent.builder()
+                        final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
                             .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
                         builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
                         return builder.build();
@@ -243,7 +242,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @RequiredArgsConstructor
     private static class UserChannel {
-        public final Sinks.Many<@NonNull MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer(Queues.<MyServerSentEvent>get(1024).get());
+        public final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer(Queues.<nl.appsource.cardserver.openapi.MyServerSentEvent>get(1024).get());
         public final String userId;
     }
 

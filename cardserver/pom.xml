@@ -12,7 +12,7 @@
     <artifactId>cardserver</artifactId>
 
     <properties>
-        <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
+        <spring-boot.build-image.skip>true</spring-boot.build-image.skip>
     </properties>
 
     <dependencies>

@@ -40,14 +40,14 @@ public class WebfluxSecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public ReactiveJwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") final String issuerUri) {
-        return NimbusReactiveJwtDecoder.withIssuerLocation(issuerUri)
-            //.jwsAlgorithm(com.nimbusds.jose.JWSAlgorithm.EdDSA)
-            //.jwsAlgorithm(SignatureAlgorithm.RS256)
-            //.jwsAlgorithms(signatureAlgorithms -> signatureAlgorithms.addAll(List.of(JWSAlgorithm.EdDSA, SignatureAlgorithm.RS256)))
-            .build();
-    }
+//    @Bean
+//    public ReactiveJwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") final String issuerUri) {
+//        return NimbusReactiveJwtDecoder.withIssuerLocation(issuerUri)
+//            //.jwsAlgorithm(com.nimbusds.jose.JWSAlgorithm.EdDSA)
+//            //.jwsAlgorithm(SignatureAlgorithm.RS256)
+//            //.jwsAlgorithms(signatureAlgorithms -> signatureAlgorithms.addAll(List.of(JWSAlgorithm.EdDSA, SignatureAlgorithm.RS256)))
+//            .build();
+//    }
 
     public CorsConfigurationSource getPrivateCorsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();

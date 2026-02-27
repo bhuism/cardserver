@@ -8,7 +8,6 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.stream.service.MyServerSentEvent;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;

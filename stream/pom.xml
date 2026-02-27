@@ -11,10 +11,6 @@
 
     <artifactId>stream</artifactId>
 
-    <properties>
-        <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
-    </properties>
-
     <dependencies>
 
 <!--        <dependency>-->
