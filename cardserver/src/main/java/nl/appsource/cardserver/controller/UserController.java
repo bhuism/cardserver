@@ -2,7 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.converters.UserToOpenApiConverter;
 import nl.appsource.cardserver.service.UserService;
 import nl.appsource.generated.openapi.model.CreateInvite;
 import nl.appsource.generated.openapi.model.CreateInviteResponse;

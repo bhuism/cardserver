@@ -1,7 +1,7 @@
 package nl.appsource.cardserver.service;
 
 import lombok.NonNull;
-import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.generated.openapi.model.UserMessage;
 import reactor.core.publisher.Mono;
 

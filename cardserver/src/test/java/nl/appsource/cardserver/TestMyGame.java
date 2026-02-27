@@ -1,8 +1,8 @@
 package nl.appsource.cardserver;
 
-import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.Suit;
 import nl.appsource.cardserver.service.GameEngineImpl;
 import org.junit.jupiter.api.Test;
 

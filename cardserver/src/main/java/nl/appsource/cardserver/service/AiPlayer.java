@@ -1,9 +1,9 @@
 package nl.appsource.cardserver.service;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Rank;
-import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.couchbase.model.Rank;
+import nl.appsource.cardserver.couchbase.model.Suit;
 import nl.appsource.cardserver.service.exception.GameEngineException;
 import nl.appsource.generated.openapi.model.AiRisc;
 import nl.appsource.generated.openapi.model.GameVariant;

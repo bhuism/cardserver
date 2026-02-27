@@ -4,14 +4,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.AiRisc;
-import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.GameVariant;
-import nl.appsource.cardserver.model.Suit;
-import nl.appsource.cardserver.repository.BoomRepository;
-import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
+import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
+import nl.appsource.cardserver.couchbase.model.Suit;
+import nl.appsource.cardserver.couchbase.repository.BoomRepository;
+import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import nl.appsource.generated.openapi.model.UserMessage;
@@ -26,18 +26,15 @@ import reactor.util.retry.Retry;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
@@ -297,14 +294,14 @@ public class GameServiceImpl implements GameService {
         eventQueue.add(scheduledGameEvent);
     }
 
-    public static Map<Card, Integer> randomCards() {
-        final Map<Card, Integer> cards = new HashMap<>();
-        final List<Card> deck = Arrays.asList(Card.values());
-        shuffle(deck, RAND);
-        IntStream.range(0, deck.size())
-            .forEach(index -> cards.put(deck.get(index), index % 4));
-        return cards;
-    }
+//    public static Map<Card, Integer> randomCards() {
+//        final Map<Card, Integer> cards = new HashMap<>();
+//        final List<Card> deck = Arrays.asList(Card.values());
+//        shuffle(deck, RAND);
+//        IntStream.range(0, deck.size())
+//            .forEach(index -> cards.put(deck.get(index), index % 4));
+//        return cards;
+//    }
 
 //    @Override
 //    public Mono<Void> reload(final String appIdentifier, final String userId, final String gameId) {

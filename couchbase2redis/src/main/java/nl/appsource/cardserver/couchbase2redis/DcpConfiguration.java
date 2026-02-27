@@ -8,11 +8,19 @@ import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converters.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converters.GameToOpenApiConverter;
+import nl.appsource.cardserver.converters.UserToOpenApiConverter;
+import nl.appsource.cardserver.couchbase.model.Boom;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.User;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import reactor.core.publisher.Flux;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,11 +41,11 @@ public class DcpConfiguration {
 
 //    private final SseEmitterRepository sseEmitterRepository;
 //
-//    private final BoomToOpenApiConverter boomToOpenApiConverter;
+    private final BoomToOpenApiConverter boomToOpenApiConverter;
 //
-//    private final UserToOpenApiConverter userToOpenApiConverter;
+    private final UserToOpenApiConverter userToOpenApiConverter;
 //
-//    private final GameToOpenApiConverter gameToOpenApiConverter;
+    private final GameToOpenApiConverter gameToOpenApiConverter;
 //
 //    private final UserRepository userRepository;
 
@@ -81,17 +89,15 @@ public class DcpConfiguration {
 
             if (DcpMutationMessage.is(event)) {
 
-                String className = "";
-
                 try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
 
                     final JsonNode rootNode = jsonMapper.readTree(is);
 
                     if (rootNode.isObject()) {
 
-                        className = rootNode.get("_class").asString();
+                        ((ObjectNode) rootNode).put("id", id);
 
-                        redisPublisher.publish("dcpupdates", jsonMapper.writeValueAsString(rootNode)).subscribe();
+                        final String className = rootNode.get("_class").asString();
 
                         switch (className) {
 //                            case "nl.appsource.cardserver.model.SseEvent" -> {
@@ -106,33 +112,31 @@ public class DcpConfiguration {
 //                                sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
 //
 //                            }
-//                            case "nl.appsource.cardserver.model.Boom" -> {
-//                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
-//                                boom.setId(id);
-//
-//                                boomToOpenApiConverter.convert(boom).subscribe(convertedBoom ->
-//                                    Flux.fromIterable(boom.getPlayers())
-//                                        .concatWith(Flux.just(boom.getCreator()))
-//                                        .distinct()
-//                                        .subscribe(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateBoom(convertedBoom))));
-//
-//                            }
-//                            case "nl.appsource.cardserver.model.User" -> {
-//                                final User user = jsonMapper.treeToValue(rootNode, User.class);
-//                                user.setId(id);
-//
-//                                final nl.appsource.generated.openapi.model.User convertedUser = userToOpenApiConverter.convert(user);
-//                                userRepository.getOnlineFriends(user.getId()).mergeWith(Mono.just(user.getId())).subscribe(friend -> sseEmitterRepository.send(null, friend, MyServerSentEvent.updateUser(convertedUser)));
-//
-//                            }
-//                            case "nl.appsource.cardserver.model.Game" -> {
-//                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
-//                                game.setId(id);
-//
-//                                final nl.appsource.generated.openapi.model.Game convertedGame = gameToOpenApiConverter.convert(game);
-//                                game.getPlayers().forEach(player -> sseEmitterRepository.send(null, player, MyServerSentEvent.updateGame(convertedGame)));
-//
-//                            }
+                            case "nl.appsource.cardserver.model.Boom" -> {
+                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+                                boom.setId(id);
+
+                                redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
+                                    .mergeWith(Flux.just(boom.getCreator()))
+                                    .distinct(), jsonMapper.writeValueAsString(boomToOpenApiConverter.convert(boom))).subscribe();
+
+                            }
+                            case "nl.appsource.cardserver.model.User" -> {
+                                final User user = jsonMapper.treeToValue(rootNode, User.class);
+                                user.setId(id);
+
+                                redisPublisher.publish(user.getId(), jsonMapper.writeValueAsString(userToOpenApiConverter.convert(user))).subscribe();
+
+                            }
+                            case "nl.appsource.cardserver.model.Game" -> {
+                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+                                game.setId(id);
+
+                                redisPublisher.publish(Flux.fromIterable(game.getPlayers())
+                                    .mergeWith(Flux.just(game.getCreator()))
+                                    .distinct(), jsonMapper.writeValueAsString(gameToOpenApiConverter.convert(game))).subscribe();
+
+                            }
 
 //                            case "nl.appsource.cardserver.model.SingleEvent" -> {
 //                                final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);
@@ -157,6 +161,7 @@ public class DcpConfiguration {
                         }
 
                     }
+
 
                 } catch (IOException e) {
                     log.warn("Can not deserialize key: " + id);

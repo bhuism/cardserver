@@ -1,8 +1,8 @@
 package nl.appsource.cardserver.service;
 
-import nl.appsource.cardserver.model.AiRisc;
-import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.GameVariant;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import reactor.core.publisher.Flux;

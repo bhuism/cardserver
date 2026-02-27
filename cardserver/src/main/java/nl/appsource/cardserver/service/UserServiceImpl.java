@@ -3,12 +3,12 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.AiRisc;
-import nl.appsource.cardserver.model.GameVariant;
-import nl.appsource.cardserver.model.ScreenOrientation;
-import nl.appsource.cardserver.model.Theme;
-import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
+import nl.appsource.cardserver.couchbase.model.ScreenOrientation;
+import nl.appsource.cardserver.couchbase.model.Theme;
+import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.generated.openapi.model.UpdatePreferences;
 import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;

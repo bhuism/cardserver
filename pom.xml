@@ -14,9 +14,6 @@
 
     <packaging>pom</packaging>
 
-    <name>root</name>
-    <description>root</description>
-
     <properties>
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -32,7 +29,10 @@
         <module>cardserver</module>
         <module>couchbase2redis</module>
         <module>openapi</module>
-        <module>documents</module>
+        <module>couchbase</module>
+        <module>converters</module>
+        <module>stream</module>
+        <module>utils</module>
     </modules>
 
     <dependencyManagement>
@@ -44,12 +44,22 @@
             </dependency>
             <dependency>
                 <groupId>nl.appsource.cardserver</groupId>
-                <artifactId>documents</artifactId>
+                <artifactId>couchbase</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>nl.appsource.cardserver</groupId>
                 <artifactId>openapi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.appsource.cardserver</groupId>
+                <artifactId>converters</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.appsource.cardserver</groupId>
+                <artifactId>utils</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -88,23 +98,6 @@
                     <groupId>org.openapitools</groupId>
                     <artifactId>openapi-generator-maven-plugin</artifactId>
                     <version>${openapi-generator-maven-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.springframework.boot</groupId>
-                    <artifactId>spring-boot-maven-plugin</artifactId>
-                    <configuration>
-                        <image>
-                            <env>
-                                <BP_JVM_VERSION>${java.version}</BP_JVM_VERSION>
-                            </env>
-                        </image>
-                        <excludes>
-                            <exclude>
-                                <groupId>org.projectlombok</groupId>
-                                <artifactId>lombok</artifactId>
-                            </exclude>
-                        </excludes>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

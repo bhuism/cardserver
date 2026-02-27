@@ -2,8 +2,8 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.Feedback;
-import nl.appsource.cardserver.repository.FeedbackRepository;
+import nl.appsource.cardserver.couchbase.model.Feedback;
+import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.generated.openapi.model.FeedbackRequest;
 import org.openapitools.api.FeedbackApi;
 import org.springframework.http.HttpStatus;

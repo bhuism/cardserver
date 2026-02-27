@@ -19,9 +19,14 @@ public final class CardServerProperties {
 
     private String jwtEd25519Secret;
 
+    private String jwtEs512Secret;
+
     @PostConstruct
     public void validate() {
         if (!StringUtils.hasText(jwtEd25519Secret)) {
+            throw new RuntimeException("Please set a jwtSecret");
+        }
+        if (!StringUtils.hasText(jwtEs512Secret)) {
             throw new RuntimeException("Please set a jwtSecret");
         }
     }

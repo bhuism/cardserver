@@ -11,8 +11,9 @@
 
     <artifactId>cardserver</artifactId>
 
-    <name>cardserver</name>
-    <description>cardserver</description>
+    <properties>
+        <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
+    </properties>
 
     <dependencies>
 
@@ -95,12 +96,22 @@
 
         <dependency>
             <groupId>nl.appsource.cardserver</groupId>
-            <artifactId>documents</artifactId>
+            <artifactId>couchbase</artifactId>
         </dependency>
 
         <dependency>
             <groupId>nl.appsource.cardserver</groupId>
             <artifactId>openapi</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.appsource.cardserver</groupId>
+            <artifactId>converters</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.appsource.cardserver</groupId>
+            <artifactId>utils</artifactId>
         </dependency>
 
     </dependencies>
@@ -183,6 +194,19 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <image>
+                        <env>
+                            <BP_JVM_VERSION>${java.version}</BP_JVM_VERSION>
+                        </env>
+                    </image>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

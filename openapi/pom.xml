@@ -13,11 +13,8 @@
     <artifactId>openapi</artifactId>
 
     <properties>
-        <skipNativeBuild>true</skipNativeBuild>
-        <spring-boot.aot.skip>true</spring-boot.aot.skip>
-        <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
+        <spring-boot.build-image.skip>true</spring-boot.build-image.skip>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

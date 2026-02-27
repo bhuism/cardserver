@@ -2,7 +2,7 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.repository.SseSessionRepository;
+import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.generated.openapi.model.SseConnection;
 import nl.appsource.generated.openapi.model.SseConnections;
 import org.openapitools.api.DebugApi;

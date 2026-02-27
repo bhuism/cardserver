@@ -1,7 +1,8 @@
 spring:
   data:
     redis:
-      host: 10.103.71.147
+#      host: 10.103.71.147
+      host: 127.0.0.1
       port: 6379
 cardserver:
   couchbase:
