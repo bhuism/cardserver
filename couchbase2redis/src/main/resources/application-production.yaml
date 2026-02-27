@@ -5,7 +5,7 @@ spring:
       port: 6379
 cardserver:
   couchbase:
-    connection-string: couchbase://couchbase-stack.couchbase-stack.svc.cluster.local
+    connection-string: couchbase://couchbase.couchbase.svc.cluster.local
     username: root
     password: killer
     bucket-name: cardserver
