@@ -6,10 +6,10 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.Ed25519Signer;
-import com.nimbusds.jose.crypto.Ed25519Verifier;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.OctetKeyPair;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -47,26 +48,32 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     private JWSSigner signer;
 
-    private OctetKeyPair okp;
+    //private OctetKeyPair okp;
 
     private ECKey es512eckey;
 
     @PostConstruct
     public void init() throws JOSEException, ParseException {
-        okp = OctetKeyPair.parse(cardServerProperties.getJwtEd25519Secret());
+        //okp = OctetKeyPair.parse(cardServerProperties.getJwtEd25519Secret());
         es512eckey = ECKey.parse(cardServerProperties.getJwtEs512Secret());
-        verifier = new Ed25519Verifier(okp.toPublicJWK());
-        signer = new Ed25519Signer(okp);
+
+        verifier = new ECDSAVerifier(es512eckey.toPublicJWK());
+
+        signer = new ECDSASigner(es512eckey);
+
+        //verifier = new Ed25519Verifier(okp.toPublicJWK());
+        //signer = new Ed25519Signer(okp);
     }
 
-    @Override
-    public OctetKeyPair getPublicKey() {
-        return okp.toPublicJWK();
-    }
+//    @Override
+//    public OctetKeyPair getPublicKey() {
+//        return okp.toPublicJWK();
+//    }
+
 
     @Override
-    public ECKey getPublicKeyEs512() {
-        return es512eckey.toPublicJWK();
+    public List<JWK> getJKSKets() {
+        return List.of(es512eckey.toPublicJWK());
     }
 
     @Override
@@ -122,7 +129,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
         final SignedJWT signedJWT = new SignedJWT(
             new JWSHeader.Builder(JWSAlgorithm.EdDSA)
-                .keyID(getPublicKey().getKeyID())
+                .keyID(es512eckey.toPublicJWK().getKeyID())
                 .type(JOSEObjectType.JWT)
                 .jwkURL(URI.create("https://api.klaversjassen.nl/.well-known/jwks.json"))
                 .build(), claimsSet);

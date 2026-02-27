@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +22,7 @@ public class WellKnownController {
     private final JWKSet jwkSet;
 
     public WellKnownController(final CardServerJwtModem cardServerJwtModem) {
-        jwkSet = new JWKSet(List.of(cardServerJwtModem.getPublicKey().toPublicJWK(), cardServerJwtModem.getPublicKeyEs512().toPublicJWK()));
+        jwkSet = new JWKSet(cardServerJwtModem.getJKSKets());
     }
 
     @GetMapping("jwks.json")
