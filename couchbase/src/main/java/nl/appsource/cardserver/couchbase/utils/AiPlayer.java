@@ -1,12 +1,12 @@
-package nl.appsource.cardserver.service;
+package nl.appsource.cardserver.couchbase.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.couchbase.exception.GameEngineException;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
 import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
 import nl.appsource.cardserver.couchbase.model.Rank;
 import nl.appsource.cardserver.couchbase.model.Suit;
-import nl.appsource.cardserver.service.exception.GameEngineException;
-import nl.appsource.generated.openapi.model.AiRisc;
-import nl.appsource.generated.openapi.model.GameVariant;
 
 import java.util.Comparator;
 import java.util.List;
@@ -238,7 +238,7 @@ public record AiPlayer(GameEngine gameEngine) {
             // If you can over-trump...
             if (overTrumpCard.isPresent()) {
 
-                if (GameVariant.ROTTERDAMS.equals(gameEngine.getGame().getGameVariant())) {
+                if (gameEngine.getGame().getGameVariant().equals(GameVariant.ROTTERDAMS)) {
                     // In Rotterdams, if you can over-trump, you MUST over-trump, regardless of partner winning.
                     return overTrumpCard.get();
                 }

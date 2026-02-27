@@ -14,7 +14,6 @@ import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,9 +45,6 @@ public class GameControllerTests {
 
     @MockitoBean
     private UserRepository userRepository;
-
-    @MockitoBean
-    private SseEmitterRepository sseEmitterRepository;
 
     @MockitoBean
     private GameService gameService;

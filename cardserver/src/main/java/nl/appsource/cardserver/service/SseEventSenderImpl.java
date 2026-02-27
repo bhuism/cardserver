@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
 @Service

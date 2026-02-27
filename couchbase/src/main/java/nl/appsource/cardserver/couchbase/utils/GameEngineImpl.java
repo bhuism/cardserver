@@ -1,6 +1,13 @@
 package nl.appsource.cardserver.couchbase.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.couchbase.exception.CardAlreadyPlayerException;
+import nl.appsource.cardserver.couchbase.exception.ElderException;
+import nl.appsource.cardserver.couchbase.exception.GameCompletedException;
+import nl.appsource.cardserver.couchbase.exception.GameEngineException;
+import nl.appsource.cardserver.couchbase.exception.LastTrickOpenException;
+import nl.appsource.cardserver.couchbase.exception.NotAPlayerException;
+import nl.appsource.cardserver.couchbase.exception.NotPlayersTurnException;
 import nl.appsource.cardserver.couchbase.model.Card;
 import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.cardserver.couchbase.model.Rank;
@@ -136,177 +143,177 @@ public record GameEngineImpl(Game game) implements GameEngine {
         }
     }
 
-//    @Override
-//    public Mono<GameEngine> playAiCard() {
-//
-//        if (!isAiTurn()) {
-//            return Mono.empty();
-//        }
-//
-//        final String userId = game.getPlayers()
-//            .get(calcWhoHasTurn());
-//
-//        if (!AI_USER_ID.contains(userId)) {
-//            throw new GameEngineException("Not an Ai player");
-//        }
-//
-//        return playCard(userId, new AiPlayer(this).calcAiCard(userId));
-//
-//    }
+    @Override
+    public Mono<GameEngine> playAiCard() {
 
-//    @Override
-//    public Mono<GameEngine> sayAi() {
-//
-//        if (!isAiSay()) {
-//            return Mono.empty();
-//        }
-//
-//        final int whoSay = calcWhoSay();
-//
-//        final String userId = this.game.getPlayers()
-//            .get(whoSay);
-//
-//        return say(userId, new AiPlayer(this).decideBid(userId));
-//
-//    }
+        if (!isAiTurn()) {
+            return Mono.empty();
+        }
 
-//    @Override
-//    public Mono<GameEngine> playCard(final String userId, final Card card) {
-//
-//        final int playerNum = this.game.getPlayers()
-//            .indexOf(userId);
-//
-//        if (isCompleted()) {
-//            log.warn("Game {} allready completed", game.getId());
-//            throw new GameCompletedException();
-//        }
-//
-//        if (!game.getPlayers()
-//            .contains(userId)) {
-//            throw new RuntimeException("Not a player");
-//        }
-//
-//        final int cardOwner = whoHasCard(card);
-//
-//        if (playerNum != cardOwner) {
-//            log.warn("Player does not have card {}", card);
-//        }
-//
-//        if (game.getTurns()
-//            .stream()
-//            .anyMatch((c) -> c == card)) {
-//            log.warn("Card {} allready played", card);
-//            throw new CardAlreadyPlayerException(card);
-//        }
-//
-//        if (game.getLastTrickOpen()) {
-//            return Mono.empty();
-//        }
-//
-//        final int gotTurn = calcWhoHasTurn();
-//
-//        if (gotTurn != playerNum) {
-//            log.warn("playCard({}) It's player {} turn", card, game.getPlayers()
-//                .get(gotTurn));
-//            throw new NotPlayersTurnException();
-//        }
-//
-//        log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
-//
-//        //game.setUpdated(Instant.now());
-//        game.getTurns().add(card);
-//        game.setLastTrickOpen(false);
-//
-//        return Mono.just(this);
-//
-//    }
-//
-//    @Override
-//    public Mono<GameEngine> say(final String userId, final Boolean say) {
-//
-////        final List<UserMessage> userMessages = new ArrayList<>();
-//
-//        final int playerNum = this.game.getPlayers()
-//            .indexOf(userId);
-//
-//        if (isCompleted()) {
-//            log.warn("Game {} allready completed", game.getId());
-//            throw new GameCompletedException();
-//        }
-//
-//        if (!game.getPlayers()
-//            .contains(userId)) {
-//            throw new NotAPlayerException();
-//        }
-//
-//        if (game.getSay() == null) {
-//            game.setSay(new HashMap<>());
-//        }
-//
-//        if (isErGegaan()) {
-//            throw new ElderException("Er is al iemand gegaan");
-//        }
-//
-//        if (game.getSay()
-//            .containsKey(playerNum)) {
-//            throw new ElderException("Je hebt al gezegd");
-//        }
-//
-//        if (game.getLastTrickOpen()) {
-//            throw new LastTrickOpenException();
-//        }
-//
-//        final int whoSay = calcWhoSay();
-//
-//        if (whoSay != playerNum) {
-//            log.warn("say() It's player {} turn to say", game.getPlayers()
-//                .get(whoSay));
-//            throw new NotPlayersTurnException();
-//        }
-//
-//        game.getSay()
-//            .put(playerNum, say);
-//
-//        // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
-//
-//        return checkNiemandIsGegaanEnIedereenHeeftGezegd().then(Mono.just(this));
-//
-//        //game.setUpdated(Instant.now());
-//
-////        return userMessages;
-//
-//        //return Mono.just(this);
-//
-//    }
-//
-//    @Override
-//    public Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd() {
-//        if (niemandIsGegaanEnIedereenHeeftGezegd()) {
-//            if (game.getDealCounter() % 2 == 0) {
-//
-//                final Suit oldTrump = this.game.getTrump();
-//
-//                do {
-//                    game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-//                }
-//                while (oldTrump == game.getTrump());
-//            } else {
-//                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
-//                game.setPlayerCard(randomCards());
-//            }
-//
-//            game.getSay()
-//                .clear();
-//
-//            game.setDealCounter(game.getDealCounter() + 1);
-//            //game.setUpdated(Instant.now());
-//
-//            return Mono.just(this);
-//        } else {
-//            return Mono.empty();
-//        }
-//
-//    }
+        final String userId = game.getPlayers()
+            .get(calcWhoHasTurn());
+
+        if (!AI_USER_ID.contains(userId)) {
+            throw new GameEngineException("Not an Ai player");
+        }
+
+        return playCard(userId, new AiPlayer(this).calcAiCard(userId));
+
+    }
+
+    @Override
+    public Mono<GameEngine> sayAi() {
+
+        if (!isAiSay()) {
+            return Mono.empty();
+        }
+
+        final int whoSay = calcWhoSay();
+
+        final String userId = this.game.getPlayers()
+            .get(whoSay);
+
+        return say(userId, new AiPlayer(this).decideBid(userId));
+
+    }
+
+    @Override
+    public Mono<GameEngine> playCard(final String userId, final Card card) {
+
+        final int playerNum = this.game.getPlayers()
+            .indexOf(userId);
+
+        if (isCompleted()) {
+            log.warn("Game {} allready completed", game.getId());
+            throw new GameCompletedException();
+        }
+
+        if (!game.getPlayers()
+            .contains(userId)) {
+            throw new RuntimeException("Not a player");
+        }
+
+        final int cardOwner = whoHasCard(card);
+
+        if (playerNum != cardOwner) {
+            log.warn("Player does not have card {}", card);
+        }
+
+        if (game.getTurns()
+            .stream()
+            .anyMatch((c) -> c == card)) {
+            log.warn("Card {} allready played", card);
+            throw new CardAlreadyPlayerException(card);
+        }
+
+        if (game.getLastTrickOpen()) {
+            return Mono.empty();
+        }
+
+        final int gotTurn = calcWhoHasTurn();
+
+        if (gotTurn != playerNum) {
+            log.warn("playCard({}) It's player {} turn", card, game.getPlayers()
+                .get(gotTurn));
+            throw new NotPlayersTurnException();
+        }
+
+        log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
+
+        //game.setUpdated(Instant.now());
+        game.getTurns().add(card);
+        game.setLastTrickOpen(false);
+
+        return Mono.just(this);
+
+    }
+
+    @Override
+    public Mono<GameEngine> say(final String userId, final Boolean say) {
+
+//        final List<UserMessage> userMessages = new ArrayList<>();
+
+        final int playerNum = this.game.getPlayers()
+            .indexOf(userId);
+
+        if (isCompleted()) {
+            log.warn("Game {} allready completed", game.getId());
+            throw new GameCompletedException();
+        }
+
+        if (!game.getPlayers()
+            .contains(userId)) {
+            throw new NotAPlayerException();
+        }
+
+        if (game.getSay() == null) {
+            game.setSay(new HashMap<>());
+        }
+
+        if (isErGegaan()) {
+            throw new ElderException("Er is al iemand gegaan");
+        }
+
+        if (game.getSay()
+            .containsKey(playerNum)) {
+            throw new ElderException("Je hebt al gezegd");
+        }
+
+        if (game.getLastTrickOpen()) {
+            throw new LastTrickOpenException();
+        }
+
+        final int whoSay = calcWhoSay();
+
+        if (whoSay != playerNum) {
+            log.warn("say() It's player {} turn to say", game.getPlayers()
+                .get(whoSay));
+            throw new NotPlayersTurnException();
+        }
+
+        game.getSay()
+            .put(playerNum, say);
+
+        // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
+
+        return checkNiemandIsGegaanEnIedereenHeeftGezegd().then(Mono.just(this));
+
+        //game.setUpdated(Instant.now());
+
+//        return userMessages;
+
+        //return Mono.just(this);
+
+    }
+
+    @Override
+    public Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd() {
+        if (niemandIsGegaanEnIedereenHeeftGezegd()) {
+            if (game.getDealCounter() % 2 == 0) {
+
+                final Suit oldTrump = this.game.getTrump();
+
+                do {
+                    game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                }
+                while (oldTrump == game.getTrump());
+            } else {
+                game.setTrump(Suit.values()[RAND.nextInt(Suit.values().length)]);
+                game.setPlayerCard(randomCards());
+            }
+
+            game.getSay()
+                .clear();
+
+            game.setDealCounter(game.getDealCounter() + 1);
+            //game.setUpdated(Instant.now());
+
+            return Mono.just(this);
+        } else {
+            return Mono.empty();
+        }
+
+    }
 
     @Override
     public boolean isCompleted() {
@@ -690,28 +697,33 @@ public record GameEngineImpl(Game game) implements GameEngine {
         return false;
     }
 
-//    @Override
-//    public Mono<GameEngine> claimRoem(final String userId, final SseEventSender sseEventSender) {
-//        final int slagNr = calcTricksPlayed();
-//
-//        final int correctedSlagNr = slagNr - (slagNr > 0 && getTurnCount() % 4 == 0 ? 1 : 0);
-//
-//        final int roem = calculateTrickRoem(correctedSlagNr);
-//        if (roem > 0) {
-//            final boolean result = getGame()
-//                .getRoemGeklopt()
-//                .add(calcTricksPlayed());
-//
+    @Override
+    public Mono<GameEngine> claimRoem(final String userId) {
+        final int slagNr = calcTricksPlayed();
+
+        final int correctedSlagNr = slagNr - (slagNr > 0 && getTurnCount() % 4 == 0 ? 1 : 0);
+
+        final int roem = calculateTrickRoem(correctedSlagNr);
+        if (roem > 0) {
+            final boolean result = getGame()
+                .getRoemGeklopt()
+                .add(calcTricksPlayed());
+
+            log.warn("Roem geklopt: {} in slag {} result: {}", roem, correctedSlagNr + 1, result);
+
 //            return sseEventSender.sendUserIdsMessage(Set.copyOf(getGame().getPlayers()), "Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1),
 //                    UserMessage.VariantEnum.INFO)
 //                .then(Mono.just(this));
-//
-//        } else {
+
+        }
+//        else {
 //            return sseEventSender.sendUserIdsMessage(Set.copyOf(getGame().getPlayers()), "Er is geen roem in slag " + (correctedSlagNr + 1),
 //                    UserMessage.VariantEnum.WARNING)
 //                .then(Mono.just(this));
 //        }
-//    }
+
+        return Mono.just(this);
+    }
 
     private boolean isPartner(final int p1, final int p2) {
         return (p1 + 2) % 4 == p2;

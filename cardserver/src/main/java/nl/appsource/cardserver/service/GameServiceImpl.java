@@ -12,6 +12,8 @@ import nl.appsource.cardserver.couchbase.model.Suit;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
+import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import nl.appsource.generated.openapi.model.UserMessage;
@@ -39,10 +41,10 @@ import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
-import static java.util.Collections.shuffle;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
-import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.randomCards;
 import static nl.appsource.cardserver.utils.IDTYPE.GAME;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
@@ -211,7 +213,7 @@ public class GameServiceImpl implements GameService {
                                 case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                                 case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
                                 case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
-                                case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId, sseEventSender));
+                                case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId));
                             };
 
                             return result

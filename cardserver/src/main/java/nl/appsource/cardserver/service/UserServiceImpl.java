@@ -11,7 +11,6 @@ import nl.appsource.cardserver.couchbase.model.User;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.generated.openapi.model.UpdatePreferences;
 import nl.appsource.generated.openapi.model.UserMessage;
-import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,11 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    private final SseEmitterRepository sseEmitterRepository;
-
     private final SseEventSender sseEventSender;
-
-    private final ReactiveCouchbaseTemplate template;
 
     @Override
     public Mono<User> findById(final String userId) {

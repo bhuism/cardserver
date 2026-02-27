@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.service;
+package nl.appsource.cardserver.couchbase.utils;
 
 import nl.appsource.cardserver.couchbase.model.Card;
 import nl.appsource.cardserver.couchbase.model.Game;

@@ -18,17 +18,17 @@ public interface GameEngine {
 
     int calcWhoHasTurn();
 
-//    Mono<GameEngine> sayAi();
+    Mono<GameEngine> sayAi();
 
-//    Mono<GameEngine> playCard(String userId, Card card);
+    Mono<GameEngine> playCard(String userId, Card card);
 
-//    Mono<GameEngine> say(String userId, Boolean say);
+    Mono<GameEngine> say(String userId, Boolean say);
 
-//    Mono<GameEngine> playAiCard();
+    Mono<GameEngine> playAiCard();
 
-//    Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd();
+    Mono<GameEngine> checkNiemandIsGegaanEnIedereenHeeftGezegd();
 
-//    Mono<GameEngine> claimRoem(String userId, SseEventSender sseEventSender);
+    Mono<GameEngine> claimRoem(String userId);
 
     boolean isCompleted();
 
