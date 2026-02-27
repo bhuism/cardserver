@@ -1,11 +1,9 @@
 server:
-  tomcat:
-    accesslog:
-      pattern: '%t %a [%I] "%r" %s (%D ms)'
   compression:
     enabled: true
   forward-headers-strategy: framework
   shutdown: graceful
+  port: 8080
 logging:
   level:
     ROOT: info
