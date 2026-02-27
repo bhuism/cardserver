@@ -1,7 +1,7 @@
 package nl.appsource.cardserver.controller;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import nl.appsource.cardserver.service.CardServerJwtModem;
+import nl.appsource.cardserver.config.CardServerJwtModem;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -9,10 +9,11 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static nl.appsource.cardserver.service.CardServerJwtModemImpl.ISSUER;
+import static nl.appsource.cardserver.config.CardServerJwtModemImpl.ISSUER;
 
 @CrossOrigin
 @Controller
@@ -22,7 +23,7 @@ public class WellKnownController {
     private final JWKSet jwkSet;
 
     public WellKnownController(final CardServerJwtModem cardServerJwtModem) {
-        jwkSet = new JWKSet(cardServerJwtModem.getPublicKey().toPublicJWK());
+        jwkSet = new JWKSet(List.of(cardServerJwtModem.getPublicKey().toPublicJWK(), cardServerJwtModem.getPublicKeyEs512().toPublicJWK()));
     }
 
     @GetMapping("jwks.json")

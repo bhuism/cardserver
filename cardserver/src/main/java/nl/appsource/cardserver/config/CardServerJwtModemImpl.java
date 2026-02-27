@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.service;
+package nl.appsource.cardserver.config;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -16,7 +16,6 @@ import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.config.CardServerProperties;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.MappedJwtClaimSetConverter;
@@ -49,9 +48,12 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     private OctetKeyPair okp;
 
+    private OctetKeyPair es512okp;
+
     @PostConstruct
     public void init() throws JOSEException, ParseException {
         okp = OctetKeyPair.parse(cardServerProperties.getJwtEd25519Secret());
+        es512okp = OctetKeyPair.parse(cardServerProperties.getJwtEs512Secret());
         verifier = new Ed25519Verifier(okp.toPublicJWK());
         signer = new Ed25519Signer(okp);
     }
@@ -59,6 +61,11 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
     @Override
     public OctetKeyPair getPublicKey() {
         return okp.toPublicJWK();
+    }
+
+    @Override
+    public OctetKeyPair getPublicKeyEs512() {
+        return es512okp.toPublicJWK();
     }
 
     @Override
