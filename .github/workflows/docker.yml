@@ -64,10 +64,21 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-22.04-arm
     steps:
-
-      - name: Rollout Restart Deployment
+      - name: Rollout Restart CardServerController Deployment
         uses: actions-hub/kubectl@master
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
-          args: -n cardserver rollout restart deployment cardserver
+          args: -n cardserver rollout restart deployment cardserver-cardservercontroller
+      - name: Rollout Restart Couchbase2RedisController Deployment
+        uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: -n cardserver rollout restart deployment cardserver-couchbase2rediscontroller
+      - name: Rollout Restart StreamController Deployment
+        uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: -n cardserver rollout restart deployment cardserver-streamcontroller
