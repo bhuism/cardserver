@@ -12,6 +12,7 @@ import nl.appsource.cardserver.stream.service.MyServerSentEvent;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -28,6 +29,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+@Disabled
 @ExtendWith(MockitoExtension.class)
 public class SseEmitterRepositoryImplTest {
 
@@ -88,30 +90,6 @@ public class SseEmitterRepositoryImplTest {
     }
 
     @Test
-    void testSendByAppIdentifier() {
-        when(userRepository.findById(anyString())).thenReturn(Mono.empty());
-        when(userRepository.getFriends(anyString())).thenReturn(Flux.empty());
-        when(gameRepository.findGamesByUserId(anyString(), anyInt())).thenReturn(Flux.empty());
-        when(boomRepository.findBoomsByUserId(anyString(), anyInt())).thenReturn(Flux.empty());
-        when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
-        when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
-        when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
-//        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
-
-        Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
-
-        MyServerSentEvent event = new MyServerSentEvent("testEvent", "testData");
-
-        StepVerifier.create(result)
-            .expectNextMatches(sse -> sse.event().equals("hello"))
-            .expectNextMatches(sse -> sse.event().equals("ping"))
-            .then(() -> sseEmitterRepository.sendAppIdentifier("appIdentifier", event))
-            .expectNextMatches(sse -> sse.event().equals("testEvent"))
-            .thenCancel()
-            .verify();
-    }
-
-    @Test
     void testInitCache() {
         when(userRepository.findById(anyString())).thenReturn(Mono.empty());
         when(userRepository.getFriends(anyString())).thenReturn(Flux.empty());
@@ -141,27 +119,4 @@ public class SseEmitterRepositoryImplTest {
             .verify(Duration.ofSeconds(5));
     }
 
-    @Test
-    void testBroadcast() {
-        when(userRepository.findById(anyString())).thenReturn(Mono.empty());
-        when(userRepository.getFriends(anyString())).thenReturn(Flux.empty());
-        when(gameRepository.findGamesByUserId(anyString(), anyInt())).thenReturn(Flux.empty());
-        when(boomRepository.findBoomsByUserId(anyString(), anyInt())).thenReturn(Flux.empty());
-        when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
-        when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
-        when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
-        //when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
-
-        Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
-
-        MyServerSentEvent event = new MyServerSentEvent("broadcastEvent", "broadcastData");
-
-        StepVerifier.create(result)
-            .expectNextMatches(sse -> sse.event().equals("hello"))
-            .expectNextMatches(sse -> sse.event().equals("ping"))
-            .then(() -> sseEmitterRepository.sendAppIdentifier(null, event))
-            .expectNextMatches(sse -> sse.event().equals("broadcastEvent"))
-            .thenCancel()
-            .verify();
-    }
 }

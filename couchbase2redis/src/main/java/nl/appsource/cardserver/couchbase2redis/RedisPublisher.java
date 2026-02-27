@@ -14,13 +14,13 @@ public class RedisPublisher {
 
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
-    public Mono<Long> publish(String topic, String message) {
+    public Mono<Long> publish(final String topic, final String message) {
         //log.info("Publishing message to topic {}: {}", topic, message);
         return reactiveRedisTemplate.convertAndSend(topic, message)
             .doOnError(e -> log.error("Error publishing message", e));
     }
 
-    public Mono<Void> publish(Flux<String> topic, String message) {
+    public Mono<Void> publish(final Flux<String> topic, final String message) {
         return topic.flatMap(t -> publish(t, message)).then();
     }
 
