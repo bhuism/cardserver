@@ -2,20 +2,20 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.BoomToOpenApiConverter;
-import nl.appsource.cardserver.converter.GameToOpenApiConverter;
-import nl.appsource.cardserver.repository.BoomRepository;
-import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.converters.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converters.GameToOpenApiConverter;
+import nl.appsource.cardserver.couchbase.repository.BoomRepository;
+import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.service.BoomService;
-import nl.appsource.cardserver.service.GameEngineImpl;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
+import nl.appsource.generated.openapi.model.Boom;
+import nl.appsource.generated.openapi.model.CreateBoom;
+import nl.appsource.generated.openapi.model.Game;
+import nl.appsource.generated.openapi.model.GetBooms200Response;
 import org.openapitools.api.BoomApi;
-import org.openapitools.model.Boom;
-import org.openapitools.model.CreateBoom;
-import org.openapitools.model.Game;
-import org.openapitools.model.GetBooms200Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,7 +50,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
                     user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.userId(), createBoom.getPlayers(), user.getGameVariant(), user.getAiRisc()))
                 )
             )
-            .flatMap(boomToOpenApiConverter::convert)
+            .map(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
@@ -60,7 +60,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
         log.info("{} getBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> boomService.getBoom(auth.userId(), boomId))
-            .flatMap(boomToOpenApiConverter::convert)
+            .map(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.defer(() -> {
                 log.warn("{} getBoom({}), boom not found", exchange.getRequest()
@@ -78,7 +78,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> boomService.getBooms(auth.userId())
                 .collectList()
-                .map(booms -> new GetBooms200Response().booms(booms))
+                .map(booms -> GetBooms200Response.builder().booms(booms).build())
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
             )
@@ -86,7 +86,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     }
 
-    private Mono<Integer> calcDealer(final nl.appsource.cardserver.model.Boom boom) {
+    private Mono<Integer> calcDealer(final nl.appsource.cardserver.couchbase.model.Boom boom) {
 
         if (boom.getGames().isEmpty()) {
             return Mono.just(RAND.nextInt(4));

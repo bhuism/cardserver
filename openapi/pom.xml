@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>nl.appsource.cardserver</groupId>
+        <artifactId>root</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>openapi</artifactId>
+
+    <properties>
+        <spring-boot.build-image.skip>true</spring-boot.build-image.skip>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.9</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generateApi</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/static/schema/api.yaml</inputSpec>
+<!--                            <generatorName>spring</generatorName>-->
+                            <generateApis>false</generateApis>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+<!--                            <generateModelTests>false</generateModelTests>-->
+<!--                            <generateModelDocumentation>false</generateModelDocumentation>-->
+<!--                            <generateModels>true</generateModels>-->
+                            <generateApiTests>false</generateApiTests>
+<!--                            <generateApiDocumentation>false</generateApiDocumentation>-->
+<!--                            <typeMappings>AnyType=java.io.Serializable</typeMappings>-->
+<!--                            <modelPackage>nl.appsource.generated.openapi.model</modelPackage>-->
+<!--                            -->
+                            <generatorName>spring</generatorName>
+                            <typeMappings>AnyType=java.io.Serializable</typeMappings>
+                            <generateModels>true</generateModels>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <modelPackage>nl.appsource.generated.openapi.model</modelPackage>
+
+                            <configOptions>
+                                <library>spring-boot</library>
+<!--                                <useSpringBoot3>true</useSpringBoot3>-->
+                                <additionalModelTypeAnnotations>@lombok.Data; @lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
+
+<!--                                <openApiNullable>false</openApiNullable>-->
+                                <useJakartaEe>true</useJakartaEe>
+                                <reactive>true</reactive>
+                                <dateLibrary>java8</dateLibrary>
+                                <serializableModel>true</serializableModel>
+<!--                                <openApiNullable>false</openApiNullable>-->
+                                <useOptional>true</useOptional>
+                                <!--                                <useSpringBoot3>true</useSpringBoot3>-->
+                                <!--                                <interfaceOnly>true</interfaceOnly>-->
+                                <!--                                <disallowAdditionalPropertiesIfNotPresent>false</disallowAdditionalPropertiesIfNotPresent>-->
+                                <!--                                <skipDefaultInterface>true</skipDefaultInterface>-->
+                                <useBeanValidation>true</useBeanValidation>
+                                <annotationLibrary>none</annotationLibrary>
+                                <useSwaggerUI>false</useSwaggerUI>
+                                <documentationProvider>none</documentationProvider>
+
+
+<!--                                <useSpringBoot3>true</useSpringBoot3>-->
+<!--                                <interfaceOnly>true</interfaceOnly>-->
+<!--                                <disallowAdditionalPropertiesIfNotPresent>false</disallowAdditionalPropertiesIfNotPresent>-->
+<!--                                <skipDefaultInterface>true</skipDefaultInterface>-->
+<!--                                <annotationLibrary>none</annotationLibrary>-->
+<!--                                <useSwaggerUI>false</useSwaggerUI>-->
+<!--                                <documentationProvider>none</documentationProvider>-->
+                            </configOptions>
+                            <typeMappings>
+                                DateTime=Instant
+                            </typeMappings>
+                            <importMappings>
+                                <importMapping>Instant=java.time.Instant</importMapping>
+                            </importMappings>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

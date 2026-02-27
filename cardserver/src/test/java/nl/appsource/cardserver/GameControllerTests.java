@@ -1,19 +1,19 @@
 package nl.appsource.cardserver;
 
 import nl.appsource.cardserver.controller.BoomController;
-import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.Suit;
-import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.repository.BoomRepository;
-import nl.appsource.cardserver.repository.FeedbackRepository;
-import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.SseEventRepository;
-import nl.appsource.cardserver.repository.SseSessionRepository;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
+import nl.appsource.cardserver.couchbase.model.Suit;
+import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.couchbase.repository.BoomRepository;
+import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
+import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
+import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.service.SseEmitterRepository;
 import nl.appsource.cardserver.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,9 +45,6 @@ public class GameControllerTests {
 
     @MockitoBean
     private UserRepository userRepository;
-
-    @MockitoBean
-    private SseEmitterRepository sseEmitterRepository;
 
     @MockitoBean
     private GameService gameService;
@@ -91,6 +88,7 @@ public class GameControllerTests {
         mockGame.setDealer(0);
         mockGame.setSay(new HashMap<>());
         mockGame.setTrump(Suit.Spades);
+        mockGame.setGameVariant(GameVariant.ROTTERDAMS);
 
         when(gameService.getGame("user-abc", "game-found")).thenReturn(Mono.just(mockGame));
 
@@ -130,7 +128,7 @@ public class GameControllerTests {
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isOk()
-            .expectBody(org.openapitools.model.Game.class);
+            .expectBody(nl.appsource.generated.openapi.model.Game.class);
 //            .isEqualTo(expectedGame);
     }
 

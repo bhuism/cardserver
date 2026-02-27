@@ -2,10 +2,10 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.repository.SseSessionRepository;
+import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
+import nl.appsource.generated.openapi.model.SseConnection;
+import nl.appsource.generated.openapi.model.SseConnections;
 import org.openapitools.api.DebugApi;
-import org.openapitools.model.SseConnection;
-import org.openapitools.model.SseConnections;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,8 +47,8 @@ public class DebugController extends AbstractBaseController implements DebugApi,
                         sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());
                         return sseConnection;
                     });
-                return Mono.zip(arr -> new SseConnections().connections(
-                        (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
+                return Mono.zip(arr -> SseConnections.builder().connections(
+                        (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]).build(),
                     connections.collectList(),
                     Mono.just(Instant.now())
                 );

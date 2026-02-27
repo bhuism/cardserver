@@ -1,8 +1,8 @@
 package nl.appsource.cardserver.service;
 
-import nl.appsource.cardserver.model.Boom;
-import org.openapitools.model.AiRisc;
-import org.openapitools.model.GameVariant;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
+import nl.appsource.cardserver.couchbase.model.Boom;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

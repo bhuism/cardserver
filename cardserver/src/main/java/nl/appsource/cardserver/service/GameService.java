@@ -1,10 +1,10 @@
 package nl.appsource.cardserver.service;
 
-import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
-import org.openapitools.model.AiRisc;
-import org.openapitools.model.GameVariant;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -1,11 +1,11 @@
 package nl.appsource.cardserver;
 
-import nl.appsource.cardserver.repository.BoomRepository;
-import nl.appsource.cardserver.repository.FeedbackRepository;
-import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.SseEventRepository;
-import nl.appsource.cardserver.repository.SseSessionRepository;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.repository.BoomRepository;
+import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
+import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
+import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

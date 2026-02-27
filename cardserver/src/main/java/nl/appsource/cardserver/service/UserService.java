@@ -1,8 +1,8 @@
 package nl.appsource.cardserver.service;
 
 import jakarta.validation.constraints.NotNull;
-import nl.appsource.cardserver.model.User;
-import org.openapitools.model.UpdatePreferences;
+import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.generated.openapi.model.UpdatePreferences;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

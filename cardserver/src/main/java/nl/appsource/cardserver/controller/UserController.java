@@ -2,15 +2,15 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converter.UserToOpenApiConverter;
+import nl.appsource.cardserver.converters.UserToOpenApiConverter;
 import nl.appsource.cardserver.service.UserService;
+import nl.appsource.generated.openapi.model.CreateInvite;
+import nl.appsource.generated.openapi.model.CreateInviteResponse;
+import nl.appsource.generated.openapi.model.InvitesResponse;
+import nl.appsource.generated.openapi.model.PostMessage;
+import nl.appsource.generated.openapi.model.UpdatePreferences;
+import nl.appsource.generated.openapi.model.User;
 import org.openapitools.api.UsersApi;
-import org.openapitools.model.CreateInvite;
-import org.openapitools.model.CreateInviteResponse;
-import org.openapitools.model.InvitesResponse;
-import org.openapitools.model.PostMessage;
-import org.openapitools.model.UpdatePreferences;
-import org.openapitools.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,10 +52,10 @@ public class UserController extends AbstractBaseController implements UsersApi, 
                         final Flux<String> incoming = invites.incoming();
                         final Flux<String> outgoing = invites.outgoing();
                         final Flux<String> friends = invites.friends();
-                        return Mono.zip(arr -> new InvitesResponse()
+                        return Mono.zip(arr -> InvitesResponse.builder()
                             .incoming((List<String>) arr[0])
                             .friends((List<String>) arr[1])
-                            .outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
+                            .outgoing((List<String>) arr[2]).build(), incoming.collectList(), friends.collectList(), outgoing.collectList());
                     })
                     .map(ResponseEntity::ok)
                     .defaultIfEmpty(ResponseEntity.notFound().build())
@@ -94,7 +94,7 @@ public class UserController extends AbstractBaseController implements UsersApi, 
         return authorize(appIdentifier, exchange)
             .flatMap(auth -> createInviteMono.flatMap(createInvite -> userService.createInvite(auth.userId(), createInvite.getSearchString()))
                 .map(BigDecimal::new)
-                .map(count -> new CreateInviteResponse().count(count))
+                .map(count -> CreateInviteResponse.builder().count(count).build())
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(just(ResponseEntity.notFound()
                     .build())))

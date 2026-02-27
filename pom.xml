@@ -14,9 +14,6 @@
 
     <packaging>pom</packaging>
 
-    <name>root</name>
-    <description>root</description>
-
     <properties>
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -25,11 +22,17 @@
         <checkstyle.version>3.6.0</checkstyle.version>
         <dcp-client.version>0.56.0</dcp-client.version>
         <openapi-generator-maven-plugin.version>7.20.0</openapi-generator-maven-plugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <modules>
         <module>cardserver</module>
         <module>couchbase2redis</module>
+        <module>openapi</module>
+        <module>couchbase</module>
+        <module>converters</module>
+        <module>stream</module>
+        <module>utils</module>
     </modules>
 
     <dependencyManagement>
@@ -38,6 +41,26 @@
                 <groupId>com.couchbase.client</groupId>
                 <artifactId>dcp-client</artifactId>
                 <version>${dcp-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.appsource.cardserver</groupId>
+                <artifactId>couchbase</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.appsource.cardserver</groupId>
+                <artifactId>openapi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.appsource.cardserver</groupId>
+                <artifactId>converters</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>nl.appsource.cardserver</groupId>
+                <artifactId>utils</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -61,6 +84,10 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -125,24 +152,6 @@
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <image>
-                        <env>
-                            <BP_JVM_VERSION>${java.version}</BP_JVM_VERSION>
-                        </env>
-                    </image>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
                 </configuration>
             </plugin>
 

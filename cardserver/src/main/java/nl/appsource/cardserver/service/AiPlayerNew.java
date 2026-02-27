@@ -5,7 +5,7 @@
 //import nl.appsource.cardserver.model.Rank;
 //import nl.appsource.cardserver.model.Suit;
 //import nl.appsource.cardserver.service.exception.GameEngineException;
-//import org.openapitools.model.GameVariant;
+//import nl.appsource.generated.openapi.model.GameVariant;
 //
 //import java.util.Comparator;
 //import java.util.List;

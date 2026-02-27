@@ -10,8 +10,9 @@
 
     <artifactId>couchbase2redis</artifactId>
 
-    <name>couchbase2redis</name>
-    <description>couchbase2redis</description>
+    <properties>
+        <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
+    </properties>
 
     <dependencies>
 
@@ -25,6 +26,38 @@
             <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jackson</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.appsource.cardserver</groupId>
+            <artifactId>converters</artifactId>
+        </dependency>
+
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <image>
+                        <env>
+                            <BP_JVM_VERSION>${java.version}</BP_JVM_VERSION>
+                        </env>
+                    </image>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

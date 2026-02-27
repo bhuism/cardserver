@@ -4,11 +4,12 @@ import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerJwtModem;
-import nl.appsource.cardserver.converter.UserToOpenApiConverter;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.converters.UserToOpenApiConverter;
+import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.service.UserService;
+import nl.appsource.generated.openapi.model.LoginResponse;
 import org.openapitools.api.LoginApi;
-import org.openapitools.model.LoginResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -53,7 +54,7 @@ public class LoginController implements LoginApi {
 
                 log.info("{} Creating a new user {}", exchange.getRequest().getRemoteAddress(), email);
 
-                final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
+                final User user = new nl.appsource.cardserver.couchbase.model.User();
 
                 user.setId(idGen(USER, 28));
                 user.setEmail(email);
@@ -66,7 +67,7 @@ public class LoginController implements LoginApi {
                 return Mono.just(user);
             })).flatMap(userRepository::save).mapNotNull(userToOpenApiConverter::convert).flatMap((user) -> {
                 try {
-                    return Mono.just(new LoginResponse().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()));
+                    return Mono.just(LoginResponse.builder().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()).build());
                 } catch (JOSEException e) {
                     return Mono.error(e);
                 }

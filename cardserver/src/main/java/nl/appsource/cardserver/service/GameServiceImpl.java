@@ -4,17 +4,19 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.Suit;
-import nl.appsource.cardserver.repository.BoomRepository;
-import nl.appsource.cardserver.repository.GameRepository;
-import nl.appsource.cardserver.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.model.AiRisc;
+import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.GameVariant;
+import nl.appsource.cardserver.couchbase.model.Suit;
+import nl.appsource.cardserver.couchbase.repository.BoomRepository;
+import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
+import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
-import org.openapitools.model.AiRisc;
-import org.openapitools.model.GameVariant;
-import org.openapitools.model.UserMessage;
+import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -26,26 +28,23 @@ import reactor.util.retry.Retry;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
-import static java.util.Collections.shuffle;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
-import static nl.appsource.cardserver.service.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.randomCards;
 import static nl.appsource.cardserver.utils.IDTYPE.GAME;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
@@ -214,7 +213,7 @@ public class GameServiceImpl implements GameService {
                                 case HUMAN_PLAY_CARD -> catchException(() -> gameEngine.playCard(userId, card));
                                 case HUMAN_SAY -> catchException(() -> gameEngine.say(userId, say));
                                 case CHECK_ROTATE -> catchException(gameEngine::checkNiemandIsGegaanEnIedereenHeeftGezegd);
-                                case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId, sseEventSender));
+                                case CLAIM_ROEM -> catchException(() -> gameEngine.claimRoem(userId));
                             };
 
                             return result
@@ -250,11 +249,7 @@ public class GameServiceImpl implements GameService {
             .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
                 if (userId != null && !isAiPlayer(userId)) {
-                    sseEventSender.sendUserIdMessage(userId, new UserMessage()
-                            .userId(userId)
-                            .variant(UserMessage.VariantEnum.ERROR)
-                            .message(throwable.getClass().getName() + ":" + throwable.getMessage()))
-                        .subscribe();
+                    sseEventSender.sendUserIdMessage(userId, throwable.getClass().getName() + ":" + throwable.getMessage(), UserMessage.VariantEnum.ERROR).subscribe();
                 }
             })
             .subscribe();
@@ -301,14 +296,14 @@ public class GameServiceImpl implements GameService {
         eventQueue.add(scheduledGameEvent);
     }
 
-    public static Map<Card, Integer> randomCards() {
-        final Map<Card, Integer> cards = new HashMap<>();
-        final List<Card> deck = Arrays.asList(Card.values());
-        shuffle(deck, RAND);
-        IntStream.range(0, deck.size())
-            .forEach(index -> cards.put(deck.get(index), index % 4));
-        return cards;
-    }
+//    public static Map<Card, Integer> randomCards() {
+//        final Map<Card, Integer> cards = new HashMap<>();
+//        final List<Card> deck = Arrays.asList(Card.values());
+//        shuffle(deck, RAND);
+//        IntStream.range(0, deck.size())
+//            .forEach(index -> cards.put(deck.get(index), index % 4));
+//        return cards;
+//    }
 
 //    @Override
 //    public Mono<Void> reload(final String appIdentifier, final String userId, final String gameId) {
@@ -332,19 +327,12 @@ public class GameServiceImpl implements GameService {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return sseEventSender.sendUserIdMessage(Set.copyOf(gameEngine.getGame()
-                                .getPlayers()), new UserMessage()
-                                .userId(auth.userId())
-                                .variant(UserMessage.VariantEnum.INFO)
-                                .message("Er is niet verzaakt in slag " + laatsteCompleteSlag));
+                            return sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame()
+                                .getPlayers()), "Er is niet verzaakt in slag " + laatsteCompleteSlag, UserMessage.VariantEnum.INFO);
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> sseEventSender.sendUserIdMessage(Set.copyOf(gameEngine.getGame()
-                                        .getPlayers()), new UserMessage()
-                                        .userId(auth.userId())
-                                        .variant(UserMessage.VariantEnum.ERROR)
-                                        .message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName())))
+                                    .flatMap(player -> sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame().getPlayers()), "Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName(), UserMessage.VariantEnum.ERROR))
                                 ).then();
                         }
                     });

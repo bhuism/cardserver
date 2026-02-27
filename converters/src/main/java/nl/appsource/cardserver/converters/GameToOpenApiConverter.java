@@ -1,0 +1,334 @@
+package nl.appsource.cardserver.converters;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.couchbase.model.Suit;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
+import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
+import nl.appsource.generated.openapi.model.AiRisc;
+import nl.appsource.generated.openapi.model.Card;
+import nl.appsource.generated.openapi.model.GamePlayerCardInner;
+import nl.appsource.generated.openapi.model.GameVariant;
+import nl.appsource.generated.openapi.model.NorthSouthNumber;
+import nl.appsource.generated.openapi.model.NorthSouthString;
+import nl.appsource.generated.openapi.model.Teams;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appsource.generated.openapi.model.Game> {
+
+    @NonNull
+    @Override
+    @SuppressWarnings("MethodLength")
+    public nl.appsource.generated.openapi.model.Game convert(final Game source) {
+
+        final nl.appsource.generated.openapi.model.Game target = new nl.appsource.generated.openapi.model.Game();
+
+        target.setId(source.getId());
+        target.setCreated(source.getCreated());
+        target.setUpdated(source.getUpdated());
+        target.setCreator(source.getCreator());
+        target.setDealer(source.getDealer());
+        target.setPlayerCard(source.getPlayerCard()
+            .entrySet()
+            .stream()
+            .map(cardIntegerEntry -> {
+                final GamePlayerCardInner gamePlayerCardInner = new GamePlayerCardInner();
+                gamePlayerCardInner.setCard(GameToOpenApiConverter.convertCard(cardIntegerEntry.getKey()));
+                gamePlayerCardInner.setPlayer(cardIntegerEntry.getValue());
+                return gamePlayerCardInner;
+            })
+            .collect(Collectors.toCollection(ArrayList::new)));
+        target.setPlayers(source.getPlayers());
+        target.setTrump(GameToOpenApiConverter.convertSuit(source.getTrump()));
+        target.setTurns(GameToOpenApiConverter.convertToOpenApi(source.getTurns()));
+
+        final Map<String, Boolean> says = new HashMap<>();
+
+        if (source.getSay() != null) {
+            source.getSay()
+                .forEach((integer, aBoolean) -> says.put("" + integer, aBoolean));
+        }
+
+        target.setSays(says);
+
+        final GameEngine gameEngine = new GameEngineImpl(source);
+
+        if (!gameEngine.isCompleted()) {
+
+            if (!gameEngine.getErIsGegaan()) {
+                target.setWhoSay(Optional.of(gameEngine.calcWhoSay()));
+                target.setWhosTurn(Optional.empty());
+            } else {
+                target.setWhoSay(Optional.empty());
+                target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
+            }
+        }
+
+        target.setLastTrickOpen(source.getLastTrickOpen());
+        target.setVariant(GameVariant.valueOf(source.getGameVariant().name()));
+        target.setDealCounter(source.getDealCounter());
+
+        target.setNumberOfTurns(gameEngine.getTurnCount());
+        target.setIsCompleted(source.getTurns()
+            .size() == 32);
+        target.setHasFullTrick(gameEngine.isFullTrick());
+        target.setTricksPlayed(gameEngine.calcTricksPlayed());
+        target.setIedereenPast(source
+            .getSay()
+            .values()
+            .stream()
+            .filter(aBoolean -> aBoolean.equals(Boolean.FALSE))
+            .count() == 4);
+        target.setNiemandGezegd(source
+            .getSay()
+            .isEmpty());
+        target.setGeenKaartGespeeld(gameEngine.getTurnCount() == 0);
+
+        target.setCurrentTrickCards(gameEngine.getHuidigeTableCards().stream().map(GameToOpenApiConverter::convertCard).toList());
+
+        if (!gameEngine.getHuidigeTableCards().isEmpty()) {
+            target.setCurrentTrickWinnerCard(
+                Optional.of(convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getHuidigeTableCards(), source.getTrump())))
+            );
+        }
+
+        target.setTrickPoints(new ArrayList<>());
+        target.setAllPoints(new NorthSouthNumber());
+
+        target.setTrickRoem(new ArrayList<>());
+        target.setAllRoem(new NorthSouthNumber());
+
+        target.setErIsGegaan(gameEngine.getErIsGegaan());
+
+        final Optional<Integer> optionalElder = source.getSay()
+            .entrySet()
+            .stream()
+            .filter(integerBooleanEntry -> integerBooleanEntry.getValue().equals(true))
+            .map(Map.Entry::getKey)
+            .findFirst();
+
+        if (optionalElder.isPresent()) {
+            target.setElder(optionalElder);
+            target.setElderTeam(Optional.of(optionalElder.get() % 2 == 0 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+        }
+
+        target.setPlayerPoints(new ArrayList<>(List.of(0, 0, 0, 0)));
+
+        gameEngine.getGame().getSay().forEach((playerIndex, gegaan) -> {
+            if (Boolean.FALSE.equals(gegaan)) {
+                target.getHeeftGepast().add(playerIndex);
+            }
+        });
+
+        target.setRoemGeklopt(source.getRoemGeklopt());
+
+        var numberOfTrickWinsNorthSouthCounter = 0;
+        var numberOfTrickWinsEastWestCounter = 0;
+
+        target.setTotalString(NorthSouthString.builder().northSouth("").eastWest("").build());
+
+        if (gameEngine.calcTricksPlayed() > 0) {
+
+            for (int trickNr = 0; trickNr < gameEngine.calcTricksPlayed(); trickNr++) {
+
+                final int trickWinner = gameEngine.determineTrickWinningPlayer(trickNr);
+
+                target.getTrickWinnerPlayer().add(trickNr, trickWinner);
+
+                target.getTrickWinnerCard().add(trickNr, GameToOpenApiConverter.convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getTrickCards(trickNr), source.getTrump())));
+
+                final NorthSouthNumber northSouthNumber = new NorthSouthNumber();
+                final NorthSouthNumber roemNorthSouthNumber = new NorthSouthNumber();
+
+                final int points = gameEngine.calculateTrickPoints(trickNr);
+
+                target.getPlayerPoints().set(trickWinner, target.getPlayerPoints().get(trickWinner) + points);
+
+                final int roemPoints = gameEngine.calculateTrickRoem(trickNr);
+
+                if (trickWinner % 2 == 0) {
+                    northSouthNumber.setNorthSouth(points);
+                    northSouthNumber.setEastWest(0);
+
+                    roemNorthSouthNumber.setNorthSouth(roemPoints);
+                    roemNorthSouthNumber.setEastWest(0);
+
+                    target.getAllPoints().setNorthSouth(target.getAllPoints().getNorthSouth() + points);
+                    target.getAllRoem().setNorthSouth(target.getAllRoem().getNorthSouth() + roemPoints);
+
+                    numberOfTrickWinsNorthSouthCounter++;
+
+                } else {
+                    northSouthNumber.setNorthSouth(0);
+                    northSouthNumber.setEastWest(points);
+
+
+                    roemNorthSouthNumber.setNorthSouth(0);
+                    roemNorthSouthNumber.setEastWest(roemPoints);
+
+                    target.getAllPoints().setEastWest(target.getAllPoints().getEastWest() + points);
+                    target.getAllRoem().setEastWest(target.getAllRoem().getEastWest() + roemPoints);
+
+                    numberOfTrickWinsEastWestCounter++;
+                }
+
+                target.setTricksWonNorthSouth(Optional.of(numberOfTrickWinsNorthSouthCounter));
+                target.setTricksWonEastWest(Optional.of(numberOfTrickWinsEastWestCounter));
+
+                target.getTrickPoints().add(northSouthNumber);
+                target.getTrickRoem().add(roemNorthSouthNumber);
+
+            }
+
+            if (gameEngine.isCompleted() && optionalElder.isPresent()) {
+
+                target.setPit(Optional.of(numberOfTrickWinsNorthSouthCounter == 8 || numberOfTrickWinsEastWestCounter == 8));
+
+                if (target.getAllPoints()
+                    .getNorthSouth() + target.getAllRoem()
+                    .getNorthSouth() == target.getAllPoints()
+                    .getEastWest() + target.getAllRoem()
+                    .getEastWest()) {
+                    target.setWinner(Optional.of(optionalElder.get() == 1 || optionalElder.get() == 3 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+                } else {
+                    target.setWinner(Optional.of(target.getAllPoints()
+                        .getNorthSouth() + target.getAllRoem()
+                        .getNorthSouth() > target.getAllPoints()
+                        .getEastWest() + target.getAllRoem()
+                        .getEastWest() ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+                }
+
+                if (target.getPit().orElseThrow()) {
+                    if (target.getWinner().orElseThrow() == Teams.NORTH_SOUTH) {
+                        target.setTotalPoints(Optional.of(new NorthSouthNumber(162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100, 0)));
+                        target.getTotalString().setNorthSouth("162" + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + "+100p");
+                        target.getTotalString().setEastWest("0");
+                    } else {
+                        target.setTotalPoints(Optional.of(new NorthSouthNumber(0, 162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100)));
+                        target.getTotalString().setNorthSouth("0");
+                        target.getTotalString().setEastWest("162" + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + "+100p");
+                    }
+                } else {
+                    target.setTotalPoints(Optional.of(new NorthSouthNumber(target.getAllPoints().getNorthSouth() + target.getAllRoem().getNorthSouth(), target.getAllPoints().getEastWest() + target.getAllRoem().getEastWest())));
+
+                    if (target.getAllPoints().getNorthSouth() > 0) {
+                        target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + target.getAllPoints().getNorthSouth());
+                    }
+
+                    if (target.getAllRoem().getNorthSouth() > 0) {
+                        target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + "+" + target.getAllRoem().getNorthSouth());
+                    }
+
+                    if (target.getAllPoints().getEastWest() > 0) {
+                        target.getTotalString().setEastWest(target.getTotalString().getEastWest() + target.getAllPoints().getEastWest());
+                    }
+
+                    if (target.getAllRoem().getEastWest() > 0) {
+                        target.getTotalString().setEastWest(target.getTotalString().getEastWest() + "+" + target.getAllRoem().getEastWest());
+                    }
+
+                }
+            } else {
+                if (target.getAllPoints().getNorthSouth() > 0) {
+                    target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + target.getAllPoints().getNorthSouth());
+                }
+
+                if (target.getAllRoem().getNorthSouth() > 0) {
+                    target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + "+" + target.getAllRoem().getNorthSouth());
+                }
+
+                if (target.getAllPoints().getEastWest() > 0) {
+                    target.getTotalString().setEastWest(target.getTotalString().getEastWest() + target.getAllPoints().getEastWest());
+                }
+
+                if (target.getAllRoem().getEastWest() > 0) {
+                    target.getTotalString().setEastWest(target.getTotalString().getEastWest() + "+" + target.getAllRoem().getEastWest());
+                }
+
+            }
+        }
+
+        target.setBoomId(Optional.ofNullable(source.getBoomId()));
+
+        final List<Set<Integer>> verzakenResult = new ArrayList<>();
+
+        IntStream.range(0, gameEngine.calcTricksPlayed()).forEach(vtrick -> {
+
+            final Set<Integer> verzakers = new HashSet<>();
+
+            IntStream.range(0, 3).forEach(speler -> {
+                if (gameEngine.verzaakt(vtrick, speler)) {
+                    verzakers.add(speler);
+                }
+            });
+
+            verzakenResult.add(vtrick, verzakers);
+
+        });
+
+        if (!verzakenResult.isEmpty()) {
+            target.setVerzaakt(verzakenResult);
+        }
+
+        target.setAiRisc(AiRisc.valueOf(source.getAiRisc().name()));
+
+        return target;
+
+    }
+
+    public static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.couchbase.model.Card> source) {
+        return source.stream()
+            .map(GameToOpenApiConverter::convertCard)
+            .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public static List<nl.appsource.cardserver.couchbase.model.Card> convertToModel(final List<Card> source) {
+        return source.stream()
+            .map(GameToOpenApiConverter::convertCard)
+            .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public static nl.appsource.generated.openapi.model.Card convertCard(final nl.appsource.cardserver.couchbase.model.Card source) {
+        return nl.appsource.generated.openapi.model.Card.fromValue(source.name());
+    }
+
+    public static nl.appsource.cardserver.couchbase.model.Card convertCard(final nl.appsource.generated.openapi.model.Card source) {
+        return nl.appsource.cardserver.couchbase.model.Card.valueOf(source.getValue());
+    }
+
+
+    public static nl.appsource.generated.openapi.model.Suit convertSuit(final Suit suit) {
+        return switch (suit) {
+            case Clubs -> nl.appsource.generated.openapi.model.Suit.CLUBS;
+            case Hearts -> nl.appsource.generated.openapi.model.Suit.HEARTS;
+            case Spades -> nl.appsource.generated.openapi.model.Suit.SPADES;
+            case Diamonds -> nl.appsource.generated.openapi.model.Suit.DIAMONDS;
+        };
+    }
+
+    public static Suit convertSuit(final nl.appsource.generated.openapi.model.Suit suit) {
+        return switch (suit) {
+            case nl.appsource.generated.openapi.model.Suit.CLUBS -> Suit.Clubs;
+            case nl.appsource.generated.openapi.model.Suit.HEARTS -> Suit.Hearts;
+            case nl.appsource.generated.openapi.model.Suit.SPADES -> Suit.Spades;
+            case nl.appsource.generated.openapi.model.Suit.DIAMONDS -> Suit.Diamonds;
+        };
+    }
+
+}

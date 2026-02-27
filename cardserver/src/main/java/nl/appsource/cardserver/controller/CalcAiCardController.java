@@ -10,9 +10,9 @@
 //import nl.appsource.cardserver.service.GameEngine;
 //import nl.appsource.cardserver.service.GameEngineImpl;
 //import org.openapitools.api.AiApi;
-//import org.openapitools.model.AiCreateGameRequest;
-//import org.openapitools.model.AiPlayCardRequest;
-//import org.openapitools.model.CalcAiCardRequest;
+//import nl.appsource.generated.openapi.model.AiCreateGameRequest;
+//import nl.appsource.generated.openapi.model.AiPlayCardRequest;
+//import nl.appsource.generated.openapi.model.CalcAiCardRequest;
 //import org.springframework.context.annotation.Profile;
 //import org.springframework.http.ResponseEntity;
 //import org.springframework.web.bind.annotation.RestController;
@@ -45,7 +45,7 @@
 //    private final GameRepository gameRepository;
 //
 //    @Override
-//    public Mono<ResponseEntity<org.openapitools.model.Game>> aiCreateGame(final Mono<AiCreateGameRequest> aiCreateGameRequestArg, final ServerWebExchange exchange) {
+//    public Mono<ResponseEntity<nl.appsource.generated.openapi.model.Game>> aiCreateGame(final Mono<AiCreateGameRequest> aiCreateGameRequestArg, final ServerWebExchange exchange) {
 //        log.info("aiCreateGame()");
 //        return aiCreateGameRequestArg.map(aiCreateGameRequest -> {
 //                final Game game = new Game();
@@ -69,7 +69,7 @@
 //
 //
 //    @Override
-//    public Mono<ResponseEntity<org.openapitools.model.Game>> aiPlayCard(final Mono<AiPlayCardRequest> aiPlayCardRequestArg, final ServerWebExchange exchange) {
+//    public Mono<ResponseEntity<nl.appsource.generated.openapi.model.Game>> aiPlayCard(final Mono<AiPlayCardRequest> aiPlayCardRequestArg, final ServerWebExchange exchange) {
 //        return aiPlayCardRequestArg
 //            .flatMap(aiPlayCardRequest -> {
 //                log.info("aiPlayCard() gameId={} playerId={} card={}", aiPlayCardRequest.getGameId(), aiPlayCardRequest.getPlayerId(), aiPlayCardRequest.getCard());
@@ -84,7 +84,7 @@
 //    }
 //
 //    @Override
-//    public Mono<ResponseEntity<org.openapitools.model.Card>> calcAiCard(final Mono<CalcAiCardRequest> calcAiCardRequestArg, final ServerWebExchange exchange) {
+//    public Mono<ResponseEntity<nl.appsource.generated.openapi.model.Card>> calcAiCard(final Mono<CalcAiCardRequest> calcAiCardRequestArg, final ServerWebExchange exchange) {
 //        log.info("calcAiCard()");
 //        return calcAiCardRequestArg
 //            .doOnNext((calcAiCardRequest) -> log.info("{} calcAiCard()", exchange.getRequest().getRemoteAddress()))
