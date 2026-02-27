@@ -118,7 +118,7 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
             .build();
 
         final SignedJWT signedJWT = new SignedJWT(
-            new JWSHeader.Builder(JWSAlgorithm.EdDSA)
+            new JWSHeader.Builder(JWSAlgorithm.ES512)
                 .keyID(es512eckey.toPublicJWK().getKeyID())
                 .type(JOSEObjectType.JWT)
                 .jwkURL(URI.create("https://api.klaversjassen.nl/.well-known/jwks.json"))
