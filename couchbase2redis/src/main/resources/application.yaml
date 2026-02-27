@@ -12,7 +12,7 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 2s
   main:
-    web-application-type: none
+    web-application-type: reactive
   application:
     name: Couchbase 2 Redis
   jackson:
