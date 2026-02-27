@@ -8,6 +8,7 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.Ed25519Signer;
 import com.nimbusds.jose.crypto.Ed25519Verifier;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.OctetKeyPair;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -48,12 +49,12 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
 
     private OctetKeyPair okp;
 
-    private OctetKeyPair es512okp;
+    private ECKey es512eckey;
 
     @PostConstruct
     public void init() throws JOSEException, ParseException {
         okp = OctetKeyPair.parse(cardServerProperties.getJwtEd25519Secret());
-        es512okp = OctetKeyPair.parse(cardServerProperties.getJwtEs512Secret());
+        es512eckey = ECKey.parse(cardServerProperties.getJwtEs512Secret());
         verifier = new Ed25519Verifier(okp.toPublicJWK());
         signer = new Ed25519Signer(okp);
     }
@@ -64,8 +65,8 @@ public class CardServerJwtModemImpl implements CardServerJwtModem {
     }
 
     @Override
-    public OctetKeyPair getPublicKeyEs512() {
-        return es512okp.toPublicJWK();
+    public ECKey getPublicKeyEs512() {
+        return es512eckey.toPublicJWK();
     }
 
     @Override

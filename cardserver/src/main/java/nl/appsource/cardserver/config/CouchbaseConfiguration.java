@@ -103,7 +103,7 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
     @Override
     @Bean(name = BeanNames.COUCHBASE_MAPPING_CONTEXT)
-    public CouchbaseMappingContext couchbaseMappingContext(@Qualifier(BeanNames.COUCHBASE_CUSTOM_CONVERSIONS) CustomConversions customConversions) throws Exception {
+    public CouchbaseMappingContext couchbaseMappingContext(@Qualifier(BeanNames.COUCHBASE_CUSTOM_CONVERSIONS) final CustomConversions customConversions) throws Exception {
         return super.couchbaseMappingContext(customConversions);
     }
 
