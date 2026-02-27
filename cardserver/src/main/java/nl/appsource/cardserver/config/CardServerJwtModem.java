@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.service;
+package nl.appsource.cardserver.config;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.OctetKeyPair;
@@ -10,6 +10,8 @@ import reactor.core.publisher.Mono;
 public interface CardServerJwtModem extends ReactiveJwtDecoder {
 
     OctetKeyPair getPublicKey();
+
+    OctetKeyPair getPublicKeyEs512();
 
     Mono<Jwt> decode(String token);
 
