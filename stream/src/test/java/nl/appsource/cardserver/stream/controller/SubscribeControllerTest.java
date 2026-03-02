@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.stream.controller;
 
-import nl.appsource.cardserver.stream.PubSubService;
+import nl.appsource.cardserver.openapi.service.PubSubService;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

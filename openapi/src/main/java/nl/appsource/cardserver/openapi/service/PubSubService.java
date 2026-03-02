@@ -1,21 +1,18 @@
-package nl.appsource.cardserver.stream;
+package nl.appsource.cardserver.openapi.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.ReactiveSubscription.Message;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
-import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
-@Service
+@RequiredArgsConstructor
 public class PubSubService {
 
     private final ReactiveRedisMessageListenerContainer container;
-    private Disposable topicSubscription;
 
-    public PubSubService(final ReactiveRedisMessageListenerContainer container) {
-        this.container = container;
-    }
+    private Disposable topicSubscription;
 
     // Start listening to the topic
     public void listenTo(final String topicName) {
