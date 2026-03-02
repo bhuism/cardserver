@@ -3,7 +3,7 @@ server:
     enabled: true
   forward-headers-strategy: framework
   shutdown: graceful
-  port: 8082
+  port: 8080
 logging:
   level:
     ROOT: info
@@ -42,9 +42,9 @@ management:
     web:
       base-path: /manage
       exposure:
-        include: '*'
+        include: 'health,info,env'
   server:
-    port: 9082
+    port: 9080
     ssl:
       enabled: false
     add-application-context-header: true

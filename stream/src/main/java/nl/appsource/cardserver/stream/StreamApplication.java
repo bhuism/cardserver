@@ -1,12 +1,11 @@
 package nl.appsource.cardserver.stream;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.couchbase.config.CouchbaseConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @Slf4j
-@SpringBootApplication(scanBasePackageClasses = CouchbaseConfiguration.class)
+@SpringBootApplication
 public class StreamApplication {
 
     public StreamApplication() {

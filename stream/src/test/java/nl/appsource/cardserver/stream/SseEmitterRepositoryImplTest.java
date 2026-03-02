@@ -1,8 +1,8 @@
 package nl.appsource.cardserver.stream;
 
-import nl.appsource.cardserver.converters.BoomToOpenApiConverter;
-import nl.appsource.cardserver.converters.GameToOpenApiConverter;
-import nl.appsource.cardserver.converters.UserToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.model.User;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
