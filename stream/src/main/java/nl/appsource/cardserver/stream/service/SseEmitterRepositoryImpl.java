@@ -11,6 +11,7 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
@@ -24,7 +25,6 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-import reactor.util.concurrent.Queues;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -36,6 +36,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.hello;
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.ping;
 import static reactor.core.publisher.Mono.just;
 
 /**
@@ -61,8 +63,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final BoomRepository boomRepository;
 
     private final SseSessionRepository sseSessionRepository;
-
-    //private final SseEventSender sseEventSender;
 
     private final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
 
@@ -145,7 +145,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
-            .map(aLong -> nl.appsource.cardserver.openapi.MyServerSentEvent.ping())
+            .map(aLong -> ping())
             .subscribe(myServerSentEvent -> {
                 tryEmit(mainSink, myServerSentEvent, "mainSink", false);
             });
@@ -195,26 +195,23 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
 
         final UserChannel userChannel = new UserChannel(userId);
+
         userChannelsByApplicationId.put(appIdentifier, userChannel);
         userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
 
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> helloFlux = Flux.just(nl.appsource.cardserver.openapi.MyServerSentEvent.hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
+        final Flux<MyServerSentEvent> helloFlux = Flux.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
 
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux = Flux.concat(
-            Flux.just(nl.appsource.cardserver.openapi.MyServerSentEvent.ping()),
-            Mono.delay(Duration.ofSeconds(1)).thenMany(initCache(userId))
-            //.doOnComplete(() -> sseEventSender.sendOnlineListToFriendsOf(userId).subscribe())
-        );
-
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> liveSinks = Flux.merge(
-            userChannel.sink.asFlux(),
-            mainSink.asFlux()
-        );
+        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux =
+            helloFlux.then(Mono.delay(Duration.ofSeconds(1)))
+                .then(Mono.just(ping()))
+                .thenMany(initCache(userId)
+                .thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux()))
+            );
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
-                Flux.concat(helloFlux, Flux.merge(restFlux, liveSinks))
+                restFlux
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
 
@@ -243,7 +240,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     @RequiredArgsConstructor
     private static class UserChannel {
-        public final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer(Queues.<nl.appsource.cardserver.openapi.MyServerSentEvent>get(1024).get());
+        public final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer();
         public final String userId;
     }
 
