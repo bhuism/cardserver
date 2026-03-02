@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.converters;
+package nl.appsource.cardserver.converters.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
