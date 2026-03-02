@@ -1,9 +1,6 @@
 server:
-  tomcat:
-    accesslog:
-      enabled: true
   port: 8080
-  shutdown: immediate
+  shutdown: graceful
 logging:
   level:
     ROOT: info
@@ -23,12 +20,12 @@ spring:
     error:
       whitelabel:
         enabled: false
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://accounts.google.com
-          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          issuer-uri: https://accounts.google.com
+#          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
 
 cardserver:
   couchbase:

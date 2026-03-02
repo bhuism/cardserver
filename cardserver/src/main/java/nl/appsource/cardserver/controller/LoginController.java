@@ -4,7 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.config.CardServerJwtModem;
-import nl.appsource.cardserver.converters.UserToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.model.User;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.service.UserService;

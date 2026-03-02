@@ -2,8 +2,8 @@ package nl.appsource.cardserver.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converters.BoomToOpenApiConverter;
-import nl.appsource.cardserver.converters.GameToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
