@@ -13,7 +13,7 @@ logging:
 
 cardserver:
   couchbase:
-    connection-string: couchbase://couchbase.couchbase
+    connection-string: couchbase://couchbase.couchbase.svc.cluster.local
     username: root
     password: killer
     bucket-name: cardserver
