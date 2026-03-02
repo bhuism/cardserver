@@ -56,11 +56,11 @@ public class HttpRequestTests {
             .contains("logo192.png");
     }
 
-//    @Test
-//    public void actuatorHealthShouldReturnDefaultMessage() {
-//        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
-//            .isEqualTo("{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}");
-//    }
+    @Test
+    public void actuatorHealthShouldReturnDefaultMessage() {
+        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
+            .isEqualTo("{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}");
+    }
 
     @Test
     public void actuatorHealthLiveNessShouldReturnDefaultMessage() {

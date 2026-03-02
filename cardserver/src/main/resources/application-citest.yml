@@ -12,6 +12,10 @@ management:
   server:
     port: 9081
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisReactiveAutoConfiguration
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
   security:
     oauth2:
       resourceserver:
