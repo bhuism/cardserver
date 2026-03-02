@@ -1,13 +1,16 @@
-package nl.appsource.cardserver.couchbase2redis;
+package nl.appsource.cardserver.openapi.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@ConditionalOnClass(ReactiveRedisConnectionFactory.class)
 public class RedisConfiguration {
 
     @Bean
@@ -18,6 +21,11 @@ public class RedisConfiguration {
             .value(serializer)
             .build();
         return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+    @Bean
+    public ReactiveRedisMessageListenerContainer container(final ReactiveRedisConnectionFactory connectionFactory) {
+        return new ReactiveRedisMessageListenerContainer(connectionFactory);
     }
 
 }

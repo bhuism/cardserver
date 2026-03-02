@@ -10,3 +10,5 @@ cardserver:
     username: root
     password: killer
     bucket-name: cardserver
+
+
