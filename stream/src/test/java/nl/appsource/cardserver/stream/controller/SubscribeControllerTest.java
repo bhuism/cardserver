@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @Disabled
-@WebFluxTest
+@WebFluxTest(controllers = SubscribeController.class)
 public class SubscribeControllerTest {
 
     @Autowired
