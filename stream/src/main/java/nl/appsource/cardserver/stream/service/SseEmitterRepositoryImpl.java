@@ -173,10 +173,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         Optional.ofNullable(userChannelsByApplicationId.get(appIdentifier))
             .ifPresent(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true));
 
-            final UserChannel userChannel = userChannelsByApplicationId.get(appIdentifier);
-            if (userChannel != null) {
-                tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true);
-            }
+        final UserChannel userChannel = userChannelsByApplicationId.get(appIdentifier);
+
+        if (userChannel != null) {
+            tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true);
+        }
 //        } else if (userId != null) {
 //            final Set<UserChannel> channels = userChannelsByUserId.get(userId);
 //            if (channels != null) {
@@ -202,12 +203,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux = Flux.concat(
             Flux.just(nl.appsource.cardserver.openapi.MyServerSentEvent.ping()),
             Mono.delay(Duration.ofSeconds(1)).thenMany(initCache(userId))
-                //.doOnComplete(() -> sseEventSender.sendOnlineListToFriendsOf(userId).subscribe())
+            //.doOnComplete(() -> sseEventSender.sendOnlineListToFriendsOf(userId).subscribe())
         );
 
         final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> liveSinks = Flux.merge(
-            userChannel.sink.asFlux().onBackpressureBuffer(2048),
-            mainSink.asFlux().onBackpressureBuffer(8192)
+            userChannel.sink.asFlux(),
+            mainSink.asFlux()
         );
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
