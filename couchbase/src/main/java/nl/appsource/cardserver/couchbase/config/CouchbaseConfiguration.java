@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
 import org.springframework.data.couchbase.config.BeanNames;
@@ -22,10 +20,7 @@ import java.time.Duration;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 
-
-@Configuration
 @RequiredArgsConstructor
-@Profile("!citest")
 @Slf4j
 @EnableReactiveCouchbaseRepositories(basePackages = "nl.appsource.cardserver.couchbase.repository")
 @EnableReactiveCouchbaseAuditing(auditorAwareRef = "reactiveAuditorAware")
