@@ -1,7 +1,6 @@
 spring:
   data:
     redis:
-      #      host: 10.103.71.147
       host: 127.0.0.1
       port: 6379
   security:
@@ -9,7 +8,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "https://api.klaversjassen.nl"
-#          jwk-set-uri: "https://api.klaversjassen.nl/.well-known/jwks.json"
 cardserver:
   couchbase:
     connection-string: couchbase://192.168.1.86
@@ -20,5 +18,4 @@ cardserver:
 logging:
   level:
     ROOT: info
-#    org.springframework.security: trace
     nl.appsource: debug
