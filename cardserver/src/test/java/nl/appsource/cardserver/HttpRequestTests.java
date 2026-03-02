@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
-import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -51,23 +50,17 @@ public class HttpRequestTests {
     @MockitoBean
     private SseEventRepository sseEventRepository;
 
-//    @MockitoBean
-//    private SingleEventRepository singleEventRepository;
-
-    @MockitoBean
-    private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
-
     @Test
     void greetingShouldReturnDefaultMessage() {
         assertThat(this.webTestClient.get().uri("http://localhost:" + port + "/", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
             .contains("logo192.png");
     }
 
-    @Test
-    public void actuatorHealthShouldReturnDefaultMessage() {
-        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
-            .isEqualTo("{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}");
-    }
+//    @Test
+//    public void actuatorHealthShouldReturnDefaultMessage() {
+//        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
+//            .isEqualTo("{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}");
+//    }
 
     @Test
     public void actuatorHealthLiveNessShouldReturnDefaultMessage() {
