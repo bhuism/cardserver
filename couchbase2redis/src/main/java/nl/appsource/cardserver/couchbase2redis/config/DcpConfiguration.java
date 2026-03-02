@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.couchbase2redis;
+package nl.appsource.cardserver.couchbase2redis.config;
 
 import com.couchbase.client.core.deps.io.netty.buffer.ByteBufInputStream;
 import com.couchbase.client.dcp.Client;
@@ -14,6 +14,7 @@ import nl.appsource.cardserver.converters.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.model.Boom;
 import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.couchbase2redis.CardServerCouchbaseProperties;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
