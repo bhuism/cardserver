@@ -8,13 +8,13 @@ import com.couchbase.client.dcp.message.DcpMutationMessage;
 import com.couchbase.client.dcp.message.MessageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converters.BoomToOpenApiConverter;
-import nl.appsource.cardserver.converters.GameToOpenApiConverter;
-import nl.appsource.cardserver.converters.UserToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
+import nl.appsource.cardserver.couchbase.config.CardServerCouchbaseProperties;
 import nl.appsource.cardserver.couchbase.model.Boom;
 import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.cardserver.couchbase.model.User;
-import nl.appsource.cardserver.couchbase2redis.CardServerCouchbaseProperties;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
@@ -45,12 +45,12 @@ public class DcpConfiguration {
 
     private final RedisPublisher redisPublisher;
 
-//    private final SseEmitterRepository sseEmitterRepository;
+    //    private final SseEmitterRepository sseEmitterRepository;
 //
     private final BoomToOpenApiConverter boomToOpenApiConverter;
-//
+    //
     private final UserToOpenApiConverter userToOpenApiConverter;
-//
+    //
     private final GameToOpenApiConverter gameToOpenApiConverter;
 //
 //    private final UserRepository userRepository;
