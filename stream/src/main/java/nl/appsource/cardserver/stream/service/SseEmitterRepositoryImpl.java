@@ -153,6 +153,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 }
             } else if (result == Sinks.EmitResult.FAIL_TERMINATED) {
                 log.debug("{} sink terminated", context);
+            } else if (result == Sinks.EmitResult.FAIL_ZERO_SUBSCRIBER) {
+                // this is ok
+                log.trace("{} no subscribers", context);
             } else {
                 log.warn("{} emit failed: {}", context, result);
             }
