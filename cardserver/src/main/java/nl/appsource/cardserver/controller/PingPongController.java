@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
-import nl.appsource.cardserver.service.SseEventSender;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.PingApi;
 import org.openapitools.api.PongApi;
@@ -26,30 +25,11 @@ import java.time.Duration;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class PingPongApi extends AbstractBaseController implements V1Api, PingApi, PongApi {
+public class PingPongController extends AbstractBaseController implements V1Api, PingApi, PongApi {
 
-    //    private final SseEmitterRepository sseEmitterRepository;
     private final SseSessionRepository sseSessionRepository;
-    private final SseEventSender sseEventSender;
     private final RedisPublisher redisPublisher;
     private final JsonMapper jsonMapper;
-
-//    @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(@RequestBody final String body, final ServerWebExchange exchange) {
-//
-//        final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
-//        final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
-//
-//        exchange.getResponse().getHeaders().add("X-Accel-Buffering", "no");
-//
-//        return getUserId(exchange)
-//            .map(userId -> ResponseEntity.ok(sseEmitterRepository.subscribe(
-//                userId, "" + exchange.getRequest().getRemoteAddress(),
-//                userAgent
-//            )))
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Flux.empty()));
-//
-//    }
 
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
