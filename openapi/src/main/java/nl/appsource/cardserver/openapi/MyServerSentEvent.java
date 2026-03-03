@@ -9,6 +9,7 @@ import nl.appsource.generated.openapi.model.OnlineListEvent;
 import nl.appsource.generated.openapi.model.User;
 
 import java.io.Serializable;
+import java.util.Map;
 
 public record MyServerSentEvent(String event, Object data) implements Serializable {
 
@@ -21,7 +22,7 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
     }
 
     public static MyServerSentEvent ping(final long count) {
-        return new MyServerSentEvent("ping", "{ count: " + count + "}");
+        return new MyServerSentEvent("ping", Map.of("count", count));
     }
 
     public static MyServerSentEvent pong() {
