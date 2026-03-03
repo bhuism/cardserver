@@ -153,7 +153,7 @@ public class DcpConfiguration {
                                     redisPublisher.publish(user.getId(), userString).subscribe();
 
                                     userRepository.getFriendIds(user.getId())
-                                        .map(friendId -> redisPublisher.publish(friendId, userString))
+                                        .flatMap(friendId -> redisPublisher.publish(friendId, userString))
                                         .subscribe();
 
                                 }
