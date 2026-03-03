@@ -148,17 +148,13 @@ public class DcpConfiguration {
                                     final User user = jsonMapper.treeToValue(rootNode, User.class);
                                     user.setId(id);
 
-//                                    log.info("Handling userChange: {}", id);
-
                                     final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
 
                                     redisPublisher.publish(user.getId(), userString).subscribe();
 
                                     userRepository.getFriendIds(user.getId())
-                                        .map(friendId -> {
-                                            log.info("found friendId: {} of {}", friendId, user.getId());
-                                            return redisPublisher.publish(friendId, userString);
-                                        }).subscribe();
+                                        .map(friendId -> redisPublisher.publish(friendId, userString))
+                                        .subscribe();
 
                                 }
                                 case "nl.appsource.cardserver.model.Game" -> {
