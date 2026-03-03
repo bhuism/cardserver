@@ -32,10 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.hello;
@@ -70,10 +67,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
 
-    private final Map<String, UserChannel> userChannelsByApplicationId = new ConcurrentHashMap<>();
-
-    private final Map<String, Set<UserChannel>> userChannelsByUserId = new ConcurrentHashMap<>();
-
     private final JsonMapper jsonMapper;
 
     private static final String HOSTNAME;
@@ -107,13 +100,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             log.error("Error closing mainSink", t);
         }
 
-        userChannelsByApplicationId.values().forEach(userChannel -> {
-            try {
-                userChannel.sink.tryEmitComplete();
-            } catch (final Throwable t) {
-                log.error("Error closing userChannel sink", t);
-            }
-        });
     }
 
     private Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> initCache(final String userId) {
@@ -179,39 +165,30 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final String appIdentifier = Utils.idGen(IDTYPE.SESS, 8);
         final AtomicLong atomicLong = new AtomicLong(1);
 
-        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
+        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
-        final UserChannel userChannel = new UserChannel(userId);
-
-        userChannelsByApplicationId.put(appIdentifier, userChannel);
-        userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
+        final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
 
         final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux =
-            Mono.delay(Duration.ofSeconds(1)).thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux(), Mono.just(ping()), initCache(userId), redisUserMessage, redisAooidentifierMessage));
+            Mono.delay(Duration.ofSeconds(1)).thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), Mono.just(ping()), initCache(userId), redisUserMessage, redisAooidentifierMessage));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
                 Flux.concat(Mono.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build())), restFlux)
                     .doFinally(signalType -> {
-                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
-
-                        userChannelsByApplicationId.remove(appIdentifier);
-                        userChannelsByUserId.computeIfPresent(userId, (k, channels) -> {
-                            channels.remove(userChannel);
-                            return channels.isEmpty() ? null : channels;
-                        });
+                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
                             //.then(sseEventSender.sendOnlineListToFriendsOf(userId))
                             .subscribe();
 
-                        userChannel.sink.tryEmitComplete();
+                        userSink.tryEmitComplete();
 
                     })
                     .map(myServerSentEvent -> {
@@ -221,12 +198,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         return builder.build();
                     })
             );
-    }
-
-    @RequiredArgsConstructor
-    private static class UserChannel {
-        public final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> sink = Sinks.many().unicast().onBackpressureBuffer();
-        public final String userId;
     }
 
 }
