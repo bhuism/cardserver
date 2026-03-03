@@ -68,7 +68,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final SseSessionRepository sseSessionRepository;
 
-    private final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> mainSink = Sinks.many().multicast().onBackpressureBuffer(1024, false);
+    private final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
 
     private final Map<String, UserChannel> userChannelsByApplicationId = new ConcurrentHashMap<>();
 
