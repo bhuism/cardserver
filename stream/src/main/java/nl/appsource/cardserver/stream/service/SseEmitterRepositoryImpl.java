@@ -65,7 +65,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final SseSessionRepository sseSessionRepository;
 
-    private final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
 
     private final JsonMapper jsonMapper;
 
@@ -102,33 +102,33 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    private Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> initCache(final String userId) {
+    private Flux<MyServerSentEvent> initCache(final String userId) {
 
         // users
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> friends = userRepository.getFriends(userId)
+        final Flux<MyServerSentEvent> friends = userRepository.getFriends(userId)
             .map(userToOpenApiConverter::convert)
-            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateUser);
+            .map(MyServerSentEvent::updateUser);
 
         // games
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
+        final Flux<MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
             .map(gameToOpenApiConverter::convert)
-            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateGame);
+            .map(MyServerSentEvent::updateGame);
 
         // forest
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
+        final Flux<MyServerSentEvent> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
             .map(boomToOpenApiConverter::convert)
-            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateBoom);
+            .map(MyServerSentEvent::updateBoom);
 
         // users
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> me = userRepository.findById(userId)
+        final Flux<MyServerSentEvent> me = userRepository.findById(userId)
             .map(userToOpenApiConverter::convert)
-            .map(nl.appsource.cardserver.openapi.MyServerSentEvent::updateUser)
+            .map(MyServerSentEvent::updateUser)
             .flux();
 
         // online list
-        final Mono<nl.appsource.cardserver.openapi.MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
+        final Mono<MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
             .collectList()
-            .map(onlineFriends -> nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
+            .map(onlineFriends -> MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
 
         return Flux.concat(me, friends, games, booms, onlineList);
 
@@ -137,29 +137,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
-            .map(aLong -> ping())
-            .subscribe(myServerSentEvent -> {
-                tryEmit(mainSink, myServerSentEvent, "mainSink", false);
-            });
-    }
-
-    private void tryEmit(final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> sink, final nl.appsource.cardserver.openapi.MyServerSentEvent event, final String context, final boolean disconnectOnOverflow) {
-        final Sinks.EmitResult result = sink.tryEmitNext(event);
-        if (result.isFailure()) {
-            if (result == Sinks.EmitResult.FAIL_OVERFLOW) {
-                log.warn("{} overflow, event: {}", context, event.event());
-                if (disconnectOnOverflow) {
-                    sink.tryEmitError(new RuntimeException("Buffer overflow"));
-                }
-            } else if (result == Sinks.EmitResult.FAIL_TERMINATED) {
-                log.debug("{} sink terminated", context);
-            } else if (result == Sinks.EmitResult.FAIL_ZERO_SUBSCRIBER) {
-                // this is ok
-                log.trace("{} no subscribers", context);
-            } else {
-                log.warn("{} emit failed: {}", context, result);
-            }
-        }
+            .map(MyServerSentEvent::ping)
+            .subscribe(myServerSentEvent -> mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))));
     }
 
     @Override
@@ -170,14 +149,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
-        final Sinks.Many<nl.appsource.cardserver.openapi.MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
+        final Sinks.Many<MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
 
         final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
-        final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux =
-            Mono.delay(Duration.ofSeconds(1)).thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), Mono.just(ping()), initCache(userId), redisUserMessage, redisAooidentifierMessage));
+        final Flux<MyServerSentEvent> restFlux =
+            Mono.delay(Duration.ofSeconds(1)).thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), Mono.just(ping(0)), initCache(userId), redisUserMessage, redisAooidentifierMessage));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)

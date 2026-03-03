@@ -20,8 +20,8 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("updateUser", user);
     }
 
-    public static MyServerSentEvent ping() {
-        return new MyServerSentEvent("ping", null);
+    public static MyServerSentEvent ping(final long count) {
+        return new MyServerSentEvent("ping", "{ count: " + count + "}");
     }
 
     public static MyServerSentEvent pong() {
