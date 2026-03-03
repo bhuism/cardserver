@@ -148,21 +148,13 @@ public class DcpConfiguration {
                                     final User user = jsonMapper.treeToValue(rootNode, User.class);
                                     user.setId(id);
 
-                                    log.info("Handling userChange: {}", id);
+//                                    log.info("Handling userChange: {}", id);
 
                                     final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
 
-//                                redisPublisher.publish("updateUser", userString).subscribe();
-//                                redisPublisher.publish(user.getId(), userString);
+                                    redisPublisher.publish(user.getId(), userString).subscribe();
 
                                     userRepository.getFriendIds(user.getId())
-                                        .doOnSubscribe(subscription -> {
-                                            log.info("onsubscribe() found friends for user: {}", user.getId());
-                                        })
-                                        .doFinally(signalType -> {
-                                            log.info("onfinally() found friends for user: {}", user.getId());
-                                        })
-//                                        .doOnNext(friend -> log.info("onnext() found a friend: {}", friend.getId()))
                                         .map(friendId -> {
                                             log.info("found friendId: {} of {}", friendId, user.getId());
                                             return redisPublisher.publish(friendId, userString);
