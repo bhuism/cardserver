@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.couchbase2redis.config;
 
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +14,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 public class RedisConfiguration {
 
     @Bean
-    public RedisPublisher redisPublisher(final ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
+    public RedisPublisher redisPublisher(final ReactiveRedisTemplate<String, MyServerSentEvent> reactiveRedisTemplate) {
         return new RedisPublisher(reactiveRedisTemplate);
     }
 

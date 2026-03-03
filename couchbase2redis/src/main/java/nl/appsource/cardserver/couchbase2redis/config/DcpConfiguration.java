@@ -16,6 +16,7 @@ import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -134,11 +135,11 @@ public class DcpConfiguration {
                                     final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                     boom.setId(id);
 
-                                    final String boomString = jsonMapper.writeValueAsString(updateBoom(boomToOpenApiConverter.convert(boom)));
+//                                    final String boomString = jsonMapper.writeValueAsString(updateBoom(boomToOpenApiConverter.convert(boom)));
 
                                     redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
                                         .mergeWith(Flux.just(boom.getCreator()))
-                                        .distinct(), boomString).subscribe();
+                                        .distinct(), updateBoom(boomToOpenApiConverter.convert(boom))).subscribe();
 
 //                                redisPublisher.publish("updateBoom", boomString).subscribe();
 
@@ -148,12 +149,14 @@ public class DcpConfiguration {
                                     final User user = jsonMapper.treeToValue(rootNode, User.class);
                                     user.setId(id);
 
-                                    final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
+//                                    final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
 
-                                    redisPublisher.publish(user.getId(), userString).subscribe();
+                                    final MyServerSentEvent updateUser = updateUser(userToOpenApiConverter.convert(user));
+
+                                    redisPublisher.publish(user.getId(), updateUser).subscribe();
 
                                     userRepository.getFriendIds(user.getId())
-                                        .flatMap(friendId -> redisPublisher.publish(friendId, userString))
+                                        .flatMap(friendId -> redisPublisher.publish(friendId, updateUser))
                                         .subscribe();
 
                                 }
@@ -161,11 +164,11 @@ public class DcpConfiguration {
                                     final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                     game.setId(id);
 
-                                    final String gameString = jsonMapper.writeValueAsString(updateGame(gameToOpenApiConverter.convert(game)));
+                                    final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
 
                                     redisPublisher.publish(Flux.fromIterable(game.getPlayers())
                                         .mergeWith(Flux.just(game.getCreator()))
-                                        .distinct(), gameString).subscribe();
+                                        .distinct(), gameEvent).subscribe();
 
 //                                redisPublisher.publish("updateBoom", gameString).subscribe();
 
