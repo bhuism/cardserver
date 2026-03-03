@@ -151,8 +151,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 if (disconnectOnOverflow) {
                     sink.tryEmitError(new RuntimeException("Buffer overflow"));
                 }
-            } else if (result == Sinks.EmitResult.FAIL_TERMINATED || result == Sinks.EmitResult.FAIL_ZERO_SUBSCRIBER) {
-                log.debug("{} sink terminated or no subscribers", context);
+            } else if (result == Sinks.EmitResult.FAIL_TERMINATED) {
+                log.debug("{} sink terminated", context);
             } else {
                 log.warn("{} emit failed: {}", context, result);
             }
