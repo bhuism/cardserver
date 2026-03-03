@@ -12,6 +12,7 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import nl.appsource.cardserver.openapi.service.PubSubService;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
@@ -19,19 +20,20 @@ import nl.appsource.generated.openapi.model.OnlineListEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.data.redis.connection.ReactiveSubscription;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,6 +51,8 @@ import static reactor.core.publisher.Mono.just;
 @Slf4j
 @RequiredArgsConstructor
 public class SseEmitterRepositoryImpl implements SseEmitterRepository {
+
+    private final PubSubService pubSubService;
 
     private final UserRepository userRepository;
 
@@ -69,6 +73,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final Map<String, UserChannel> userChannelsByApplicationId = new ConcurrentHashMap<>();
 
     private final Map<String, Set<UserChannel>> userChannelsByUserId = new ConcurrentHashMap<>();
+
+    private final JsonMapper jsonMapper;
 
     private static final String HOSTNAME;
 
@@ -167,25 +173,25 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
     }
 
-    @Override
-    public void sendAppIdentifier(final String appIdentifier, final nl.appsource.cardserver.openapi.MyServerSentEvent myServerSentEvent) {
-
-        Optional.ofNullable(userChannelsByApplicationId.get(appIdentifier))
-            .ifPresent(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true));
-
-        final UserChannel userChannel = userChannelsByApplicationId.get(appIdentifier);
-
-        if (userChannel != null) {
-            tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true);
-        }
-//        } else if (userId != null) {
-//            final Set<UserChannel> channels = userChannelsByUserId.get(userId);
-//            if (channels != null) {
-//                channels.forEach(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + userId + "]", true));
-//            }
+//    @Override
+//    public void sendAppIdentifier(final String appIdentifier, final nl.appsource.cardserver.openapi.MyServerSentEvent myServerSentEvent) {
+//
+//        Optional.ofNullable(userChannelsByApplicationId.get(appIdentifier))
+//            .ifPresent(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true));
+//
+//        final UserChannel userChannel = userChannelsByApplicationId.get(appIdentifier);
+//
+//        if (userChannel != null) {
+//            tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true);
 //        }
-    }
 
+    /// /        } else if (userId != null) {
+    /// /            final Set<UserChannel> channels = userChannelsByUserId.get(userId);
+    /// /            if (channels != null) {
+    /// /                channels.forEach(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + userId + "]", true));
+    /// /            }
+    /// /        }
+//    }
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
 
@@ -199,19 +205,26 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userChannelsByApplicationId.put(appIdentifier, userChannel);
         userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
 
-        final Flux<MyServerSentEvent> helloFlux = Flux.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
+//        pubSubService.listenTo(appIdentifier).subscribe(stringStringMessage -> {
+//            try {
+//                userChannel.sink.tryEmitNext(stringStringMessage.getMessage());
+//            } catch (Exception e) {
+//                log.error("Error emitting message to user channel", e);
+//            }
+//        });
+
+        final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
+
+        final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux =
             Mono.delay(Duration.ofSeconds(1))
-                .then(Mono.just(ping()))
-                .thenMany(initCache(userId)
-                    .thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux()))
-                );
+                .thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux(), Mono.just(ping()), initCache(userId), redisUserMessage, redisAooidentifierMessage));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
-                Flux.concat(helloFlux, restFlux)
+                Flux.concat(Mono.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build())), restFlux)
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
 

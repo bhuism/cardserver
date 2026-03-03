@@ -6,6 +6,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import nl.appsource.cardserver.service.SseEventSender;
 import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.openapitools.api.PingApi;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 
@@ -25,9 +28,11 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class PingPongApi extends AbstractBaseController implements V1Api, PingApi, PongApi {
 
-//    private final SseEmitterRepository sseEmitterRepository;
+    //    private final SseEmitterRepository sseEmitterRepository;
     private final SseSessionRepository sseSessionRepository;
     private final SseEventSender sseEventSender;
+    private final RedisPublisher redisPublisher;
+    private final JsonMapper jsonMapper;
 
 //    @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 //    public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(@RequestBody final String body, final ServerWebExchange exchange) {
@@ -51,10 +56,11 @@ public class PingPongApi extends AbstractBaseController implements V1Api, PingAp
         log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
-//            .flatMap(sseSessionRepository::ping)
+            .flatMap(sseSessionRepository::pingReceived)
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
-            .delayUntil(sseEventSender::sendPong)
+            .flatMap(_ -> redisPublisher.publish(appIdentifier, jsonMapper.writeValueAsString(MyServerSentEvent.pong())))
+//            .delayUntil(sseEventSender::sendPong)
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
@@ -64,7 +70,7 @@ public class PingPongApi extends AbstractBaseController implements V1Api, PingAp
         log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
-//            .flatMap(sseSessionRepository::pong)
+            .flatMap(sseSessionRepository::pongReceived)
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
             .map(_ -> ResponseEntity.ok().<Void>build())

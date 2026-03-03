@@ -18,6 +18,10 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("ping", null);
     }
 
+    public static MyServerSentEvent pong() {
+        return new MyServerSentEvent("pong", null);
+    }
+
     public static MyServerSentEvent updateGame(final Game game) {
         return new MyServerSentEvent("updateGame", game);
     }

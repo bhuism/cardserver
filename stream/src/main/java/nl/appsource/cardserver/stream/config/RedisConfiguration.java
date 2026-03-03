@@ -16,5 +16,5 @@ public class RedisConfiguration {
     PubSubService pubSubService(final ReactiveRedisMessageListenerContainer reactiveRedisMessageListenerContainer) {
         return new PubSubService(reactiveRedisMessageListenerContainer);
     }
-    
+
 }

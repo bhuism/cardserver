@@ -8,6 +8,7 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.service.PubSubService;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,9 +18,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 
@@ -55,16 +58,23 @@ public class SseEmitterRepositoryImplTest {
 
     private SseEmitterRepository sseEmitterRepository;
 
+    private JsonMapper jsonMapper = new JsonMapper();
+
+    @MockitoBean
+    private PubSubService pubSubService;
+
     @BeforeEach
     void setUp() {
         sseEmitterRepository = new SseEmitterRepositoryImpl(
+            pubSubService,
             userRepository,
             gameToOpenApiConverter,
             userToOpenApiConverter,
             boomToOpenApiConverter,
             gameRepository,
             boomRepository,
-            sseSessionRepository
+            sseSessionRepository,
+            jsonMapper
         );
     }
 

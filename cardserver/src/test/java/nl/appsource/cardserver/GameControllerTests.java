@@ -12,6 +12,7 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.UserService;
@@ -75,6 +76,9 @@ public class GameControllerTests {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private RedisPublisher redisPublisher;
 
     @BeforeEach
     void setUp() {

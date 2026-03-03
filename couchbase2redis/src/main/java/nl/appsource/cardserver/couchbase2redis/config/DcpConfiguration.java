@@ -16,7 +16,6 @@ import nl.appsource.cardserver.couchbase.model.Boom;
 import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.cardserver.couchbase.model.User;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +30,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateBoom;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGame;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateUser;
 
@@ -123,13 +123,13 @@ public class DcpConfiguration {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
 
-                                final String boomString = jsonMapper.writeValueAsString(MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)));
+                                final String boomString = jsonMapper.writeValueAsString(updateBoom(boomToOpenApiConverter.convert(boom)));
 
                                 redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
                                     .mergeWith(Flux.just(boom.getCreator()))
                                     .distinct(), boomString).subscribe();
 
-                                redisPublisher.publish("updateBoom", boomString).subscribe();
+//                                redisPublisher.publish("updateBoom", boomString).subscribe();
 
                             }
                             case "nl.appsource.cardserver.model.User" -> {
@@ -138,7 +138,7 @@ public class DcpConfiguration {
 
                                 final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
 
-                                redisPublisher.publish("updateUser", userString).subscribe();
+//                                redisPublisher.publish("updateUser", userString).subscribe();
                                 redisPublisher.publish(user.getId(), userString).subscribe();
                                 userRepository.getFriendIds(user.getId()).map(friendId -> redisPublisher.publish(friendId, userString)).subscribe();
 
@@ -153,7 +153,7 @@ public class DcpConfiguration {
                                     .mergeWith(Flux.just(game.getCreator()))
                                     .distinct(), gameString).subscribe();
 
-                                redisPublisher.publish("updateBoom", gameString).subscribe();
+//                                redisPublisher.publish("updateBoom", gameString).subscribe();
 
                             }
 

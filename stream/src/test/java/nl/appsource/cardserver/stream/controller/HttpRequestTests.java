@@ -6,6 +6,7 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.service.PubSubService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +50,9 @@ public class HttpRequestTests {
 
     @MockitoBean
     private SseEventRepository sseEventRepository;
+
+    @MockitoBean
+    public PubSubService pubSubService;
 
 //    @Test
 //    void greetingShouldReturnDefaultMessage() {
