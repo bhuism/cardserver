@@ -8,10 +8,10 @@ import nl.appsource.cardserver.couchbase.exception.GameEngineException;
 import nl.appsource.cardserver.couchbase.exception.LastTrickOpenException;
 import nl.appsource.cardserver.couchbase.exception.NotAPlayerException;
 import nl.appsource.cardserver.couchbase.exception.NotPlayersTurnException;
-import nl.appsource.cardserver.couchbase.model.Card;
-import nl.appsource.cardserver.couchbase.model.Game;
-import nl.appsource.cardserver.couchbase.model.Rank;
-import nl.appsource.cardserver.couchbase.model.Suit;
+import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.Rank;
+import nl.appsource.cardserver.model.Suit;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
 import static java.util.Comparator.comparing;
-import static nl.appsource.cardserver.couchbase.model.GameVariant.ROTTERDAMS;
+import static nl.appsource.cardserver.model.GameVariant.ROTTERDAMS;
 
 @Slf4j
 public record GameEngineImpl(Game game) implements GameEngine {

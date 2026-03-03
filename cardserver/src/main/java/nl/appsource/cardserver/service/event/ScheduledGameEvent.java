@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.service.GameEventType;
 
 import java.io.Serializable;

@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.couchbase.repository;
 
-import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.model.User;
 import org.springframework.data.couchbase.repository.Query;
 import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository;
 import org.springframework.data.repository.query.Param;

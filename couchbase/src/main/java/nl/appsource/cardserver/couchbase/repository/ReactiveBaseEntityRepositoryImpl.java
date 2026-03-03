@@ -6,7 +6,7 @@ import com.couchbase.client.java.kv.MutateInSpec;
 import com.couchbase.client.java.kv.MutationResult;
 import com.couchbase.client.java.kv.ReplaceOptions;
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.couchbase.model.BaseEntity;
+import nl.appsource.cardserver.model.BaseEntity;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.data.couchbase.core.mapping.CouchbaseDocument;
 import reactor.core.publisher.Mono;

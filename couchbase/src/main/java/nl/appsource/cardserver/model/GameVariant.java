@@ -1,16 +1,16 @@
-package nl.appsource.cardserver.couchbase.model;
+package nl.appsource.cardserver.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public enum Theme {
+public enum GameVariant {
 
-    AUTO("auto"),
-    LIGHT("light"),
-    DARK("dark");
+    AMSTERDAMS("amsterdams"),
+    ROTTERDAMS("rotterdams"),
+    HAAGS("haags");
 
-    final String value;
+    public final String value;
 
     @JsonValue
     public String getValue() {

@@ -1,16 +1,16 @@
-package nl.appsource.cardserver.couchbase.model;
+package nl.appsource.cardserver.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public enum GameVariant {
+public enum ScreenOrientation {
 
-    AMSTERDAMS("amsterdams"),
-    ROTTERDAMS("rotterdams"),
-    HAAGS("haags");
+    AUTO("auto"),
+    PORTRAIT("portrait"),
+    LANDSCAPE("landscape");
 
-    public final String value;
+    final String value;
 
     @JsonValue
     public String getValue() {

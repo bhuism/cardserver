@@ -1,7 +1,7 @@
 package nl.appsource.cardserver.couchbase.exception;
 
 import lombok.Getter;
-import nl.appsource.cardserver.couchbase.model.Card;
+import nl.appsource.cardserver.model.Card;
 
 @Getter
 public class CardAlreadyPlayerException extends GameEngineException {

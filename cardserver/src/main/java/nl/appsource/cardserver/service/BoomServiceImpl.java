@@ -2,10 +2,10 @@ package nl.appsource.cardserver.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.couchbase.model.AiRisc;
-import nl.appsource.cardserver.couchbase.model.Boom;
-import nl.appsource.cardserver.couchbase.model.GameVariant;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
+import nl.appsource.cardserver.model.AiRisc;
+import nl.appsource.cardserver.model.Boom;
+import nl.appsource.cardserver.model.GameVariant;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;

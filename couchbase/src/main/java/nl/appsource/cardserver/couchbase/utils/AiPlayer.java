@@ -2,11 +2,11 @@ package nl.appsource.cardserver.couchbase.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.exception.GameEngineException;
-import nl.appsource.cardserver.couchbase.model.AiRisc;
-import nl.appsource.cardserver.couchbase.model.Card;
-import nl.appsource.cardserver.couchbase.model.GameVariant;
-import nl.appsource.cardserver.couchbase.model.Rank;
-import nl.appsource.cardserver.couchbase.model.Suit;
+import nl.appsource.cardserver.model.AiRisc;
+import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.GameVariant;
+import nl.appsource.cardserver.model.Rank;
+import nl.appsource.cardserver.model.Suit;
 
 import java.util.Comparator;
 import java.util.List;

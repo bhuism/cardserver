@@ -2,10 +2,10 @@ package nl.appsource.cardserver.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.couchbase.model.Game;
-import nl.appsource.cardserver.couchbase.model.SseEvent;
 import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.SseEvent;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.NewGameEvent;

@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.couchbase.model;
+package nl.appsource.cardserver.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

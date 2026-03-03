@@ -1,16 +1,18 @@
-package nl.appsource.cardserver.couchbase.model;
+package nl.appsource.cardserver.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public enum ScreenOrientation {
+public enum AiRisc {
 
-    AUTO("auto"),
-    PORTRAIT("portrait"),
-    LANDSCAPE("landscape");
+    VERYLOW("verylow"),
+    LOW("low"),
+    MEDIUM("medium"),
+    HIGH("high"),
+    VERYHIGH("veryhigh");
 
-    final String value;
+    public final String value;
 
     @JsonValue
     public String getValue() {

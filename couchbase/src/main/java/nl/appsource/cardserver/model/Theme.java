@@ -1,18 +1,16 @@
-package nl.appsource.cardserver.couchbase.model;
+package nl.appsource.cardserver.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public enum AiRisc {
+public enum Theme {
 
-    VERYLOW("verylow"),
-    LOW("low"),
-    MEDIUM("medium"),
-    HIGH("high"),
-    VERYHIGH("veryhigh");
+    AUTO("auto"),
+    LIGHT("light"),
+    DARK("dark");
 
-    public final String value;
+    final String value;
 
     @JsonValue
     public String getValue() {

@@ -12,3 +12,7 @@ cardserver:
     bucket-name: cardserver
 
 
+logging:
+  level:
+    nl.altindag: DEBUG
+

@@ -1,7 +1,7 @@
 package nl.appsource.cardserver.couchbase.repository;
 
 import com.couchbase.client.java.kv.MutationResult;
-import nl.appsource.cardserver.couchbase.model.BaseEntity;
+import nl.appsource.cardserver.model.BaseEntity;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;

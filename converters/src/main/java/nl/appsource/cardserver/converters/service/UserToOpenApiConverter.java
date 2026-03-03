@@ -2,7 +2,7 @@ package nl.appsource.cardserver.converters.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.model.User;
 import nl.appsource.generated.openapi.model.AiRisc;
 import nl.appsource.generated.openapi.model.GameVariant;
 import nl.appsource.generated.openapi.model.ScreenOrientation;

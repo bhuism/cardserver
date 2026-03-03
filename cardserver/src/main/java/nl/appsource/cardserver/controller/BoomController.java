@@ -86,7 +86,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     }
 
-    private Mono<Integer> calcDealer(final nl.appsource.cardserver.couchbase.model.Boom boom) {
+    private Mono<Integer> calcDealer(final nl.appsource.cardserver.model.Boom boom) {
 
         if (boom.getGames().isEmpty()) {
             return Mono.just(RAND.nextInt(4));

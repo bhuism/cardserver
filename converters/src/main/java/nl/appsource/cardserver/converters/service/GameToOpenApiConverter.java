@@ -3,10 +3,10 @@ package nl.appsource.cardserver.converters.service;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.couchbase.model.Game;
-import nl.appsource.cardserver.couchbase.model.Suit;
 import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
+import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.Suit;
 import nl.appsource.generated.openapi.model.AiRisc;
 import nl.appsource.generated.openapi.model.Card;
 import nl.appsource.generated.openapi.model.GamePlayerCardInner;
@@ -292,24 +292,24 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
 
     }
 
-    public static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.couchbase.model.Card> source) {
+    public static List<Card> convertToOpenApi(final List<nl.appsource.cardserver.model.Card> source) {
         return source.stream()
             .map(GameToOpenApiConverter::convertCard)
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static List<nl.appsource.cardserver.couchbase.model.Card> convertToModel(final List<Card> source) {
+    public static List<nl.appsource.cardserver.model.Card> convertToModel(final List<Card> source) {
         return source.stream()
             .map(GameToOpenApiConverter::convertCard)
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static nl.appsource.generated.openapi.model.Card convertCard(final nl.appsource.cardserver.couchbase.model.Card source) {
+    public static nl.appsource.generated.openapi.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
         return nl.appsource.generated.openapi.model.Card.fromValue(source.name());
     }
 
-    public static nl.appsource.cardserver.couchbase.model.Card convertCard(final nl.appsource.generated.openapi.model.Card source) {
-        return nl.appsource.cardserver.couchbase.model.Card.valueOf(source.getValue());
+    public static nl.appsource.cardserver.model.Card convertCard(final nl.appsource.generated.openapi.model.Card source) {
+        return nl.appsource.cardserver.model.Card.valueOf(source.getValue());
     }
 
 

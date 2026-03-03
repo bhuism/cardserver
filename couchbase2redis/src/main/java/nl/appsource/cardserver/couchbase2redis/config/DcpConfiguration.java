@@ -12,10 +12,10 @@ import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.config.CardServerCouchbaseProperties;
-import nl.appsource.cardserver.couchbase.model.Boom;
-import nl.appsource.cardserver.couchbase.model.Game;
-import nl.appsource.cardserver.couchbase.model.User;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.model.Boom;
+import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,8 +77,10 @@ public class DcpConfiguration {
 //            .build();
 //    }
 
+
     @Bean
     public Client dcpClient() {
+
         final Client client = Client.builder()
             .connectionString(cardServerCouchbaseProperties.getConnectionString())
             .bucket(cardServerCouchbaseProperties.getBucketName())
@@ -92,21 +94,30 @@ public class DcpConfiguration {
 
         client.dataEventHandler((flowController, event) -> {
 
-            final String id = MessageUtil.getKeyAsString(event);
+            try {
 
-            if (DcpMutationMessage.is(event)) {
+                final String id = MessageUtil.getKeyAsString(event);
 
-                try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
+//            log.info("Got eventId: {}", id);
 
-                    final JsonNode rootNode = jsonMapper.readTree(is);
+                if (DcpMutationMessage.is(event)) {
 
-                    if (rootNode.isObject()) {
 
-                        ((ObjectNode) rootNode).put("id", id);
+//                log.info("Got mutation eventId: {}", id);
 
-                        final String className = rootNode.get("_class").asString();
+                    try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
 
-                        switch (className) {
+                        final JsonNode rootNode = jsonMapper.readTree(is);
+
+                        if (rootNode.isObject()) {
+
+                            ((ObjectNode) rootNode).put("id", id);
+
+                            final String className = rootNode.get("_class").asString();
+
+//                        log.info("Got object eventId: {} className: {}", id, className);
+
+                            switch (className) {
 //                            case "nl.appsource.cardserver.model.SseEvent" -> {
 //                                final SseEvent sseEvent = jsonMapper.treeToValue(rootNode, SseEvent.class);
 //                                sseEvent.setId(id);
@@ -119,43 +130,58 @@ public class DcpConfiguration {
 //                                sseEmitterRepository.send(sseEvent.getAppIdentifier(), sseEvent.getUserId(), new MyServerSentEvent(sseEvent.getEvent(), sseEvent.getData()));
 //
 //                            }
-                            case "nl.appsource.cardserver.model.Boom" -> {
-                                final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
-                                boom.setId(id);
+                                case "nl.appsource.cardserver.model.Boom" -> {
+                                    final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
+                                    boom.setId(id);
 
-                                final String boomString = jsonMapper.writeValueAsString(updateBoom(boomToOpenApiConverter.convert(boom)));
+                                    final String boomString = jsonMapper.writeValueAsString(updateBoom(boomToOpenApiConverter.convert(boom)));
 
-                                redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
-                                    .mergeWith(Flux.just(boom.getCreator()))
-                                    .distinct(), boomString).subscribe();
+                                    redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
+                                        .mergeWith(Flux.just(boom.getCreator()))
+                                        .distinct(), boomString).subscribe();
 
 //                                redisPublisher.publish("updateBoom", boomString).subscribe();
 
-                            }
-                            case "nl.appsource.cardserver.model.User" -> {
-                                final User user = jsonMapper.treeToValue(rootNode, User.class);
-                                user.setId(id);
+                                }
+                                case "nl.appsource.cardserver.model.User" -> {
 
-                                final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
+                                    final User user = jsonMapper.treeToValue(rootNode, User.class);
+                                    user.setId(id);
+
+                                    log.info("Handling userChange: {}", id);
+
+                                    final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
 
 //                                redisPublisher.publish("updateUser", userString).subscribe();
-                                redisPublisher.publish(user.getId(), userString).subscribe();
-                                userRepository.getFriendIds(user.getId()).map(friendId -> redisPublisher.publish(friendId, userString)).subscribe();
+//                                redisPublisher.publish(user.getId(), userString);
 
-                            }
-                            case "nl.appsource.cardserver.model.Game" -> {
-                                final Game game = jsonMapper.treeToValue(rootNode, Game.class);
-                                game.setId(id);
+                                    userRepository.getFriendIds(user.getId())
+                                        .doOnSubscribe(subscription -> {
+                                            log.info("onsubscribe() found friends for user: {}", user.getId());
+                                        })
+                                        .doFinally(signalType -> {
+                                            log.info("onfinally() found friends for user: {}", user.getId());
+                                        })
+//                                        .doOnNext(friend -> log.info("onnext() found a friend: {}", friend.getId()))
+                                        .map(friendId -> {
+                                            log.info("found friendId: {} of {}", friendId, user.getId());
+                                            return redisPublisher.publish(friendId, userString);
+                                        }).subscribe();
 
-                                final String gameString = jsonMapper.writeValueAsString(updateGame(gameToOpenApiConverter.convert(game)));
+                                }
+                                case "nl.appsource.cardserver.model.Game" -> {
+                                    final Game game = jsonMapper.treeToValue(rootNode, Game.class);
+                                    game.setId(id);
 
-                                redisPublisher.publish(Flux.fromIterable(game.getPlayers())
-                                    .mergeWith(Flux.just(game.getCreator()))
-                                    .distinct(), gameString).subscribe();
+                                    final String gameString = jsonMapper.writeValueAsString(updateGame(gameToOpenApiConverter.convert(game)));
+
+                                    redisPublisher.publish(Flux.fromIterable(game.getPlayers())
+                                        .mergeWith(Flux.just(game.getCreator()))
+                                        .distinct(), gameString).subscribe();
 
 //                                redisPublisher.publish("updateBoom", gameString).subscribe();
 
-                            }
+                                }
 
 //                            case "nl.appsource.cardserver.model.SingleEvent" -> {
 //                                final SingleEvent singleEvent = jsonMapper.treeToValue(rootNode, SingleEvent.class);
@@ -175,21 +201,23 @@ public class DcpConfiguration {
 //                                    singleEventRepository.handledBy(singleEvent.getId(), HOSTNAME).subscribe();
 //                                }
 //                            }
-                            default -> {
+                                default -> {
+                                }
                             }
+
                         }
 
+
+                    } catch (IOException e) {
+                        log.warn("Can not deserialize key: " + id);
                     }
 
-
-                } catch (IOException e) {
-                    log.warn("Can not deserialize key: " + id);
                 }
-
+            } finally {
+                flowController.ack(event);
+                event.release();
             }
 
-            flowController.ack(event);
-            event.release();
 
         });
 

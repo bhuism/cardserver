@@ -1,10 +1,10 @@
 //package nl.appsource.cardserver.service;
 //
 //import lombok.extern.slf4j.Slf4j;
-//import nl.appsource.cardserver.couchbase.model.Card;
-//import nl.appsource.cardserver.couchbase.model.Game;
-//import nl.appsource.cardserver.couchbase.model.Rank;
-//import nl.appsource.cardserver.couchbase.model.Suit;
+//import nl.appsource.cardserver.model.model.Card;
+//import nl.appsource.cardserver.model.model.Game;
+//import nl.appsource.cardserver.model.model.Rank;
+//import nl.appsource.cardserver.model.model.Suit;
 //import nl.appsource.cardserver.service.exception.CardAlreadyPlayerException;
 //import nl.appsource.cardserver.service.exception.ElderException;
 //import nl.appsource.cardserver.service.exception.GameCompletedException;
@@ -26,7 +26,7 @@
 //import java.util.stream.Collectors;
 //
 //import static java.util.Comparator.comparing;
-//import static nl.appsource.cardserver.couchbase.model.GameVariant.ROTTERDAMS;
+//import static nl.appsource.cardserver.model.model.GameVariant.ROTTERDAMS;
 //import static nl.appsource.cardserver.service.GameServiceImpl.randomCards;
 //
 //@Slf4j

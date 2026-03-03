@@ -2,7 +2,7 @@ package nl.appsource.cardserver.converters.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.couchbase.model.Boom;
+import nl.appsource.cardserver.model.Boom;
 import nl.appsource.generated.openapi.model.AiRisc;
 import nl.appsource.generated.openapi.model.GameVariant;
 import org.springframework.core.convert.converter.Converter;

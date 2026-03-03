@@ -1,7 +1,7 @@
 package nl.appsource.cardserver.couchbase.utils;
 
-import nl.appsource.cardserver.couchbase.model.Card;
-import nl.appsource.cardserver.couchbase.model.Game;
+import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.model.Game;
 import reactor.core.publisher.Mono;
 
 import java.util.List;

@@ -7,7 +7,6 @@ server:
 logging:
   level:
     ROOT: info
-    nl.appsource: info
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 2s
