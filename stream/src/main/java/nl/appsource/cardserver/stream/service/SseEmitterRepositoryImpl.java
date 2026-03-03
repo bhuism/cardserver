@@ -202,16 +202,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final Flux<MyServerSentEvent> helloFlux = Flux.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build()));
 
         final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux =
-            helloFlux.then(Mono.delay(Duration.ofSeconds(1)))
+            Mono.delay(Duration.ofSeconds(1))
                 .then(Mono.just(ping()))
                 .thenMany(initCache(userId)
-                .thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux()))
-            );
+                    .thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux()))
+                );
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
-                restFlux
+                Flux.concat(helloFlux, restFlux)
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={} userChannelsCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount(), this.userChannelsByApplicationId.size());
 
