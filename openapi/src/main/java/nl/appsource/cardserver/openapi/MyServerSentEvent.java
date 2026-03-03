@@ -13,7 +13,7 @@ import java.io.Serializable;
 public record MyServerSentEvent(String event, Object data) implements Serializable {
 
     public MyServerSentEvent(final String event) {
-        this(event, null);
+        this(event, "{}");
     }
 
     public static MyServerSentEvent updateUser(final User user) {
