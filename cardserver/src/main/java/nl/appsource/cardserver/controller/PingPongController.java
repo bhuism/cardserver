@@ -33,7 +33,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
 
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
-        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
+//        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
             .flatMap(sseSessionRepository::pingReceived)
@@ -46,7 +46,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
-        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
+//        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
         return authorize(appIdentifier, exchange)
             .map(CardServerAuthentication::appIdentifier)
             .flatMap(sseSessionRepository::pongReceived)
