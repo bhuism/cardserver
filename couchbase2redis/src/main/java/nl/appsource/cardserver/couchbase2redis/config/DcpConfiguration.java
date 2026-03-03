@@ -42,6 +42,9 @@ public class DcpConfiguration {
 
     @Bean(destroyMethod = "disconnect")
     public Client dcpClient() {
+
+        log.info("Connecting to DCP stream");
+
         return Client.builder()
             .connectionString(cardServerCouchbaseProperties.getConnectionString())
             .bucket(cardServerCouchbaseProperties.getBucketName())
@@ -52,6 +55,8 @@ public class DcpConfiguration {
 
     @Bean
     public Flux<ByteBuf> dcpStream(final Client dcpClient) {
+
+        log.info("Starting DCP stream");
 
         final Sinks.Many<ByteBuf> sink = Sinks.many().multicast().onBackpressureBuffer();
 
