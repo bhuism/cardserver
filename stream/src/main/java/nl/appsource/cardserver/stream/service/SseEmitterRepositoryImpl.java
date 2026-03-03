@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.hello;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.ping;
+import static reactor.core.publisher.Flux.concat;
 import static reactor.core.publisher.Mono.just;
 
 /**
@@ -119,7 +120,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .map(boomToOpenApiConverter::convert)
             .map(MyServerSentEvent::updateBoom);
 
-        // users
+        // me
         final Flux<MyServerSentEvent> me = userRepository.findById(userId)
             .map(userToOpenApiConverter::convert)
             .map(MyServerSentEvent::updateUser)
@@ -130,7 +131,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .collectList()
             .map(onlineFriends -> MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
 
-        return Flux.concat(me, friends, games, booms, onlineList);
+        return concat(me, friends, games, booms, onlineList);
 
     }
 
@@ -151,17 +152,22 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Sinks.Many<MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
 
-        final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
+        final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId)
+            .map(ReactiveSubscription.Message::getMessage)
+            .map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
-        final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
+        final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier)
+            .map(ReactiveSubscription.Message::getMessage)
+            .map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<MyServerSentEvent> restFlux =
-            Mono.delay(Duration.ofSeconds(1)).thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), Mono.just(ping(0)), initCache(userId), redisUserMessage, redisAooidentifierMessage));
+            Mono.delay(Duration.ofSeconds(1))
+                .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisUserMessage, redisAooidentifierMessage));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
-                Flux.concat(Mono.just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build())), restFlux)
+                concat(just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build())), restFlux)
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
