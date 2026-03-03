@@ -34,6 +34,9 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
         + " AND ARRAY_CONTAINS(invites, $userId)"
         + " AND ARRAY_CONTAINS((SELECT RAW t.invites FROM #{#n1ql.bucket} AS t USE KEYS $userId)[0], meta(#{#n1ql.bucket}).id)";
 
+    @Query(value = FRIENDIDS, readonly = true)
+    Flux<String> getFriendIds(String userId);
+
     String ONLINE_FRIENDIDS = FRIENDIDS + " AND ARRAY_CONTAINS((SELECT RAW s.creator FROM  #{#n1ql.bucket} AS s WHERE s._class='nl.appsource.cardserver.model.SseSession'), meta(#{#n1ql.bucket}).id)";
 
     @Query(value = ONLINE_FRIENDIDS, readonly = true)
