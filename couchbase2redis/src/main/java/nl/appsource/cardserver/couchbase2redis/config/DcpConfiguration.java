@@ -15,6 +15,7 @@ import nl.appsource.cardserver.couchbase.config.CardServerCouchbaseProperties;
 import nl.appsource.cardserver.couchbase.model.Boom;
 import nl.appsource.cardserver.couchbase.model.Game;
 import nl.appsource.cardserver.couchbase.model.User;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
 import org.springframework.context.annotation.Bean;
@@ -52,8 +53,8 @@ public class DcpConfiguration {
     private final UserToOpenApiConverter userToOpenApiConverter;
     //
     private final GameToOpenApiConverter gameToOpenApiConverter;
-//
-//    private final UserRepository userRepository;
+    //
+    private final UserRepository userRepository;
 
 //    private final SingleEventRepository singleEventRepository;
 
@@ -122,25 +123,38 @@ public class DcpConfiguration {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
 
+                                final String boomString = jsonMapper.writeValueAsString(MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)));
+
                                 redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
                                     .mergeWith(Flux.just(boom.getCreator()))
-                                    .distinct(), jsonMapper.writeValueAsString(MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)))).subscribe();
+                                    .distinct(), boomString).subscribe();
+
+                                redisPublisher.publish("updateBoom", boomString).subscribe();
 
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
 
-                                redisPublisher.publish(user.getId(), jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)))).subscribe();
+                                final String userString = jsonMapper.writeValueAsString(updateUser(userToOpenApiConverter.convert(user)));
+
+                                redisPublisher.publish("updateUser", userString).subscribe();
+                                redisPublisher.publish(user.getId(), userString).subscribe();
+                                userRepository.getFriendIds(user.getId()).map(friendId -> redisPublisher.publish(friendId, userString)).subscribe();
 
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
 
+                                final String gameString = jsonMapper.writeValueAsString(updateGame(gameToOpenApiConverter.convert(game)));
+
                                 redisPublisher.publish(Flux.fromIterable(game.getPlayers())
                                     .mergeWith(Flux.just(game.getCreator()))
-                                    .distinct(), jsonMapper.writeValueAsString(updateGame(gameToOpenApiConverter.convert(game)))).subscribe();
+                                    .distinct(), gameString).subscribe();
+
+                                redisPublisher.publish("updateBoom", gameString).subscribe();
+
                             }
 
 //                            case "nl.appsource.cardserver.model.SingleEvent" -> {
