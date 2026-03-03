@@ -173,25 +173,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
     }
 
-//    @Override
-//    public void sendAppIdentifier(final String appIdentifier, final nl.appsource.cardserver.openapi.MyServerSentEvent myServerSentEvent) {
-//
-//        Optional.ofNullable(userChannelsByApplicationId.get(appIdentifier))
-//            .ifPresent(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true));
-//
-//        final UserChannel userChannel = userChannelsByApplicationId.get(appIdentifier);
-//
-//        if (userChannel != null) {
-//            tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + appIdentifier + "]", true);
-//        }
-
-    /// /        } else if (userId != null) {
-    /// /            final Set<UserChannel> channels = userChannelsByUserId.get(userId);
-    /// /            if (channels != null) {
-    /// /                channels.forEach(userChannel -> tryEmit(userChannel.sink, myServerSentEvent, "userChannel[" + userId + "]", true));
-    /// /            }
-    /// /        }
-//    }
     @Override
     public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
 
@@ -205,21 +186,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         userChannelsByApplicationId.put(appIdentifier, userChannel);
         userChannelsByUserId.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(userChannel);
 
-//        pubSubService.listenTo(appIdentifier).subscribe(stringStringMessage -> {
-//            try {
-//                userChannel.sink.tryEmitNext(stringStringMessage.getMessage());
-//            } catch (Exception e) {
-//                log.error("Error emitting message to user channel", e);
-//            }
-//        });
-
         final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier).map(ReactiveSubscription.Message::getMessage).map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
         final Flux<nl.appsource.cardserver.openapi.MyServerSentEvent> restFlux =
-            Mono.delay(Duration.ofSeconds(1))
-                .thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux(), Mono.just(ping()), initCache(userId), redisUserMessage, redisAooidentifierMessage));
+            Mono.delay(Duration.ofSeconds(1)).thenMany(Flux.merge(mainSink.asFlux(), userChannel.sink.asFlux(), Mono.just(ping()), initCache(userId), redisUserMessage, redisAooidentifierMessage));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)

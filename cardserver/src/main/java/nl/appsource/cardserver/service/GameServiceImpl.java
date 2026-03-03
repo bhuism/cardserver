@@ -249,7 +249,7 @@ public class GameServiceImpl implements GameService {
             .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
                 if (userId != null && !isAiPlayer(userId)) {
-                    sseEventSender.sendUserIdMessage(userId, throwable.getClass().getName() + ":" + throwable.getMessage(), UserMessage.VariantEnum.ERROR).subscribe();
+                    sseEventSender.sendUserIdMessage(userId, userId, throwable.getClass().getName() + ":" + throwable.getMessage(), UserMessage.VariantEnum.ERROR).subscribe();
                 }
             })
             .subscribe();
@@ -328,11 +328,11 @@ public class GameServiceImpl implements GameService {
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
                             return sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame()
-                                .getPlayers()), "Er is niet verzaakt in slag " + laatsteCompleteSlag, UserMessage.VariantEnum.INFO);
+                                .getPlayers()), auth.userId(), "Er is niet verzaakt in slag " + laatsteCompleteSlag, UserMessage.VariantEnum.INFO);
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame().getPlayers()), "Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName(), UserMessage.VariantEnum.ERROR))
+                                    .flatMap(player -> sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame().getPlayers()), auth.userId(), "Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName(), UserMessage.VariantEnum.ERROR))
                                 ).then();
                         }
                     });

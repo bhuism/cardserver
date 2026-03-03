@@ -9,13 +9,9 @@ import java.util.Set;
 
 public interface SseEventSender {
 
-    // Mono<Void> sendAppIdentifierMessage(String appIdentifier, UserMessage userMessage);
+    Mono<Void> sendUserIdMessage(String to, String from, String message, UserMessage.VariantEnum variant);
 
-    Mono<Void> sendUserIdMessage(String userId, String message, UserMessage.VariantEnum variant);
-
-    Mono<Void> sendUserIdsMessage(Set<String> userIds, String message, UserMessage.VariantEnum variant);
-
-    Mono<Void> sendPong(String id);
+    Mono<Void> sendUserIdsMessage(Set<String> userIds, String from, String message, UserMessage.VariantEnum variant);
 
     Mono<Void> friendsChanged(Set<String> userIds);
 
@@ -27,7 +23,4 @@ public interface SseEventSender {
 
     Mono<Void> sendOnlineListTo(String userId, Set<@NonNull String> onlineList);
 
-    Mono<Void> sendOnlineListToFriendsOf(String userId);
-
-    Mono<Void> sendOnlineListTo(String userId);
 }

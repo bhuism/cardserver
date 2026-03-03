@@ -3,7 +3,6 @@ package nl.appsource.cardserver;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
-import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
@@ -31,9 +30,6 @@ class CardServerApplicationTests {
 
     @MockitoBean
     private SseSessionRepository sseSessionRepository;
-
-    @MockitoBean
-    private SseEventRepository sseEventRepository;
 
     @MockitoBean
     private RedisPublisher redisPublisher;

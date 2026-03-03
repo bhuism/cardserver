@@ -4,7 +4,6 @@ import nl.appsource.cardserver.controller.BoomController;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
-import nl.appsource.cardserver.couchbase.repository.SseEventRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.Card;
@@ -64,9 +63,6 @@ public class GameControllerTests {
 
     @MockitoBean
     private SseSessionRepository sseSessionRepository;
-
-    @MockitoBean
-    private SseEventRepository sseEventRepository;
 
     @MockitoBean
     private BoomRepository boomRepository;

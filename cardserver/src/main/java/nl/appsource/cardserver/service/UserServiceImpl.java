@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,8 +75,8 @@ public class UserServiceImpl implements UserService {
             })
             .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(sseEventSender.sendOnlineListTo(userId))
-            .then(sseEventSender.sendOnlineListTo(friendId));
+            .then(userRepository.getFriendIds(userId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))))
+            .then(userRepository.getFriendIds(friendId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))));
     }
 
     @Override
@@ -88,8 +89,8 @@ public class UserServiceImpl implements UserService {
             })
             .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(sseEventSender.sendOnlineListTo(userId))
-            .then(sseEventSender.sendOnlineListTo(friendId));
+            .then(userRepository.getFriendIds(userId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))))
+            .then(userRepository.getFriendIds(friendId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))));
     }
 
     @Override
@@ -107,8 +108,8 @@ public class UserServiceImpl implements UserService {
                     return userRepository.save(user)
                         .flatMap(savedUser -> {
                             return Flux.fromIterable(newFriendIds)
-                                .flatMap(sseEventSender::sendOnlineListTo)
-                                .then(sseEventSender.sendOnlineListTo(userId))
+//                                .flatMap(sseEventSender::sendOnlineListTo)
+//                                .then(sseEventSender.sendOnlineListTo(userId))
                                 .then(sseEventSender.friendsChanged(newFriendIds))
                                 .then(sseEventSender.friendsChanged(singleton(userId)));
                         })
@@ -137,7 +138,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<Void> usersMessage(final String userId, final Set<String> recipients, final String message) {
-        return sseEventSender.sendUserIdsMessage(recipients, message, UserMessage.VariantEnum.INFO);
+        return sseEventSender.sendUserIdsMessage(recipients, userId, message, UserMessage.VariantEnum.INFO);
     }
 
 }
