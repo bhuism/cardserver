@@ -20,7 +20,7 @@ public class RedisPublisher {
     }
 
     public Mono<Void> publish(final Flux<String> topic, final MyServerSentEvent myServerSentEvent) {
-        return topic.flatMap(t -> publish(t, myServerSentEvent)).then();
+        return topic.distinct().flatMap(t -> publish(t, myServerSentEvent)).then();
     }
 
 }
