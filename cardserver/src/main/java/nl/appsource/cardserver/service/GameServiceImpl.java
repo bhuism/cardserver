@@ -306,7 +306,7 @@ public class GameServiceImpl implements GameService {
 //    }
 
 //    @Override
-//    public Mono<Void> reload(final String appIdentifier, final String userId, final String gameId) {
+//    public Mono<Void> reload(final String userId, final String gameId) {
 //        return gameRepository.findByUserIdAndGameId(userId, gameId)
 //            .doOnNext(game -> sseEmitterRepository.updateGameForId(appIdentifier, game))
 //            .then();

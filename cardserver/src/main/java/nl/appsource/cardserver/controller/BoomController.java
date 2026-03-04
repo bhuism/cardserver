@@ -42,9 +42,9 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     private static final Random RAND = new SecureRandom();
 
     @Override
-    public Mono<ResponseEntity<Boom>> createBoom(final String appIdentifier, final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
-        log.info("{} createBoom() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<Boom>> createBoom(final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
+        log.info("{} createBoom()", exchange.getRequest().getRemoteAddress());
+        return authorize(exchange)
             .flatMap(auth -> userRepository.findById(auth.userId())
                 .flatMap(
                     user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.userId(), createBoom.getPlayers(), user.getGameVariant(), user.getAiRisc()))
@@ -56,9 +56,9 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     }
 
     @Override
-    public Mono<ResponseEntity<Boom>> getBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
-        log.info("{} getBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<Boom>> getBoom(final String boomId, final ServerWebExchange exchange) {
+        log.info("{} getBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
+        return authorize(exchange)
             .flatMap(auth -> boomService.getBoom(auth.userId(), boomId))
             .map(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
@@ -73,9 +73,9 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
 
     @Override
-    public Mono<ResponseEntity<GetBooms200Response>> getBooms(final String appIdentifier, final ServerWebExchange exchange) {
-        log.info("{} getBooms() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<GetBooms200Response>> getBooms(final ServerWebExchange exchange) {
+        log.info("{} getBooms()", exchange.getRequest().getRemoteAddress());
+        return authorize(exchange)
             .flatMap(auth -> boomService.getBooms(auth.userId())
                 .collectList()
                 .map(booms -> GetBooms200Response.builder().booms(booms).build())
@@ -99,9 +99,9 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
 
     @Override
-    public Mono<ResponseEntity<Game>> playBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
-        log.info("{} playBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<Game>> playBoom(final String boomId, final ServerWebExchange exchange) {
+        log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
+        return authorize(exchange)
             .flatMap(auth -> {
                 return boomRepository.findById(boomId)
                     .flatMap((boom) -> {
@@ -132,9 +132,9 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteBoom(final String appIdentifier, final String boomId, final ServerWebExchange exchange) {
-        log.info("{} deleteBoom() appIdentifier={} boomId={}", exchange.getRequest().getRemoteAddress(), appIdentifier, boomId);
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<Void>> deleteBoom(final String boomId, final ServerWebExchange exchange) {
+        log.info("{} deleteBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
+        return authorize(exchange)
             .map(CardServerAuthentication::userId)
             .flatMap(boomRepository::deleteById)
             .then(Mono.just(ResponseEntity.ok().build()));

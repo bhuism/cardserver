@@ -2,13 +2,12 @@ package nl.appsource.cardserver.controller;
 
 import com.couchbase.client.core.error.CasMismatchException;
 import com.couchbase.client.core.error.DocumentNotFoundException;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPublisher;
-import nl.appsource.cardserver.utils.CardServerAuthentication;
+import nl.appsource.generated.openapi.model.PingPongSchema;
 import org.openapitools.api.PingApi;
 import org.openapitools.api.PongApi;
 import org.springframework.http.HttpStatus;
@@ -32,23 +31,26 @@ public class PingPongController extends AbstractBaseController implements V1Api,
     private final JsonMapper jsonMapper;
 
     @Override
-    public Mono<@NonNull ResponseEntity<@NonNull Void>> ping(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> ping(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
 //        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
-        return authorize(appIdentifier, exchange)
-            .map(CardServerAuthentication::appIdentifier)
-            .flatMap(sseSessionRepository::pingReceived)
-            .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
-            .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
-            .flatMap(_ -> redisPublisher.publish(appIdentifier, MyServerSentEvent.pong()))
+        return authorize(exchange)
+            .flatMap(_ -> pingPongSchema)
+            .map(PingPongSchema::getAppIdentifier)
+            .flatMap(appIdentifier -> sseSessionRepository.pingReceived(appIdentifier)
+                .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
+                .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
+                .flatMap(_ -> redisPublisher.publish(appIdentifier, MyServerSentEvent.pong()))
+            )
             .map(_ -> ResponseEntity.ok().<Void>build())
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .build());
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> pong(final String appIdentifier, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> pong(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
 //        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
-        return authorize(appIdentifier, exchange)
-            .map(CardServerAuthentication::appIdentifier)
+        return authorize(exchange)
+            .flatMap(_unused -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
             .flatMap(sseSessionRepository::pongReceived)
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))

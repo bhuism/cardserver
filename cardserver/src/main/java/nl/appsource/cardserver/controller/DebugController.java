@@ -27,8 +27,8 @@ public class DebugController extends AbstractBaseController implements DebugApi,
     private final SseSessionRepository sseSessionRepository;
 
     @Override
-    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final String appIdentifier, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final ServerWebExchange exchange) {
+        return authorize(exchange)
             .filter(auth -> isAdmin(auth.userId()))
             .flatMap(_s -> {
                 final Flux<SseConnection> connections = sseSessionRepository.findAll()
@@ -62,8 +62,8 @@ public class DebugController extends AbstractBaseController implements DebugApi,
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> deleteSseSession(final String appIdentifier, final String sessionIdentifier, final ServerWebExchange exchange) {
-        return authorize(appIdentifier, exchange)
+    public Mono<ResponseEntity<Void>> deleteSseSession(final String sessionIdentifier, final ServerWebExchange exchange) {
+        return authorize(exchange)
             .filter(auth -> isAdmin(auth.userId()))
             .flatMap(_s -> sseSessionRepository.deleteById(sessionIdentifier).thenReturn(true))
             .map(_s -> ResponseEntity.ok().<Void>build())

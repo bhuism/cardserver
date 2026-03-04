@@ -40,18 +40,8 @@ public abstract class AbstractBaseController {
                 ));
     }
 
-    protected Mono<CardServerAuthentication> authorize(final String appIdentifier, final ServerWebExchange exchange) {
-        return getUserId(exchange)
-            .flatMap(userId ->
-                sseSessionRepository.updateUpdated(appIdentifier)
-                    .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
-                    .map(_unused -> new CardServerAuthentication(userId, appIdentifier))
-            )
-            .switchIfEmpty(Mono.defer(() -> {
-                log.warn("{} {} session not found, appIdentifier={}", exchange.getRequest().getRemoteAddress(), exchange.getRequest().getPath(), appIdentifier);
-                return Mono.empty();
-            }));
-
+    protected Mono<CardServerAuthentication> authorize(final ServerWebExchange exchange) {
+        return getUserId(exchange).map(CardServerAuthentication::new);
     }
 
 }
