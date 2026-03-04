@@ -32,8 +32,8 @@ public class PingPongController extends AbstractBaseController implements V1Api,
 
     @Override
     public Mono<ResponseEntity<Void>> ping(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
-//        log.info("{} ping() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
-        return authorize(exchange)
+//        log.info("{} ping() ", exchange.getRequest().getRemoteAddress());
+        return getUserId(exchange)
             .flatMap(_ -> pingPongSchema)
             .map(PingPongSchema::getAppIdentifier)
             .flatMap(appIdentifier -> sseSessionRepository.pingReceived(appIdentifier)
@@ -48,9 +48,9 @@ public class PingPongController extends AbstractBaseController implements V1Api,
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
-//        log.info("{} pong() appIdentifier={}", exchange.getRequest().getRemoteAddress(), appIdentifier);
-        return authorize(exchange)
-            .flatMap(_unused -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
+//        log.info("{} pong()", exchange.getRequest().getRemoteAddress());
+        return getUserId(exchange)
+            .flatMap(_ -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
             .flatMap(sseSessionRepository::pongReceived)
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))

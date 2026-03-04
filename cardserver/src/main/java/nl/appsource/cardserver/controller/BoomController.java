@@ -10,7 +10,6 @@ import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
-import nl.appsource.cardserver.utils.CardServerAuthentication;
 import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.CreateBoom;
 import nl.appsource.generated.openapi.model.Game;
@@ -44,10 +43,10 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     @Override
     public Mono<ResponseEntity<Boom>> createBoom(final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
         log.info("{} createBoom()", exchange.getRequest().getRemoteAddress());
-        return authorize(exchange)
-            .flatMap(auth -> userRepository.findById(auth.userId())
+        return getUserId(exchange)
+            .flatMap(userId -> userRepository.findById(userId)
                 .flatMap(
-                    user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(auth.userId(), createBoom.getPlayers(), user.getGameVariant(), user.getAiRisc()))
+                    user -> createBoomMono.flatMap(createBoom -> boomService.createBoom(userId, createBoom.getPlayers(), user.getGameVariant(), user.getAiRisc()))
                 )
             )
             .map(boomToOpenApiConverter::convert)
@@ -58,8 +57,8 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     @Override
     public Mono<ResponseEntity<Boom>> getBoom(final String boomId, final ServerWebExchange exchange) {
         log.info("{} getBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
-        return authorize(exchange)
-            .flatMap(auth -> boomService.getBoom(auth.userId(), boomId))
+        return getUserId(exchange)
+            .flatMap(userId -> boomService.getBoom(userId, boomId))
             .map(boomToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .switchIfEmpty(Mono.defer(() -> {
@@ -75,8 +74,8 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     @Override
     public Mono<ResponseEntity<GetBooms200Response>> getBooms(final ServerWebExchange exchange) {
         log.info("{} getBooms()", exchange.getRequest().getRemoteAddress());
-        return authorize(exchange)
-            .flatMap(auth -> boomService.getBooms(auth.userId())
+        return getUserId(exchange)
+            .flatMap(userId -> boomService.getBooms(userId)
                 .collectList()
                 .map(booms -> GetBooms200Response.builder().booms(booms).build())
                 .map(ResponseEntity::ok)
@@ -101,8 +100,8 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final String boomId, final ServerWebExchange exchange) {
         log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
-        return authorize(exchange)
-            .flatMap(auth -> {
+        return getUserId(exchange)
+            .flatMap(userId -> {
                 return boomRepository.findById(boomId)
                     .flatMap((boom) -> {
                         return Flux.fromIterable(boom.getGames())
@@ -114,7 +113,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
                                     return calcDealer(boom)
                                         .flatMap(dealer -> {
                                             log.info("Creating new game for Boom " + boomId + ", player=" + boom.getPlayers() + ", dealer:" + dealer);
-                                            return gameService.createGame(auth.userId(), boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
+                                            return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
                                                 .doOnNext(game -> boom.getGames().add(game.getId()))
                                                 .flatMap(game -> boomRepository.save(boom).thenReturn(game));
                                         });
@@ -130,15 +129,5 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
             })
             .map(responseEntityMono -> responseEntityMono);
     }
-
-    @Override
-    public Mono<ResponseEntity<Void>> deleteBoom(final String boomId, final ServerWebExchange exchange) {
-        log.info("{} deleteBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
-        return authorize(exchange)
-            .map(CardServerAuthentication::userId)
-            .flatMap(boomRepository::deleteById)
-            .then(Mono.just(ResponseEntity.ok().build()));
-    }
-
 
 }

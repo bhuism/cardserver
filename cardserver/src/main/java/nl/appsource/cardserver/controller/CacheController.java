@@ -25,8 +25,8 @@ public class CacheController extends AbstractBaseController implements V1Api, Fe
     @Override
     public Mono<ResponseEntity<Void>> feedback(final Mono<FeedbackRequest> feedbackRequest, final ServerWebExchange exchange) {
         log.info("{} feedback()", exchange.getRequest().getRemoteAddress());
-        return authorize(exchange)
-            .flatMap(user -> feedbackRequest.flatMap((fb) -> {
+        return getUserId(exchange)
+            .flatMap(_ -> feedbackRequest.flatMap((fb) -> {
 
                 final Feedback feedBack = new Feedback();
 

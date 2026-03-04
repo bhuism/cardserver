@@ -15,7 +15,6 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
-import nl.appsource.cardserver.utils.CardServerAuthentication;
 import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -313,7 +312,7 @@ public class GameServiceImpl implements GameService {
 //    }
 
     @Override
-    public Mono<Void> claimVerzaken(final CardServerAuthentication auth, final String gameId) {
+    public Mono<Void> claimVerzaken(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
@@ -328,11 +327,11 @@ public class GameServiceImpl implements GameService {
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
                             return sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame()
-                                .getPlayers()), auth.userId(), "Er is niet verzaakt in slag " + laatsteCompleteSlag, UserMessage.VariantEnum.INFO);
+                                .getPlayers()), userId, "Er is niet verzaakt in slag " + laatsteCompleteSlag, UserMessage.VariantEnum.INFO);
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame().getPlayers()), auth.userId(), "Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName(), UserMessage.VariantEnum.ERROR))
+                                    .flatMap(player -> sseEventSender.sendUserIdsMessage(Set.copyOf(gameEngine.getGame().getPlayers()), userId, "Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName(), UserMessage.VariantEnum.ERROR))
                                 ).then();
                         }
                     });

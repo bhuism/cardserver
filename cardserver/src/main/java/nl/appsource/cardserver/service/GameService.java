@@ -4,7 +4,6 @@ import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
-import nl.appsource.cardserver.utils.CardServerAuthentication;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,5 +33,5 @@ public interface GameService {
 
 //    Mono<Void> claimRoem(CardServerAuthentication auth, String gameId);
 
-    Mono<Void> claimVerzaken(CardServerAuthentication auth, String gameId);
+    Mono<Void> claimVerzaken(String userId, String gameId);
 }

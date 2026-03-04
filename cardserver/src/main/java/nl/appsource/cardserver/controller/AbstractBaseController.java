@@ -3,9 +3,7 @@ package nl.appsource.cardserver.controller;
 import com.couchbase.client.core.error.CasMismatchException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.utils.CardServerAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -23,10 +21,7 @@ public abstract class AbstractBaseController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private SseSessionRepository sseSessionRepository;
-
-    public Mono<String> getUserId(final ServerWebExchange exchange) {
+    protected Mono<String> getUserId(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
@@ -38,10 +33,6 @@ public abstract class AbstractBaseController {
                         return Mono.empty();
                     })
                 ));
-    }
-
-    protected Mono<CardServerAuthentication> authorize(final ServerWebExchange exchange) {
-        return getUserId(exchange).map(CardServerAuthentication::new);
     }
 
 }

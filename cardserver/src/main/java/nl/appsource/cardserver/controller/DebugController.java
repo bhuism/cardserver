@@ -3,6 +3,7 @@ package nl.appsource.cardserver.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
+import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.SseConnection;
 import nl.appsource.generated.openapi.model.SseConnections;
 import org.openapitools.api.DebugApi;
@@ -28,9 +29,9 @@ public class DebugController extends AbstractBaseController implements DebugApi,
 
     @Override
     public Mono<ResponseEntity<SseConnections>> getDebugSseConnections(final ServerWebExchange exchange) {
-        return authorize(exchange)
-            .filter(auth -> isAdmin(auth.userId()))
-            .flatMap(_s -> {
+        return getUserId(exchange)
+            .filter(Utils::isAdmin)
+            .flatMap(_ -> {
                 final Flux<SseConnection> connections = sseSessionRepository.findAll()
                     .map(mySseEmitterEntry -> {
                         final SseConnection sseConnection = new SseConnection();
@@ -63,8 +64,8 @@ public class DebugController extends AbstractBaseController implements DebugApi,
 
     @Override
     public Mono<ResponseEntity<Void>> deleteSseSession(final String sessionIdentifier, final ServerWebExchange exchange) {
-        return authorize(exchange)
-            .filter(auth -> isAdmin(auth.userId()))
+        return getUserId(exchange)
+            .filter(Utils::isAdmin)
             .flatMap(_s -> sseSessionRepository.deleteById(sessionIdentifier).thenReturn(true))
             .map(_s -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
