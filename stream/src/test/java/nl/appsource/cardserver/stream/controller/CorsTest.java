@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.stream.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ public class CorsTest {
 
     @MockitoBean
     private SseEmitterRepository sseEmitterRepository;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @BeforeEach
     public void setUp() {
