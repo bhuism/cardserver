@@ -19,11 +19,9 @@ public class GamePlayer {
     public void init() {
         log.info("GamePlayer init");
         redisPubSubService.listenTo("updateGame").subscribe(myServerSentEvent -> {
-
-            if (myServerSentEvent.event().equals("gameUpdate")) {
-                log.info("gameUpdate to gameID={}", myServerSentEvent.data());
+            if (myServerSentEvent.event().equals("updateGame")) {
+                log.info("gameUpdate to gameId={}", myServerSentEvent.data());
             }
-
         });
 
     }
