@@ -69,24 +69,21 @@ public class DcpStreamProcessor {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
                                 return redisPubSubService.publish(Flux.fromIterable(boom.getPlayers())
-                                    .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
+                                    .mergeWith(Flux.just(boom.getCreator(), boom.getId(), "updateBoom"))
                                     .distinct(), updateBoom(boomToOpenApiConverter.convert(boom))).then();
                             }
                             case "nl.appsource.cardserver.model.User" -> {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
                                 final MyServerSentEvent updateUser = updateUser(userToOpenApiConverter.convert(user));
-                                return redisPubSubService.publish(user.getId(), updateUser)
-                                    .thenMany(userRepository.getFriendIds(user.getId())
-                                        .flatMap(friendId -> redisPubSubService.publish(friendId, updateUser)))
-                                    .then();
+                                return redisPubSubService.publish(userRepository.getFriendIds(user.getId()).mergeWith(Flux.just(user.getId(), "updateUser")), updateUser).then();
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
                                 final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
                                 return redisPubSubService.publish(Flux.fromIterable(game.getPlayers())
-                                    .mergeWith(Flux.just(game.getCreator(), game.getId()))
+                                    .mergeWith(Flux.just(game.getCreator(), game.getId(), "updateGame"))
                                     .distinct(), gameEvent).then();
                             }
                             default -> {
