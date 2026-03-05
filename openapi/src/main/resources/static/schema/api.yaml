@@ -773,6 +773,10 @@ components:
       oneOf:
         - $ref: '#/components/schemas/PlayCard'
         - $ref: '#/components/schemas/OpenLastTrick'
+        - $ref: '#/components/schemas/CloseLastTrick'
+        - $ref: '#/components/schemas/ClaimRoem'
+        - $ref: '#/components/schemas/Make'
+        - $ref: '#/components/schemas/Pass'
     GameEventType:
       type: string
       enum:
