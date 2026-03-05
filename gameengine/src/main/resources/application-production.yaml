@@ -1,0 +1,15 @@
+spring:
+  data:
+    redis:
+      host: redis-stack.redis-stack.svc.cluster.local
+      port: 6379
+cardserver:
+  couchbase:
+    connection-string: couchbase://couchbase.couchbase.svc.cluster.local
+    username: root
+    password: killer
+    bucket-name: cardserver
+logging:
+  level:
+    ROOT: info
+    nl.appsource: debug

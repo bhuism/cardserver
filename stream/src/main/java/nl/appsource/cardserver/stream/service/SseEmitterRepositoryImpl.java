@@ -12,7 +12,7 @@ import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.PubSubService;
+import nl.appsource.cardserver.openapi.service.RedisSubscriber;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
@@ -50,7 +50,7 @@ import static reactor.core.publisher.Mono.just;
 @RequiredArgsConstructor
 public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
-    private final PubSubService pubSubService;
+    private final RedisSubscriber redisSubscriber;
 
     private final UserRepository userRepository;
 
@@ -152,11 +152,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Sinks.Many<MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
 
-        final Flux<MyServerSentEvent> redisUserMessage = pubSubService.listenTo(userId)
+        final Flux<MyServerSentEvent> redisUserMessage = redisSubscriber.listenTo(userId)
             .map(ReactiveSubscription.Message::getMessage)
             .map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 
-        final Flux<MyServerSentEvent> redisAooidentifierMessage = pubSubService.listenTo(appIdentifier)
+        final Flux<MyServerSentEvent> redisAooidentifierMessage = redisSubscriber.listenTo(appIdentifier)
             .map(ReactiveSubscription.Message::getMessage)
             .map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
 

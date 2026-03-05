@@ -69,7 +69,7 @@ public class DcpStreamProcessor {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
                                 return redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
-                                    .mergeWith(Flux.just(boom.getCreator()))
+                                    .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
                                     .distinct(), updateBoom(boomToOpenApiConverter.convert(boom))).then();
                             }
                             case "nl.appsource.cardserver.model.User" -> {
@@ -86,7 +86,7 @@ public class DcpStreamProcessor {
                                 game.setId(id);
                                 final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
                                 return redisPublisher.publish(Flux.fromIterable(game.getPlayers())
-                                    .mergeWith(Flux.just(game.getCreator()))
+                                    .mergeWith(Flux.just(game.getCreator(), game.getId()))
                                     .distinct(), gameEvent).then();
                             }
                             default -> {

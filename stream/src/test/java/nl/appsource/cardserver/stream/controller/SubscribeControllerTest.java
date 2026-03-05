@@ -1,6 +1,6 @@
 package nl.appsource.cardserver.stream.controller;
 
-import nl.appsource.cardserver.openapi.service.PubSubService;
+import nl.appsource.cardserver.openapi.service.RedisSubscriber;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ public class SubscribeControllerTest {
     private SseEmitterRepository sseEmitterRepository;
 
     @MockitoBean
-    private PubSubService pubSubService;
+    private RedisSubscriber redisSubscriber;
 
     @Test
     @WithMockUser(username = "test-user")

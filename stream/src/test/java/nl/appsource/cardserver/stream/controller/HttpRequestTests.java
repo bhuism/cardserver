@@ -5,7 +5,7 @@ import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.service.PubSubService;
+import nl.appsource.cardserver.openapi.service.RedisSubscriber;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,7 +48,7 @@ public class HttpRequestTests {
     private SseSessionRepository sseSessionRepository;
 
     @MockitoBean
-    public PubSubService pubSubService;
+    public RedisSubscriber redisSubscriber;
 
 //    @Test
 //    void greetingShouldReturnDefaultMessage() {

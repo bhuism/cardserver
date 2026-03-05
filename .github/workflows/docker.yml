@@ -57,6 +57,7 @@ jobs:
           docker push ghcr.io/bhuism/stream:latest
           docker push ghcr.io/bhuism/couchbase2redis:latest
           docker push ghcr.io/bhuism/cardserver:latest
+          docker push ghcr.io/bhuism/gameengine:latest
 
   rollout-restart:
     name: Rollout Restart

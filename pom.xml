@@ -34,6 +34,7 @@
         <module>converters</module>
         <module>stream</module>
         <module>utils</module>
+        <module>gameengine</module>
     </modules>
 
     <dependencyManagement>
