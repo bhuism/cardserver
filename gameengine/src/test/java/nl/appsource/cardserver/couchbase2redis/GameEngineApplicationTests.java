@@ -6,7 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("citest")
-class Couchbase2redisApplicationTests {
+class GameEngineApplicationTests {
 
     @Test
     void contextLoads() {
