@@ -12,7 +12,7 @@ import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisSubscriber;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
@@ -20,7 +20,6 @@ import nl.appsource.generated.openapi.model.OnlineListEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataRetrievalFailureException;
-import org.springframework.data.redis.connection.ReactiveSubscription;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
@@ -50,7 +49,7 @@ import static reactor.core.publisher.Mono.just;
 @RequiredArgsConstructor
 public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
-    private final RedisSubscriber redisSubscriber;
+    private final RedisPubSubService redisPubSubService;
 
     private final UserRepository userRepository;
 
@@ -152,13 +151,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Sinks.Many<MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
 
-        final Flux<MyServerSentEvent> redisUserMessage = redisSubscriber.listenTo(userId)
-            .map(ReactiveSubscription.Message::getMessage)
-            .map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
+        final Flux<MyServerSentEvent> redisUserMessage = redisPubSubService.listenTo(userId);
 
-        final Flux<MyServerSentEvent> redisAooidentifierMessage = redisSubscriber.listenTo(appIdentifier)
-            .map(ReactiveSubscription.Message::getMessage)
-            .map(myServerSentEventString -> jsonMapper.readValue(myServerSentEventString, MyServerSentEvent.class));
+        final Flux<MyServerSentEvent> redisAooidentifierMessage = redisPubSubService.listenTo(appIdentifier);
 
         final Flux<MyServerSentEvent> restFlux =
             Mono.delay(Duration.ofSeconds(1))

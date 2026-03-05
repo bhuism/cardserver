@@ -1,0 +1,48 @@
+package nl.appsource.cardserver.openapi.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import org.springframework.data.redis.connection.ReactiveSubscription;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+
+@Slf4j
+@RequiredArgsConstructor
+public class RedisPubSubService {
+
+    private final ReactiveRedisTemplate<String, MyServerSentEvent> reactiveRedisTemplate;
+
+    private final ReactiveRedisMessageListenerContainer container;
+
+    private final JsonMapper jsonMapper;
+
+    public Mono<Long> publish(final String topic, final MyServerSentEvent myServerSentEvent) {
+        //log.info("Publishing message to topic {}: {}", topic, message);
+        return reactiveRedisTemplate.convertAndSend(topic, myServerSentEvent)
+            .doOnError(e -> log.error("Error publishing message", e));
+    }
+
+    public Mono<Void> publish(final Flux<String> topic, final MyServerSentEvent myServerSentEvent) {
+        return topic.distinct().flatMap(t -> publish(t, myServerSentEvent)).then();
+    }
+
+    public Flux<MyServerSentEvent> listenTo(final String topicName) {
+        return container.receive(ChannelTopic.of(topicName))
+            .map(ReactiveSubscription.Message::getMessage)
+            .flatMap(message -> {
+                try {
+                    return Mono.just(jsonMapper.readValue(message, MyServerSentEvent.class));
+                } catch (final JacksonException e) {
+                    log.error("Could not deserialize message on topic: {}", topicName, e);
+                    return Mono.empty();
+                }
+            });
+    }
+
+}

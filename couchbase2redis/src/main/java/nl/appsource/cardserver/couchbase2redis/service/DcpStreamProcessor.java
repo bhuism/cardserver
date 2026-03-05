@@ -15,7 +15,7 @@ import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPublisher;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -40,7 +40,7 @@ public class DcpStreamProcessor {
 
     private final JsonMapper jsonMapper;
 
-    private final RedisPublisher redisPublisher;
+    private final RedisPubSubService redisPubSubService;
 
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
@@ -68,7 +68,7 @@ public class DcpStreamProcessor {
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
-                                return redisPublisher.publish(Flux.fromIterable(boom.getPlayers())
+                                return redisPubSubService.publish(Flux.fromIterable(boom.getPlayers())
                                     .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
                                     .distinct(), updateBoom(boomToOpenApiConverter.convert(boom))).then();
                             }
@@ -76,16 +76,16 @@ public class DcpStreamProcessor {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
                                 final MyServerSentEvent updateUser = updateUser(userToOpenApiConverter.convert(user));
-                                return redisPublisher.publish(user.getId(), updateUser)
+                                return redisPubSubService.publish(user.getId(), updateUser)
                                     .thenMany(userRepository.getFriendIds(user.getId())
-                                        .flatMap(friendId -> redisPublisher.publish(friendId, updateUser)))
+                                        .flatMap(friendId -> redisPubSubService.publish(friendId, updateUser)))
                                     .then();
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
                                 final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
-                                return redisPublisher.publish(Flux.fromIterable(game.getPlayers())
+                                return redisPubSubService.publish(Flux.fromIterable(game.getPlayers())
                                     .mergeWith(Flux.just(game.getCreator(), game.getId()))
                                     .distinct(), gameEvent).then();
                             }

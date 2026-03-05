@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
@@ -49,7 +48,7 @@ public class SubscribeController implements V1Api {
     }
 
     @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(@RequestBody final String body, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(final ServerWebExchange exchange) {
 
         final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
         final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;

@@ -8,7 +8,7 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.openapi.service.RedisSubscriber;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,15 +58,15 @@ public class SseEmitterRepositoryImplTest {
 
     private SseEmitterRepository sseEmitterRepository;
 
-    private JsonMapper jsonMapper = new JsonMapper();
+    private final JsonMapper jsonMapper = new JsonMapper();
 
     @MockitoBean
-    private RedisSubscriber redisSubscriber;
+    private RedisPubSubService redisPubSubService;
 
     @BeforeEach
     void setUp() {
         sseEmitterRepository = new SseEmitterRepositoryImpl(
-            redisSubscriber,
+            redisPubSubService,
             userRepository,
             gameToOpenApiConverter,
             userToOpenApiConverter,

@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPublisher;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.generated.openapi.model.PingPongSchema;
 import org.openapitools.api.PingApi;
 import org.openapitools.api.PongApi;
@@ -27,7 +27,7 @@ import java.time.Duration;
 public class PingPongController extends AbstractBaseController implements V1Api, PingApi, PongApi {
 
     private final SseSessionRepository sseSessionRepository;
-    private final RedisPublisher redisPublisher;
+    private final RedisPubSubService redisPubSubService;
     private final JsonMapper jsonMapper;
 
     @Override
@@ -39,7 +39,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
             .flatMap(appIdentifier -> sseSessionRepository.pingReceived(appIdentifier)
                 .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
                 .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
-                .flatMap(_ -> redisPublisher.publish(appIdentifier, MyServerSentEvent.pong()))
+                .flatMap(_ -> redisPubSubService.publish(appIdentifier, MyServerSentEvent.pong()))
             )
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)

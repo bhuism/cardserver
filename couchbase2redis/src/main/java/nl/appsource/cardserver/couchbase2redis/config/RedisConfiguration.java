@@ -1,12 +1,14 @@
 package nl.appsource.cardserver.couchbase2redis.config;
 
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPublisher;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 @Import(nl.appsource.cardserver.openapi.config.RedisConfiguration.class)
@@ -14,8 +16,11 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 public class RedisConfiguration {
 
     @Bean
-    public RedisPublisher redisPublisher(final ReactiveRedisTemplate<String, MyServerSentEvent> reactiveRedisTemplate) {
-        return new RedisPublisher(reactiveRedisTemplate);
+    public RedisPubSubService redisPubSubService(final ReactiveRedisTemplate<String, MyServerSentEvent> reactiveRedisTemplate,
+                                                 final ReactiveRedisMessageListenerContainer container,
+                                                 final JsonMapper jsonMapper) {
+        return new RedisPubSubService(reactiveRedisTemplate, container, jsonMapper);
     }
+
 
 }

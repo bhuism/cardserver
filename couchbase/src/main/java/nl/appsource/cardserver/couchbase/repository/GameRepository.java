@@ -32,13 +32,17 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
         + "ORDER BY updated DESC LIMIT $limit", readonly = true)
     Flux<String> findGameIdsByUserId(String userId, Boolean includeBoom, Boolean includeFinished, Integer limit);
 
+    @Query(value = "SELECT meta(#{#n1ql.bucket}).id "
+        + "FROM #{#n1ql.bucket} "
+        + "WHERE #{#n1ql.filter} "
+        + "AND ARRAY_LENGTH(turns) != 32", readonly = true)
+    Flux<String> findUnfinishedGames();
+
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit", readonly = true)
     Flux<Game> findGamesByUserId(String userId, Integer limit);
 
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC", readonly = true)
     Mono<Game> findByUserIdAndGameId(String userId, String gameId);
-
-
 
     @ScanConsistency(query = REQUEST_PLUS)
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId", readonly = true)

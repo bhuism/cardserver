@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.stream.controller;
 
-import nl.appsource.cardserver.openapi.service.RedisSubscriber;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -27,7 +29,10 @@ public class SubscribeControllerTest {
     private SseEmitterRepository sseEmitterRepository;
 
     @MockitoBean
-    private RedisSubscriber redisSubscriber;
+    private RedisPubSubService redisPubSubService;
+
+    @MockitoBean
+    private UserRepository userRepository;
 
     @Test
     @WithMockUser(username = "test-user")
@@ -35,6 +40,8 @@ public class SubscribeControllerTest {
         ServerSentEvent<Object> event = ServerSentEvent.builder().event("hello").build();
         when(sseEmitterRepository.subscribe(anyString(), anyString(), anyString()))
             .thenReturn(Flux.just(event));
+
+        when(userRepository.updateUpdated(anyString())).thenReturn(Mono.just("test-user"));
 
         webTestClient.post()
             .uri("/api/v1/subscribe")
