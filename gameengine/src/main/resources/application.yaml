@@ -3,7 +3,7 @@ server:
     enabled: true
   forward-headers-strategy: framework
   shutdown: graceful
-  port: 8081
+  port: 8083
 logging:
   level:
     ROOT: info
@@ -44,7 +44,7 @@ management:
       exposure:
         include: '*'
   server:
-    port: 9081
+    port: 9083
     ssl:
       enabled: false
     add-application-context-header: true
