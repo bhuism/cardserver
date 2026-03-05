@@ -2,6 +2,7 @@ package nl.appsource.cardserver.openapi;
 
 import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.Game;
+import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.HelloEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.NewGameEvent;
@@ -62,8 +63,10 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
     }
 
     public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
-        //return NewGameEvent.builder().displayNameCreator(game.getCreator()).gameId(game.getId()).build()
-
         return new MyServerSentEvent("newGame", newGameEvent);
+    }
+
+    public static MyServerSentEvent gameEvent(final GameEvent gameEvent) {
+        return new MyServerSentEvent("gameEvent", gameEvent);
     }
 }

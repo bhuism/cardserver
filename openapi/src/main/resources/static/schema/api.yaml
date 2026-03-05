@@ -749,18 +749,70 @@ components:
       properties:
         gameId:
           type: string
-        displayNameCreator:
+        creator:
           type: string
       required:
         - gameId
-        - displayNameCreator
-    #    NewFriendEvent:
-    #      type: object
-    #      properties:
-    #        newFriendId:
-    #          type: string
-    #      required:
-    #        - newFriendId
+        - creator
+    GameEvent:
+      type: object
+      properties:
+        eventType:
+          $ref: '#/components/schemas/GameEventType'
+      required:
+        - eventType
+      discriminator:
+        propertyName: eventType
+        mapping:
+          PlayCard: '#/components/schemas/PlayCard'
+          OpenLastTrick: '#/components/schemas/OpenLastTrick'
+          CloseLastTrick: '#/components/schemas/CloseLastTrick'
+          ClaimRoem: '#/components/schemas/ClaimRoem'
+          Make: '#/components/schemas/Make'
+          Pass: '#/components/schemas/Pass'
+      oneOf:
+        - $ref: '#/components/schemas/PlayCard'
+        - $ref: '#/components/schemas/OpenLastTrick'
+    GameEventType:
+      type: string
+      enum:
+        - PlayCard
+        - OpenLastTrick
+        - CloseLastTrick
+        - ClaimRoem
+        - Make
+        - Pass
+    BaseEventType:
+      type: object
+      properties:
+        eventType:
+          $ref: '#/components/schemas/GameEventType'
+      required:
+        - eventType
+    PlayCard:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventType'
+        - type: object
+          properties:
+            card:
+              $ref: '#/components/schemas/Card'
+          required:
+            - card
+    OpenLastTrick:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventType'
+    CloseLastTrick:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventType'
+    ClaimRoem:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventType'
+    Make:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventType'
+    Pass:
+      allOf:
+        - $ref: '#/components/schemas/BaseEventType'
     MessageEvent:
       type: object
       properties:
@@ -768,6 +820,21 @@ components:
           $ref: '#/components/schemas/UserMessage'
       required:
         - message
+    #    GameEvent:
+    #      type: object
+    #      properties:
+    #        gameId:
+    #          type: string
+    #        event:
+    #          oneOf:
+    #            - type: object
+    #              properties:
+    #                gameId:
+    #                  type: string
+    #                event:
+    #                  type: string
+    #      required:
+    #        - gameId
     GameVariant:
       enum:
         - amsterdams

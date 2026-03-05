@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
@@ -21,6 +23,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
+import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +33,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
+    private final RedisPubSubService redisPubSubService;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
@@ -51,8 +56,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         log.info("{} playCard() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
             .flatMap(userId -> playCardMono.map(PlayCard::getCard)
-                .map(GameToOpenApiConverter::convertCard)
-                .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_PLAY_CARD, gameId).setCard(playCard)))
+                .doOnNext(card -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(PlayCard.builder().card(card).build())))
+                .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_PLAY_CARD, gameId).setCard(convertCard(playCard))))
                 .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                 .defaultIfEmpty(ResponseEntity.notFound().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

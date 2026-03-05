@@ -58,7 +58,7 @@ public class SseEventSenderImpl implements SseEventSender {
     public Mono<Void> newGame(final Game game) {
 
         final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));
-        final NewGameEvent newGameEvent = NewGameEvent.builder().displayNameCreator(game.getCreator()).gameId(game.getId()).build();
+        final NewGameEvent newGameEvent = NewGameEvent.builder().creator(game.getCreator()).gameId(game.getId()).build();
 
         return redisPubSubService.publish(topics, MyServerSentEvent.newGame(newGameEvent));
 
