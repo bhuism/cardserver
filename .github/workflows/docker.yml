@@ -38,6 +38,7 @@ jobs:
             ghcr.io/bhuism/cardserver
             ghcr.io/bhuism/couchbase2redis
             ghcr.io/bhuism/stream
+            ghcr.io/bhuism/gameengine
 
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
@@ -70,4 +71,4 @@ jobs:
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
-          args: -n cardserver rollout restart deployment cardserver-cardservercontroller cardserver-couchbase2rediscontroller cardserver-streamcontroller
+          args: -n cardserver rollout restart deployment cardserver-cardservercontroller cardserver-couchbase2rediscontroller cardserver-streamcontroller cardserver-gameengine
