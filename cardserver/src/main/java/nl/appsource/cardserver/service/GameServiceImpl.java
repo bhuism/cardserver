@@ -320,7 +320,6 @@ public class GameServiceImpl implements GameService {
 
                 final int laatsteCompleteSlag = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
 
-
                 return Flux.just(0, 1, 2, 3)
                     .filter(playerNr -> gameEngine.verzaakt(laatsteCompleteSlag, playerNr))
                     .collectList()

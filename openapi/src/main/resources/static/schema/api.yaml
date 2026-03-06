@@ -180,7 +180,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/gameId"
       requestBody:
-        $ref: "#/components/requestBodies/playCard"
+        $ref: "#/components/requestBodies/card"
       responses:
         "200":
           description: ok
@@ -346,12 +346,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playerSay"
-    playCard:
+    card:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/playCard"
+            $ref: "#/components/schemas/card"
     updatePreferences:
       required: true
       content:
@@ -614,7 +614,7 @@ components:
           type: boolean
       required:
         - say
-    playCard:
+    card:
       type: object
       properties:
         card:

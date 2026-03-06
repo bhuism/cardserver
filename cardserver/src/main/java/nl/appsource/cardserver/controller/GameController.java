@@ -9,6 +9,7 @@ import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import nl.appsource.generated.openapi.model.Card;
 import nl.appsource.generated.openapi.model.ClaimRoem;
 import nl.appsource.generated.openapi.model.CloseLastTrick;
 import nl.appsource.generated.openapi.model.CreateGame;
@@ -56,15 +57,16 @@ public class GameController extends AbstractBaseController implements GamesApi, 
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
+
     @Override
-    public Mono<ResponseEntity<Void>> playCard(final String gameId, final Mono<PlayCard> playCardMono, final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Void>> playCard(final String gameId, final Mono<Card> cardMono, final ServerWebExchange exchange) {
         log.info("{} playCard() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
-            .flatMap(userId -> playCardMono.map(PlayCard::getCard)
-                .doOnNext(card -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(PlayCard.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.PLAY_CARD).card(card).build())))
-                .doOnNext(playCard -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_PLAY_CARD, gameId).setCard(convertCard(playCard))))
+            .flatMap(userId -> cardMono
+                .flatMap(card -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(PlayCard.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.PLAY_CARD).card(card).build()))
+                .doOnNext(_ -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_PLAY_CARD, gameId).setCard(convertCard(card))))))
                 .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-                .defaultIfEmpty(ResponseEntity.notFound().build()))
+                .defaultIfEmpty(ResponseEntity.notFound().build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
@@ -122,7 +124,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
                         return say.getSay();
                     })
                     .doOnNext(say -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_SAY, gameId).setSay(say)))
-                    .doOnNext(say -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(say ? Make.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.MAKE).build() : Pass.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.PASS).build())))
+                    .flatMap(say -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(say ? Make.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.MAKE).build() : Pass.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.PASS).build())))
                     .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                     .defaultIfEmpty(ResponseEntity.notFound().build())
             )
@@ -133,8 +135,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     public Mono<ResponseEntity<Void>> openLastTrick(final String gameId, final ServerWebExchange exchange) {
         log.info("{} openLastTrick() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
-            .doOnNext(card -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(OpenLastTrick.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.OPEN_LAST_TRICK).build())))
-            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.OPEN_LAST_TRICK, gameId)))
+            .flatMap(userId -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(OpenLastTrick.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.OPEN_LAST_TRICK).build()))
+            .doOnNext(_ -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.OPEN_LAST_TRICK, gameId))))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -143,8 +145,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     public Mono<ResponseEntity<Void>> closeLastTrick(final String gameId, final ServerWebExchange exchange) {
         log.info("{} closeLastTrick() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
-            .doOnNext(card -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(CloseLastTrick.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.CLOSE_LAST_TRICK).build())))
-            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLOSE_LAST_TRICK, gameId)))
+            .flatMap(userId -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(CloseLastTrick.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.CLOSE_LAST_TRICK).build()))
+            .doOnNext(_ -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLOSE_LAST_TRICK, gameId))))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -153,8 +155,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     public Mono<ResponseEntity<Void>> claimRoem(final String gameId, final ServerWebExchange exchange) {
         log.info("{} claimRoem() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
-            .doOnNext(card -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(ClaimRoem.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.CLAIM_ROEM).build())))
-            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLAIM_ROEM, gameId)))
+            .flatMap(userId -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(ClaimRoem.builder().eventType(nl.appsource.generated.openapi.model.GameEventType.CLAIM_ROEM).build()))
+            .doOnNext(_ -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLAIM_ROEM, gameId))))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -163,8 +165,10 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     public Mono<ResponseEntity<Void>> claimVerzaken(final String gameId, final ServerWebExchange exchange) {
         log.info("{} claimVerzaken() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
-            .flatMap(userId -> gameService.claimVerzaken(userId, gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+            .flatMap(userId -> gameService.claimVerzaken(userId, gameId)
+                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+                )
+            .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
 
 }
