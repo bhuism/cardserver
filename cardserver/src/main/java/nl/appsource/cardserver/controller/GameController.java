@@ -166,7 +166,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         log.info("{} claimVerzaken() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
             .flatMap(userId -> gameService.claimVerzaken(userId, gameId)
-                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.<Void>ok().build()))
                 )
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
