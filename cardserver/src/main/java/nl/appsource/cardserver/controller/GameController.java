@@ -9,6 +9,7 @@ import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.service.GameEventType;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import nl.appsource.generated.openapi.model.BaseGameEvent;
 import nl.appsource.generated.openapi.model.Card;
 import nl.appsource.generated.openapi.model.CreateGame;
 import nl.appsource.generated.openapi.model.Game;
@@ -156,7 +157,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         log.info("{} claimVerzaken() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
         return getUserId(exchange)
             .flatMap(userId -> gameService.claimVerzaken(userId, gameId)
-                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.<Void>ok().build()))
+                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
                 )
             .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
     }
@@ -164,9 +165,18 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     @Override
     public Mono<ResponseEntity<Void>> gameEvent(final String gameId, final Mono<GameEvent> gameEventMono, final ServerWebExchange exchange) {
         return getUserId(exchange)
+
             .flatMap(userId -> gameEventMono
                 .doOnNext(gameEvent -> log.info("{} gameEvent() gameId={} gameEvent={}", exchange.getRequest().getRemoteAddress(), gameId, gameEvent))
-            .flatMap(gameEvent -> redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(gameEvent))
+            .flatMap(gameEvent -> {
+
+                    final BaseGameEvent baseGameEvent = (BaseGameEvent) gameEvent;
+
+                    baseGameEvent.setGameId(gameId);
+                    baseGameEvent.setUserId(userId);
+
+                    return redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(gameEvent));
+                }
             ))
             .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

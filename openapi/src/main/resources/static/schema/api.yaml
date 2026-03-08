@@ -256,7 +256,6 @@ paths:
           description: some application error
         "404":
           description: not found
-
     delete:
       operationId: deleteGame
       parameters:
@@ -774,9 +773,7 @@ components:
       required:
         - gameId
         - creator
-    # 1. The Polymorphic Wrapper/Container
     GameEvent:
-      type: object
       oneOf:
         - $ref: '#/components/schemas/PlayCardEvent'
         - $ref: '#/components/schemas/OpenLastTrickEvent'
@@ -794,16 +791,20 @@ components:
           make: '#/components/schemas/MakeEvent'
           pass: '#/components/schemas/PassEvent'
 
-    # 2. The Abstract Base Schema (Inheritance via allOf)
     BaseGameEvent:
       type: object
       required:
         - eventType
+        - userId
+        - gameId
       properties:
         eventType:
           type: string
-
-    # 3. Concrete Event Specification A: User Signup
+        userId:
+          type: string
+        gameId:
+          type: string
+          description: The unique identifier of the game associated with the event.
     PlayCardEvent:
       allOf:
         - $ref: '#/components/schemas/BaseGameEvent'
@@ -817,8 +818,6 @@ components:
               default: play_card
             card:
               $ref: '#/components/schemas/Card'
-
-    # 4. Concrete Event Specification B: Resource Allocation
     OpenLastTrickEvent:
       allOf:
         - $ref: '#/components/schemas/BaseGameEvent'

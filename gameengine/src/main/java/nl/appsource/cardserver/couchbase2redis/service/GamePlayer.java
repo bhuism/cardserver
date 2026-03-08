@@ -18,8 +18,8 @@ public class GamePlayer {
     @PostConstruct
     public void init() {
         log.info("GamePlayer init");
-        redisPubSubService.listenTo("updateGame").subscribe(myServerSentEvent -> {
-            if (myServerSentEvent.event().equals("updateGame")) {
+        redisPubSubService.listenTo("gameEvent").subscribe(myServerSentEvent -> {
+            if (myServerSentEvent.event().equals("gameEvent")) {
                 log.info("gameUpdate to gameId={}", myServerSentEvent.data());
             }
         });
