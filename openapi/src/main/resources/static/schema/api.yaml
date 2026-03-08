@@ -774,175 +774,22 @@ components:
         - gameId
         - creator
     GameEvent:
-      oneOf:
-        - $ref: '#/components/schemas/PlayCardEvent'
-        - $ref: '#/components/schemas/OpenLastTrickEvent'
-        - $ref: '#/components/schemas/CloseLastTrickEvent'
-        - $ref: '#/components/schemas/ClaimRoemEvent'
-        - $ref: '#/components/schemas/MakeEvent'
-        - $ref: '#/components/schemas/PassEvent'
-      discriminator:
-        propertyName: eventType
-        mapping:
-          play_card: '#/components/schemas/PlayCardEvent'
-          open_last_trick: '#/components/schemas/OpenLastTrickEvent'
-          close_last_trick: '#/components/schemas/CloseLastTrickEvent'
-          claim_roem: '#/components/schemas/ClaimRoemEvent'
-          make: '#/components/schemas/MakeEvent'
-          pass: '#/components/schemas/PassEvent'
-
-    BaseGameEvent:
       type: object
-      required:
-        - eventType
-        - userId
-        - gameId
       properties:
         eventType:
           type: string
+          enum: [play_card, open_last_trick, close_last_trick, claim_roem, make, pass]
         userId:
           type: string
         gameId:
           type: string
           description: The unique identifier of the game associated with the event.
-    PlayCardEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseGameEvent'
-        - type: object
-          required:
-            - eventType
-            - card
-          properties:
-            eventType:
-              type: string
-              default: play_card
-            card:
-              $ref: '#/components/schemas/Card'
-    OpenLastTrickEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseGameEvent'
-        - type: object
-          required:
-            - eventType
-          properties:
-            eventType:
-              type: string
-              default: open_last_trick
-    CloseLastTrickEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseGameEvent'
-        - type: object
-          required:
-            - eventType
-          properties:
-            eventType:
-              type: string
-              default: close_last_trick
-    ClaimRoemEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseGameEvent'
-        - type: object
-          required:
-            - eventType
-          properties:
-            eventType:
-              type: string
-              default: claim_roem
-    MakeEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseGameEvent'
-        - type: object
-          required:
-            - eventType
-          properties:
-            eventType:
-              type: string
-              default: make
-    PassEvent:
-      allOf:
-        - $ref: '#/components/schemas/BaseGameEvent'
-        - type: object
-          required:
-            - eventType
-          properties:
-            eventType:
-              type: string
-              default: pass
-#      allOf:
-#        - $ref: '#/components/schemas/BaseGameEvent'
-#        - type: object
-#          properties:
-#            eventType:
-#              type: string
-
-#    GameEvent:
-#      oneOf:
-#        - $ref: '#/components/schemas/PlayCard'
-#        - $ref: '#/components/schemas/OpenLastTrick'
-#        - $ref: '#/components/schemas/CloseLastTrick'
-#        - $ref: '#/components/schemas/ClaimRoem'
-#        - $ref: '#/components/schemas/Make'
-#        - $ref: '#/components/schemas/Pass'
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#      required:
-#        - type
-#      discriminator:
-#        propertyName: type
-#        mapping:
-#          playCard: '#/components/schemas/PlayCard'
-#          openLastTrick: '#/components/schemas/OpenLastTrick'
-#          closeLastTrick: '#/components/schemas/CloseLastTrick'
-#          claimRoem: '#/components/schemas/ClaimRoem'
-#          make: '#/components/schemas/Make'
-#          pass: '#/components/schemas/Pass'
-#    PlayCard:
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#        card:
-#          $ref: '#/components/schemas/Card'
-#      required:
-#        - type
-#        - card
-#    OpenLastTrick:
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#      required:
-#        - type
-#    CloseLastTrick:
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#      required:
-#        - type
-#    ClaimRoem:
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#      required:
-#        - type
-#    Make:
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#      required:
-#        - type
-#    Pass:
-#      type: object
-#      properties:
-#        type:
-#          type: string
-#      required:
-#        - type
+        card:
+          $ref: '#/components/schemas/Card'
+      required:
+        - eventType
+        - userId
+        - gameId
     MessageEvent:
       type: object
       properties:
@@ -950,21 +797,6 @@ components:
           $ref: '#/components/schemas/UserMessage'
       required:
         - message
-    #    GameEvent:
-    #      type: object
-    #      properties:
-    #        gameId:
-    #          type: string
-    #        event:
-    #          oneOf:
-    #            - type: object
-    #              properties:
-    #                gameId:
-    #                  type: string
-    #                event:
-    #                  type: string
-    #      required:
-    #        - gameId
     GameVariant:
       enum:
         - amsterdams
