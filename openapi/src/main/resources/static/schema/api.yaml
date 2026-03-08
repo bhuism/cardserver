@@ -786,10 +786,14 @@ components:
           description: The unique identifier of the game associated with the event.
         card:
           $ref: '#/components/schemas/Card'
+        executionTime:
+          type: integer
+          default: 0
       required:
         - eventType
         - userId
         - gameId
+        - executionTime
     MessageEvent:
       type: object
       properties:

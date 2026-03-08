@@ -15,6 +15,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.service.event.ScheduledGameEvent;
+import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -27,23 +28,27 @@ import reactor.util.retry.Retry;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
+import static java.util.Collections.shuffle;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
-import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.randomCards;
 import static nl.appsource.cardserver.utils.IDTYPE.GAME;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
@@ -286,30 +291,9 @@ public class GameServiceImpl implements GameService {
             log.error("userId = null , not scheduling ", new RuntimeException("not scheduling exmpty userId"));
         }
 
-//        final SingleEvent singleEvent = new SingleEvent();
-//        singleEvent.setId(idGen(IDTYPE.SVNT, 20));
-//        singleEvent.setEvent(scheduledGameEvent.getGameEventType().name());
-//        singleEventRepository.save(singleEvent).subscribe();
-
-
         eventQueue.add(scheduledGameEvent);
     }
 
-//    public static Map<Card, Integer> randomCards() {
-//        final Map<Card, Integer> cards = new HashMap<>();
-//        final List<Card> deck = Arrays.asList(Card.values());
-//        shuffle(deck, RAND);
-//        IntStream.range(0, deck.size())
-//            .forEach(index -> cards.put(deck.get(index), index % 4));
-//        return cards;
-//    }
-
-//    @Override
-//    public Mono<Void> reload(final String userId, final String gameId) {
-//        return gameRepository.findByUserIdAndGameId(userId, gameId)
-//            .doOnNext(game -> sseEmitterRepository.updateGameForId(appIdentifier, game))
-//            .then();
-//    }
 
     @Override
     public Mono<Void> claimVerzaken(final String userId, final String gameId) {
@@ -335,6 +319,15 @@ public class GameServiceImpl implements GameService {
                         }
                     });
             });
+    }
+
+    private static Map<Card, Integer> randomCards() {
+        final Map<Card, Integer> cards = new HashMap<>();
+        final List<Card> deck = Arrays.asList(Card.values());
+        shuffle(deck, ThreadLocalRandom.current());
+        IntStream.range(0, deck.size())
+            .forEach(index -> cards.put(deck.get(index), index % 4));
+        return cards;
     }
 
 
