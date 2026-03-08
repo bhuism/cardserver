@@ -243,6 +243,20 @@ paths:
           $ref: "#/components/responses/GameResponse"
         "404":
           description: not found
+    post:
+      operationId: gameEvent
+      parameters:
+        - $ref: "#/components/parameters/gameId"
+      requestBody:
+        $ref: "#/components/requestBodies/gameEventRequest"
+      responses:
+        "200":
+          description: ok
+        "422":
+          description: some application error
+        "404":
+          description: not found
+
     delete:
       operationId: deleteGame
       parameters:
@@ -346,6 +360,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/playerSay"
+    gameEventRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GameEvent"
     card:
       required: true
       content:
