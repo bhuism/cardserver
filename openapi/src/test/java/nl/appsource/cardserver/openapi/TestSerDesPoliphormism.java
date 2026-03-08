@@ -3,8 +3,7 @@ package nl.appsource.cardserver.openapi;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.generated.openapi.model.Card;
 import nl.appsource.generated.openapi.model.GameEvent;
-import nl.appsource.generated.openapi.model.GameEventType;
-import nl.appsource.generated.openapi.model.PlayCard;
+import nl.appsource.generated.openapi.model.PlayCardEvent;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -19,10 +18,7 @@ public class TestSerDesPoliphormism {
     @Test
     public void testPlayCard() {
 
-        final GameEvent gameEvent = PlayCard.builder().eventType(GameEventType.PLAY_CARD).card(Card.AS).build();
-
-
-        log.info("gameEvent: " + gameEvent);
+        final GameEvent gameEvent = PlayCardEvent.builder().card(Card.AS).build();
 
 
         log.info("gameEvent: " + jsonMapper.writeValueAsString(gameEvent));

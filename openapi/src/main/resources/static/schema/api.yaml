@@ -754,69 +754,176 @@ components:
       required:
         - gameId
         - creator
+    # 1. The Polymorphic Wrapper/Container
     GameEvent:
       type: object
-      properties:
-        eventType:
-          $ref: '#/components/schemas/GameEventType'
-      required:
-        - eventType
+      oneOf:
+        - $ref: '#/components/schemas/PlayCardEvent'
+        - $ref: '#/components/schemas/OpenLastTrickEvent'
+        - $ref: '#/components/schemas/CloseLastTrickEvent'
+        - $ref: '#/components/schemas/ClaimRoemEvent'
+        - $ref: '#/components/schemas/MakeEvent'
+        - $ref: '#/components/schemas/PassEvent'
       discriminator:
         propertyName: eventType
         mapping:
-          PlayCard: '#/components/schemas/PlayCard'
-          OpenLastTrick: '#/components/schemas/OpenLastTrick'
-          CloseLastTrick: '#/components/schemas/CloseLastTrick'
-          ClaimRoem: '#/components/schemas/ClaimRoem'
-          Make: '#/components/schemas/Make'
-          Pass: '#/components/schemas/Pass'
-      oneOf:
-        - $ref: '#/components/schemas/PlayCard'
-        - $ref: '#/components/schemas/OpenLastTrick'
-        - $ref: '#/components/schemas/CloseLastTrick'
-        - $ref: '#/components/schemas/ClaimRoem'
-        - $ref: '#/components/schemas/Make'
-        - $ref: '#/components/schemas/Pass'
-    GameEventType:
-      type: string
-      enum:
-        - PlayCard
-        - OpenLastTrick
-        - CloseLastTrick
-        - ClaimRoem
-        - Make
-        - Pass
-    BaseEventType:
+          play_card: '#/components/schemas/PlayCardEvent'
+          open_last_trick: '#/components/schemas/OpenLastTrickEvent'
+          close_last_trick: '#/components/schemas/CloseLastTrickEvent'
+          claim_roem: '#/components/schemas/ClaimRoemEvent'
+          make: '#/components/schemas/MakeEvent'
+          pass: '#/components/schemas/PassEvent'
+
+    # 2. The Abstract Base Schema (Inheritance via allOf)
+    BaseGameEvent:
       type: object
-      properties:
-        eventType:
-          $ref: '#/components/schemas/GameEventType'
       required:
         - eventType
-    PlayCard:
+      properties:
+        eventType:
+          type: string
+
+    # 3. Concrete Event Specification A: User Signup
+    PlayCardEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEventType'
+        - $ref: '#/components/schemas/BaseGameEvent'
         - type: object
+          required:
+            - eventType
+            - card
           properties:
+            eventType:
+              type: string
+              default: play_card
             card:
               $ref: '#/components/schemas/Card'
+
+    # 4. Concrete Event Specification B: Resource Allocation
+    OpenLastTrickEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseGameEvent'
+        - type: object
           required:
-            - card
-    OpenLastTrick:
+            - eventType
+          properties:
+            eventType:
+              type: string
+              default: open_last_trick
+    CloseLastTrickEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEventType'
-    CloseLastTrick:
+        - $ref: '#/components/schemas/BaseGameEvent'
+        - type: object
+          required:
+            - eventType
+          properties:
+            eventType:
+              type: string
+              default: close_last_trick
+    ClaimRoemEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEventType'
-    ClaimRoem:
+        - $ref: '#/components/schemas/BaseGameEvent'
+        - type: object
+          required:
+            - eventType
+          properties:
+            eventType:
+              type: string
+              default: claim_roem
+    MakeEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEventType'
-    Make:
+        - $ref: '#/components/schemas/BaseGameEvent'
+        - type: object
+          required:
+            - eventType
+          properties:
+            eventType:
+              type: string
+              default: make
+    PassEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEventType'
-    Pass:
-      allOf:
-        - $ref: '#/components/schemas/BaseEventType'
+        - $ref: '#/components/schemas/BaseGameEvent'
+        - type: object
+          required:
+            - eventType
+          properties:
+            eventType:
+              type: string
+              default: pass
+#      allOf:
+#        - $ref: '#/components/schemas/BaseGameEvent'
+#        - type: object
+#          properties:
+#            eventType:
+#              type: string
+
+#    GameEvent:
+#      oneOf:
+#        - $ref: '#/components/schemas/PlayCard'
+#        - $ref: '#/components/schemas/OpenLastTrick'
+#        - $ref: '#/components/schemas/CloseLastTrick'
+#        - $ref: '#/components/schemas/ClaimRoem'
+#        - $ref: '#/components/schemas/Make'
+#        - $ref: '#/components/schemas/Pass'
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#      required:
+#        - type
+#      discriminator:
+#        propertyName: type
+#        mapping:
+#          playCard: '#/components/schemas/PlayCard'
+#          openLastTrick: '#/components/schemas/OpenLastTrick'
+#          closeLastTrick: '#/components/schemas/CloseLastTrick'
+#          claimRoem: '#/components/schemas/ClaimRoem'
+#          make: '#/components/schemas/Make'
+#          pass: '#/components/schemas/Pass'
+#    PlayCard:
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#        card:
+#          $ref: '#/components/schemas/Card'
+#      required:
+#        - type
+#        - card
+#    OpenLastTrick:
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#      required:
+#        - type
+#    CloseLastTrick:
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#      required:
+#        - type
+#    ClaimRoem:
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#      required:
+#        - type
+#    Make:
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#      required:
+#        - type
+#    Pass:
+#      type: object
+#      properties:
+#        type:
+#          type: string
+#      required:
+#        - type
     MessageEvent:
       type: object
       properties:
