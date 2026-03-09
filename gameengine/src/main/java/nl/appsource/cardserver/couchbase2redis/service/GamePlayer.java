@@ -234,7 +234,7 @@ public class GamePlayer {
             if (isAiPlayer(userId)) {
                 throw new IllegalStateException("Not AI player");
             }
-            
+
             scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(Optional.of(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId)))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)).build());
         }
 
