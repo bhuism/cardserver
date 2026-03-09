@@ -4,35 +4,24 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.exception.CardAlreadyPlayerException;
 import nl.appsource.cardserver.couchbase.exception.ElderException;
 import nl.appsource.cardserver.couchbase.exception.GameCompletedException;
-import nl.appsource.cardserver.couchbase.exception.GameEngineException;
 import nl.appsource.cardserver.couchbase.exception.LastTrickOpenException;
 import nl.appsource.cardserver.couchbase.exception.NotAPlayerException;
 import nl.appsource.cardserver.couchbase.exception.NotPlayersTurnException;
-import nl.appsource.cardserver.couchbase.utils.AiPlayer;
 import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.model.Rank;
 import nl.appsource.cardserver.model.Suit;
 import reactor.core.publisher.Mono;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.Collections.shuffle;
-import static java.util.Comparator.comparing;
-import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.AI_USER_ID;
-import static nl.appsource.cardserver.model.GameVariant.ROTTERDAMS;
 
 @Slf4j
 public record GameEngineRw(Game game, GameEngine gameEngine) {
@@ -41,37 +30,37 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
         this(game, new GameEngineImpl(game));
     }
 
-    public Mono<GameEngineRw> playAiCard() {
-
-        if (!gameEngine.isAiTurn()) {
-            return Mono.empty();
-        }
-
-        final String userId = game.getPlayers()
-            .get(gameEngine.calcWhoHasTurn());
-
-        if (!AI_USER_ID.contains(userId)) {
-            throw new GameEngineException("Not an Ai player");
-        }
-
-        return playCard(userId, new AiPlayer(this.gameEngine).calcAiCard(userId));
-
-    }
-
-    public Mono<GameEngineRw> sayAi() {
-
-        if (!gameEngine.isAiSay()) {
-            return Mono.empty();
-        }
-
-        final int whoSay = gameEngine.calcWhoSay();
-
-        final String userId = this.game.getPlayers()
-            .get(whoSay);
-
-        return say(userId, new AiPlayer(this.gameEngine).decideBid(userId));
-
-    }
+//    public Mono<GameEngineRw> playAiCard() {
+//
+//        if (!gameEngine.isAiTurn()) {
+//            return Mono.empty();
+//        }
+//
+//        final String userId = game.getPlayers()
+//            .get(gameEngine.calcWhoHasTurn());
+//
+//        if (!AI_USER_ID.contains(userId)) {
+//            throw new GameEngineException("Not an Ai player");
+//        }
+//
+//        return playCard(userId, new AiPlayer(this.gameEngine).calcAiCard(userId));
+//
+//    }
+//
+//    public Mono<GameEngineRw> sayAi() {
+//
+//        if (!gameEngine.isAiSay()) {
+//            return Mono.empty();
+//        }
+//
+//        final int whoSay = gameEngine.calcWhoSay();
+//
+//        final String userId = this.game.getPlayers()
+//            .get(whoSay);
+//
+//        return say(userId, new AiPlayer(this.gameEngine).decideBid(userId));
+//
+//    }
 
     public Mono<GameEngineRw> playCard(final String userId, final Card card) {
 
@@ -119,7 +108,7 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
         game.getTurns().add(card);
         game.setLastTrickOpen(false);
 
-        return Mono.just(this);
+        return Mono.just(new GameEngineRw(game));
 
     }
 
@@ -170,17 +159,18 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
 
         // userMessages.add(new UserMessage().message(userId + " " + (say ? "gaat!" : "past")).variant(say ? UserMessage.VariantEnum.SUCCESS : UserMessage.VariantEnum.INFO));
 
-        return checkNiemandIsGegaanEnIedereenHeeftGezegd().then(Mono.just(this));
+        return checkNiemandIsGegaanEnIedereenHeeftGezegd()
+            .then(Mono.just(new GameEngineRw(game)));
 
         //game.setUpdated(Instant.now());
 
 //        return userMessages;
 
-        //return Mono.just(this);
+        //return Mono.just(new GameEngineRw(game));
 
     }
 
-    private Mono<GameEngineRw> checkNiemandIsGegaanEnIedereenHeeftGezegd() {
+    public Mono<GameEngineRw> checkNiemandIsGegaanEnIedereenHeeftGezegd() {
         if (gameEngine.niemandIsGegaanEnIedereenHeeftGezegd()) {
             if (game.getDealCounter() % 2 == 0) {
 
@@ -201,7 +191,7 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
             game.setDealCounter(game.getDealCounter() + 1);
             //game.setUpdated(Instant.now());
 
-            return Mono.just(this);
+            return Mono.just(new GameEngineRw(game));
         } else {
             return Mono.empty();
         }
@@ -212,7 +202,7 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
         if (!gameEngine.isCompleted() && gameEngine.getTurnCount() > 4 && gameEngine.getTurnCount() % 4 != 0) {
             if (!this.gameEngine.getGame().getLastTrickOpen()) {
                 this.gameEngine.getGame().setLastTrickOpen(true);
-                return Mono.just(this);
+                return Mono.just(new GameEngineRw(game));
             }
         }
         return Mono.empty();
@@ -221,7 +211,7 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
     public Mono<GameEngineRw> closeLastTrick() {
         if (this.gameEngine.getGame().getLastTrickOpen()) {
             this.gameEngine.getGame().setLastTrickOpen(false);
-            return Mono.just(this);
+            return Mono.just(new GameEngineRw(game));
         } else {
             return Mono.empty();
         }
@@ -242,16 +232,16 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
 
 //            return sseEventSender.sendUserIdsMessage(Set.copyOf(getGame().getPlayers()), "Er is " + (result ? "" : "al ") + roem + " roem geklopt in slag " + (correctedSlagNr + 1),
 //                    UserMessage.VariantEnum.INFO)
-//                .then(Mono.just(this));
+//                .then(Mono.just(new GameEngineRw(game)));
 
         }
 //        else {
 //            return sseEventSender.sendUserIdsMessage(Set.copyOf(getGame().getPlayers()), "Er is geen roem in slag " + (correctedSlagNr + 1),
 //                    UserMessage.VariantEnum.WARNING)
-//                .then(Mono.just(this));
+//                .then(Mono.just(new GameEngineRw(game)));
 //        }
 
-        return Mono.just(this);
+        return Mono.just(new GameEngineRw(game));
     }
 
     private static Map<Card, Integer> randomCards() {

@@ -112,94 +112,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/LoadUserResponse"
-  /games/{gameId}/say:
-    post:
-      operationId: say
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      requestBody:
-        $ref: "#/components/requestBodies/sayRequest"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
-  /games/{gameId}/claimRoem:
-    post:
-      operationId: claimRoem
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
-  /games/{gameId}/claimVerzaken:
-    post:
-      operationId: claimVerzaken
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
-  /games/{gameId}/openLastTrick:
-    post:
-      operationId: openLastTrick
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
-  /games/{gameId}/closeLastTrick:
-    post:
-      operationId: closeLastTrick
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
-  /games/{gameId}/playCard:
-    post:
-      operationId: playCard
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      requestBody:
-        $ref: "#/components/requestBodies/card"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
-  /games/{gameId}/kickAi:
-    post:
-      operationId: kickAi
-      parameters:
-        - $ref: "#/components/parameters/gameId"
-      responses:
-        "200":
-          description: ok
-        "422":
-          description: some application error
-        "404":
-          description: not found
   /games:
     get:
       operationId: getGames
@@ -778,7 +690,7 @@ components:
       properties:
         eventType:
           type: string
-          enum: [play_card, open_last_trick, close_last_trick, claim_roem, make, pass]
+          enum: [play_card, open_last_trick, close_last_trick, claim_roem, say, check_rotate]
         userId:
           type: string
         gameId:
@@ -788,7 +700,10 @@ components:
           $ref: '#/components/schemas/Card'
         executionTime:
           type: integer
+          format: int64
           default: 0
+        say:
+          type: boolean
       required:
         - eventType
         - userId

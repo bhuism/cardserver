@@ -3,7 +3,6 @@ package nl.appsource.cardserver.service;
 import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
-import nl.appsource.cardserver.service.event.ScheduledGameEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,11 +26,11 @@ public interface GameService {
 
 //    Mono<Game> executeSynchronious(ScheduledGameEvent eventToExecute);
 
-    void scheduleGameEvent(ScheduledGameEvent scheduledGameEvent);
+//    void scheduleGameEvent(ScheduledGameEvent scheduledGameEvent);
 
-    //Mono<Void> reload(String appIdentifier, String userId, String gameId);
+//    Mono<Void> reload(String appIdentifier, String userId, String gameId);
 
 //    Mono<Void> claimRoem(CardServerAuthentication auth, String gameId);
 
-    Mono<Void> claimVerzaken(String userId, String gameId);
+//    Mono<Void> claimVerzaken(String userId, String gameId);
 }

@@ -4,16 +4,18 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.couchbase.utils.GameEngine;
-import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
+import nl.appsource.cardserver.couchbase.utils.AiPlayer;
 import nl.appsource.cardserver.couchbase2redis.GameEngineRw;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.generated.openapi.model.GameEvent;
+import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -25,6 +27,7 @@ import reactor.util.retry.Retry;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -33,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
+import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 
 @RequiredArgsConstructor
@@ -70,7 +74,7 @@ public class GamePlayer {
                     executeSynchronious(GameEvent.builder().eventType(GameEvent.EventTypeEnum.CLOSE_LAST_TRICK).gameId(gameId).build());
                     executeSynchronious(GameEvent.builder().eventType(GameEvent.EventTypeEnum.CHECK_ROTATE).gameId(gameId).build());
                     gameRepository.findById(gameId)
-                        .map(GameEngineImpl::new)
+                        .map(GameEngineRw::new)
                         .subscribe(this::scheduleNext);
                 });
         }
@@ -95,7 +99,7 @@ public class GamePlayer {
 
     @FunctionalInterface
     public interface GameEngineExecutor {
-        Mono<GameEngine> run();
+        Mono<GameEngineRw> run();
     }
 
     private void processDueEvents() {
@@ -112,7 +116,7 @@ public class GamePlayer {
         }
     }
 
-    public Mono<GameEngine> catchException(final GameEngineExecutor gameEngineExecutor) {
+    public Mono<GameEngineRw> catchException(final GameEngineExecutor gameEngineExecutor) {
         return gameEngineExecutor.run();
     }
 
@@ -131,7 +135,7 @@ public class GamePlayer {
             }))
             .flatMap(entry -> {
                     return Mono.just(entry.getKey())
-                        .filter(game -> userId == null || isAiPlayer(userId) || game.getCreator().equals(userId) || game.getPlayers().contains(userId))
+                        .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator().equals(gameEvent.getUserId()) || game.getPlayers().contains(gameEvent.getUserId()))
                         //                .doOnNext(game -> {
                         //                    log.info("Executing event: {} for game {} userId: {}", gameEventType, gameId, userId);
                         //                })
@@ -139,19 +143,22 @@ public class GamePlayer {
                         .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
                         .flatMap(gameEngineRw -> {
 
-                            final Mono<GameEngine> result = switch (gameEvent.getEventType()) {
-                                case AI_SAY -> catchException(gameEngineRw::sayAi);
-                                case AI_PLAY_CARD -> catchException(gameEngineRw::playAiCard);
+                            final String userId = gameEvent.getUserId();
+                            final String gameId = gameEvent.getGameId();
+                            final Optional<Boolean> say = gameEvent.getSay();
+                            final Optional<Card> card = gameEvent.getCard().map(GameToOpenApiConverter::convertCard);
+
+                            final Mono<GameEngineRw> result = switch (gameEvent.getEventType()) {
                                 case OPEN_LAST_TRICK -> catchException(gameEngineRw::openLastTrick);
                                 case CLOSE_LAST_TRICK -> catchException(gameEngineRw::closeLastTrick);
-                                case HUMAN_PLAY_CARD -> catchException(() -> gameEngineRw.playCard(userId, card));
-                                case HUMAN_SAY -> catchException(() -> gameEngineRw.say(userId, say));
+                                case PLAY_CARD -> catchException(() -> gameEngineRw.playCard(userId, card.orElseThrow()));
+                                case SAY -> catchException(() -> gameEngineRw.say(userId, say.orElseThrow()));
                                 case CHECK_ROTATE -> catchException(gameEngineRw::checkNiemandIsGegaanEnIedereenHeeftGezegd);
                                 case CLAIM_ROEM -> catchException(() -> gameEngineRw.claimRoem(userId));
                             };
 
                             return result
-                                .map(GameEngine::getGame)
+                                .map(GameEngineRw::game)
                                 .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
                                 .onErrorResume(error -> {
                                     log.error("Error during update, attempting to unlock game: {}", gameId);
@@ -164,7 +171,7 @@ public class GamePlayer {
                                         // Re-throw the original error to the subscriber
                                         .then(Mono.error(error));
                                 })
-                                .doOnNext(game -> log.info("executeSynchronious() executed gameEventType:" + gameEventType.name() + ", userId=" + userId + ", gameId=" + gameId + ", card=" + card + ", say=" + say))
+                                .doOnNext(game -> log.info("executeSynchronious() executed gameEventType:" + gameEvent.getEventType() + ", userId=" + gameEvent.getUserId() + ", gameId=" + gameEvent.getGameId() + ", card=" + gameEvent.getCard()))
                                 .flatMap(game -> {
                                     if (game.getBoomId() != null) {
                                         return boomRepository.findById(game.getBoomId())
@@ -175,55 +182,56 @@ public class GamePlayer {
                                     }
                                 })
 
-                                .doFinally((_unused) -> this.scheduleNext(gameEngine));
+                                .doFinally((_unused) -> this.scheduleNext(gameEngineRw));
                         });
                 }
             )
+            .then()
+            .onErrorResume(throwable -> {
 
-            .doOnError(throwable -> {
                 log.error("executeSynchronious()", throwable);
-                if (userId != null && !isAiPlayer(userId)) {
-                    sseEventSender.sendUserIdMessage(userId, userId, throwable.getClass().getName() + ":" + throwable.getMessage(), UserMessage.VariantEnum.ERROR).subscribe();
+
+                if (gameEvent.getUserId() != null && !isAiPlayer(gameEvent.getUserId())) {
+                    final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
+                    return redisPubSubService.publish(gameEvent.getUserId(), MyServerSentEvent.messageEvent(MessageEvent.builder().message(UserMessage.builder().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR).build()).build())).then();
+                } else {
+                    return Mono.empty();
                 }
+
             })
             .subscribe();
     }
 
-    private void scheduleNext(final GameEngine gameEngine) {
+    private void scheduleNext(final GameEngineRw gameEngine) {
 
-        if (gameEngine.isCompleted()) {
+        if (gameEngine.gameEngine().isCompleted()) {
             return;
         }
 
-        if (gameEngine.getGame()
+        if (gameEngine.gameEngine().getGame()
             .getLastTrickOpen()) {
             return;
         }
 
-        if (gameEngine.isAiSay()) {
-            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + 2000 + RAND.nextInt(1000), gameEngine.getGame()
-                .getPlayers()
-                .get(gameEngine.calcWhoSay()), GameEventType.AI_SAY, gameEngine.getGame()
-                .getId()));
-        } else if (gameEngine.isAiTurn()) {
-            scheduleGameEvent(new ScheduledGameEvent(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + RAND.nextInt(500), gameEngine.getGame()
-                .getPlayers()
-                .get(gameEngine.calcWhoHasTurn()), GameEventType.AI_PLAY_CARD, gameEngine.getGame()
-                .getId()));
+        final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoSay());
+
+        if (gameEngine.gameEngine().isAiSay()) {
+            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).eventType(GameEvent.EventTypeEnum.SAY).say(Optional.of(new AiPlayer(gameEngine.gameEngine()).decideBid(userId))).executionTime(System.currentTimeMillis() + 2000 + RAND.nextLong(1000)).build());
+        } else if (gameEngine.gameEngine().isAiTurn()) {
+            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(Optional.of(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId)))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)).build());
         }
+
     }
 
 
-    @Override
-    public void scheduleGameEvent(final ScheduledGameEvent scheduledGameEvent) {
+    public void scheduleGameEvent(final GameEvent gameEvent) {
 
-        if (scheduledGameEvent.getUserId() == null) {
+        if (gameEvent.getUserId() == null) {
             log.error("userId = null , not scheduling ", new RuntimeException("not scheduling exmpty userId"));
         }
 
-        eventQueue.add(scheduledGameEvent);
+        eventQueue.add(gameEvent);
     }
-
 
 
 }
