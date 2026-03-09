@@ -674,6 +674,7 @@ components:
             - claim_roem
             - say
             - check_rotate
+            - claim_verzaken
         userId:
           type: string
         gameId:
