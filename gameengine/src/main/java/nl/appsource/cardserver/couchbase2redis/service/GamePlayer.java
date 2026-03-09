@@ -226,7 +226,7 @@ public class GamePlayer {
                 throw new IllegalStateException("Not AI player");
             }
 
-            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).eventType(GameEvent.EventTypeEnum.SAY).say(Optional.of(new AiPlayer(gameEngine.gameEngine()).decideBid(userId))).executionTime(System.currentTimeMillis() + 2000 + RAND.nextLong(1000)).build());
+            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(Optional.of(new AiPlayer(gameEngine.gameEngine()).decideBid(userId))).executionTime(System.currentTimeMillis() + 2000 + RAND.nextLong(1000)).build());
         } else if (gameEngine.gameEngine().isAiTurn()) {
 
             final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoHasTurn());
@@ -235,7 +235,7 @@ public class GamePlayer {
                 throw new IllegalStateException("Not AI player");
             }
 
-            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(Optional.of(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId)))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)).build());
+            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(Optional.of(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId)))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)).build());
         }
 
     }
