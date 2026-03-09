@@ -27,14 +27,14 @@
     </properties>
 
     <modules>
-        <module>cardserver</module>
-        <module>couchbase2redis</module>
         <module>openapi</module>
         <module>couchbase</module>
         <module>converters</module>
-        <module>stream</module>
         <module>utils</module>
+        <module>couchbase2redis</module>
+        <module>stream</module>
         <module>gameengine</module>
+        <module>cardserver</module>
     </modules>
 
     <dependencyManagement>
