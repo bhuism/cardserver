@@ -67,7 +67,7 @@ public class LoginController implements LoginApi {
                 return Mono.just(user);
             })).flatMap(userRepository::save).mapNotNull(userToOpenApiConverter::convert).flatMap((user) -> {
                 try {
-                    return Mono.just(LoginResponse.builder().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()).build());
+                    return Mono.just(new LoginResponse().user(user).jwt(cardServerJwtModem.encode(user.getId()).serialize()));
                 } catch (JOSEException e) {
                     return Mono.error(e);
                 }

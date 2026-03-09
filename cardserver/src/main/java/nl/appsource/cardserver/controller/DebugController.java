@@ -18,8 +18,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import static nl.appsource.cardserver.utils.Utils.isAdmin;
-
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -48,8 +46,8 @@ public class DebugController extends AbstractBaseController implements DebugApi,
                         sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());
                         return sseConnection;
                     });
-                return Mono.zip(arr -> SseConnections.builder().connections(
-                        (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]).build(),
+                return Mono.zip(arr -> new SseConnections().connections(
+                        (List<SseConnection>) arr[0]).timeStamp((Instant) arr[1]),
                     connections.collectList(),
                     Mono.just(Instant.now())
                 );

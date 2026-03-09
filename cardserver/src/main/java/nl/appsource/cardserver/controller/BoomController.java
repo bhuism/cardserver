@@ -77,7 +77,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
         return getUserId(exchange)
             .flatMap(userId -> boomService.getBooms(userId)
                 .collectList()
-                .map(booms -> GetBooms200Response.builder().booms(booms).build())
+                .map(booms -> new GetBooms200Response().booms(booms))
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
             )

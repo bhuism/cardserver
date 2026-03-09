@@ -46,10 +46,9 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
             .map(userToOpenApiConverter::convert)
             .flatMap(user -> {
                 try {
-                    return Mono.just(LoginResponse.builder()
+                    return Mono.just(new LoginResponse()
                         .user(user)
                         .jwt(cardServerJwtModem.encode(user.getId()).serialize())
-                        .build()
                     );
                 } catch (JOSEException e) {
                     return Mono.error(e);

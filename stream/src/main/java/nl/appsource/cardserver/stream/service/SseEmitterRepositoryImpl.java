@@ -128,7 +128,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         // online list
         final Mono<MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
             .collectList()
-            .map(onlineFriends -> MyServerSentEvent.onlineList(OnlineListEvent.builder().onlineList(onlineFriends).build()));
+            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
         return concat(me, friends, games, booms, onlineList);
 
@@ -162,7 +162,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .thenMany(
-                concat(just(hello(HelloEvent.builder().hostName(HOSTNAME).appIdentifier(appIdentifier).build())), restFlux)
+                concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), restFlux)
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 

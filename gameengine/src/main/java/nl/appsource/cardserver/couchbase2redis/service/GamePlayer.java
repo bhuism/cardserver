@@ -75,8 +75,8 @@ public class GamePlayer {
                 .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
                 .subscribe(gameId -> {
-                    executeSynchronious(GameEvent.builder().eventType(GameEvent.EventTypeEnum.CLOSE_LAST_TRICK).gameId(gameId).build());
-                    executeSynchronious(GameEvent.builder().eventType(GameEvent.EventTypeEnum.CHECK_ROTATE).gameId(gameId).build());
+                    executeSynchronious(new GameEvent().eventType(GameEvent.EventTypeEnum.CLOSE_LAST_TRICK).gameId(gameId));
+                    executeSynchronious(new GameEvent().eventType(GameEvent.EventTypeEnum.CHECK_ROTATE).gameId(gameId));
                     gameRepository.findById(gameId)
                         .map(GameEngineRw::new)
                         .subscribe(this::scheduleNext);
@@ -140,9 +140,6 @@ public class GamePlayer {
             .flatMap(entry -> {
                     return Mono.just(entry.getKey())
                         .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator().equals(gameEvent.getUserId()) || game.getPlayers().contains(gameEvent.getUserId()))
-                        //                .doOnNext(game -> {
-                        //                    log.info("Executing event: {} for game {} userId: {}", gameEventType, gameId, userId);
-                        //                })
                         .map(GameEngineRw::new)
                         .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
                         .flatMap(gameEngineRw -> {
@@ -198,7 +195,7 @@ public class GamePlayer {
 
                 if (gameEvent.getUserId() != null && !isAiPlayer(gameEvent.getUserId())) {
                     final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
-                    return redisPubSubService.publish(gameEvent.getUserId(), MyServerSentEvent.messageEvent(MessageEvent.builder().message(UserMessage.builder().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR).build()).build())).then();
+                    return redisPubSubService.publish(gameEvent.getUserId(), MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
                 } else {
                     return Mono.empty();
                 }
@@ -226,7 +223,7 @@ public class GamePlayer {
                 throw new IllegalStateException("Not AI player");
             }
 
-            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(Optional.of(new AiPlayer(gameEngine.gameEngine()).decideBid(userId))).executionTime(System.currentTimeMillis() + 2000 + RAND.nextLong(1000)).build());
+            scheduleGameEvent(new GameEvent().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(new AiPlayer(gameEngine.gameEngine()).decideBid(userId)).executionTime(System.currentTimeMillis() + 2000 + RAND.nextLong(1000)));
         } else if (gameEngine.gameEngine().isAiTurn()) {
 
             final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoHasTurn());
@@ -235,7 +232,7 @@ public class GamePlayer {
                 throw new IllegalStateException("Not AI player");
             }
 
-            scheduleGameEvent(GameEvent.builder().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(Optional.of(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId)))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)).build());
+            scheduleGameEvent(new GameEvent().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)));
         }
 
     }
@@ -265,11 +262,11 @@ public class GamePlayer {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(MessageEvent.builder().message(UserMessage.builder().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO).build()).build()));
+                            return redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO))));
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(MessageEvent.builder().message(UserMessage.builder().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR).build()).build())))
+                                    .flatMap(player -> redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)))))
                                 ).then();
                         }
                     });

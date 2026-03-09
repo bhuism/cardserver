@@ -52,10 +52,10 @@ public class UserController extends AbstractBaseController implements UsersApi, 
                         final Flux<String> incoming = invites.incoming();
                         final Flux<String> outgoing = invites.outgoing();
                         final Flux<String> friends = invites.friends();
-                        return Mono.zip(arr -> InvitesResponse.builder()
+                        return Mono.zip(arr -> new InvitesResponse()
                             .incoming((List<String>) arr[0])
                             .friends((List<String>) arr[1])
-                            .outgoing((List<String>) arr[2]).build(), incoming.collectList(), friends.collectList(), outgoing.collectList());
+                            .outgoing((List<String>) arr[2]), incoming.collectList(), friends.collectList(), outgoing.collectList());
                     })
                     .map(ResponseEntity::ok)
                     .defaultIfEmpty(ResponseEntity.notFound().build())
@@ -94,7 +94,7 @@ public class UserController extends AbstractBaseController implements UsersApi, 
         return getUserId(exchange)
             .flatMap(userId -> createInviteMono.flatMap(createInvite -> userService.createInvite(userId, createInvite.getSearchString()))
                 .map(BigDecimal::new)
-                .map(count -> CreateInviteResponse.builder().count(count).build())
+                .map(count -> new CreateInviteResponse().count(count))
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(just(ResponseEntity.notFound()
                     .build())))

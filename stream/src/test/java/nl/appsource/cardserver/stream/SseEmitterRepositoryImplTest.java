@@ -114,7 +114,7 @@ public class SseEmitterRepositoryImplTest {
         user.setId("userId");
         when(userRepository.findById("userId")).thenReturn(Mono.just(user));
 
-        nl.appsource.generated.openapi.model.User openApiUser = nl.appsource.generated.openapi.model.User.builder().id("userId").build();
+        nl.appsource.generated.openapi.model.User openApiUser = new nl.appsource.generated.openapi.model.User().id("userId");
         when(userToOpenApiConverter.convert(user)).thenReturn(openApiUser);
 
         Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");

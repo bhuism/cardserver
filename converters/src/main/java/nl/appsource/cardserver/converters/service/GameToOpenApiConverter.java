@@ -141,7 +141,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
         var numberOfTrickWinsNorthSouthCounter = 0;
         var numberOfTrickWinsEastWestCounter = 0;
 
-        target.setTotalString(NorthSouthString.builder().northSouth("").eastWest("").build());
+        target.setTotalString(new NorthSouthString().northSouth("").eastWest(""));
 
         if (gameEngine.calcTricksPlayed() > 0) {
 

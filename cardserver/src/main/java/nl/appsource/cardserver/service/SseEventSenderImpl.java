@@ -29,13 +29,13 @@ public class SseEventSenderImpl implements SseEventSender {
 
     @Override
     public Mono<Void> sendUserIdMessage(final String to, final String from, final String message, final UserMessage.VariantEnum variant) {
-        final MessageEvent messageEvent = MessageEvent.builder().message(UserMessage.builder().userId(from).message(message).variant(variant).build()).build();
+        final MessageEvent messageEvent = new MessageEvent().message(new UserMessage().userId(from).message(message).variant(variant));
         return redisPubSubService.publish(to, messageEvent(messageEvent)).then();
     }
 
     @Override
     public Mono<Void> sendUserIdsMessage(final Set<String> to, final String from, final String message, final UserMessage.VariantEnum variant) {
-        final MessageEvent messageEvent = MessageEvent.builder().message(UserMessage.builder().userId(from).message(message).variant(variant).build()).build();
+        final MessageEvent messageEvent = new MessageEvent().message(new UserMessage().userId(from).message(message).variant(variant));
         return redisPubSubService.publish(Flux.fromIterable(to), messageEvent(messageEvent));
     }
 
@@ -58,7 +58,7 @@ public class SseEventSenderImpl implements SseEventSender {
     public Mono<Void> newGame(final Game game) {
 
         final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));
-        final NewGameEvent newGameEvent = NewGameEvent.builder().creator(game.getCreator()).gameId(game.getId()).build();
+        final NewGameEvent newGameEvent = new NewGameEvent().creator(game.getCreator()).gameId(game.getId());
 
         return redisPubSubService.publish(topics, MyServerSentEvent.newGame(newGameEvent));
 
@@ -66,7 +66,7 @@ public class SseEventSenderImpl implements SseEventSender {
 
     @Override
     public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
-        final OnlineListEvent onlineListEvent = OnlineListEvent.builder().onlineList(onlineList.stream().toList()).build();
+        final OnlineListEvent onlineListEvent = new OnlineListEvent().onlineList(onlineList.stream().toList());
         return redisPubSubService.publish(userId, onlineList(onlineListEvent)).then();
     }
 

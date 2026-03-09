@@ -84,7 +84,7 @@
                             <configOptions>
                                 <library>spring-boot</library>
                                 <!--                                <useSpringBoot3>true</useSpringBoot3>-->
-                                <additionalModelTypeAnnotations>@lombok.Data; @lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
+<!--                                <additionalModelTypeAnnotations>@lombok.Data; @lombok.Builder; @lombok.NoArgsConstructor; @lombok.AllArgsConstructor</additionalModelTypeAnnotations>-->
 
                                 <!--                                <openApiNullable>false</openApiNullable>-->
                                 <useJakartaEe>true</useJakartaEe>

@@ -72,7 +72,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         return getUserId(exchange)
             .flatMap(userId -> gameService.getGames(userId, boom.orElse(true), finished.orElse(true), limit.orElse(10))
                 .collectList()
-                .map(games -> GetGames200Response.builder().games(games).build())
+                .map(games -> new GetGames200Response().games(games))
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
             )
