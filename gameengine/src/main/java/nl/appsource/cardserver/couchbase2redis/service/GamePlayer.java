@@ -222,7 +222,7 @@ public class GamePlayer {
         if (gameEngine.gameEngine().isAiSay()) {
             final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoSay());
 
-            if (isAiPlayer(userId)) {
+            if (!isAiPlayer(userId)) {
                 throw new IllegalStateException("Not AI player");
             }
 
@@ -231,7 +231,7 @@ public class GamePlayer {
 
             final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoHasTurn());
 
-            if (isAiPlayer(userId)) {
+            if (!isAiPlayer(userId)) {
                 throw new IllegalStateException("Not AI player");
             }
 
