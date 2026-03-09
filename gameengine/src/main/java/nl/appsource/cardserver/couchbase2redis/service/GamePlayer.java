@@ -9,6 +9,7 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.AiPlayer;
+import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.couchbase2redis.GameEngineRw;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
@@ -21,6 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -155,6 +157,7 @@ public class GamePlayer {
                                 case SAY -> catchException(() -> gameEngineRw.say(userId, say.orElseThrow()));
                                 case CHECK_ROTATE -> catchException(gameEngineRw::checkNiemandIsGegaanEnIedereenHeeftGezegd);
                                 case CLAIM_ROEM -> catchException(() -> gameEngineRw.claimRoem(userId));
+                                case CLAIM_VERZAKEN -> catchException(() -> claimVerzaken(userId, gameId));
                             };
 
                             return result
@@ -231,6 +234,33 @@ public class GamePlayer {
         }
 
         eventQueue.add(gameEvent);
+    }
+
+    //    @Override
+    //    @Override
+    public Mono<GameEngineRw> claimVerzaken(final String userId, final String gameId) {
+        return gameRepository.findById(gameId)
+            .map(GameEngineImpl::new)
+            .flatMap(gameEngine -> {
+                final int slagNr = gameEngine.calcTricksPlayed();
+
+                final int laatsteCompleteSlag = slagNr - (slagNr > 0 && gameEngine.getTurnCount() % 4 == 0 ? 1 : 0);
+
+                return Flux.just(0, 1, 2, 3)
+                    .filter(playerNr -> gameEngine.verzaakt(laatsteCompleteSlag, playerNr))
+                    .collectList()
+                    .flatMap(verzaakteSpelers -> {
+                        if (verzaakteSpelers.isEmpty()) {
+                            return redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(MessageEvent.builder().message(UserMessage.builder().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO).build()).build()));
+                        } else {
+                            return Flux.fromIterable(verzaakteSpelers)
+                                .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
+                                    .flatMap(player -> redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(MessageEvent.builder().message(UserMessage.builder().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR).build()).build())))
+                                ).then();
+                        }
+                    });
+            })
+            .then(Mono.empty());
     }
 
 
