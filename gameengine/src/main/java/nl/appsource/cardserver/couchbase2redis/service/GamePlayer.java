@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.security.SecureRandom;
 import java.time.Duration;
@@ -62,6 +63,7 @@ public class GamePlayer {
     private final UserRepository userRepository;
 
     private final BoomRepository boomRepository;
+    private final JsonMapper jsonMapper;
 
     boolean stop = false;
 
@@ -86,7 +88,7 @@ public class GamePlayer {
         redisPubSubService.listenTo("gameEvent").subscribe(myServerSentEvent -> {
             if (myServerSentEvent.event().equals("gameEvent")) {
                 log.info("gameUpdate to gameId={}", myServerSentEvent.data());
-                final GameEvent gameEvent = (GameEvent) myServerSentEvent.data();
+                final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
                 executeSynchronious(gameEvent);
             }
         });
