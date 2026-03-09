@@ -1,14 +1,18 @@
-openapi: "3.0.4"
+openapi: 3.0.4
 info:
   title: Klavers Jassen
   description: Klavers Jassen
-  version: "@git.commit.id.abbrev@"
+  version: '@git.commit.id.abbrev@'
 servers:
-  - url: 'https://api.klaversjassen.nl/api/v1'
+  - url: https://api.klaversjassen.nl/api/v1
     description: Klavers Jassen
-  - url: 'https://api.klaversjassen.nl'
+  - url: https://api.klaversjassen.nl
     description: Klavers Jassen Root
-
+security:
+  - bearerAuth:
+      - openid
+      - profile
+      - email
 paths:
   /feedback:
     post:
@@ -25,14 +29,14 @@ paths:
               required:
                 - message
       responses:
-        "200":
+        '200':
           description: ok
   /boom:
     get:
       operationId: getBooms
       responses:
-        "200":
-          $ref: "#/components/responses/BoomsResponse"
+        '200':
+          $ref: '#/components/responses/BoomsResponse'
     post:
       operationId: createBoom
       requestBody:
@@ -40,38 +44,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateBoom"
+              $ref: '#/components/schemas/CreateBoom'
       responses:
-        "200":
+        '200':
           description: Boomresponse
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Boom"
+                $ref: '#/components/schemas/Boom'
   /boom/{boomId}/play:
     post:
       operationId: playBoom
       parameters:
-        - $ref: "#/components/parameters/boomId"
+        - $ref: '#/components/parameters/boomId'
       responses:
-        "200":
+        '200':
           description: a boom
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Game"
+                $ref: '#/components/schemas/Game'
   /boom/{boomId}:
     get:
       operationId: getBoom
       parameters:
-        - $ref: "#/components/parameters/boomId"
+        - $ref: '#/components/parameters/boomId'
       responses:
-        "200":
+        '200':
           description: a boom
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Boom"
+                $ref: '#/components/schemas/Boom'
         '404':
           description: Todo item not found.
   /debug/sseconnections/get:
@@ -80,17 +84,17 @@ paths:
         - debug
       operationId: getDebugSseConnections
       responses:
-        "200":
-          $ref: "#/components/responses/SseConnectionsResponse"
+        '200':
+          $ref: '#/components/responses/SseConnectionsResponse'
   /debug/sseconnections/{sessionIdentifier}:
     delete:
       tags:
         - debug
       parameters:
-        - $ref: "#/components/parameters/sessionIdentifier"
+        - $ref: '#/components/parameters/sessionIdentifier'
       operationId: deleteSseSession
       responses:
-        "200":
+        '200':
           description: ok
   /login:
     post:
@@ -98,20 +102,20 @@ paths:
         - login
       operationId: login
       responses:
-        "200":
-          $ref: "#/components/responses/LoginResponse"
+        '200':
+          $ref: '#/components/responses/LoginResponse'
   /rotateJwt:
     post:
       operationId: rotateJwt
       responses:
-        "200":
-          $ref: "#/components/responses/LoginResponse"
+        '200':
+          $ref: '#/components/responses/LoginResponse'
   /loadUser:
     post:
       operationId: loadUser
       responses:
-        "200":
-          $ref: "#/components/responses/LoadUserResponse"
+        '200':
+          $ref: '#/components/responses/LoadUserResponse'
   /games:
     get:
       operationId: getGames
@@ -129,8 +133,8 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
-          $ref: "#/components/responses/GamesResponse"
+        '200':
+          $ref: '#/components/responses/GamesResponse'
     post:
       operationId: createGame
       requestBody:
@@ -139,90 +143,90 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/createGame"
+              $ref: '#/components/schemas/createGame'
       responses:
-        "200":
-          $ref: "#/components/responses/GameResponse"
-        "404":
+        '200':
+          $ref: '#/components/responses/GameResponse'
+        '404':
           description: not found
   /games/{gameId}:
     get:
       operationId: getGame
       parameters:
-        - $ref: "#/components/parameters/gameId"
+        - $ref: '#/components/parameters/gameId'
       responses:
-        "200":
-          $ref: "#/components/responses/GameResponse"
-        "404":
+        '200':
+          $ref: '#/components/responses/GameResponse'
+        '404':
           description: not found
     post:
       operationId: gameEvent
       parameters:
-        - $ref: "#/components/parameters/gameId"
+        - $ref: '#/components/parameters/gameId'
       requestBody:
-        $ref: "#/components/requestBodies/gameEventRequest"
+        $ref: '#/components/requestBodies/gameEventRequest'
       responses:
-        "200":
+        '200':
           description: ok
-        "422":
-          description: some application error
-        "404":
+        '404':
           description: not found
+        '422':
+          description: some application error
     delete:
       operationId: deleteGame
       parameters:
-        - $ref: "#/components/parameters/gameId"
+        - $ref: '#/components/parameters/gameId'
       responses:
-        "200":
+        '200':
           description: ok
   /users/multiple/{userIds}:
     get:
       operationId: getUserByIds
       parameters:
-        - $ref: "#/components/parameters/multipleUserId"
+        - $ref: '#/components/parameters/multipleUserId'
       responses:
-        "200":
-          $ref: "#/components/responses/UsersResponse"
+        '200':
+          $ref: '#/components/responses/UsersResponse'
   /ping:
     post:
       operationId: ping
       requestBody:
-        $ref: "#/components/requestBodies/pingPongRequestBody"
+        $ref: '#/components/requestBodies/pingPongRequestBody'
       responses:
-        "200":
+        '200':
           description: ok
   /pong:
     post:
       operationId: pong
       requestBody:
-        $ref: "#/components/requestBodies/pingPongRequestBody"
+        $ref: '#/components/requestBodies/pingPongRequestBody'
       responses:
-        "200":
+        '200':
           description: ok
   /users/updatePreferences:
     post:
       operationId: updatePreferences
       requestBody:
-        $ref: "#/components/requestBodies/updatePreferences"
+        $ref: '#/components/requestBodies/updatePreferences'
       responses:
-        "200":
-          $ref: "#/components/responses/UserResponse"
+        '200':
+          $ref: '#/components/responses/UserResponse'
   /users/single/{userId}:
     get:
       operationId: getUser
       parameters:
-        - $ref: "#/components/parameters/userId"
+        - $ref: '#/components/parameters/userId'
       responses:
-        "200":
-          $ref: "#/components/responses/UserResponse"
-        "404":
+        '200':
+          $ref: '#/components/responses/UserResponse'
+        '404':
           description: not found
   /users/invites:
     get:
       operationId: getInvites
       responses:
-        "200":
-          $ref: "#/components/responses/InvitesResponse"
+        '200':
+          $ref: '#/components/responses/InvitesResponse'
     post:
       operationId: createInvite
       requestBody:
@@ -230,77 +234,65 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/createInvite"
+              $ref: '#/components/schemas/createInvite'
       responses:
-        "200":
-          $ref: "#/components/responses/CreateInvitesResponse"
-        "404":
+        '200':
+          $ref: '#/components/responses/CreateInvitesResponse'
+        '404':
           description: not found
   /users/invites/{userId}:
     delete:
       operationId: removeInvite
       parameters:
-        - $ref: "#/components/parameters/userId"
+        - $ref: '#/components/parameters/userId'
       responses:
-        "200":
+        '200':
           description: ok
-        "404":
+        '404':
           description: not found
     post:
       operationId: acceptInvite
       parameters:
-        - $ref: "#/components/parameters/userId"
+        - $ref: '#/components/parameters/userId'
       responses:
-        "200":
+        '200':
           description: ok
-        "404":
+        '404':
           description: not found
   /users/message:
     post:
       operationId: usersMessage
       requestBody:
-        $ref: "#/components/requestBodies/postMessage"
+        $ref: '#/components/requestBodies/postMessage'
       responses:
-        "200":
+        '200':
           description: ok
 components:
   requestBodies:
-    sayRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/playerSay"
     gameEventRequest:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/GameEvent"
-    card:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/card"
+            $ref: '#/components/schemas/GameEvent'
     updatePreferences:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/updatePreferences"
+            $ref: '#/components/schemas/updatePreferences'
     pingPongRequestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/pingPongSchema"
+            $ref: '#/components/schemas/pingPongSchema'
     postMessage:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/postMessage"
+            $ref: '#/components/schemas/postMessage'
   parameters:
     gameId:
       name: gameId
@@ -347,13 +339,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Game"
+            $ref: '#/components/schemas/Game'
     UserResponse:
       description: a user
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/User"
+            $ref: '#/components/schemas/User'
     BoomsResponse:
       description: all booms
       content:
@@ -383,13 +375,13 @@ components:
           schema:
             type: array
             items:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
     SseConnectionsResponse:
       description: sse connnection response
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/sseConnections"
+            $ref: '#/components/schemas/sseConnections'
     LoginResponse:
       description: login response
       content:
@@ -401,7 +393,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/User"
+            $ref: '#/components/schemas/User'
     CreateInvitesResponse:
       description: response for create invites
       content:
@@ -414,7 +406,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/invitesResponse'
-
   schemas:
     Boom:
       type: object
@@ -449,7 +440,7 @@ components:
         gameVariant:
           $ref: '#/components/schemas/GameVariant'
         aiRisc:
-          $ref: "#/components/schemas/AiRisc"
+          $ref: '#/components/schemas/AiRisc'
       required:
         - id
         - created
@@ -538,20 +529,6 @@ components:
           type: array
           items:
             type: string
-    playerSay:
-      type: object
-      properties:
-        say:
-          type: boolean
-      required:
-        - say
-    card:
-      type: object
-      properties:
-        card:
-          $ref: "#/components/schemas/Card"
-      required:
-        - card
     createInvite:
       type: object
       properties:
@@ -690,7 +667,13 @@ components:
       properties:
         eventType:
           type: string
-          enum: [play_card, open_last_trick, close_last_trick, claim_roem, say, check_rotate]
+          enum:
+            - play_card
+            - open_last_trick
+            - close_last_trick
+            - claim_roem
+            - say
+            - check_rotate
         userId:
           type: string
         gameId:
@@ -770,10 +753,6 @@ components:
             required:
               - card
               - player
-        #        elder:
-        #          type: integer
-        #          minimum: 0
-        #          maximum: 3
         says:
           type: object
           additionalProperties:
@@ -787,7 +766,7 @@ components:
         turns:
           type: array
           items:
-            $ref: "#/components/schemas/Card"
+            $ref: '#/components/schemas/Card'
           minItems: 0
           maxItems: 32
         trump:
@@ -817,35 +796,35 @@ components:
         geenKaartGespeeld:
           type: boolean
         currentTrickWinnerCard:
-          $ref: "#/components/schemas/Card"
+          $ref: '#/components/schemas/Card'
         currentTrickCards:
           type: array
           items:
-            $ref: "#/components/schemas/Card"
+            $ref: '#/components/schemas/Card'
         trickPoints:
           type: array
           items:
-            $ref: "#/components/schemas/NorthSouthNumber"
+            $ref: '#/components/schemas/NorthSouthNumber'
         allPoints:
-          $ref: "#/components/schemas/NorthSouthNumber"
+          $ref: '#/components/schemas/NorthSouthNumber'
         totalPoints:
-          $ref: "#/components/schemas/NorthSouthNumber"
+          $ref: '#/components/schemas/NorthSouthNumber'
         trickRoem:
           type: array
           items:
-            $ref: "#/components/schemas/NorthSouthNumber"
+            $ref: '#/components/schemas/NorthSouthNumber'
         allRoem:
-          $ref: "#/components/schemas/NorthSouthNumber"
+          $ref: '#/components/schemas/NorthSouthNumber'
         totalString:
-          $ref: "#/components/schemas/NorthSouthString"
+          $ref: '#/components/schemas/NorthSouthString'
         winner:
-          $ref: "#/components/schemas/Teams"
+          $ref: '#/components/schemas/Teams'
         erIsGegaan:
           type: boolean
         elder:
           type: integer
         elderTeam:
-          $ref: "#/components/schemas/Teams"
+          $ref: '#/components/schemas/Teams'
         trickWinnerPlayer:
           type: array
           items:
@@ -853,7 +832,7 @@ components:
         trickWinnerCard:
           type: array
           items:
-            $ref: "#/components/schemas/Card"
+            $ref: '#/components/schemas/Card'
         playerPoints:
           type: array
           items:
@@ -883,7 +862,7 @@ components:
         tricksWonEastWest:
           type: integer
         aiRisc:
-          $ref: "#/components/schemas/AiRisc"
+          $ref: '#/components/schemas/AiRisc'
       required:
         - id
         - trump
@@ -1004,11 +983,11 @@ components:
         skipAnimation:
           type: boolean
         gameVariant:
-          $ref: "#/components/schemas/GameVariant"
+          $ref: '#/components/schemas/GameVariant'
         screenOrientation:
-          $ref: "#/components/schemas/ScreenOrientation"
+          $ref: '#/components/schemas/ScreenOrientation'
         theme:
-          $ref: "#/components/schemas/Theme"
+          $ref: '#/components/schemas/Theme'
         aiRisc:
           $ref: '#/components/schemas/AiRisc'
         autoKnock:
@@ -1025,8 +1004,3 @@ components:
         - theme
         - aiRisc
         - autoKnock
-security:
-  - bearerAuth:
-      - openid
-      - profile
-      - email
