@@ -62,7 +62,7 @@ public class DcpStreamProcessor {
                         ((ObjectNode) rootNode).put("id", id);
                         final String className = rootNode.get("_class").asString();
 
-                        log.info("Received {} with id {}", className, id);
+//                        log.info("Received {} with id {}", className, id);
 
                         switch (className) {
                             case "nl.appsource.cardserver.model.Boom" -> {
