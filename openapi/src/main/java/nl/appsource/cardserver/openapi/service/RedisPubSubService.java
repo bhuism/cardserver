@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
@@ -93,7 +92,7 @@ public class RedisPubSubService {
 
         final ReactiveStreamOperations<String, String, MyServerSentEvent> streamOps = reactiveRedisTemplate.opsForStream();
 
-        final String consumerName = "consumer-" + HOSTNAME + "-" + UUID.randomUUID();
+        final String consumerName = "consumer-" + HOSTNAME;
 
         // 1. Initialize the Consumer Group
         return streamOps.createGroup(streamKey, ReadOffset.latest(), groupName)
