@@ -107,13 +107,13 @@ public class RedisPubSubService {
                             // ERROR PATH: Catch failures. Do NOT acknowledge.
                             // The message remains in the PEL for this consumer to be claimed/retried.
                             .onErrorResume(error -> {
-                                System.err.println("Processing failed for message ID: " + record.getId() + " | Error: " + error.getMessage());
+                                log.error("Processing failed for message ID: " + record.getId() + " | Error: " + error.getMessage(), error);
                                 return Mono.empty();
                             }), 1
                     )
                     // GLOBAL ERROR PATH: Handle transient Redis connection drops
                     .onErrorResume(e -> {
-                        System.err.println("Redis connection error: " + e.getMessage());
+                        log.error("Redis connection error: " + e.getMessage(), e);
                         return Mono.delay(Duration.ofSeconds(2)).then(Mono.empty());
                     })
                     // Loop indefinitely
@@ -128,7 +128,7 @@ public class RedisPubSubService {
         final Map<String, MyServerSentEvent> messageBody = Collections.singletonMap("payload", message);
         final MapRecord<String, String, MyServerSentEvent> record = MapRecord.create(queueName, messageBody);
         return reactiveRedisTemplate.opsForStream().add(record)
-            .doOnSuccess(recordId -> System.out.println("Published to stream with ID: " + recordId))
+            .doOnSuccess(recordId -> log.info("Published to stream with ID: " + recordId))
             .doOnError(e -> System.err.println("Failed to publish: " + e.getMessage()));
     }
 

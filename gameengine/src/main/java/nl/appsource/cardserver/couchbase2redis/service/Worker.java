@@ -111,7 +111,7 @@ public class Worker {
         scheduler.shutdown();
 
         if (this.streamSubscription != null && !this.streamSubscription.isDisposed()) {
-            System.out.println("Disposing stream subscription...");
+            log.info("Disposing stream subscription...");
             this.streamSubscription.dispose();
         }
     }
