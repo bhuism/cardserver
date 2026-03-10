@@ -34,10 +34,6 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("updateGame", game);
     }
 
-    public static MyServerSentEvent updateGame(final String game) {
-        return new MyServerSentEvent("updateGame", game);
-    }
-
     public static MyServerSentEvent updateBoom(final Boom boom) {
         return new MyServerSentEvent("updateBoom", boom);
     }
