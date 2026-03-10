@@ -79,16 +79,14 @@ public class Worker {
                 });
         }
 
-
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
 
-        redisPubSubService.listenTo("gameEvent").subscribe(myServerSentEvent -> {
-            if (myServerSentEvent.event().equals("gameEvent")) {
-                log.info("gameEvent to gameId={}", myServerSentEvent.data());
-                final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
-                scheduleGameEvent(gameEvent);
-            }
-        });
+        redisPubSubService.listenTo("gameEvent")
+            .subscribe(myServerSentEvent -> {
+                if (myServerSentEvent.event().equals("gameEvent")) {
+                    scheduleGameEvent(jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class));
+                }
+            });
 
     }
 
