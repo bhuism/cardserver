@@ -100,7 +100,7 @@ public class AiWorker {
 
                     log.info("In Game {}, AiPLayer {} says: {}", gameId, userId, say ? "make" : "pass");
 
-                    return redisPubSubService.publishList("gameEvent", MyServerSentEvent.gameEvent(new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000))))
+                    return redisPubSubService.publishToStream("gameEvent", MyServerSentEvent.gameEvent(new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000))))
                         .then(Mono.just(gameId));
 
                 } else if (gameEngine.isAiTurn()) {
@@ -114,7 +114,7 @@ public class AiWorker {
 
                     log.info("In Game {}, AiPLayer {} plays: {}", gameId, userId, card);
 
-                    return redisPubSubService.publishList("gameEvent", MyServerSentEvent.gameEvent(new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500))))
+                    return redisPubSubService.publishToStream("gameEvent", MyServerSentEvent.gameEvent(new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500))))
                         .then(Mono.just(gameId));
 
                 } else {

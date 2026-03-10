@@ -75,7 +75,7 @@ public class RedisPubSubService {
     }
 
     //    public Disposable consumeAndProcess(final String queueName, final Function<MyServerSentEvent, Mono<Void>> messageProcessor) {
-    public Disposable consumeAndProcess(final String streamKey, final String groupName, final Function<MyServerSentEvent, Mono<Void>> messageProcessor) {
+    public Disposable consumeFromStream(final String streamKey, final String groupName, final Function<MyServerSentEvent, Mono<Void>> messageProcessor) {
 
         final ReactiveStreamOperations<String, String, MyServerSentEvent> streamOps = reactiveRedisTemplate.opsForStream();
 
@@ -124,7 +124,7 @@ public class RedisPubSubService {
     }
 
 
-    public Mono<RecordId> publishList(final String queueName, final MyServerSentEvent message) {
+    public Mono<RecordId> publishToStream(final String queueName, final MyServerSentEvent message) {
         final Map<String, MyServerSentEvent> messageBody = Collections.singletonMap("payload", message);
         final MapRecord<String, String, MyServerSentEvent> record = MapRecord.create(queueName, messageBody);
         return reactiveRedisTemplate.opsForStream().add(record)

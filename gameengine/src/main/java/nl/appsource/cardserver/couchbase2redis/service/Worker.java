@@ -99,7 +99,7 @@ public class Worker {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
-        streamSubscription = redisPubSubService.consumeAndProcess("gameEvent", "groupGameEvent", myServerSentEvent -> {
+        streamSubscription = redisPubSubService.consumeFromStream("gameEvent", "groupGameEvent", myServerSentEvent -> {
             final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
             return executeSynchronious(gameEvent);
         });
