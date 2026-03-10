@@ -3,7 +3,13 @@ package nl.appsource.cardserver.openapi.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.ReadOffset;
+import org.springframework.data.redis.connection.stream.RecordId;
+import org.springframework.data.redis.connection.stream.StreamOffset;
+import org.springframework.data.redis.connection.stream.StreamReadOptions;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.ReactiveStreamOperations;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
 import reactor.core.Disposable;
@@ -13,6 +19,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -67,42 +74,62 @@ public class RedisPubSubService {
             });
     }
 
-    public Disposable consumeAndProcess(final String queueName, final Function<MyServerSentEvent, Mono<Void>> messageProcessor) {
+    //    public Disposable consumeAndProcess(final String queueName, final Function<MyServerSentEvent, Mono<Void>> messageProcessor) {
+    public Disposable consumeAndProcess(final String streamKey, final String groupName, final Function<MyServerSentEvent, Mono<Void>> messageProcessor) {
 
-        final String processingQueue = "task-queue-processing-" + queueName + UUID.randomUUID();
+        final ReactiveStreamOperations<String, String, MyServerSentEvent> streamOps = reactiveRedisTemplate.opsForStream();
 
-        return reactiveRedisTemplate.opsForList()
-            .rightPopAndLeftPush(queueName, processingQueue, Duration.ofSeconds(5))
-            .flatMap(message ->
-                // Execute the injected business logic
-                messageProcessor.apply(message)
-                    // SUCCESS PATH: Acknowledge by removing from the processing queue
-                    .then(reactiveRedisTemplate.opsForList().remove(processingQueue, 1, message))
+        final String consumerName = "consumer-" + UUID.randomUUID();
 
-                    // ERROR PATH: Handle failures localized to this specific message
-                    .onErrorResume(error -> {
-                        System.err.println("Business logic failed for: " + message + " | Error: " + error.getMessage());
-                        // Acknowledge (remove) the failed message to prevent infinite retries
-                        return reactiveRedisTemplate.opsForList().remove(processingQueue, 1, message);
-                    })
-            )
-            // GLOBAL ERROR PATH: Handle Redis connection drops (prevents termination of the repeat loop)
+        // 1. Initialize the Consumer Group
+        return streamOps.createGroup(streamKey, ReadOffset.latest(), groupName)
             .onErrorResume(e -> {
-                System.err.println("Redis connection error: " + e.getMessage());
-                return Mono.delay(Duration.ofSeconds(2));
+                // Ignore BUSYGROUP error if the group already exists
+                if (e.getMessage() != null && e.getMessage().contains("BUSYGROUP")) {
+                    return Mono.empty();
+                }
+                return Mono.error(e);
             })
-            // Loop indefinitely
-            .repeat()
-            // Trigger execution and run in the background
-            .subscribe();
 
+            // 2. Chain the infinite read loop to execute after group creation
+            .thenMany(
+                streamOps.read(
+                        org.springframework.data.redis.connection.stream.Consumer.from(groupName, consumerName),
+                        StreamReadOptions.empty().block(Duration.ofSeconds(5)),
+                        StreamOffset.create(streamKey, ReadOffset.lastConsumed())
+                    )
+                    .flatMap(record ->
+                        // Execute the injected business logic
+                        messageProcessor.apply(record.getValue().get("payload"))
+                            // SUCCESS PATH: Acknowledge the message to remove it from the PEL
+                            .then(streamOps.acknowledge(groupName, record))
+
+                            // ERROR PATH: Catch failures. Do NOT acknowledge.
+                            // The message remains in the PEL for this consumer to be claimed/retried.
+                            .onErrorResume(error -> {
+                                System.err.println("Processing failed for message ID: " + record.getId() + " | Error: " + error.getMessage());
+                                return Mono.empty();
+                            }), 1
+                    )
+                    // GLOBAL ERROR PATH: Handle transient Redis connection drops
+                    .onErrorResume(e -> {
+                        System.err.println("Redis connection error: " + e.getMessage());
+                        return Mono.delay(Duration.ofSeconds(2)).then(Mono.empty());
+                    })
+                    // Loop indefinitely
+                    .<MyServerSentEvent>repeat()
+            )
+            // 3. Trigger execution and return the Disposable
+            .subscribe();
     }
 
-    public Mono<Long> publishList(final String queueName, final MyServerSentEvent message) {
-        return reactiveRedisTemplate.opsForList()
-            .leftPush(queueName, message)
-//            .doOnSuccess(listSize -> System.out.println("Published: " + message + " | Queue size: " + listSize))
-            .doOnError(e -> System.err.println("Failed to publish message: " + e.getMessage()));
+
+    public Mono<RecordId> publishList(final String queueName, final MyServerSentEvent message) {
+        final Map<String, MyServerSentEvent> messageBody = Collections.singletonMap("payload", message);
+        final MapRecord<String, String, MyServerSentEvent> record = MapRecord.create(queueName, messageBody);
+        return reactiveRedisTemplate.opsForStream().add(record)
+            .doOnSuccess(recordId -> System.out.println("Published to stream with ID: " + recordId))
+            .doOnError(e -> System.err.println("Failed to publish: " + e.getMessage()));
     }
 
 

@@ -17,7 +17,9 @@ import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -63,11 +65,12 @@ public class Worker {
     private final UserRepository userRepository;
 
     private final BoomRepository boomRepository;
+
     private final JsonMapper jsonMapper;
 
     boolean stop = false;
 
-    private Disposable subscribtion;
+    private Disposable streamSubscription;
 
     @PostConstruct
     public void init() {
@@ -91,11 +94,15 @@ public class Worker {
 //                }
 //            });
 
-        subscribtion = redisPubSubService.consumeAndProcess("gameEvent", myServerSentEvent -> {
+
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void startListening() {
+        streamSubscription = redisPubSubService.consumeAndProcess("gameEvent", "groupGameEvent", myServerSentEvent -> {
             final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
             return executeSynchronious(gameEvent);
         });
-
     }
 
     @PreDestroy
@@ -103,9 +110,9 @@ public class Worker {
         stop = true;
         scheduler.shutdown();
 
-        if (subscribtion != null) {
-            subscribtion.dispose();
-            subscribtion = null;
+        if (this.streamSubscription != null && !this.streamSubscription.isDisposed()) {
+            System.out.println("Disposing stream subscription...");
+            this.streamSubscription.dispose();
         }
     }
 
