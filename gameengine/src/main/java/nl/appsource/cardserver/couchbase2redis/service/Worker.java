@@ -106,21 +106,21 @@ public class Worker {
 
             log.info("Record Id: {} Stream: {}", mapRecord.getId(), mapRecord.getStream());
 
-            log.info("Value: {}  keys: {} ", mapRecord.getValue(), mapRecord.getValue().keySet());
+            log.info("Value: {}", mapRecord.getValue());
 
-            if (mapRecord.getValue().size() != 1) {
-                log.warn("Got null event from redis pubsub");
-                return Mono.empty();
-            } else {
-                final MyServerSentEvent myServerSentEvent = jsonMapper.convertValue(mapRecord.getValue().values().stream().findFirst().orElseThrow(), MyServerSentEvent.class);
+//            if (mapRecord.getValue().size() != 1) {
+//                log.warn("Got null event from redis pubsub");
+//                return Mono.empty();
+//            } else {
+//                final MyServerSentEvent myServerSentEvent = jsonMapper.convertValue(mapRecord.getValue().values().stream().findFirst().orElseThrow(), MyServerSentEvent.class);
+//
+//                log.info("Received gameEvent: {}", myServerSentEvent);
+//    //            return executeSynchronious(gameEvent);
+//
+//                return Mono.empty();
+//            }
 
-                log.info("Received gameEvent: {}", myServerSentEvent);
-    //            return executeSynchronious(gameEvent);
-
-                return Mono.empty();
-            }
-
-//            return Mono.empty();
+            return Mono.empty();
         });
     }
 
