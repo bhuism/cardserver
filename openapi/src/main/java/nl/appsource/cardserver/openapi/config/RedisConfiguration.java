@@ -39,20 +39,4 @@ public class RedisConfiguration {
         return new ReactiveRedisMessageListenerContainer(connectionFactory);
     }
 
-//    @Bean
-//    public Converter<MyServerSentEvent, byte[]> sse2byteArray() {
-//        return jsonMapper::writeValueAsBytes;
-//    }
-//
-//    @Bean
-//    public Converter<byte[], MyServerSentEvent> byte2sse() {
-//        return source -> jsonMapper.readValue(source, MyServerSentEvent.class);
-//    }
-//
-//    @Bean
-//    public RedisCustomConversions redisCustomConversions(final Converter<MyServerSentEvent, byte[]> sse2byteArray,
-//                                                         final Converter<byte[], MyServerSentEvent> byte2sse) {
-//        return new RedisCustomConversions(List.of(sse2byteArray, byte2sse));
-//    }
-
 }

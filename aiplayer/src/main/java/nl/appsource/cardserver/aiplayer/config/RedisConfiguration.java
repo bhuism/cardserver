@@ -25,9 +25,7 @@ public class RedisConfiguration {
     }
 
     @Bean
-    public RedisStreamService redisStreamService(final ReactiveRedisTemplate<String, GameEvent> reactiveRedisTemplate,
-                                                 final ReactiveRedisMessageListenerContainer container,
-                                                 final JsonMapper jsonMapper) {
+    public RedisStreamService redisStreamService(final ReactiveRedisTemplate<String, GameEvent> reactiveRedisTemplate) {
         return new RedisStreamService(reactiveRedisTemplate);
     }
 
