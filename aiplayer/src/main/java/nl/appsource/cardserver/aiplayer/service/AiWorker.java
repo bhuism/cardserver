@@ -82,6 +82,8 @@ public class AiWorker {
 
                     final boolean say = new AiPlayer(gameEngine).decideBid(userId);
 
+                    log.info("AiPLayer {} says: {}", userId, say ? "make" : "pass");
+
                     return redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000))))
                         .then(Mono.just(gameId));
 
@@ -94,6 +96,8 @@ public class AiWorker {
                     }
 
                     final Card card = new AiPlayer(gameEngine).calcAiCard(userId);
+
+                    log.info("AiPLayer {} plays: {}", userId, card);
 
                     return redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500))))
                         .then(Mono.just(gameId));
