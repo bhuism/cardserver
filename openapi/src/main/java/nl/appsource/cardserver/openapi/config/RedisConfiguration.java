@@ -16,13 +16,15 @@ public class RedisConfiguration {
     private final JsonMapper jsonMapper;
 
     @Bean
-    public ReactiveRedisTemplate<String, MyServerSentEvent> reactiveRedisTemplate(final ReactiveRedisConnectionFactory factory) {
+    public ReactiveRedisTemplate<String, MyServerSentEvent> reactiveRedisTemplateMyServerSentEvents(final ReactiveRedisConnectionFactory factory) {
 
         final JacksonJsonRedisSerializer<MyServerSentEvent> serializer = new JacksonJsonRedisSerializer<>(jsonMapper, MyServerSentEvent.class);
 
         RedisSerializationContext<String, MyServerSentEvent> context = RedisSerializationContext
             .<String, MyServerSentEvent>newSerializationContext(serializer)
             .value(serializer)
+            .hashValue(serializer)
+            .hashKey(serializer)
             .build();
 
         return new ReactiveRedisTemplate<>(factory, context);
@@ -32,5 +34,21 @@ public class RedisConfiguration {
     public ReactiveRedisMessageListenerContainer container(final ReactiveRedisConnectionFactory connectionFactory) {
         return new ReactiveRedisMessageListenerContainer(connectionFactory);
     }
+
+//    @Bean
+//    public Converter<MyServerSentEvent, byte[]> sse2byteArray() {
+//        return jsonMapper::writeValueAsBytes;
+//    }
+//
+//    @Bean
+//    public Converter<byte[], MyServerSentEvent> byte2sse() {
+//        return source -> jsonMapper.readValue(source, MyServerSentEvent.class);
+//    }
+//
+//    @Bean
+//    public RedisCustomConversions redisCustomConversions(final Converter<MyServerSentEvent, byte[]> sse2byteArray,
+//                                                         final Converter<byte[], MyServerSentEvent> byte2sse) {
+//        return new RedisCustomConversions(List.of(sse2byteArray, byte2sse));
+//    }
 
 }

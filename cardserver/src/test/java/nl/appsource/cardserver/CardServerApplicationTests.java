@@ -6,6 +6,7 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
@@ -36,6 +37,9 @@ class CardServerApplicationTests {
 
     @MockitoBean
     private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
+
+    @MockitoBean
+    private RedisStreamService redisStreamService;
 
     @Test
     void contextLoads() {

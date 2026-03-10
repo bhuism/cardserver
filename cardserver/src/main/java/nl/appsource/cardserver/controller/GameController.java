@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.generated.openapi.model.CreateGame;
 import nl.appsource.generated.openapi.model.Game;
@@ -28,7 +27,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
-    private final RedisPubSubService redisPubSubService;
+    private final RedisStreamService redisStreamService;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
@@ -88,7 +87,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
                 .flatMap(gameEvent -> {
                         gameEvent.setGameId(gameId);
                         gameEvent.setUserId(userId);
-                        return redisPubSubService.publishToStream("gameEvent", MyServerSentEvent.gameEvent(gameEvent));
+                        return redisStreamService.publishToStream("gameEvent", gameEvent);
                     }
                 )
             )

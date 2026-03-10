@@ -2,6 +2,8 @@ package nl.appsource.cardserver.config;
 
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -21,5 +23,13 @@ public class RedisConfiguration {
                                                  final JsonMapper jsonMapper) {
         return new RedisPubSubService(reactiveRedisTemplate, container, jsonMapper);
     }
+
+    @Bean
+    public RedisStreamService redisStreamService(final ReactiveRedisTemplate<String, GameEvent> reactiveRedisTemplate,
+                                                 final ReactiveRedisMessageListenerContainer container,
+                                                 final JsonMapper jsonMapper) {
+        return new RedisStreamService(reactiveRedisTemplate);
+    }
+
 
 }

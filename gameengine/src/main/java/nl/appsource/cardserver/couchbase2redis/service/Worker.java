@@ -14,6 +14,7 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
@@ -49,6 +50,8 @@ import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 @Service
 @Profile("!citest")
 public class Worker {
+
+    private final RedisStreamService redisStreamService;
 
     private final RedisPubSubService redisPubSubService;
 
@@ -99,14 +102,25 @@ public class Worker {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
-        streamSubscription = redisPubSubService.consumeFromStream("gameEvent", "groupGameEvent", myServerSentEvent -> {
-            if (myServerSentEvent == null) {
+        streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", mapRecord -> {
+
+            log.info("Record Id: {} Stream: {}", mapRecord.getId(), mapRecord.getStream());
+
+            log.info("Value: {}  keys: {} ", mapRecord.getValue(), mapRecord.getValue().keySet());
+
+            if (mapRecord.getValue().size() != 1) {
                 log.warn("Got null event from redis pubsub");
                 return Mono.empty();
             } else {
-                final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
-                return executeSynchronious(gameEvent);
+                final MyServerSentEvent myServerSentEvent = jsonMapper.convertValue(mapRecord.getValue().values().stream().findFirst().orElseThrow(), MyServerSentEvent.class);
+
+                log.info("Received gameEvent: {}", myServerSentEvent);
+    //            return executeSynchronious(gameEvent);
+
+                return Mono.empty();
             }
+
+//            return Mono.empty();
         });
     }
 

@@ -12,6 +12,7 @@ import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.cardserver.service.BoomService;
 import nl.appsource.cardserver.service.GameService;
 import nl.appsource.cardserver.service.UserService;
@@ -75,6 +76,9 @@ public class GameControllerTests {
 
     @MockitoBean
     private RedisPubSubService redisPubSubService;
+
+    @MockitoBean
+    private RedisStreamService redisStreamService;
 
     @BeforeEach
     void setUp() {
