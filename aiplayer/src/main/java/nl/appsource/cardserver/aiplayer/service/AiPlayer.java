@@ -1,7 +1,8 @@
-package nl.appsource.cardserver.couchbase.utils;
+package nl.appsource.cardserver.aiplayer.service;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.exception.GameEngineException;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.GameVariant;
@@ -16,21 +17,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public record AiPlayer(GameEngine gameEngine) {
-
-    private record Hand(List<Card> cards, Map<Suit, List<Card>> bySuit) {
-        static Hand from(final List<Card> cards) {
-            return new Hand(cards, cards.stream()
-                .collect(Collectors.groupingBy(Card::getSuit)));
-        }
-
-        List<Card> ofSuit(final Suit suit) {
-            return bySuit.getOrDefault(suit, List.of());
-        }
-
-        boolean hasSuit(final Suit suit) {
-            return bySuit.containsKey(suit);
-        }
-    }
 
     // Main entry point for the AI's decision
     public Card calcAiCard(final String userId) throws GameEngineException {
@@ -50,7 +36,7 @@ public record AiPlayer(GameEngine gameEngine) {
      */
     private Card playAsLeader(final String userId, final Hand hand) {
 
-        log.trace("playAsLeader for user: {} with hand: {}", userId, hand.cards);
+        log.trace("playAsLeader for user: {} with hand: {}", userId, hand.cards());
 
         // New Strategy: If partner is "gegaan", lead with a trump to support them.
         final String partnerId = gameEngine.getPartner(userId);
@@ -169,7 +155,7 @@ public record AiPlayer(GameEngine gameEngine) {
      */
     private Card playAsFollower(final String userId, final Hand hand, final List<Card> currentTrick, final Card highestCardInTrick) {
 
-        log.trace("playAsFollower {} {} {} ", hand.cards, currentTrick, highestCardInTrick);
+        log.trace("playAsFollower {} {} {} ", hand.cards(), currentTrick, highestCardInTrick);
 
         final Suit leadingSuit = currentTrick.getFirst().getSuit();
         final Suit trumpSuit = gameEngine.getGame().getTrump();
@@ -557,9 +543,10 @@ public record AiPlayer(GameEngine gameEngine) {
         if (cards.size() < length) {
             return false;
         }
-        // Get ranks, sort them descending, and remove duplicates
+        // Get ranks, sort them descending, and remove duplicates.
+        // Roem sequences are based on the natural order of ranks.
         final List<Integer> sortedRanks = cards.stream()
-            .map(this::getKlaverjassenRank)
+            .map(c -> c.getRank().ordinal())
             .distinct()
             .sorted(Comparator.reverseOrder())
             .toList();

@@ -1,0 +1,50 @@
+server:
+  compression:
+    enabled: true
+  forward-headers-strategy: framework
+  shutdown: graceful
+  port: 8084
+logging:
+  level:
+    ROOT: info
+    com.couchbase: warn
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 2s
+  main:
+    web-application-type: reactive
+  application:
+    name: Ai Player
+  jackson:
+    default-property-inclusion: non_absent
+    time-zone: Europe/Amsterdam
+  output:
+    ansi:
+      enabled: ALWAYS
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          no-store: true
+          no-cache: true
+          max-age: 0
+management:
+  endpoint:
+    env:
+      show-values: always
+    info:
+      access: read_only
+    health:
+      access: read_only
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: '*'
+  server:
+    port: 9084
+    ssl:
+      enabled: false
+    add-application-context-header: true

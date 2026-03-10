@@ -35,6 +35,7 @@
         <module>stream</module>
         <module>gameengine</module>
         <module>cardserver</module>
+        <module>aiplayer</module>
     </modules>
 
     <dependencyManagement>

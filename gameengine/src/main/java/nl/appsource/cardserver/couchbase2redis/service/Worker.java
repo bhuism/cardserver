@@ -8,7 +8,6 @@ import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.couchbase.utils.AiPlayer;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.couchbase2redis.GameEngineRw;
 import nl.appsource.cardserver.model.Card;
@@ -39,14 +38,13 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
-import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 
 @RequiredArgsConstructor
 @Slf4j
 @Service
 @Profile("!citest")
-public class GamePlayer {
+public class Worker {
 
     private final RedisPubSubService redisPubSubService;
 
@@ -75,13 +73,11 @@ public class GamePlayer {
                 .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
                 .subscribe(gameId -> {
-                    executeSynchronious(new GameEvent().eventType(GameEvent.EventTypeEnum.CLOSE_LAST_TRICK).gameId(gameId));
-                    executeSynchronious(new GameEvent().eventType(GameEvent.EventTypeEnum.CHECK_ROTATE).gameId(gameId));
-                    gameRepository.findById(gameId)
-                        .map(GameEngineRw::new)
-                        .subscribe(this::scheduleNext);
+                    scheduleGameEvent(new GameEvent().eventType(GameEvent.EventTypeEnum.CLOSE_LAST_TRICK).gameId(gameId));
+                    scheduleGameEvent(new GameEvent().eventType(GameEvent.EventTypeEnum.CHECK_ROTATE).gameId(gameId));
                 });
         }
+
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
 
@@ -89,7 +85,7 @@ public class GamePlayer {
             if (myServerSentEvent.event().equals("gameEvent")) {
                 log.info("gameUpdate to gameId={}", myServerSentEvent.data());
                 final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
-                executeSynchronious(gameEvent);
+                scheduleGameEvent(gameEvent);
             }
         });
 
@@ -182,9 +178,7 @@ public class GamePlayer {
                                     } else {
                                         return Mono.just(game);
                                     }
-                                })
-
-                                .doFinally((_unused) -> this.scheduleNext(gameEngineRw));
+                                });
                         });
                 }
             )
@@ -202,39 +196,6 @@ public class GamePlayer {
 
             })
             .subscribe();
-    }
-
-    private void scheduleNext(final GameEngineRw gameEngine) {
-
-        if (gameEngine.gameEngine().isCompleted()) {
-            return;
-        }
-
-        if (gameEngine.gameEngine().getGame()
-            .getLastTrickOpen()) {
-            return;
-        }
-
-
-        if (gameEngine.gameEngine().isAiSay()) {
-            final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoSay());
-
-            if (!isAiPlayer(userId)) {
-                throw new IllegalStateException("Not AI player");
-            }
-
-            scheduleGameEvent(new GameEvent().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(new AiPlayer(gameEngine.gameEngine()).decideBid(userId)).executionTime(System.currentTimeMillis() + 2000 + RAND.nextLong(1000)));
-        } else if (gameEngine.gameEngine().isAiTurn()) {
-
-            final String userId = gameEngine.game().getPlayers().get(gameEngine.gameEngine().calcWhoHasTurn());
-
-            if (!isAiPlayer(userId)) {
-                throw new IllegalStateException("Not AI player");
-            }
-
-            scheduleGameEvent(new GameEvent().gameId(gameEngine.gameEngine().getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(new AiPlayer(gameEngine.gameEngine()).calcAiCard(userId))).executionTime(System.currentTimeMillis() + (gameEngine.gameEngine().isFullTrick() ? 4000 : 2000) + RAND.nextLong(500)));
-        }
-
     }
 
 

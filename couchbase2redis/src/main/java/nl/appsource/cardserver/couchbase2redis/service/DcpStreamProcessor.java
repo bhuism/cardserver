@@ -83,8 +83,7 @@ public class DcpStreamProcessor {
                                 game.setId(id);
                                 final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
                                 return redisPubSubService.publish(Flux.fromIterable(game.getPlayers())
-                                    .mergeWith(Flux.just(game.getCreator(), game.getId(), "updateGame"))
-                                    .distinct(), gameEvent).then();
+                                    .mergeWith(Flux.just(game.getCreator(), game.getId(), "updateGame")).distinct(), gameEvent).then();
                             }
                             default -> {
                                 return Flux.empty();

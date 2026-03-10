@@ -12,6 +12,9 @@ import reactor.core.publisher.Mono;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Slf4j
 @RequiredArgsConstructor
 public class RedisPubSubService {
@@ -32,8 +35,12 @@ public class RedisPubSubService {
         return topic.distinct().flatMap(t -> publish(t, myServerSentEvent)).then();
     }
 
-    public Flux<MyServerSentEvent> listenTo(final String topicName) {
-        return container.receive(ChannelTopic.of(topicName))
+    public Flux<MyServerSentEvent> listenTo(final String... topicName) {
+        return listenTo(new HashSet<>(Set.of(topicName)));
+    }
+
+    public Flux<MyServerSentEvent> listenTo(final Set<String> topicName) {
+        return container.receive(topicName.stream().map(ChannelTopic::of).toArray(ChannelTopic[]::new))
             .map(ReactiveSubscription.Message::getMessage)
             .flatMap(message -> {
                 try {
