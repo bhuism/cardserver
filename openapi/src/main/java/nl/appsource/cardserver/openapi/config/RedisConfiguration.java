@@ -2,9 +2,8 @@ package nl.appsource.cardserver.openapi.config;
 
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
@@ -12,8 +11,6 @@ import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import tools.jackson.databind.json.JsonMapper;
 
-@Configuration
-@Profile("!citest")
 @RequiredArgsConstructor
 public class RedisConfiguration {
 
@@ -26,6 +23,21 @@ public class RedisConfiguration {
 
         RedisSerializationContext<String, MyServerSentEvent> context = RedisSerializationContext
             .<String, MyServerSentEvent>newSerializationContext(serializer)
+            .value(serializer)
+            .hashValue(serializer)
+            .hashKey(serializer)
+            .build();
+
+        return new ReactiveRedisTemplate<>(factory, context);
+    }
+
+    @Bean
+    public ReactiveRedisTemplate<String, GameEvent> reactiveRedisTemplateGameEvent(final ReactiveRedisConnectionFactory factory) {
+
+        final JacksonJsonRedisSerializer<GameEvent> serializer = new JacksonJsonRedisSerializer<>(jsonMapper, GameEvent.class);
+
+        RedisSerializationContext<String, GameEvent> context = RedisSerializationContext
+            .<String, GameEvent>newSerializationContext(serializer)
             .value(serializer)
             .hashValue(serializer)
             .hashKey(serializer)
