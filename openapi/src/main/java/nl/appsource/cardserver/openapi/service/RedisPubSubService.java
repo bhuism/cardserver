@@ -3,7 +3,6 @@ package nl.appsource.cardserver.openapi.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import org.springframework.data.redis.connection.ReactiveSubscription;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
@@ -13,6 +12,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -41,10 +41,21 @@ public class RedisPubSubService {
 
     public Flux<MyServerSentEvent> listenTo(final Set<String> topicName) {
         return container.receive(topicName.stream().map(ChannelTopic::of).toArray(ChannelTopic[]::new))
-            .map(ReactiveSubscription.Message::getMessage)
             .flatMap(message -> {
                 try {
-                    return Mono.just(jsonMapper.readValue(message, MyServerSentEvent.class));
+                    return Mono.just(jsonMapper.readValue(message.getMessage(), MyServerSentEvent.class));
+                } catch (final JacksonException e) {
+                    log.error("Could not deserialize message on topic: {}", topicName, e);
+                    return Mono.empty();
+                }
+            });
+    }
+
+    public Flux<Map.Entry<String, MyServerSentEvent>> listenToMessage(final Set<String> topicName) {
+        return container.receive(topicName.stream().map(ChannelTopic::of).toArray(ChannelTopic[]::new))
+            .flatMap(message -> {
+                try {
+                    return Mono.just(Map.entry(message.getChannel(), jsonMapper.readValue(message.getMessage(), MyServerSentEvent.class)));
                 } catch (final JacksonException e) {
                     log.error("Could not deserialize message on topic: {}", topicName, e);
                     return Mono.empty();

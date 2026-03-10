@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
@@ -21,7 +22,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.AI_USER_ID;
-import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -43,28 +43,37 @@ public class AiWorker {
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns().size() != 32)
-                .map(Game::getId)
-                .flatMap(this::scheduleNext)
+                .flatMap((Game game) -> {
+                    final GameEngine gameEngine = new GameEngineImpl(game);
+                    if (gameEngine.isAiSay()) {
+                        final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
+                        return scheduleNext(game.getId(), userId);
+                    } else if (gameEngine.isAiTurn()) {
+                        final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
+                        return scheduleNext(game.getId(), userId);
+                    } else {
+                        return Mono.empty();
+                    }
+                })
                 .subscribe();
         }
 
-        redisPubSubService.listenTo(AI_USER_ID)
+        redisPubSubService.listenToMessage(AI_USER_ID)
 
-            .doOnNext(myServerSentEvent -> {
+            .doOnNext(myServerSentEventEntry -> {
 
 //                log.info("AiWorker received event: {}", myServerSentEvent.event());
 
-                if (myServerSentEvent.event().equals("updateGame")) {
+                if (myServerSentEventEntry.getValue().event().equals("updateGame")) {
 //                    log.info("updateGame to game={} class={}", myServerSentEvent.data(), myServerSentEvent.data().getClass());
-                    final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(myServerSentEvent.data(), nl.appsource.generated.openapi.model.Game.class);
-                    scheduleNext(game.getId()).subscribe();
+                    final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(myServerSentEventEntry.getValue().data(), nl.appsource.generated.openapi.model.Game.class);
+                    scheduleNext(game.getId(), myServerSentEventEntry.getKey()).subscribe();
                 }
             }).subscribe();
 
-
     }
 
-    private Mono<String> scheduleNext(final String gameId) {
+    private Mono<String> scheduleNext(final String gameId, final String userId) {
 
 //        log.info("scheduleNext for gameId={}", gameId);
 
@@ -81,9 +90,9 @@ public class AiWorker {
                 }
 
                 if (gameEngine.isAiSay()) {
-                    final String userId = gameEngine.game().getPlayers().get(gameEngine.calcWhoSay());
 
-                    if (!isAiPlayer(userId)) {
+                    if (!userId.equals(gameEngine.game().getPlayers().get(gameEngine.calcWhoSay()))) {
+                        // not my turn
                         return Mono.empty();
                     }
 
@@ -96,9 +105,8 @@ public class AiWorker {
 
                 } else if (gameEngine.isAiTurn()) {
 
-                    final String userId = gameEngine.game().getPlayers().get(gameEngine.calcWhoHasTurn());
-
-                    if (!isAiPlayer(userId)) {
+                    if (!userId.equals(gameEngine.game().getPlayers().get(gameEngine.calcWhoHasTurn()))) {
+                        // not my turn
                         return Mono.empty();
                     }
 
