@@ -51,7 +51,7 @@ public class AiWorker {
             if (myServerSentEvent.event().equals("updateGame")) {
                 log.info("gameUpdate to gameId={}", myServerSentEvent.data());
                 final Game game = jsonMapper.convertValue(myServerSentEvent.data(), Game.class);
-                scheduleNext(game.getId());
+                scheduleNext(game.getId()).subscribe();
             }
         });
 
