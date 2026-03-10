@@ -45,8 +45,7 @@ public class AiWorker {
                 .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
                 .flatMap(this::scheduleNext)
-                .subscribe()
-            ;
+                .subscribe();
         }
 
         redisPubSubService.listenTo(AI_USER_ID)
