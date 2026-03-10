@@ -18,6 +18,8 @@ import reactor.core.publisher.Mono;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,6 +37,18 @@ public class RedisPubSubService {
     private final ReactiveRedisMessageListenerContainer container;
 
     private final JsonMapper jsonMapper;
+
+    private static final String HOSTNAME;
+
+    static {
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (final UnknownHostException e) {
+            host = "unknown";
+        }
+        HOSTNAME = host;
+    }
 
     public Mono<Long> broadCast(final String topic, final MyServerSentEvent myServerSentEvent) {
         //log.info("Publishing message to topic {}: {}", topic, message);
@@ -79,7 +93,7 @@ public class RedisPubSubService {
 
         final ReactiveStreamOperations<String, String, MyServerSentEvent> streamOps = reactiveRedisTemplate.opsForStream();
 
-        final String consumerName = "consumer-" + UUID.randomUUID();
+        final String consumerName = "consumer-" + HOSTNAME + "-" + UUID.randomUUID();
 
         // 1. Initialize the Consumer Group
         return streamOps.createGroup(streamKey, ReadOffset.latest(), groupName)
