@@ -44,25 +44,30 @@ public class AiWorker {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
-                .subscribe(this::scheduleNext);
+                .flatMap(this::scheduleNext)
+                .subscribe()
+            ;
         }
 
-        redisPubSubService.listenTo(AI_USER_ID).subscribe(myServerSentEvent -> {
+        redisPubSubService.listenTo(AI_USER_ID)
 
-            log.info("AiWorker received event: {}", myServerSentEvent.event());
+            .doOnNext(myServerSentEvent -> {
 
-            if (myServerSentEvent.event().equals("updateGame")) {
-                log.info("gameUpdate to gameId={}", myServerSentEvent.data());
-                final Game game = jsonMapper.convertValue(myServerSentEvent.data(), Game.class);
-                scheduleNext(game.getId()).subscribe();
-            }
-        });
+                log.info("AiWorker received event: {}", myServerSentEvent.event());
+
+                if (myServerSentEvent.event().equals("updateGame")) {
+//                    log.info("gameUpdate to gameId={}", myServerSentEvent.data());
+                    final Game game = jsonMapper.convertValue(myServerSentEvent.data(), Game.class);
+                    scheduleNext(game.getId()).subscribe();
+                }
+            }).subscribe();
+
 
     }
 
     private Mono<String> scheduleNext(final String gameId) {
 
-        log.info("scheduleNext for gameId={}", gameId);
+//        log.info("scheduleNext for gameId={}", gameId);
 
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
@@ -72,8 +77,7 @@ public class AiWorker {
                     return Mono.empty();
                 }
 
-                if (gameEngine.getGame()
-                    .getLastTrickOpen()) {
+                if (gameEngine.getGame().getLastTrickOpen()) {
                     return Mono.empty();
                 }
 

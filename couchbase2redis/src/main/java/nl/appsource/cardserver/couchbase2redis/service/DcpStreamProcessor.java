@@ -53,13 +53,13 @@ public class DcpStreamProcessor {
     @PostConstruct
     public void init() {
         dcpStream
-            .doOnNext(byteBuf -> {
-                log.info("Received {}", MessageUtil.getShortOpcodeName(byteBuf));
-            })
+//            .doOnNext(byteBuf -> {
+//                log.info("Received {}", MessageUtil.getShortOpcodeName(byteBuf));
+//            })
             .filter(DcpMutationMessage::is)
             .flatMap(event -> {
                 final String id = MessageUtil.getKeyAsString(event);
-                log.info("Received key: {}", id);
+//                log.info("Received key: {}", id);
                 try (InputStream is = new ByteBufInputStream(MessageUtil.getContent(event))) {
                     final JsonNode rootNode = jsonMapper.readTree(is);
                     if (rootNode.isObject()) {
