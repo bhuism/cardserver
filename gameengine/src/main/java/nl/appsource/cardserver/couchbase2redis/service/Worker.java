@@ -84,7 +84,7 @@ public class Worker {
 
         redisPubSubService.listenTo("gameEvent").subscribe(myServerSentEvent -> {
             if (myServerSentEvent.event().equals("gameEvent")) {
-                log.info("gameUpdate to gameId={}", myServerSentEvent.data());
+                log.info("gameEvent to gameId={}", myServerSentEvent.data());
                 final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
                 scheduleGameEvent(gameEvent);
             }

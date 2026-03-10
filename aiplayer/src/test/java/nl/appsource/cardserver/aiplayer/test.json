@@ -1,0 +1,236 @@
+{
+  "event": "updateGame",
+  "data": {
+    "id": "game2SsNwCP1Zy2Bmsx5lHAx",
+    "created": "+58158-06-24T00:56:34Z",
+    "updated": "+58158-09-09T12:54:16Z",
+    "creator": "BbdQWhNJjyfawQhWwWDv1aXncQu2",
+    "dealer": 0,
+    "playerCard": [
+      {
+        "card": "Ac",
+        "player": 1
+      },
+      {
+        "card": "Kc",
+        "player": 2
+      },
+      {
+        "card": "Qc",
+        "player": 2
+      },
+      {
+        "card": "Jc",
+        "player": 2
+      },
+      {
+        "card": "Tc",
+        "player": 0
+      },
+      {
+        "card": "Nc",
+        "player": 0
+      },
+      {
+        "card": "Ec",
+        "player": 3
+      },
+      {
+        "card": "Sc",
+        "player": 2
+      },
+      {
+        "card": "Ad",
+        "player": 3
+      },
+      {
+        "card": "Kd",
+        "player": 3
+      },
+      {
+        "card": "Qd",
+        "player": 1
+      },
+      {
+        "card": "Jd",
+        "player": 2
+      },
+      {
+        "card": "Td",
+        "player": 1
+      },
+      {
+        "card": "Nd",
+        "player": 3
+      },
+      {
+        "card": "Ed",
+        "player": 2
+      },
+      {
+        "card": "Sd",
+        "player": 1
+      },
+      {
+        "card": "Ah",
+        "player": 2
+      },
+      {
+        "card": "Kh",
+        "player": 0
+      },
+      {
+        "card": "Qh",
+        "player": 0
+      },
+      {
+        "card": "Jh",
+        "player": 1
+      },
+      {
+        "card": "Th",
+        "player": 0
+      },
+      {
+        "card": "Nh",
+        "player": 3
+      },
+      {
+        "card": "Eh",
+        "player": 1
+      },
+      {
+        "card": "Sh",
+        "player": 0
+      },
+      {
+        "card": "As",
+        "player": 1
+      },
+      {
+        "card": "Ks",
+        "player": 1
+      },
+      {
+        "card": "Qs",
+        "player": 2
+      },
+      {
+        "card": "Js",
+        "player": 0
+      },
+      {
+        "card": "Ts",
+        "player": 3
+      },
+      {
+        "card": "Ns",
+        "player": 0
+      },
+      {
+        "card": "Es",
+        "player": 3
+      },
+      {
+        "card": "Ss",
+        "player": 3
+      }
+    ],
+    "players": [
+      "BbdQWhNJjyfawQhWwWDv1aXncQu2",
+      "2ab5fd69a2796c4740380cd98eb7",
+      "2ab5fd69a2796c4740380cd98eb8",
+      "2ab5fd69a2796c4740380cd98eb9"
+    ],
+    "turns": [
+      "Ac",
+      "Sc",
+      "Ec",
+      "Tc",
+      "As",
+      "Qs",
+      "Ts",
+      "Ns"
+    ],
+    "trump": "Hearts",
+    "lastTrickOpen": false,
+    "variant": "rotterdams",
+    "dealCounter": 0,
+    "numberOfTurns": 8,
+    "isCompleted": false,
+    "hasFullTrick": true,
+    "tricksPlayed": 2,
+    "iedereenPast": false,
+    "niemandGezegd": false,
+    "geenKaartGespeeld": false,
+    "currentTrickCards": [
+      "As",
+      "Qs",
+      "Ts",
+      "Ns"
+    ],
+    "trickPoints": [
+      {
+        "northSouth": 0,
+        "eastWest": 21
+      },
+      {
+        "northSouth": 0,
+        "eastWest": 24
+      }
+    ],
+    "allPoints": {
+      "northSouth": 0,
+      "eastWest": 45
+    },
+    "trickRoem": [
+      {
+        "northSouth": 0,
+        "eastWest": 0
+      },
+      {
+        "northSouth": 0,
+        "eastWest": 0
+      }
+    ],
+    "allRoem": {
+      "northSouth": 0,
+      "eastWest": 0
+    },
+    "totalString": {
+      "northSouth": "",
+      "eastWest": "45"
+    },
+    "erIsGegaan": true,
+    "trickWinnerPlayer": [
+      1,
+      1
+    ],
+    "trickWinnerCard": [
+      "Ac",
+      "As"
+    ],
+    "playerPoints": [
+      0,
+      45,
+      0,
+      0
+    ],
+    "heeftGepast": [],
+    "roemGeklopt": [],
+    "verzaakt": [
+      [],
+      []
+    ],
+    "aiRisc": "high",
+    "currentTrickWinnerCard": "As",
+    "elder": 1,
+    "elderTeam": "EastWest",
+    "says": {
+      "1": true
+    },
+    "tricksWonEastWest": 2,
+    "tricksWonNorthSouth": 0,
+    "whosTurn": 1
+  }
+}

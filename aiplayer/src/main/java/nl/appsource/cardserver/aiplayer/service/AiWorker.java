@@ -53,11 +53,11 @@ public class AiWorker {
 
             .doOnNext(myServerSentEvent -> {
 
-                log.info("AiWorker received event: {}", myServerSentEvent.event());
+//                log.info("AiWorker received event: {}", myServerSentEvent.event());
 
                 if (myServerSentEvent.event().equals("updateGame")) {
-//                    log.info("gameUpdate to gameId={}", myServerSentEvent.data());
-                    final Game game = jsonMapper.convertValue(myServerSentEvent.data(), Game.class);
+//                    log.info("updateGame to game={} class={}", myServerSentEvent.data(), myServerSentEvent.data().getClass());
+                    final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(myServerSentEvent.data(), nl.appsource.generated.openapi.model.Game.class);
                     scheduleNext(game.getId()).subscribe();
                 }
             }).subscribe();
