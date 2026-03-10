@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamOffset;
@@ -16,7 +17,6 @@ import reactor.core.publisher.Mono;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Map;
 import java.util.function.Function;
 
 import static org.springframework.data.redis.connection.stream.Consumer.from;
@@ -91,7 +91,7 @@ public class RedisStreamService {
 
 
     public Mono<RecordId> publishToStream(final String queueName, final GameEvent gameEvent) {
-        final MapRecord<String, String, GameEvent> mapRecord = MapRecord.create(queueName, Map.of("gameEvent", gameEvent));
+        final ObjectRecord<String, GameEvent> mapRecord = ObjectRecord.create(queueName, gameEvent);
         return reactiveRedisTemplate.opsForStream().add(mapRecord)
             .doOnSuccess(recordId -> log.info("Published to stream with ID: {}", recordId))
             .doOnError(e -> System.err.println("Failed to publish: " + e.getMessage()));
