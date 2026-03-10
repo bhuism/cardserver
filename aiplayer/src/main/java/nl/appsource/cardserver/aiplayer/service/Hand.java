@@ -9,8 +9,7 @@ import java.util.stream.Collectors;
 
 public record Hand(List<Card> cards, Map<Suit, List<Card>> bySuit) {
     static Hand from(final List<Card> cards) {
-        return new Hand(cards, cards.stream()
-            .collect(Collectors.groupingBy(Card::getSuit)));
+        return new Hand(cards, cards.stream().collect(Collectors.groupingBy(Card::getSuit)));
     }
 
     List<Card> ofSuit(final Suit suit) {
