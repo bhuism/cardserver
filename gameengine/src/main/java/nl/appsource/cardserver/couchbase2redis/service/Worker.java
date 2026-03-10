@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -66,6 +67,8 @@ public class Worker {
 
     boolean stop = false;
 
+    private Disposable subscribtion;
+
     @PostConstruct
     public void init() {
         log.info("init()");
@@ -81,12 +84,17 @@ public class Worker {
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
 
-        redisPubSubService.listenTo("gameEvent")
-            .subscribe(myServerSentEvent -> {
-                if (myServerSentEvent.event().equals("gameEvent")) {
-                    scheduleGameEvent(jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class));
-                }
-            });
+//        redisPubSubService.listenTo("gameEvent")
+//            .subscribe(myServerSentEvent -> {
+//                if (myServerSentEvent.event().equals("gameEvent")) {
+//                    scheduleGameEvent(jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class));
+//                }
+//            });
+
+        subscribtion = redisPubSubService.consumeAndProcess("gameEvent", myServerSentEvent -> {
+            final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
+            return executeSynchronious(gameEvent);
+        });
 
     }
 
@@ -94,6 +102,11 @@ public class Worker {
     public void destroy() {
         stop = true;
         scheduler.shutdown();
+
+        if (subscribtion != null) {
+            subscribtion.dispose();
+            subscribtion = null;
+        }
     }
 
     @FunctionalInterface
@@ -107,7 +120,8 @@ public class Worker {
             final GameEvent eventToExecute = eventQueue.poll();
             if (eventToExecute != null) {
                 try {
-                    executeSynchronious(eventToExecute);
+                    eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(eventToExecute.getGameId()));
+                    executeSynchronious(eventToExecute).subscribe();
                 } catch (Throwable t) {
                     log.error("Dont exception in a worker thread", t);
                 }
@@ -119,15 +133,13 @@ public class Worker {
         return gameEngineExecutor.run();
     }
 
-    public void executeSynchronious(final GameEvent gameEvent) {
+    public Mono<Void> executeSynchronious(final GameEvent gameEvent) {
 
         if (gameEvent.getUserId() == null && gameEvent.getEventType() != GameEvent.EventTypeEnum.CHECK_ROTATE && gameEvent.getEventType() != GameEvent.EventTypeEnum.CLOSE_LAST_TRICK) {
             log.error("userId === null, gameEventType=" + gameEvent.getEventType());
         }
 
-        eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(gameEvent.getGameId()));
-
-        Mono.just(gameEvent.getGameId())
+        return Mono.just(gameEvent.getGameId())
             .flatMap(id -> gameRepository.lock(id, Duration.ofMillis(500), Game.class))
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).doAfterRetry(retrySignal -> {
                 log.info("Retrying lock because of: " + retrySignal.toString());
@@ -188,13 +200,12 @@ public class Worker {
 
                 if (gameEvent.getUserId() != null && !isAiPlayer(gameEvent.getUserId())) {
                     final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
-                    return redisPubSubService.publish(gameEvent.getUserId(), MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
+                    return redisPubSubService.broadCast(gameEvent.getUserId(), MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
                 } else {
                     return Mono.empty();
                 }
 
-            })
-            .subscribe();
+            });
     }
 
     final Set<GameEvent.EventTypeEnum> allowedWithoutUserId = Set.of(GameEvent.EventTypeEnum.CHECK_ROTATE, GameEvent.EventTypeEnum.CLOSE_LAST_TRICK);
@@ -223,11 +234,11 @@ public class Worker {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO))));
+                            return redisPubSubService.broadCast(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO))));
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> redisPubSubService.publish(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)))))
+                                    .flatMap(player -> redisPubSubService.broadCast(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)))))
                                 ).then();
                         }
                     });

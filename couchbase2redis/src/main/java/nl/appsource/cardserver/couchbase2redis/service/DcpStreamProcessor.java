@@ -72,7 +72,7 @@ public class DcpStreamProcessor {
                             case "nl.appsource.cardserver.model.Boom" -> {
                                 final Boom boom = jsonMapper.treeToValue(rootNode, Boom.class);
                                 boom.setId(id);
-                                return redisPubSubService.publish(Flux.fromIterable(boom.getPlayers())
+                                return redisPubSubService.broadCast(Flux.fromIterable(boom.getPlayers())
                                     .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
                                     .distinct(), updateBoom(boomToOpenApiConverter.convert(boom))).then();
                             }
@@ -80,13 +80,13 @@ public class DcpStreamProcessor {
                                 final User user = jsonMapper.treeToValue(rootNode, User.class);
                                 user.setId(id);
                                 final MyServerSentEvent updateUser = updateUser(userToOpenApiConverter.convert(user));
-                                return redisPubSubService.publish(userRepository.getFriendIds(user.getId()).mergeWith(Flux.just(user.getId())), updateUser).then();
+                                return redisPubSubService.broadCast(userRepository.getFriendIds(user.getId()).mergeWith(Flux.just(user.getId())), updateUser).then();
                             }
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
                                 final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
-                                return redisPubSubService.publish(Flux.fromIterable(game.getPlayers())
+                                return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers())
                                     .mergeWith(Flux.just(game.getCreator(), game.getId())).distinct(), gameEvent).then();
                             }
                             default -> {

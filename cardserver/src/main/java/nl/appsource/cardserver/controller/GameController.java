@@ -88,7 +88,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
                 .flatMap(gameEvent -> {
                         gameEvent.setGameId(gameId);
                         gameEvent.setUserId(userId);
-                        return redisPubSubService.publish("gameEvent", MyServerSentEvent.gameEvent(gameEvent));
+                        return redisPubSubService.publishList("gameEvent", MyServerSentEvent.gameEvent(gameEvent));
                     }
                 )
             )

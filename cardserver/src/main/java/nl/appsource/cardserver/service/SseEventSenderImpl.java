@@ -28,28 +28,28 @@ public class SseEventSenderImpl implements SseEventSender {
     @Override
     public Mono<Void> sendUserIdMessage(final String to, final String from, final String message, final UserMessage.VariantEnum variant) {
         final MessageEvent messageEvent = new MessageEvent().message(new UserMessage().userId(from).message(message).variant(variant));
-        return redisPubSubService.publish(to, messageEvent(messageEvent)).then();
+        return redisPubSubService.broadCast(to, messageEvent(messageEvent)).then();
     }
 
     @Override
     public Mono<Void> sendUserIdsMessage(final Set<String> to, final String from, final String message, final UserMessage.VariantEnum variant) {
         final MessageEvent messageEvent = new MessageEvent().message(new UserMessage().userId(from).message(message).variant(variant));
-        return redisPubSubService.publish(Flux.fromIterable(to), messageEvent(messageEvent));
+        return redisPubSubService.broadCast(Flux.fromIterable(to), messageEvent(messageEvent));
     }
 
     @Override
     public Mono<Void> boomsChanged(final Set<String> userIdWithAi) {
-        return redisPubSubService.publish(Flux.fromIterable(userIdWithAi).filter(userId -> !isAiPlayer(userId)), updateBooms());
+        return redisPubSubService.broadCast(Flux.fromIterable(userIdWithAi).filter(userId -> !isAiPlayer(userId)), updateBooms());
     }
 
     @Override
     public Mono<Void> gamesChanged(final Set<String> userIds) {
-        return redisPubSubService.publish(Flux.fromIterable(userIds), updateGames());
+        return redisPubSubService.broadCast(Flux.fromIterable(userIds), updateGames());
     }
 
     @Override
     public Mono<Void> friendsChanged(final Set<String> userIds) {
-        return redisPubSubService.publish(Flux.fromIterable(userIds), updateFriends());
+        return redisPubSubService.broadCast(Flux.fromIterable(userIds), updateFriends());
     }
 
     @Override
@@ -58,14 +58,14 @@ public class SseEventSenderImpl implements SseEventSender {
         final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));
         final NewGameEvent newGameEvent = new NewGameEvent().creator(game.getCreator()).gameId(game.getId());
 
-        return redisPubSubService.publish(topics, newGame(newGameEvent));
+        return redisPubSubService.broadCast(topics, newGame(newGameEvent));
 
     }
 
     @Override
     public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
         final OnlineListEvent onlineListEvent = new OnlineListEvent().onlineList(onlineList.stream().toList());
-        return redisPubSubService.publish(userId, onlineList(onlineListEvent)).then();
+        return redisPubSubService.broadCast(userId, onlineList(onlineListEvent)).then();
     }
 
     public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
