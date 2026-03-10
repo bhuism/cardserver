@@ -190,8 +190,4 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return new MyServerSentEvent("ping", Map.of("count", count));
     }
 
-    public static MyServerSentEvent pong() {
-        return new MyServerSentEvent("pong", null);
-    }
-
 }

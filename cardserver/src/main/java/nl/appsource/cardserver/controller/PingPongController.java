@@ -39,7 +39,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
             .flatMap(appIdentifier -> sseSessionRepository.pingReceived(appIdentifier)
                 .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
                 .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
-                .flatMap(_ -> redisPubSubService.publish(appIdentifier, MyServerSentEvent.pong()))
+                .flatMap(_ -> redisPubSubService.broadCast(appIdentifier, PingPongController.pong()))
             )
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -58,4 +58,8 @@ public class PingPongController extends AbstractBaseController implements V1Api,
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
+
+    public static MyServerSentEvent pong() {
+        return new MyServerSentEvent("pong", null);
+    }
 }
