@@ -3,14 +3,11 @@ package nl.appsource.cardserver.openapi;
 import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.GameEvent;
-import nl.appsource.generated.openapi.model.HelloEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
-import nl.appsource.generated.openapi.model.NewGameEvent;
 import nl.appsource.generated.openapi.model.OnlineListEvent;
 import nl.appsource.generated.openapi.model.User;
 
 import java.io.Serializable;
-import java.util.Map;
 
 public record MyServerSentEvent(String event, Object data) implements Serializable {
 
@@ -22,28 +19,12 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("updateUser", user);
     }
 
-    public static MyServerSentEvent ping(final long count) {
-        return new MyServerSentEvent("ping", Map.of("count", count));
-    }
-
-    public static MyServerSentEvent pong() {
-        return new MyServerSentEvent("pong", null);
-    }
-
     public static MyServerSentEvent updateGame(final Game game) {
         return new MyServerSentEvent("updateGame", game);
     }
 
     public static MyServerSentEvent updateBoom(final Boom boom) {
         return new MyServerSentEvent("updateBoom", boom);
-    }
-
-    public static MyServerSentEvent updateBooms() {
-        return new MyServerSentEvent("updateBooms");
-    }
-
-    public static MyServerSentEvent hello(final HelloEvent helloEvent) {
-        return new MyServerSentEvent("hello", helloEvent);
     }
 
     public static MyServerSentEvent onlineList(final OnlineListEvent onlineListEvent) {
@@ -54,17 +35,9 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("messageEvent", messageEvent);
     }
 
-    public static MyServerSentEvent updateGames() {
-        return new MyServerSentEvent("updateGames");
-    }
-
-    public static MyServerSentEvent updateFriends() {
-        return new MyServerSentEvent("updateFriends");
-    }
-
-    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
-        return new MyServerSentEvent("newGame", newGameEvent);
-    }
+//    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
+//        return new MyServerSentEvent("newGame", newGameEvent);
+//    }
 
     public static MyServerSentEvent gameEvent(final GameEvent gameEvent) {
         return new MyServerSentEvent("gameEvent", gameEvent);

@@ -18,8 +18,6 @@ import java.util.Set;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateFriends;
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGames;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +39,7 @@ public class SseEventSenderImpl implements SseEventSender {
 
     @Override
     public Mono<Void> boomsChanged(final Set<String> userIdWithAi) {
-        return redisPubSubService.publish(Flux.fromIterable(userIdWithAi).filter(userId -> !isAiPlayer(userId)), MyServerSentEvent.updateBooms());
+        return redisPubSubService.publish(Flux.fromIterable(userIdWithAi).filter(userId -> !isAiPlayer(userId)), updateBooms());
     }
 
     @Override
@@ -60,7 +58,7 @@ public class SseEventSenderImpl implements SseEventSender {
         final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));
         final NewGameEvent newGameEvent = new NewGameEvent().creator(game.getCreator()).gameId(game.getId());
 
-        return redisPubSubService.publish(topics, MyServerSentEvent.newGame(newGameEvent));
+        return redisPubSubService.publish(topics, newGame(newGameEvent));
 
     }
 
@@ -68,6 +66,22 @@ public class SseEventSenderImpl implements SseEventSender {
     public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
         final OnlineListEvent onlineListEvent = new OnlineListEvent().onlineList(onlineList.stream().toList());
         return redisPubSubService.publish(userId, onlineList(onlineListEvent)).then();
+    }
+
+    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
+        return new MyServerSentEvent("newGame", newGameEvent);
+    }
+
+    public static MyServerSentEvent updateBooms() {
+        return new MyServerSentEvent("updateBooms");
+    }
+
+    public static MyServerSentEvent updateGames() {
+        return new MyServerSentEvent("updateGames");
+    }
+
+    public static MyServerSentEvent updateFriends() {
+        return new MyServerSentEvent("updateFriends");
     }
 
 }

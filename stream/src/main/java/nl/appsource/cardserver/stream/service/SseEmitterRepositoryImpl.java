@@ -31,11 +31,10 @@ import tools.jackson.databind.json.JsonMapper;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.hello;
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.ping;
 import static reactor.core.publisher.Flux.concat;
 import static reactor.core.publisher.Mono.just;
 
@@ -137,7 +136,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     @PostConstruct
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
-            .map(MyServerSentEvent::ping)
+            .map(SseEmitterRepositoryImpl::ping)
             .subscribe(myServerSentEvent -> mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))));
     }
 
@@ -181,6 +180,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         return builder.build();
                     })
             );
+    }
+
+    public static MyServerSentEvent hello(final HelloEvent helloEvent) {
+        return new MyServerSentEvent("hello", helloEvent);
+    }
+
+    public static MyServerSentEvent ping(final long count) {
+        return new MyServerSentEvent("ping", Map.of("count", count));
+    }
+
+    public static MyServerSentEvent pong() {
+        return new MyServerSentEvent("pong", null);
     }
 
 }
