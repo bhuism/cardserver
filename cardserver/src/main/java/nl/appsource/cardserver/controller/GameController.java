@@ -46,27 +46,6 @@ public class GameController extends AbstractBaseController implements GamesApi, 
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-
-//    @Override
-//    public Mono<ResponseEntity<Void>> playCard(final String gameId, final Mono<Card> cardMono, final ServerWebExchange exchange) {
-//        log.info("{} playCard() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .flatMap(userId -> cardMono
-//                .doOnNext(card -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_PLAY_CARD, gameId).setCard(convertCard(card)))))
-//                .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//                .defaultIfEmpty(ResponseEntity.notFound().build())
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-//
-//    @Override
-//    public Mono<ResponseEntity<Void>> kickAi(final String gameId, final ServerWebExchange exchange) {
-//        log.info("{} kickAi() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.AI_PLAY_CARD, gameId)))
-//            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-
     public Mono<ResponseEntity<GetGames200Response>> getGames(final Optional<Boolean> boom, final Optional<Boolean> finished, final Optional<Integer> limit, final ServerWebExchange exchange) {
         log.info("{} getGames() boom={} finished={} limit={}", exchange.getRequest().getRemoteAddress(), boom, finished, limit);
         return getUserId(exchange)
@@ -101,57 +80,6 @@ public class GameController extends AbstractBaseController implements GamesApi, 
             )
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
-
-//    @Override
-//    public Mono<ResponseEntity<Void>> say(final String gameId, final Mono<PlayerSay> playerSay, final ServerWebExchange exchange) {
-//        log.info("{} deleteGame() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .flatMap(userId -> playerSay.map(say -> {
-//                        log.info("{} say() user {} says {}", exchange.getRequest()
-//                            .getRemoteAddress(), userId, say.getSay());
-//                        return say.getSay();
-//                    })
-//                    .doOnNext(say -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.HUMAN_SAY, gameId).setSay(say)))
-//                    .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//                    .defaultIfEmpty(ResponseEntity.<Void>notFound().build())
-//            )
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-
-//    @Override
-//    public Mono<ResponseEntity<Void>> openLastTrick(final String gameId, final ServerWebExchange exchange) {
-//        log.info("{} openLastTrick() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.OPEN_LAST_TRICK, gameId)))
-//            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-//
-//    @Override
-//    public Mono<ResponseEntity<Void>> closeLastTrick(final String gameId, final ServerWebExchange exchange) {
-//        log.info("{} closeLastTrick() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLOSE_LAST_TRICK, gameId)))
-//            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-//
-//    @Override
-//    public Mono<ResponseEntity<Void>> claimRoem(final String gameId, final ServerWebExchange exchange) {
-//        log.info("{} claimRoem() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .doOnNext(userId -> gameService.scheduleGameEvent(new ScheduledGameEvent(0, userId, GameEventType.CLAIM_ROEM, gameId)))
-//            .then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
-//            .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
-//    }
-//
-//    @Override
-//    public Mono<ResponseEntity<Void>> claimVerzaken(final String gameId, final ServerWebExchange exchange) {
-//        log.info("{} claimVerzaken() gameId={}", exchange.getRequest().getRemoteAddress(), gameId);
-//        return getUserId(exchange)
-//            .flatMap(userId -> gameService.claimVerzaken(userId, gameId).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build())))
-//            .defaultIfEmpty(ResponseEntity.<Void>status(HttpStatus.UNAUTHORIZED).build());
-//    }
 
     @Override
     public Mono<ResponseEntity<Void>> gameEvent(final String gameId, final Mono<GameEvent> gameEventMono, final ServerWebExchange exchange) {
