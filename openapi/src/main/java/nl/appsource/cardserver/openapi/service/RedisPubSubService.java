@@ -101,7 +101,7 @@ public class RedisPubSubService {
     public Mono<Long> publishList(final String queueName, final MyServerSentEvent message) {
         return reactiveRedisTemplate.opsForList()
             .leftPush(queueName, message)
-            .doOnSuccess(listSize -> System.out.println("Published: " + message + " | Queue size: " + listSize))
+//            .doOnSuccess(listSize -> System.out.println("Published: " + message + " | Queue size: " + listSize))
             .doOnError(e -> System.err.println("Failed to publish message: " + e.getMessage()));
     }
 
