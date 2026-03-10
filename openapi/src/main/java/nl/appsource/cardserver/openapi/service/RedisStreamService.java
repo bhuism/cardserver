@@ -3,7 +3,6 @@ package nl.appsource.cardserver.openapi.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.generated.openapi.model.GameEvent;
-import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.RecordId;
@@ -39,7 +38,7 @@ public class RedisStreamService {
         HOSTNAME = host;
     }
 
-    public Disposable consumeFromStream(final String streamKey, final String groupName, final Function<MapRecord<String, String, GameEvent>, Mono<Void>> messageProcessor) {
+    public Disposable consumeFromStream(final String streamKey, final String groupName, final Function<ObjectRecord<String, GameEvent>, Mono<Void>> messageProcessor) {
 
         final ReactiveStreamOperations<String, String, GameEvent> streamOps = reactiveRedisTemplate.opsForStream();
 
@@ -59,6 +58,7 @@ public class RedisStreamService {
             // 2. Chain the infinite read loop to execute after group creation
             .thenMany(
                 streamOps.read(
+                        GameEvent.class,
                         from(groupName, consumerName),
                         StreamReadOptions.empty().block(Duration.ofSeconds(5)),
                         StreamOffset.create(streamKey, ReadOffset.lastConsumed())
