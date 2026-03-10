@@ -85,10 +85,7 @@ public class DcpStreamProcessor {
                             case "nl.appsource.cardserver.model.Game" -> {
                                 final Game game = jsonMapper.treeToValue(rootNode, Game.class);
                                 game.setId(id);
-//                                final MyServerSentEvent gameEventTyped = updateGame(gameToOpenApiConverter.convert(game));
-
-                                final MyServerSentEvent gameEvent = updateGame(jsonMapper.writeValueAsString(gameToOpenApiConverter.convert(game)));
-
+                                final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
                                 return redisPubSubService.publish(Flux.fromIterable(game.getPlayers())
                                     .mergeWith(Flux.just(game.getCreator(), game.getId())).distinct(), gameEvent).then();
                             }
