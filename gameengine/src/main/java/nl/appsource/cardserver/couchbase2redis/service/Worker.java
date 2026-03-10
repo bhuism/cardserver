@@ -100,8 +100,13 @@ public class Worker {
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
         streamSubscription = redisPubSubService.consumeFromStream("gameEvent", "groupGameEvent", myServerSentEvent -> {
-            final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
-            return executeSynchronious(gameEvent);
+            if (myServerSentEvent == null) {
+                log.warn("Got null event from redis pubsub");
+                return Mono.empty();
+            } else {
+                final GameEvent gameEvent = jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class);
+                return executeSynchronious(gameEvent);
+            }
         });
     }
 

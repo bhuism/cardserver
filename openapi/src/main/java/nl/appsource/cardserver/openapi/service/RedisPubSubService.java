@@ -99,11 +99,12 @@ public class RedisPubSubService {
         return streamOps.createGroup(streamKey, ReadOffset.latest(), groupName)
             .onErrorResume(e -> {
                 // Ignore BUSYGROUP error if the group already exists
-                if (e.getMessage() != null && e.getMessage().contains("BUSYGROUP")) {
+                if (e.getCause() != null && e.getCause().getMessage().contains("BUSYGROUP")) {
                     return Mono.empty();
+                } else {
+                    log.error("Failed to create consumer group for stream: {} with group name: {} message: {}", streamKey, groupName, e.getMessage(), e);
+                    return Mono.error(e);
                 }
-                log.error("Failed to create consumer group for stream: {} with group name: {} message: {}", streamKey, groupName, e.getMessage(), e);
-                return Mono.error(e);
             })
 
             // 2. Chain the infinite read loop to execute after group creation
