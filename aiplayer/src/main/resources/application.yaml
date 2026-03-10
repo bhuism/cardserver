@@ -14,7 +14,7 @@ spring:
   main:
     web-application-type: reactive
   application:
-    name: Ai Player
+    name: "Ai Player  "
   jackson:
     default-property-inclusion: non_absent
     time-zone: Europe/Amsterdam
