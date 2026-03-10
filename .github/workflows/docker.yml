@@ -2,7 +2,7 @@ name: CardServer
 
 on:
   push:
-    branches: [ "development", "sinks-many" ]
+    branches: [ "development" ]
   pull_request:
     branches: [ "development" ]
 
