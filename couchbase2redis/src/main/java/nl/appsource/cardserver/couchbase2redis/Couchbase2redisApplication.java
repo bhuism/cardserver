@@ -1,11 +1,12 @@
 package nl.appsource.cardserver.couchbase2redis;
 
+import nl.appsource.cardserver.converters.config.ConvertersConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"nl.appsource.cardserver.converters", "nl.appsource.cardserver.couchbase2redis", "nl.appsource.cardserver.couchbase"})
+@Import(ConvertersConfig.class)
 public class Couchbase2redisApplication {
 
     public static void main(final String[] args) {

@@ -48,6 +48,9 @@ public class AiWorker {
         }
 
         redisPubSubService.listenTo(AI_USER_ID).subscribe(myServerSentEvent -> {
+
+            log.info("AiWorker received event: {}", myServerSentEvent.event());
+
             if (myServerSentEvent.event().equals("updateGame")) {
                 log.info("gameUpdate to gameId={}", myServerSentEvent.data());
                 final Game game = jsonMapper.convertValue(myServerSentEvent.data(), Game.class);
@@ -58,6 +61,8 @@ public class AiWorker {
     }
 
     private Mono<String> scheduleNext(final String gameId) {
+
+        log.info("scheduleNext for gameId={}", gameId);
 
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
@@ -71,7 +76,6 @@ public class AiWorker {
                     .getLastTrickOpen()) {
                     return Mono.empty();
                 }
-
 
                 if (gameEngine.isAiSay()) {
                     final String userId = gameEngine.game().getPlayers().get(gameEngine.calcWhoSay());

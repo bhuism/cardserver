@@ -32,6 +32,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -198,10 +199,11 @@ public class Worker {
             .subscribe();
     }
 
+    final Set<GameEvent.EventTypeEnum> allowedWithoutUserId = Set.of(GameEvent.EventTypeEnum.CHECK_ROTATE, GameEvent.EventTypeEnum.CLOSE_LAST_TRICK);
 
     public void scheduleGameEvent(final GameEvent gameEvent) {
 
-        if (gameEvent.getUserId() == null) {
+        if (!allowedWithoutUserId.contains(gameEvent.getEventType()) && gameEvent.getUserId() == null) {
             log.error("userId = null , not scheduling ", new RuntimeException("not scheduling exmpty userId"));
         }
 

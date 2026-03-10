@@ -1,10 +1,28 @@
 package nl.appsource.cardserver.converters.config;
 
 
-import org.springframework.context.annotation.ComponentScan;
+import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan("nl.appsource.cardserver.converters.service")
 public class ConvertersConfig {
+
+    @Bean
+    public BoomToOpenApiConverter boomToOpenApiConverter() {
+        return new BoomToOpenApiConverter();
+    }
+
+    @Bean
+    public GameToOpenApiConverter gameToOpenApiConverter() {
+        return new GameToOpenApiConverter();
+    }
+
+    @Bean
+    public UserToOpenApiConverter userToOpenApiConverter() {
+        return new UserToOpenApiConverter();
+    }
+
 }
