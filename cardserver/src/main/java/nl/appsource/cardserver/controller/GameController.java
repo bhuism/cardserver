@@ -156,8 +156,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     @Override
     public Mono<ResponseEntity<Void>> gameEvent(final String gameId, final Mono<GameEvent> gameEventMono, final ServerWebExchange exchange) {
         return getUserId(exchange)
-            .flatMap(userId ->
-                gameEventMono.doOnNext(gameEvent -> log.info("{} gameEvent() gameId={} gameEvent={}", exchange.getRequest().getRemoteAddress(), gameId, gameEvent))
+            .flatMap(userId -> gameEventMono
                 .flatMap(gameEvent -> {
                         gameEvent.setGameId(gameId);
                         gameEvent.setUserId(userId);
