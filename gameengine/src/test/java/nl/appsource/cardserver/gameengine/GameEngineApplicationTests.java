@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.couchbase2redis;
+package nl.appsource.cardserver.gameengine;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

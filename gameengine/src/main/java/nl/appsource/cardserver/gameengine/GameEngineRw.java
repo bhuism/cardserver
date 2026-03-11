@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.couchbase2redis;
+package nl.appsource.cardserver.gameengine;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.exception.CardAlreadyPlayerException;
@@ -29,38 +29,6 @@ public record GameEngineRw(Game game, GameEngine gameEngine) {
     public GameEngineRw(final Game game) {
         this(game, new GameEngineImpl(game));
     }
-
-//    public Mono<GameEngineRw> playAiCard() {
-//
-//        if (!gameEngine.isAiTurn()) {
-//            return Mono.empty();
-//        }
-//
-//        final String userId = game.getPlayers()
-//            .get(gameEngine.calcWhoHasTurn());
-//
-//        if (!AI_USER_ID.contains(userId)) {
-//            throw new GameEngineException("Not an Ai player");
-//        }
-//
-//        return playCard(userId, new AiPlayer(this.gameEngine).calcAiCard(userId));
-//
-//    }
-//
-//    public Mono<GameEngineRw> sayAi() {
-//
-//        if (!gameEngine.isAiSay()) {
-//            return Mono.empty();
-//        }
-//
-//        final int whoSay = gameEngine.calcWhoSay();
-//
-//        final String userId = this.game.getPlayers()
-//            .get(whoSay);
-//
-//        return say(userId, new AiPlayer(this.gameEngine).decideBid(userId));
-//
-//    }
 
     public Mono<GameEngineRw> playCard(final String userId, final Card card) {
 

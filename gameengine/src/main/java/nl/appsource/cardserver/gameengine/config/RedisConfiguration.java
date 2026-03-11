@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.couchbase2redis.config;
+package nl.appsource.cardserver.gameengine.config;
 
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;

@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.couchbase2redis.service;
+package nl.appsource.cardserver.gameengine.service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -9,7 +9,7 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
-import nl.appsource.cardserver.couchbase2redis.GameEngineRw;
+import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
