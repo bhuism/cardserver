@@ -103,23 +103,7 @@ public class Worker {
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
         streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", mapRecord -> {
-
-            log.info("Record Id: {} Stream: {}", mapRecord.getId(), mapRecord.getStream());
-
-            log.info("Value: {}", mapRecord.getValue());
-
-//            if (mapRecord.getValue().size() != 1) {
-//                log.warn("Got null event from redis pubsub");
-//                return Mono.empty();
-//            } else {
-//                final MyServerSentEvent myServerSentEvent = jsonMapper.convertValue(mapRecord.getValue().values().stream().findFirst().orElseThrow(), MyServerSentEvent.class);
-//
-//                log.info("Received gameEvent: {}", myServerSentEvent);
-//    //            return executeSynchronious(gameEvent);
-//
-//                return Mono.empty();
-//            }
-
+            scheduleGameEvent(mapRecord.getValue());
             return Mono.empty();
         });
     }
