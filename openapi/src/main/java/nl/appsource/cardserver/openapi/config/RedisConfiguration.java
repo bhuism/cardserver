@@ -26,7 +26,7 @@ public class RedisConfiguration {
         RedisSerializationContext<String, MyServerSentEvent> context = RedisSerializationContext
             .<String, MyServerSentEvent>newSerializationContext(stringSerializer)
             .value(serializer)
-            .hashValue(serializer)
+            .hashValue(stringSerializer)
             .hashKey(stringSerializer)
             .build();
 
@@ -38,12 +38,11 @@ public class RedisConfiguration {
 
         final JacksonJsonRedisSerializer<GameEvent> serializer = new JacksonJsonRedisSerializer<>(jsonMapper, GameEvent.class);
         final StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        final JacksonJsonRedisSerializer<Object> objectSerializer = new JacksonJsonRedisSerializer<>(jsonMapper, Object.class);
 
         RedisSerializationContext<String, GameEvent> context = RedisSerializationContext
             .<String, GameEvent>newSerializationContext(stringSerializer)
             .value(serializer)
-            .hashValue(objectSerializer)
+            .hashValue(stringSerializer)
             .hashKey(stringSerializer)
             .build();
 

@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveStreamOperations;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -25,6 +26,7 @@ import static org.springframework.data.redis.connection.stream.Consumer.from;
 public class RedisStreamService {
 
     private final ReactiveRedisTemplate<String, GameEvent> reactiveRedisTemplate;
+    private final JsonMapper jsonMapper;
 
     private static final String HOSTNAME;
 
