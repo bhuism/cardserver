@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import static java.lang.Boolean.TRUE;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -49,7 +47,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     public Mono<ResponseEntity<GetGames200Response>> getGames(final Boolean boom, final Boolean finished, final Integer limit, final ServerWebExchange exchange) {
         log.info("{} getGames() boom={} finished={} limit={}", exchange.getRequest().getRemoteAddress(), boom, finished, limit);
         return getUserId(exchange)
-            .flatMap(userId -> gameService.getGames(userId, TRUE.equals(boom), TRUE.equals(finished), limit == null ? 10 : limit)
+            .flatMap(userId -> gameService.getGames(userId, boom == true, finished == true, limit == null ? 10 : limit)
                 .collectList()
                 .map(games -> new GetGames200Response().games(games))
                 .map(ResponseEntity::ok)
