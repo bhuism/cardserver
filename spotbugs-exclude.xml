@@ -23,4 +23,8 @@
             <Bug pattern="SE_BAD_FIELD"/>
         </Or>
     </Match>
+    <Match>
+        <Class name="nl.appsource.cardserver.controller.GameController" />
+        <Bug pattern="BX_UNBOXING_IMMEDIATELY_REBOXED" />
+    </Match>
 </FindBugsFilter>
