@@ -95,7 +95,7 @@ public class RedisStreamService {
     public Mono<RecordId> publishToStream(final String queueName, final GameEvent gameEvent) {
         final ObjectRecord<String, GameEvent> record = ObjectRecord.create(queueName, gameEvent);
         return reactiveRedisTemplate.opsForStream().add(record)
-            .doOnSuccess(recordId -> log.info("Published to stream with ID: {}", recordId))
+//            .doOnSuccess(recordId -> log.info("Published to stream with ID: {}", recordId))
             .doOnError(e -> System.err.println("Failed to publish: " + e.getMessage()));
     }
 
