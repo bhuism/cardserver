@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.aiplayer.service;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.couchbase.exception.GameEngineException;
 import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Card;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 public record AiPlayer(GameEngine gameEngine) {
 
     // Main entry point for the AI's decision
-    public Card calcAiCard(final String userId) throws GameEngineException {
+    public Card calcAiCard(final String userId) {
 
         final Hand hand = Hand.from(getHand(userId));
         final List<Card> currentTrick = gameEngine.getTrickCards(gameEngine.calcTricksPlayed());
