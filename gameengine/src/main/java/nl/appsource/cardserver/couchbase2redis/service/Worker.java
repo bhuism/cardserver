@@ -89,21 +89,12 @@ public class Worker {
         }
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
-
-//        redisPubSubService.listenTo("gameEvent")
-//            .subscribe(myServerSentEvent -> {
-//                if (myServerSentEvent.event().equals("gameEvent")) {
-//                    scheduleGameEvent(jsonMapper.convertValue(myServerSentEvent.data(), GameEvent.class));
-//                }
-//            });
-
-
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
-        streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", mapRecord -> {
-            scheduleGameEvent(mapRecord.getValue());
+        streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
+            scheduleGameEvent(record.getValue());
             return Mono.empty();
         });
     }
