@@ -179,8 +179,8 @@ public class Worker {
 
                             final String userId = gameEvent.getUserId();
                             final String gameId = gameEvent.getGameId();
-                            final Optional<Boolean> say = gameEvent.getSay();
-                            final Optional<Card> card = gameEvent.getCard().map(GameToOpenApiConverter::convertCard);
+                            final Optional<Boolean> say = Optional.ofNullable(gameEvent.getSay());
+                            final Optional<Card> card = Optional.ofNullable(gameEvent.getCard()).map(GameToOpenApiConverter::convertCard);
 
                             final Mono<GameEngineRw> result = switch (gameEvent.getEventType()) {
                                 case OPEN_LAST_TRICK -> catchException(gameEngineRw::openLastTrick);

@@ -36,11 +36,11 @@ public class DebugController extends AbstractBaseController implements DebugApi,
                         sseConnection.setId(mySseEmitterEntry.getId());
                         sseConnection.setHost(mySseEmitterEntry.getHost());
                         sseConnection.setCreated(mySseEmitterEntry.getCreated());
-                        sseConnection.setUpdated(Optional.ofNullable(mySseEmitterEntry.getUpdated()));
+                        sseConnection.setUpdated(mySseEmitterEntry.getUpdated());
                         sseConnection.setCreator(mySseEmitterEntry.getCreator());
-                        sseConnection.setPingReceived(Optional.ofNullable(mySseEmitterEntry.getPingReceived()));
+                        sseConnection.setPingReceived(mySseEmitterEntry.getPingReceived());
                         sseConnection.setPingReceivedCount(mySseEmitterEntry.getPingReceivedCount());
-                        sseConnection.setPongReceived(Optional.ofNullable(mySseEmitterEntry.getPongReceived()));
+                        sseConnection.setPongReceived(mySseEmitterEntry.getPongReceived());
                         sseConnection.setPongReceivedCount(mySseEmitterEntry.getPongReceivedCount());
                         sseConnection.setRemoteAddress(mySseEmitterEntry.getRemoteAddress());
                         sseConnection.setUserAgent(mySseEmitterEntry.getUserAgent());

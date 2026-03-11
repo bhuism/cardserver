@@ -72,11 +72,11 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
         if (!gameEngine.isCompleted()) {
 
             if (!gameEngine.getErIsGegaan()) {
-                target.setWhoSay(Optional.of(gameEngine.calcWhoSay()));
-                target.setWhosTurn(Optional.empty());
+                target.setWhoSay(gameEngine.calcWhoSay());
+                target.setWhosTurn(null);
             } else {
-                target.setWhoSay(Optional.empty());
-                target.setWhosTurn(Optional.of(gameEngine.calcWhoHasTurn()));
+                target.setWhoSay(null);
+                target.setWhosTurn(gameEngine.calcWhoHasTurn());
             }
         }
 
@@ -104,7 +104,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
 
         if (!gameEngine.getHuidigeTableCards().isEmpty()) {
             target.setCurrentTrickWinnerCard(
-                Optional.of(convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getHuidigeTableCards(), source.getTrump())))
+                convertCard(GameEngineImpl.determineTrickWinningCard(gameEngine.getHuidigeTableCards(), source.getTrump()))
             );
         }
 
@@ -124,8 +124,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
             .findFirst();
 
         if (optionalElder.isPresent()) {
-            target.setElder(optionalElder);
-            target.setElderTeam(Optional.of(optionalElder.get() % 2 == 0 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+            target.setElder(optionalElder.orElse(null));
+            target.setElderTeam(optionalElder.get() % 2 == 0 ? Teams.NORTH_SOUTH : Teams.EAST_WEST);
         }
 
         target.setPlayerPoints(new ArrayList<>(List.of(0, 0, 0, 0)));
@@ -188,8 +188,8 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
                     numberOfTrickWinsEastWestCounter++;
                 }
 
-                target.setTricksWonNorthSouth(Optional.of(numberOfTrickWinsNorthSouthCounter));
-                target.setTricksWonEastWest(Optional.of(numberOfTrickWinsEastWestCounter));
+                target.setTricksWonNorthSouth(numberOfTrickWinsNorthSouthCounter);
+                target.setTricksWonEastWest(numberOfTrickWinsEastWestCounter);
 
                 target.getTrickPoints().add(northSouthNumber);
                 target.getTrickRoem().add(roemNorthSouthNumber);
@@ -198,34 +198,34 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
 
             if (gameEngine.isCompleted() && optionalElder.isPresent()) {
 
-                target.setPit(Optional.of(numberOfTrickWinsNorthSouthCounter == 8 || numberOfTrickWinsEastWestCounter == 8));
+                target.setPit(numberOfTrickWinsNorthSouthCounter == 8 || numberOfTrickWinsEastWestCounter == 8);
 
                 if (target.getAllPoints()
                     .getNorthSouth() + target.getAllRoem()
                     .getNorthSouth() == target.getAllPoints()
                     .getEastWest() + target.getAllRoem()
                     .getEastWest()) {
-                    target.setWinner(Optional.of(optionalElder.get() == 1 || optionalElder.get() == 3 ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+                    target.setWinner(optionalElder.get() == 1 || optionalElder.get() == 3 ? Teams.NORTH_SOUTH : Teams.EAST_WEST);
                 } else {
-                    target.setWinner(Optional.of(target.getAllPoints()
+                    target.setWinner(target.getAllPoints()
                         .getNorthSouth() + target.getAllRoem()
                         .getNorthSouth() > target.getAllPoints()
                         .getEastWest() + target.getAllRoem()
-                        .getEastWest() ? Teams.NORTH_SOUTH : Teams.EAST_WEST));
+                        .getEastWest() ? Teams.NORTH_SOUTH : Teams.EAST_WEST);
                 }
 
-                if (target.getPit().orElseThrow()) {
-                    if (target.getWinner().orElseThrow() == Teams.NORTH_SOUTH) {
-                        target.setTotalPoints(Optional.of(new NorthSouthNumber(162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100, 0)));
+                if (Boolean.TRUE.equals(target.getPit())) {
+                    if (target.getWinner() == Teams.NORTH_SOUTH) {
+                        target.setTotalPoints(new NorthSouthNumber(162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100, 0));
                         target.getTotalString().setNorthSouth("162" + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + "+100p");
                         target.getTotalString().setEastWest("0");
                     } else {
-                        target.setTotalPoints(Optional.of(new NorthSouthNumber(0, 162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100)));
+                        target.setTotalPoints(new NorthSouthNumber(0, 162 + target.getAllRoem().getNorthSouth() + target.getAllRoem().getEastWest() + 100));
                         target.getTotalString().setNorthSouth("0");
                         target.getTotalString().setEastWest("162" + (target.getAllRoem().getEastWest() > 0 ? "+" + target.getAllRoem().getEastWest() : "") + (target.getAllRoem().getNorthSouth() > 0 ? "+" + target.getAllRoem().getNorthSouth() : "") + "+100p");
                     }
                 } else {
-                    target.setTotalPoints(Optional.of(new NorthSouthNumber(target.getAllPoints().getNorthSouth() + target.getAllRoem().getNorthSouth(), target.getAllPoints().getEastWest() + target.getAllRoem().getEastWest())));
+                    target.setTotalPoints(new NorthSouthNumber(target.getAllPoints().getNorthSouth() + target.getAllRoem().getNorthSouth(), target.getAllPoints().getEastWest() + target.getAllRoem().getEastWest()));
 
                     if (target.getAllPoints().getNorthSouth() > 0) {
                         target.getTotalString().setNorthSouth(target.getTotalString().getNorthSouth() + target.getAllPoints().getNorthSouth());
@@ -264,7 +264,7 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
             }
         }
 
-        target.setBoomId(Optional.ofNullable(source.getBoomId()));
+        target.setBoomId(source.getBoomId());
 
         final List<Set<Integer>> verzakenResult = new ArrayList<>();
 

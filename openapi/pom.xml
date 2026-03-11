@@ -92,7 +92,7 @@
                                 <dateLibrary>java8</dateLibrary>
                                 <serializableModel>true</serializableModel>
                                 <!--                                <openApiNullable>false</openApiNullable>-->
-                                <useOptional>true</useOptional>
+                                <useOptional>false</useOptional>
                                 <!--                                <useSpringBoot3>true</useSpringBoot3>-->
                                 <!--                                <interfaceOnly>true</interfaceOnly>-->
                                 <!--                                <disallowAdditionalPropertiesIfNotPresent>false</disallowAdditionalPropertiesIfNotPresent>-->
