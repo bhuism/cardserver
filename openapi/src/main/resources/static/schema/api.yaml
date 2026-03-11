@@ -673,7 +673,6 @@ components:
             - close_last_trick
             - claim_roem
             - say
-            - check_rotate
             - claim_verzaken
         userId:
           type: string

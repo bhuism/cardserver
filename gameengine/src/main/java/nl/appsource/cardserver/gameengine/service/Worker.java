@@ -10,9 +10,8 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.gameengine.GameEngineRw;
-import nl.appsource.cardserver.model.Card;
+import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -28,15 +27,12 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -69,8 +66,6 @@ public class Worker {
 
     private final BoomRepository boomRepository;
 
-    private final JsonMapper jsonMapper;
-
     boolean stop = false;
 
     private Disposable streamSubscription;
@@ -78,14 +73,29 @@ public class Worker {
     @PostConstruct
     public void init() {
         log.info("init()");
+
+        final GameEngineRwImpl.UserMessenger noOpuserMessenger = new GameEngineRwImpl.UserMessenger() {
+
+            @Override
+            public Mono<Void> sendUserMessage(final String message) {
+                return Mono.empty();
+            }
+
+            @Override
+            public Mono<Void> sendGameMessage(final String message) {
+                return Mono.empty();
+            }
+        };
+
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns().size() != 32)
                 .map(Game::getId)
-                .subscribe(gameId -> {
-                    scheduleGameEvent(new GameEvent().eventType(GameEvent.EventTypeEnum.CLOSE_LAST_TRICK).gameId(gameId));
-                    scheduleGameEvent(new GameEvent().eventType(GameEvent.EventTypeEnum.CHECK_ROTATE).gameId(gameId));
-                });
+                .flatMap(gameRepository::findById)
+                .map(game -> new GameEngineRwImpl(null, game, noOpuserMessenger))
+                .flatMap(GameEngineRwImpl::rotateTrump)
+                .flatMap(gameRepository::save)
+                .subscribe();
         }
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
@@ -115,7 +125,7 @@ public class Worker {
 
     @FunctionalInterface
     public interface GameEngineExecutor {
-        Mono<GameEngineRw> run();
+        Mono<GameEngineRwImpl> run();
     }
 
     private void processDueEvents() {
@@ -133,69 +143,72 @@ public class Worker {
         }
     }
 
-    public Mono<GameEngineRw> catchException(final GameEngineExecutor gameEngineExecutor) {
-        return gameEngineExecutor.run();
-    }
-
     public Mono<Void> executeSynchronious(final GameEvent gameEvent) {
-
-        if (gameEvent.getUserId() == null && gameEvent.getEventType() != GameEvent.EventTypeEnum.CHECK_ROTATE && gameEvent.getEventType() != GameEvent.EventTypeEnum.CLOSE_LAST_TRICK) {
-            log.error("userId === null, gameEventType=" + gameEvent.getEventType());
-        }
 
         return Mono.just(gameEvent.getGameId())
             .flatMap(id -> gameRepository.lock(id, Duration.ofMillis(500), Game.class))
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).doAfterRetry(retrySignal -> {
                 log.info("Retrying lock because of: " + retrySignal.toString());
             }))
-            .flatMap(entry -> {
-                    return Mono.just(entry.getKey())
-                        .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator().equals(gameEvent.getUserId()) || game.getPlayers().contains(gameEvent.getUserId()))
-                        .map(GameEngineRw::new)
-                        .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
-                        .flatMap(gameEngineRw -> {
+            .flatMap(entry -> Mono.just(entry.getKey())
+                .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator().equals(gameEvent.getUserId()) || game.getPlayers().contains(gameEvent.getUserId()))
+                .map(game -> {
 
-                            final String userId = gameEvent.getUserId();
-                            final String gameId = gameEvent.getGameId();
-                            final Optional<Boolean> say = Optional.ofNullable(gameEvent.getSay());
-                            final Optional<Card> card = Optional.ofNullable(gameEvent.getCard()).map(GameToOpenApiConverter::convertCard);
+                    final GameEngineRwImpl.UserMessenger userMessenger = new GameEngineRwImpl.UserMessenger() {
 
-                            final Mono<GameEngineRw> result = switch (gameEvent.getEventType()) {
-                                case OPEN_LAST_TRICK -> catchException(gameEngineRw::openLastTrick);
-                                case CLOSE_LAST_TRICK -> catchException(gameEngineRw::closeLastTrick);
-                                case PLAY_CARD -> catchException(() -> gameEngineRw.playCard(userId, card.orElseThrow()));
-                                case SAY -> catchException(() -> gameEngineRw.say(userId, say.orElseThrow()));
-                                case CHECK_ROTATE -> catchException(gameEngineRw::checkNiemandIsGegaanEnIedereenHeeftGezegd);
-                                case CLAIM_ROEM -> catchException(() -> gameEngineRw.claimRoem(userId));
-                                case CLAIM_VERZAKEN -> catchException(() -> claimVerzaken(userId, gameId));
-                            };
+                        @Override
+                        public Mono<Void> sendUserMessage(final String message) {
+                            return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
+                        }
 
-                            return result
-                                .map(GameEngineRw::game)
-                                .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
-                                .onErrorResume(error -> {
-                                    log.error("Error during update, attempting to unlock game: {}", gameId);
-                                    return gameRepository.unLockNoSave(gameId, entry.getValue())
-                                        // Swallow unlock-specific errors so we don't mask the original error
-                                        .onErrorResume(unlockError -> {
-                                            log.warn("Failed to cleanly unlock document: {}", gameId);
-                                            return Mono.empty();
-                                        })
-                                        // Re-throw the original error to the subscriber
-                                        .then(Mono.error(error));
-                                })
-                                .doOnNext(game -> log.info("executeSynchronious() executed gameEventType:" + gameEvent.getEventType() + ", userId=" + gameEvent.getUserId() + ", gameId=" + gameEvent.getGameId() + ", card=" + gameEvent.getCard()))
-                                .flatMap(game -> {
-                                    if (game.getBoomId() != null) {
-                                        return boomRepository.findById(game.getBoomId())
-                                            .map(boomRepository::save)
-                                            .then(Mono.just(game));
-                                    } else {
-                                        return Mono.just(game);
-                                    }
-                                });
-                        });
-                }
+                        @Override
+                        public Mono<Void> sendGameMessage(final String message) {
+                            return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers()), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
+                        }
+                    };
+
+                    return new GameEngineRwImpl(gameEvent.getUserId(), game, userMessenger);
+                })
+                .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
+                .map(gameEngineRw -> (GameEngineRw) gameEngineRw)
+                .flatMap(gameEngineRw -> {
+
+                    final String userId = gameEvent.getUserId();
+
+                    return switch (gameEvent.getEventType()) {
+                        case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
+                        case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
+                        case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(gameEvent.getCard()));
+                        case SAY -> gameEngineRw.say(gameEvent.getSay());
+                        case CLAIM_ROEM -> gameEngineRw.claimRoem();
+                        case CLAIM_VERZAKEN -> claimVerzaken(userId, entry.getKey().getId());
+                    };
+                })
+                .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
+                .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
+                .onErrorResume(error -> {
+                    log.error("Error during update, attempting to unlock game: {}", entry.getKey().getId());
+                    return gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue())
+                        // Swallow unlock-specific errors so we don't mask the original error
+                        .onErrorResume(unlockError -> {
+                            log.warn("Failed to cleanly unlock document: {}", entry.getKey().getId());
+                            return Mono.empty();
+                        })
+                        // Re-throw the original error to the subscriber
+                        .then(Mono.error(error));
+                })
+                .doFinally(signalType -> {
+                    gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).subscribe();
+                })
+                .flatMap(game -> {
+                    if (game.getBoomId() != null) {
+                        return boomRepository.findById(game.getBoomId())
+                            .map(boomRepository::save)
+                            .then(Mono.just(game));
+                    } else {
+                        return Mono.just(game);
+                    }
+                })
             )
             .then()
             .onErrorResume(throwable -> {
@@ -204,7 +217,7 @@ public class Worker {
 
                 if (gameEvent.getUserId() != null && !isAiPlayer(gameEvent.getUserId())) {
                     final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
-                    return redisPubSubService.broadCast(gameEvent.getUserId(), MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
+                    return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
                 } else {
                     return Mono.empty();
                 }
@@ -212,12 +225,18 @@ public class Worker {
             });
     }
 
-    final Set<GameEvent.EventTypeEnum> allowedWithoutUserId = Set.of(GameEvent.EventTypeEnum.CHECK_ROTATE, GameEvent.EventTypeEnum.CLOSE_LAST_TRICK);
-
     public void scheduleGameEvent(final GameEvent gameEvent) {
 
-        if (!allowedWithoutUserId.contains(gameEvent.getEventType()) && gameEvent.getUserId() == null) {
-            log.error("userId = null , not scheduling ", new RuntimeException("not scheduling exmpty userId"));
+        if (gameEvent.getUserId() == null) {
+            log.error("userId = null , not scheduling ", new RuntimeException("not scheduling empty userId"));
+        }
+
+        if (gameEvent.getGameId() == null) {
+            log.error("gameId = null , not scheduling ", new RuntimeException("not scheduling empty gameId"));
+        }
+
+        if (gameEvent.getEventType() == null) {
+            log.error("eventType = null , not scheduling ", new RuntimeException("not scheduling empty eventType"));
         }
 
         eventQueue.add(gameEvent);
@@ -225,7 +244,7 @@ public class Worker {
 
     //    @Override
     //    @Override
-    public Mono<GameEngineRw> claimVerzaken(final String userId, final String gameId) {
+    public Mono<Game> claimVerzaken(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
@@ -238,11 +257,11 @@ public class Worker {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return redisPubSubService.broadCast(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO))));
+                            return redisPubSubService.broadCast(userId, messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO))));
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> redisPubSubService.broadCast(userId, MyServerSentEvent.messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)))))
+                                    .flatMap(player -> redisPubSubService.broadCast(userId, messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)))))
                                 ).then();
                         }
                     });
