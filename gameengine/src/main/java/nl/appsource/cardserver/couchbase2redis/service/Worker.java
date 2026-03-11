@@ -94,7 +94,9 @@ public class Worker {
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
         streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
-            scheduleGameEvent(record.getValue());
+            final GameEvent gameEvent = record.getValue();
+            log.info("Received gameEvent: {}", gameEvent);
+            scheduleGameEvent(gameEvent);
             return Mono.empty();
         });
     }
@@ -107,6 +109,7 @@ public class Worker {
         if (this.streamSubscription != null && !this.streamSubscription.isDisposed()) {
             log.info("Disposing stream subscription...");
             this.streamSubscription.dispose();
+            this.streamSubscription = null;
         }
     }
 
