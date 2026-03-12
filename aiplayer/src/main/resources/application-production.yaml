@@ -6,7 +6,7 @@ spring:
   boot:
     admin:
       client:
-        url: http://cardserver-admin.cardserver:8085/admin
+        url: http://cardserver-admin.cardserver:8085
         instance:
           service-base-url: http://cardserver-aiplayer.cardserver:8084
           management-base-url: http://cardserver-aiplayer.cardserver:9084

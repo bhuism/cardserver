@@ -32,6 +32,7 @@ public class AdminApplication {
                 .authenticated())
             .formLogin(spec -> spec.loginPage(adminServerProperties.getContextPath() + "/login")
                 .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler(adminServerProperties.getContextPath())))
+            .logout(spec -> spec.logoutUrl(adminServerProperties.getContextPath() + "/"))
             .logout(Customizer.withDefaults())
             .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
