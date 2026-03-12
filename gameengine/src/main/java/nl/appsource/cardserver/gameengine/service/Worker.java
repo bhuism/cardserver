@@ -215,7 +215,7 @@ public class Worker {
 
                 log.error("executeSynchronious()", throwable);
 
-                if (gameEvent.getUserId() != null && !isAiPlayer(gameEvent.getUserId())) {
+                if (gameEvent.getUserId() != null) {
                     final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
                     return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
                 } else {
