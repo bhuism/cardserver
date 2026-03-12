@@ -24,6 +24,7 @@
         <openapi-generator-maven-plugin.version>7.20.0</openapi-generator-maven-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
+        <spring-boot-admin.version>4.0.2</spring-boot-admin.version>
     </properties>
 
     <modules>
@@ -36,10 +37,18 @@
         <module>gameengine</module>
         <module>cardserver</module>
         <module>aiplayer</module>
+        <module>admin</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>spring-boot-admin-dependencies</artifactId>
+                <version>${spring-boot-admin.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>com.couchbase.client</groupId>
                 <artifactId>dcp-client</artifactId>
