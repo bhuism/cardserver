@@ -25,6 +25,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
         <spring-boot-admin.version>4.0.2</spring-boot-admin.version>
+        <spring-cloud-kubernetes.version>5.0.1</spring-cloud-kubernetes.version>
     </properties>
 
     <modules>
@@ -42,6 +43,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-kubernetes-fabric8-all</artifactId>
+                <version>${spring-cloud-kubernetes.version}</version>
+            </dependency>
             <dependency>
                 <groupId>de.codecentric</groupId>
                 <artifactId>spring-boot-admin-dependencies</artifactId>

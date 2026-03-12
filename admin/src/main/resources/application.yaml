@@ -5,6 +5,12 @@ spring:
     user:
       name: root
       password: killer
+  cloud:
+    discovery:
+      enabled: true
+    kubernetes:
+      discovery:
+        all-namespaces: false
 management:
   endpoint:
     env:
