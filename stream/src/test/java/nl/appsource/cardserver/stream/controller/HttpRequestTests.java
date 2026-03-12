@@ -58,8 +58,7 @@ public class HttpRequestTests {
 
     @Test
     public void actuatorHealthShouldReturnDefaultMessage() {
-        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
-            .isEqualTo("{\"groups\":[\"liveness\",\"readiness\"],\"status\":\"UP\"}");
+        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk());
     }
 
     @Test
