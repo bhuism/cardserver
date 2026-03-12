@@ -10,7 +10,6 @@ spring:
         instance:
           service-base-url: http://cardserver-cardserverservice.cardserver:8080
           management-base-url: http://cardserver-cardserverservice.cardserver:9080
-
 server:
   port: 8080
 logging:
