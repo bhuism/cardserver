@@ -26,7 +26,7 @@ public class AdminApplication {
                 .permitAll()
                 .pathMatchers(adminServerProperties.getContextPath() + "/login")
                 .permitAll()
-                .pathMatchers("/manage/**")
+                .pathMatchers("/manage/**", "/instances/**")
                 .permitAll()
                 .anyExchange()
                 .authenticated())
