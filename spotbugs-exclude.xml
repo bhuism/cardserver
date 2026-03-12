@@ -24,7 +24,7 @@
         </Or>
     </Match>
     <Match>
-        <Class name="nl.appsource.cardserver.api.controller.GameController" />
+        <Class name="nl.appsource.cardsever.api.controller.GameController" />
         <Bug pattern="BX_UNBOXING_IMMEDIATELY_REBOXED" />
     </Match>
 </FindBugsFilter>
