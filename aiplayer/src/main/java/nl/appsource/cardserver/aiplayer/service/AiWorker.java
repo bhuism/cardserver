@@ -45,7 +45,7 @@ public class AiWorker {
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns().size() != 32)
-                .filter((game) -> game.getLastTrickOpen() != true)
+                .filter((game) -> !game.getLastTrickOpen())
                 .flatMap((Game game) -> {
                     final GameEngine gameEngine = new GameEngineImpl(game);
                     if (gameEngine.isAiSay()) {
