@@ -8,8 +8,8 @@ spring:
       client:
         url: http://cardserver-admin.cardserver:8085/admin
         instance:
-          service-base-url: http://api.cardserver:8080
-          management-base-url: http://api.cardserver:9080
+          service-base-url: http://cardserver-api.cardserver:8080
+          management-base-url: http://cardserver-api.cardserver:9080
 server:
   port: 8080
 logging:
