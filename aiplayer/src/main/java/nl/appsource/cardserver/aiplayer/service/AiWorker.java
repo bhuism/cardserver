@@ -46,6 +46,7 @@ public class AiWorker {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns().size() != 32)
                 .filter((game) -> !game.getLastTrickOpen())
+                .doOnNext((game) -> log.info("AiWorker startup for game: {}", game.getId()))
                 .flatMap((Game game) -> {
                     final GameEngine gameEngine = new GameEngineImpl(game);
                     if (gameEngine.isAiSay()) {
