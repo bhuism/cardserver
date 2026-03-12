@@ -1,5 +1,6 @@
 package nl.appsource.cardsever.api;
 
+import nl.appsource.cardserver.converters.config.ConvertersConfig;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
@@ -9,12 +10,14 @@ import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 @ActiveProfiles("citest")
+@Import(ConvertersConfig.class)
 class ApiApplicationTests {
 
     @MockitoBean

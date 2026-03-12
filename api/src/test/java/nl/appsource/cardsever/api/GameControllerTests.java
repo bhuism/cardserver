@@ -1,5 +1,6 @@
 package nl.appsource.cardsever.api;
 
+import nl.appsource.cardserver.converters.config.ConvertersConfig;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -39,6 +41,7 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("citest")
 @SpringBootTest(properties = "spring.main.web-application-type=reactive", webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
+@Import(ConvertersConfig.class)
 public class GameControllerTests {
 
     @Autowired
