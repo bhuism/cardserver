@@ -39,7 +39,7 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: |
-            ghcr.io/bhuism/cardserver
+            ghcr.io/bhuism/api
             ghcr.io/bhuism/couchbase2redis
             ghcr.io/bhuism/stream
             ghcr.io/bhuism/gameengine
@@ -63,7 +63,7 @@ jobs:
         run: |
           docker push ghcr.io/bhuism/stream:latest
           docker push ghcr.io/bhuism/couchbase2redis:latest
-          docker push ghcr.io/bhuism/cardserver:latest
+          docker push ghcr.io/bhuism/api:latest
           docker push ghcr.io/bhuism/gameengine:latest
           docker push ghcr.io/bhuism/aiplayer:latest
           docker push ghcr.io/bhuism/admin:latest
