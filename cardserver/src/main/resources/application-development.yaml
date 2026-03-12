@@ -6,11 +6,6 @@ logging:
     ROOT: info
 #    org.springframework: trace
     nl.appsource: debug
-management:
-  endpoints:
-    web:
-      exposure:
-        include: '*'
 spring:
   data:
     redis:

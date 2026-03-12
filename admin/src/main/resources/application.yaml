@@ -4,3 +4,24 @@ spring:
   boot:
     admin:
       context-path: /admin
+management:
+  endpoint:
+    env:
+      show-values: always
+    info:
+      access: read_only
+    health:
+      access: read_only
+      probes:
+        enabled: true
+      show-details: always
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: '*'
+  server:
+    port: 9085
+    ssl:
+      enabled: false
+    add-application-context-header: true
