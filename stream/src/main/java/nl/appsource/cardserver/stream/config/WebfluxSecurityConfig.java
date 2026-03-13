@@ -43,10 +43,10 @@ public class WebfluxSecurityConfig {
     @Order(200)
     public SecurityWebFilterChain securityFilterChainManagement(final ServerHttpSecurity http) {
         return http
-            .securityMatcher(ServerWebExchangeMatchers.pathMatchers("/manage/**"))
+            .securityMatcher(ServerWebExchangeMatchers.pathMatchers("/actuator/**"))
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/manage/**").permitAll())
+            .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/actuator/**").permitAll())
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .build();
@@ -60,7 +60,7 @@ public class WebfluxSecurityConfig {
         publicConfig.setAllowedOriginPatterns(List.of("*"));
         publicConfig.setAllowedMethods(List.of("GET"));
 
-        source.registerCorsConfiguration("/manage/**", publicConfig);
+        source.registerCorsConfiguration("/actuator/**", publicConfig);
 
         final CorsConfiguration privateConfig = new CorsConfiguration();
         privateConfig.setAllowCredentials(true);

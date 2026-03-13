@@ -65,18 +65,18 @@ public class HttpRequestTests {
 
     @Test
     public void actuatorHealthShouldReturnDefaultMessage() {
-        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody());
+        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/actuator/health", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody());
     }
 
     @Test
     public void actuatorHealthLiveNessShouldReturnDefaultMessage() {
-        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health/liveness", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
+        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/actuator/health/liveness", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
             .isEqualTo("{\"status\":\"UP\"}");
     }
 
     @Test
     public void actuatorHealthReadinessShouldReturnDefaultMessage() {
-        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/manage/health/readiness", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
+        assertThat(this.webTestClient.get().uri("http://localhost:" + managementPort + "/actuator/health/readiness", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
             .isEqualTo("{\"status\":\"UP\"}");
     }
 }

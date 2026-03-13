@@ -11,6 +11,7 @@ spring:
     kubernetes:
       discovery:
         all-namespaces: false
+
 management:
   endpoint:
     env:
@@ -24,7 +25,6 @@ management:
       show-details: always
   endpoints:
     web:
-      base-path: /manage
       exposure:
         include: '*'
   server:

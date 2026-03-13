@@ -81,7 +81,7 @@ public class WebfluxSecurityConfig {
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
-                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/manage/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/actuator/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
                     .permitAll()
             );
         return http.build();
