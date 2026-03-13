@@ -3,13 +3,13 @@ spring:
     redis:
       host: redis-stack.redis-stack.svc.cluster.local
       port: 6379
-  boot:
-    admin:
-      client:
-        url: http://cardserver-admin.cardserver:8085
-        instance:
-          service-base-url: http://cardserver-couchbase2redis.cardserver:8081
-          management-base-url: http://cardserver-couchbase2redis.cardserver:9081
+#  boot:
+#    admin:
+#      client:
+#        url: http://cardserver-admin.cardserver:8085
+#        instance:
+#          service-base-url: http://cardserver-couchbase2redis.cardserver:8081
+#          management-base-url: http://cardserver-couchbase2redis.cardserver:9081
 cardserver:
   couchbase:
     connection-string: couchbase://couchbase.couchbase.svc.cluster.local

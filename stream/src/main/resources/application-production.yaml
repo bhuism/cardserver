@@ -8,13 +8,13 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "https://api.klaversjassen.nl"
-  boot:
-    admin:
-      client:
-        url: http://cardserver-admin.cardserver:8085
-        instance:
-          service-base-url: http://cardserver-stream.cardserver:8082
-          management-base-url: http://cardserver-stream.cardserver:9082
+#  boot:
+#    admin:
+#      client:
+#        url: http://cardserver-admin.cardserver:8085
+#        instance:
+#          service-base-url: http://cardserver-stream.cardserver:8082
+#          management-base-url: http://cardserver-stream.cardserver:9082
 
 cardserver:
   couchbase:
