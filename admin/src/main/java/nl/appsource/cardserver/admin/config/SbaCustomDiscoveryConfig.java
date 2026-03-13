@@ -20,9 +20,7 @@ public class SbaCustomDiscoveryConfig {
 
             @Override
             protected URI getServiceUrl(final ServiceInstance instance) {
-
                 log.info("getServiceUrl() instance.getMetadata(): " + instance.getMetadata());
-
                 String serviceId = instance.getServiceId();
 
                 // Option A: If routing via an external Ingress/Gateway
@@ -31,7 +29,9 @@ public class SbaCustomDiscoveryConfig {
                 // Option B: If routing via internal Kubernetes DNS (and your SBA server has access to the K8s DNS resolution)
                 String namespace = instance.getMetadata().getOrDefault("k8s_namespace", "default");
                 int port = instance.getPort();
-                return URI.create(String.format("http://%s.%s.svc.cluster.local:%d", serviceId, namespace, port));
+                final URI result = URI.create(String.format("http://%s.%s.svc.cluster.local:%d", serviceId, namespace, port));
+                log.info("getServiceUrl() result: " + result);
+                return result;
             }
 
             @Override
@@ -39,7 +39,9 @@ public class SbaCustomDiscoveryConfig {
                 log.info("getManagementUrl() instance.getMetadata(): " + instance.getMetadata());
                 // Fetch the context path from metadata, defaulting to standard actuator path
                 String contextPath = instance.getMetadata().getOrDefault("management.context-path", "/actuator");
-                return URI.create(getServiceUrl(instance) + contextPath);
+                final URI result = URI.create(getServiceUrl(instance) + contextPath);
+                log.info("getManagementUrl() result: " + result);
+                return result;
             }
 
             @Override
@@ -47,7 +49,9 @@ public class SbaCustomDiscoveryConfig {
                 log.info("getHealthUrl() instance.getMetadata(): " + instance.getMetadata());
                 // Ensure the health endpoint maps correctly
                 String healthPath = instance.getMetadata().getOrDefault("health.path", "/health");
-                return URI.create(getManagementUrl(instance) + healthPath);
+                final URI result = URI.create(getManagementUrl(instance) + healthPath);
+                log.info("getHealthUrl() result: " + result);
+                return result;
             }
         };
     }
