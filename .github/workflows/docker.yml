@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: Login to GHCR
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        uses: docker/login-action@4.0.0
         with:
           registry: ghcr.io/bhuism/cardserver
           username: bhuism
