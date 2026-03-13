@@ -28,13 +28,6 @@ spring:
           no-store: true
           no-cache: true
           max-age: 0
-  boot:
-    admin:
-      client:
-        url: http://localhost:8085/admin
-        instance:
-          service-base-url: http://localhost:8080
-          management-base-url: http://localhost:9080
 management:
   endpoint:
     env:
