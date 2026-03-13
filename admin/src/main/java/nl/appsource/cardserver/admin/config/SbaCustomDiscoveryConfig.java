@@ -15,10 +15,11 @@ public class SbaCustomDiscoveryConfig {
 
     @Bean
     public ServiceInstanceConverter customServiceInstanceConverter() {
+
         return new DefaultServiceInstanceConverter() {
 
             @Override
-            protected URI getServiceUrl(ServiceInstance instance) {
+            protected URI getServiceUrl(final ServiceInstance instance) {
 
                 log.info("getServiceUrl() instance.getMetadata(): " + instance.getMetadata());
 
@@ -34,7 +35,7 @@ public class SbaCustomDiscoveryConfig {
             }
 
             @Override
-            protected URI getManagementUrl(ServiceInstance instance) {
+            protected URI getManagementUrl(final ServiceInstance instance) {
                 log.info("getManagementUrl() instance.getMetadata(): " + instance.getMetadata());
                 // Fetch the context path from metadata, defaulting to standard actuator path
                 String contextPath = instance.getMetadata().getOrDefault("management.context-path", "/actuator");
@@ -42,7 +43,7 @@ public class SbaCustomDiscoveryConfig {
             }
 
             @Override
-            protected URI getHealthUrl(ServiceInstance instance) {
+            protected URI getHealthUrl(final ServiceInstance instance) {
                 log.info("getHealthUrl() instance.getMetadata(): " + instance.getMetadata());
                 // Ensure the health endpoint maps correctly
                 String healthPath = instance.getMetadata().getOrDefault("health.path", "/health");
