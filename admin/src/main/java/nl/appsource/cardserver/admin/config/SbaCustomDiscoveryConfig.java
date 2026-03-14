@@ -36,18 +36,22 @@ public class SbaCustomDiscoveryConfig {
 
             @Override
             protected URI getManagementUrl(final ServiceInstance instance) {
-                log.info("getManagementUrl() instance.getMetadata(): " + instance.getMetadata());
+//                log.info("getManagementUrl() instance.getMetadata(): " + instance.getMetadata());
 //                // Fetch the context path from metadata, defaulting to standard actuator path
 //                String contextPath = instance.getMetadata().getOrDefault("management.context-path", "/actuator");
 //                final URI result = URI.create(getServiceUrl(instance) + contextPath);
 //                log.info("getManagementUrl() result: " + result);
 //                return result;
+
+//                log.info("management.port: " + instance.getMetadata().get("management.port"));
+                log.info("1 {} {} management.port: {}", instance.getServiceId(), instance.getInstanceId(), instance.getMetadata().get("management.port"));
                 return super.getManagementUrl(instance);
             }
 
             @Override
             protected URI getHealthUrl(final ServiceInstance instance) {
-                log.info("getHealthUrl() instance.getMetadata(): " + instance.getMetadata());
+                log.info("2 {} {} management.port: {}", instance.getServiceId(), instance.getInstanceId(), instance.getMetadata().get("management.port"));
+//                log.info("getHealthUrl() instance.getMetadata(): " + instance.getMetadata());
 //                // Ensure the health endpoint maps correctly
 //                String healthPath = instance.getMetadata().getOrDefault("health.path", "/health");
 //                final URI result = URI.create(getManagementUrl(instance) + healthPath);
