@@ -11,8 +11,9 @@ spring:
     kubernetes:
       discovery:
         all-namespaces: false
-#        metadata:
-#          add-annotations: true
+#        primary-port-name: http
+        metadata:
+          add-annotations: true
 management:
   endpoint:
     env:
