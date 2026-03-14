@@ -105,7 +105,7 @@ public class Worker {
     public void startListening() {
         streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
             final GameEvent gameEvent = record.getValue();
-            log.info("Received gameEvent: {}", gameEvent);
+//            log.info("Received gameEvent: {}", gameEvent);
             scheduleGameEvent(gameEvent);
             return Mono.empty();
         });
