@@ -1,23 +1,23 @@
-//package nl.appsource.cardserver.admin.config;
-//
-//import de.codecentric.boot.admin.server.cloud.discovery.DefaultServiceInstanceConverter;
-//import de.codecentric.boot.admin.server.cloud.discovery.ServiceInstanceConverter;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.cloud.client.ServiceInstance;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//
-//import java.net.URI;
-//
-//@Slf4j
-//@Configuration
-//public class SbaCustomDiscoveryConfig {
-//
-//    @Bean
-//    public ServiceInstanceConverter customServiceInstanceConverter() {
-//
-//        return new DefaultServiceInstanceConverter() {
-//
+package nl.appsource.cardserver.admin.config;
+
+import de.codecentric.boot.admin.server.cloud.discovery.DefaultServiceInstanceConverter;
+import de.codecentric.boot.admin.server.cloud.discovery.ServiceInstanceConverter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.net.URI;
+
+@Slf4j
+@Configuration
+public class SbaCustomDiscoveryConfig {
+
+    @Bean
+    public ServiceInstanceConverter customServiceInstanceConverter() {
+
+        return new DefaultServiceInstanceConverter() {
+
 //            @Override
 //            protected URI getServiceUrl(final ServiceInstance instance) {
 //                log.info("getServiceUrl() instance.getMetadata(): " + instance.getMetadata());
@@ -33,26 +33,28 @@
 //                log.info("getServiceUrl() result: " + result);
 //                return result;
 //            }
-//
-//            @Override
-//            protected URI getManagementUrl(final ServiceInstance instance) {
-//                log.info("getManagementUrl() instance.getMetadata(): " + instance.getMetadata());
+
+            @Override
+            protected URI getManagementUrl(final ServiceInstance instance) {
+                log.info("getManagementUrl() instance.getMetadata(): " + instance.getMetadata());
 //                // Fetch the context path from metadata, defaulting to standard actuator path
 //                String contextPath = instance.getMetadata().getOrDefault("management.context-path", "/actuator");
 //                final URI result = URI.create(getServiceUrl(instance) + contextPath);
 //                log.info("getManagementUrl() result: " + result);
 //                return result;
-//            }
-//
-//            @Override
-//            protected URI getHealthUrl(final ServiceInstance instance) {
-//                log.info("getHealthUrl() instance.getMetadata(): " + instance.getMetadata());
+                return super.getManagementUrl(instance);
+            }
+
+            @Override
+            protected URI getHealthUrl(final ServiceInstance instance) {
+                log.info("getHealthUrl() instance.getMetadata(): " + instance.getMetadata());
 //                // Ensure the health endpoint maps correctly
 //                String healthPath = instance.getMetadata().getOrDefault("health.path", "/health");
 //                final URI result = URI.create(getManagementUrl(instance) + healthPath);
 //                log.info("getHealthUrl() result: " + result);
 //                return result;
-//            }
-//        };
-//    }
-//}
+                return super.getHealthUrl(instance);
+            }
+        };
+    }
+}
