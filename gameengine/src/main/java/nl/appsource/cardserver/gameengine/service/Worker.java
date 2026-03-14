@@ -172,9 +172,7 @@ public class Worker {
                 .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
                 .map(gameEngineRw -> (GameEngineRw) gameEngineRw)
                 .flatMap(gameEngineRw -> {
-
                     final String userId = gameEvent.getUserId();
-
                     return switch (gameEvent.getEventType()) {
                         case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
                         case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
@@ -197,9 +195,6 @@ public class Worker {
                         // Re-throw the original error to the subscriber
                         .then(Mono.error(error));
                 })
-                .doFinally(signalType -> {
-                    gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).subscribe();
-                })
                 .flatMap(game -> {
                     if (game.getBoomId() != null) {
                         return boomRepository.findById(game.getBoomId())
@@ -208,6 +203,9 @@ public class Worker {
                     } else {
                         return Mono.just(game);
                     }
+                })
+                .doFinally(signalType -> {
+                    gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
                 })
             )
             .then()
