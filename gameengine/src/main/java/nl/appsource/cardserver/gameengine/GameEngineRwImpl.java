@@ -61,9 +61,7 @@ public record GameEngineRwImpl(String userId, Game game, GameEngine gameEngine, 
         if (gotTurn != playerNum) {
             return userMessenger.sendUserMessage("It's player " + game.getPlayers().get(gotTurn) + " turn").then(Mono.empty());
         }
-
-        log.info("playCard() game: {}, card: {}, player: {}", game.getId(), card, userId);
-
+        
         //game.setUpdated(Instant.now());
         game.getTurns().add(card);
         game.setLastTrickOpen(false);
