@@ -56,7 +56,6 @@ public class SubscribeController implements V1Api {
         exchange.getResponse().getHeaders().add("X-Accel-Buffering", "no");
 
         return getUserId(exchange)
-            .doOnNext(userId -> log.info("{} subscribe() userId={}", exchange.getRequest().getRemoteAddress(), userId))
             .map(userId -> ResponseEntity.ok(sseEmitterRepository.subscribe(
                 userId, "" + exchange.getRequest().getRemoteAddress(),
                 userAgent
