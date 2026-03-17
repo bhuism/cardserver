@@ -112,7 +112,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
                                 if (boom.getGames().size() < 16) {
                                     return calcDealer(boom)
                                         .flatMap(dealer -> {
-                                            log.info("Creating new game for Boom " + boomId + ", player=" + boom.getPlayers() + ", dealer:" + dealer);
+//                                            log.info("Creating new game for Boom " + boomId + ", player=" + boom.getPlayers() + ", dealer:" + dealer);
                                             return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
                                                 .doOnNext(game -> boom.getGames().add(game.getId()))
                                                 .flatMap(game -> boomRepository.save(boom).thenReturn(game));
