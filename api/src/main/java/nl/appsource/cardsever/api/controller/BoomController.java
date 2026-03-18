@@ -4,12 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
-import nl.appsource.cardserver.couchbase.repository.BoomRepository;
-import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardsever.api.service.BoomService;
-import nl.appsource.cardsever.api.service.GameService;
 import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.CreateBoom;
 import nl.appsource.generated.openapi.model.Game;
@@ -19,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.SecureRandom;
@@ -32,9 +27,6 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     private final BoomService boomService;
     private final BoomToOpenApiConverter boomToOpenApiConverter;
-    private final BoomRepository boomRepository;
-    private final GameRepository gameRepository;
-    private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
 
@@ -85,48 +77,14 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     }
 
-    private Mono<Integer> calcDealer(final nl.appsource.cardserver.model.Boom boom) {
-
-        if (boom.getGames().isEmpty()) {
-            return Mono.just(RAND.nextInt(4));
-        }
-
-        return boomRepository.findById(boom.getGames().getLast())
-            .map(game -> (game.getDealer() + 1) % 4);
-
-    }
-
-
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final String boomId, final ServerWebExchange exchange) {
         log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
         return getUserId(exchange)
-            .flatMap(userId -> {
-                return boomRepository.findById(boomId)
-                    .flatMap((boom) -> {
-                        return Flux.fromIterable(boom.getGames())
-                            .flatMap(gameRepository::findById)
-                            .filter(game -> !new GameEngineImpl(game).isCompleted())
-                            .next()
-                            .switchIfEmpty(Mono.defer(() -> {
-                                if (boom.getGames().size() < 16) {
-                                    return calcDealer(boom)
-                                        .flatMap(dealer -> {
-//                                            log.info("Creating new game for Boom " + boomId + ", player=" + boom.getPlayers() + ", dealer:" + dealer);
-                                            return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
-                                                .doOnNext(game -> boom.getGames().add(game.getId()))
-                                                .flatMap(game -> boomRepository.save(boom).thenReturn(game));
-                                        });
-                                } else {
-                                    return Mono.empty();
-                                }
-                            }))
-                            .mapNotNull(gameToOpenApiConverter::convert)
-                            .map(ResponseEntity::ok)
-                            .defaultIfEmpty(ResponseEntity.notFound()
-                                .build());
-                    });
-            })
+            .flatMap(userId -> boomService.playBoom(userId, boomId))
+            .mapNotNull(gameToOpenApiConverter::convert)
+            .map(ResponseEntity::ok)
+            .defaultIfEmpty(ResponseEntity.notFound().build())
             .map(responseEntityMono -> responseEntityMono);
     }
 

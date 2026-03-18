@@ -2,6 +2,7 @@ package nl.appsource.cardsever.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
@@ -11,6 +12,8 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -29,6 +32,7 @@ import java.util.stream.Stream;
 import static java.util.Collections.shuffle;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGame;
 import static nl.appsource.cardserver.utils.IDTYPE.GAME;
 import static nl.appsource.cardserver.utils.Utils.idGen;
 
@@ -47,7 +51,15 @@ public class GameServiceImpl implements GameService {
 
     private final BoomRepository boomRepository;
 
-    boolean stop = false;
+    private final RedisPubSubService redisPubSubService;
+
+    private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private Mono<Game> sendUpdateGame(final Game game) {
+        final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
+        return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers())
+            .mergeWith(Flux.just(game.getCreator(), game.getId())).distinct(), gameEvent).thenReturn(game);
+    }
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
@@ -97,6 +109,7 @@ public class GameServiceImpl implements GameService {
                 game.setAiRisc(aiRisc);
             })
             .flatMap(gameRepository::save)
+            .flatMap(this::sendUpdateGame)
             .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet())).then(Mono.just(game)))
             .flatMap(game -> sseEventSender.newGame(game).then(Mono.just(game)));
         //       .doOnNext(game -> scheduleNext(new GameEngineImpl(game)));

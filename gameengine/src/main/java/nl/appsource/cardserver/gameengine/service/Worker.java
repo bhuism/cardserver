@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
@@ -11,7 +12,9 @@ import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
+import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -41,6 +44,7 @@ import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
 import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGame;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -66,9 +70,28 @@ public class Worker {
 
     private final BoomRepository boomRepository;
 
+    private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final BoomToOpenApiConverter boomToOpenApiConverter;
+
     boolean stop = false;
 
     private Disposable streamSubscription;
+
+    private Mono<Boom> sendUpdateBoom(final Boom boom) {
+        return redisPubSubService.broadCast(Flux.fromIterable(boom.getPlayers())
+                .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
+                .distinct(), MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)))
+            .thenReturn(boom);
+    }
+
+    private Mono<Game> sendUpdateGame(final Game game) {
+        final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
+        return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers())
+            .mergeWith(Flux.just(game.getCreator(), game.getId())).distinct(), gameEvent).thenReturn(game);
+    }
+
+
 
     @PostConstruct
     public void init() {
@@ -95,6 +118,7 @@ public class Worker {
                 .map(game -> new GameEngineRwImpl(null, game, noOpuserMessenger))
                 .flatMap(GameEngineRwImpl::rotateTrump)
                 .flatMap(gameRepository::save)
+                .flatMap(this::sendUpdateGame)
                 .subscribe();
         }
 
@@ -183,8 +207,18 @@ public class Worker {
                     };
                 })
                 .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
+                .flatMap(this::sendUpdateGame)
                 .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
-                .onErrorResume(error -> {
+                .flatMap(game -> {
+                    if (game.getBoomId() != null) {
+                        return boomRepository.findById(game.getBoomId())
+                            .flatMap(boomRepository::save)
+                            .flatMap(this::sendUpdateBoom)
+                            .then(Mono.just(game));
+                    } else {
+                        return Mono.just(game);
+                    }
+                })                .onErrorResume(error -> {
                     log.error("Error during update, attempting to unlock game: {}", entry.getKey().getId());
                     return gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue())
                         // Swallow unlock-specific errors so we don't mask the original error
@@ -194,15 +228,6 @@ public class Worker {
                         })
                         // Re-throw the original error to the subscriber
                         .then(Mono.error(error));
-                })
-                .flatMap(game -> {
-                    if (game.getBoomId() != null) {
-                        return boomRepository.findById(game.getBoomId())
-                            .map(boomRepository::save)
-                            .then(Mono.just(game));
-                    } else {
-                        return Mono.just(game);
-                    }
                 })
                 .doFinally(signalType -> {
                     gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
