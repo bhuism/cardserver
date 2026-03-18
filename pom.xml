@@ -20,7 +20,6 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <spotbugs.version>4.9.8.2</spotbugs.version>
         <checkstyle.version>3.6.0</checkstyle.version>
-        <dcp-client.version>0.56.0</dcp-client.version>
         <openapi-generator-maven-plugin.version>7.20.0</openapi-generator-maven-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
@@ -53,11 +52,6 @@
                 <version>${spring-boot-admin.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.couchbase.client</groupId>
-                <artifactId>dcp-client</artifactId>
-                <version>${dcp-client.version}</version>
             </dependency>
             <dependency>
                 <groupId>nl.appsource.cardserver</groupId>
