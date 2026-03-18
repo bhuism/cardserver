@@ -85,12 +85,12 @@ jobs:
           if [ "${{ steps.changes.outputs.common }}" == "true" ]; then
             PL_ARGS="api,couchbase2redis,stream,gameengine,aiplayer,admin"
           else
-            [ "${{ steps.changes.outputs.api }}" == "true" ] && PL_ARGS="${PL_ARGS}api,"
-            [ "${{ steps.changes.outputs.couchbase2redis }}" == "true" ] && PL_ARGS="${PL_ARGS}couchbase2redis,"
-            [ "${{ steps.changes.outputs.stream }}" == "true" ] && PL_ARGS="${PL_ARGS}stream,"
-            [ "${{ steps.changes.outputs.gameengine }}" == "true" ] && PL_ARGS="${PL_ARGS}gameengine,"
-            [ "${{ steps.changes.outputs.aiplayer }}" == "true" ] && PL_ARGS="${PL_ARGS}aiplayer,"
-            [ "${{ steps.changes.outputs.admin }}" == "true" ] && PL_ARGS="${PL_ARGS}admin,"
+            if [ "${{ steps.changes.outputs.api }}" == "true" ]; then PL_ARGS="${PL_ARGS}api,"; fi
+            if [ "${{ steps.changes.outputs.couchbase2redis }}" == "true" ]; then PL_ARGS="${PL_ARGS}couchbase2redis,"; fi
+            if [ "${{ steps.changes.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
+            if [ "${{ steps.changes.outputs.gameengine }}" == "true" ]; then PL_ARGS="${PL_ARGS}gameengine,"; fi
+            if [ "${{ steps.changes.outputs.aiplayer }}" == "true" ]; then PL_ARGS="${PL_ARGS}aiplayer,"; fi
+            if [ "${{ steps.changes.outputs.admin }}" == "true" ]; then PL_ARGS="${PL_ARGS}admin,"; fi
             PL_ARGS="${PL_ARGS%,}"
           fi
           
@@ -121,12 +121,12 @@ jobs:
         id: deps
         run: |
           DEPS=""
-          [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.api }}" == "true" ] && DEPS="${DEPS}cardserver-api "
-          [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.couchbase2redis }}" == "true" ] && DEPS="${DEPS}cardserver-couchbase2redis "
-          [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.stream }}" == "true" ] && DEPS="${DEPS}cardserver-stream "
-          [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.gameengine }}" == "true" ] && DEPS="${DEPS}cardserver-gameengine "
-          [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.aiplayer }}" == "true" ] && DEPS="${DEPS}cardserver-aiplayer "
-          [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.admin }}" == "true" ] && DEPS="${DEPS}cardserver-admin "
+          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.api }}" == "true" ]; then DEPS="${DEPS}cardserver-api "; fi
+          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.couchbase2redis }}" == "true" ]; then DEPS="${DEPS}cardserver-couchbase2redis "; fi
+          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.stream }}" == "true" ]; then DEPS="${DEPS}cardserver-stream "; fi
+          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.gameengine }}" == "true" ]; then DEPS="${DEPS}cardserver-gameengine "; fi
+          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.aiplayer }}" == "true" ]; then DEPS="${DEPS}cardserver-aiplayer "; fi
+          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.admin }}" == "true" ]; then DEPS="${DEPS}cardserver-admin "; fi
           DEPS=$(echo "$DEPS" | xargs)
           echo "deployments=${DEPS}" >> $GITHUB_OUTPUT
 
