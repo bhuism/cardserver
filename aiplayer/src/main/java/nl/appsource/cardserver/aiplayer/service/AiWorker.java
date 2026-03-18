@@ -8,7 +8,6 @@ import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
@@ -31,8 +30,6 @@ public class AiWorker {
 
     private final RedisStreamService redisStreamService;
 
-    private final RedisPubSubService redisPubSubService;
-
     private final GameRepository gameRepository;
 
     private final Environment environment;
@@ -51,10 +48,10 @@ public class AiWorker {
                     final GameEngine gameEngine = new GameEngineImpl(game);
                     if (gameEngine.isAiSay()) {
                         final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
-                        return scheduleNext(game.getId(), userId);
+                        return say(game.getId(), userId);
                     } else if (gameEngine.isAiTurn()) {
                         final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
-                        return scheduleNext(game.getId(), userId);
+                        return playCard(game.getId(), userId);
                     } else {
                         return Mono.empty();
                     }
@@ -73,9 +70,13 @@ public class AiWorker {
                 }
 
                 final GameEvent gameEvent = record.getValue();
-//                    log.info("AiWorker received event: {}", gameEvent);
-                final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(gameEvent, nl.appsource.generated.openapi.model.Game.class);
-                return scheduleNext(game.getId(), userId).then();
+
+                return switch (gameEvent.getEventType()) {
+                    case SAY -> say(gameEvent.getGameId(), gameEvent.getUserId()).then();
+                    case PLAY_CARD -> playCard(gameEvent.getGameId(), gameEvent.getUserId()).then();
+                    default -> Mono.empty();
+                };
+
             });
         });
 
@@ -93,12 +94,12 @@ public class AiWorker {
 
     }
 
-    private Mono<String> scheduleNext(final String gameId, final String userId) {
+    private Mono<String> say(final String gameId, final String userId) {
 
-        log.info("scheduleNext for gameId={} userId={}", gameId, userId);
+        log.info("say() for gameId={} userId={}", gameId, userId);
 
         if (userId == null || gameId == null) {
-            log.error("scheduleNext for gameId={} userId={}", gameId, userId);
+            log.error("say() for gameId={} userId={}", gameId, userId);
             return Mono.empty();
         }
 
@@ -128,7 +129,36 @@ public class AiWorker {
                     return redisStreamService.publishToStream("gameEvent", new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000)))
                         .then(Mono.just(gameId));
 
-                } else if (gameEngine.isAiTurn()) {
+                } else {
+                    return Mono.empty();
+                }
+
+            });
+
+    }
+
+    private Mono<String> playCard(final String gameId, final String userId) {
+
+        log.info("playcard() for gameId={} userId={}", gameId, userId);
+
+        if (userId == null || gameId == null) {
+            log.error("playCard() for gameId={} userId={}", gameId, userId);
+            return Mono.empty();
+        }
+
+        return gameRepository.findById(gameId)
+            .map(GameEngineImpl::new)
+            .flatMap(gameEngine -> {
+
+                if (gameEngine.isCompleted()) {
+                    return Mono.empty();
+                }
+
+                if (gameEngine.getGame().getLastTrickOpen()) {
+                    return Mono.empty();
+                }
+
+                if (gameEngine.isAiTurn()) {
 
                     if (!userId.equals(gameEngine.game().getPlayers().get(gameEngine.calcWhoHasTurn()))) {
                         // not my turn
@@ -148,5 +178,6 @@ public class AiWorker {
             });
 
     }
+
 
 }
