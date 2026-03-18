@@ -95,7 +95,12 @@ public class AiWorker {
 
     private Mono<String> scheduleNext(final String gameId, final String userId) {
 
-//        log.info("scheduleNext for gameId={}", gameId);
+        log.info("scheduleNext for gameId={} userId={}", gameId, userId);
+
+        if (userId == null || gameId == null) {
+            log.error("scheduleNext for gameId={} userId={}", gameId, userId);
+            return Mono.empty();
+        }
 
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
