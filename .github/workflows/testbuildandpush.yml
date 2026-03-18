@@ -17,7 +17,6 @@ jobs:
     outputs:
       common: ${{ steps.changes.outputs.common }}
       api: ${{ steps.changes.outputs.api }}
-      couchbase2redis: ${{ steps.changes.outputs.couchbase2redis }}
       stream: ${{ steps.changes.outputs.stream }}
       gameengine: ${{ steps.changes.outputs.gameengine }}
       aiplayer: ${{ steps.changes.outputs.aiplayer }}
@@ -48,7 +47,6 @@ jobs:
         with:
           images: |
             ghcr.io/bhuism/api
-            ghcr.io/bhuism/couchbase2redis
             ghcr.io/bhuism/stream
             ghcr.io/bhuism/gameengine
             ghcr.io/bhuism/aiplayer
@@ -67,7 +65,6 @@ jobs:
         with:
           filters: |
             api: 'api/**'
-            couchbase2redis: 'couchbase2redis/**'
             stream: 'stream/**'
             gameengine: 'gameengine/**'
             aiplayer: 'aiplayer/**'
@@ -83,10 +80,9 @@ jobs:
         run: |
           PL_ARGS=""
           if [ "${{ steps.changes.outputs.common }}" == "true" ]; then
-            PL_ARGS="api,couchbase2redis,stream,gameengine,aiplayer,admin"
+            PL_ARGS="api,stream,gameengine,aiplayer,admin"
           else
             if [ "${{ steps.changes.outputs.api }}" == "true" ]; then PL_ARGS="${PL_ARGS}api,"; fi
-            if [ "${{ steps.changes.outputs.couchbase2redis }}" == "true" ]; then PL_ARGS="${PL_ARGS}couchbase2redis,"; fi
             if [ "${{ steps.changes.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
             if [ "${{ steps.changes.outputs.gameengine }}" == "true" ]; then PL_ARGS="${PL_ARGS}gameengine,"; fi
             if [ "${{ steps.changes.outputs.aiplayer }}" == "true" ]; then PL_ARGS="${PL_ARGS}aiplayer,"; fi
@@ -105,7 +101,6 @@ jobs:
         if: success() && github.event_name != 'pull_request'
         run: |
           if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.api }}" == "true" ]; then docker push ghcr.io/bhuism/api:latest; fi
-          if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.couchbase2redis }}" == "true" ]; then docker push ghcr.io/bhuism/couchbase2redis:latest; fi
           if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.stream }}" == "true" ]; then docker push ghcr.io/bhuism/stream:latest; fi
           if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.gameengine }}" == "true" ]; then docker push ghcr.io/bhuism/gameengine:latest; fi
           if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.aiplayer }}" == "true" ]; then docker push ghcr.io/bhuism/aiplayer:latest; fi
@@ -122,7 +117,6 @@ jobs:
         run: |
           DEPS=""
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.api }}" == "true" ]; then DEPS="${DEPS}cardserver-api "; fi
-          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.couchbase2redis }}" == "true" ]; then DEPS="${DEPS}cardserver-couchbase2redis "; fi
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.stream }}" == "true" ]; then DEPS="${DEPS}cardserver-stream "; fi
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.gameengine }}" == "true" ]; then DEPS="${DEPS}cardserver-gameengine "; fi
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.aiplayer }}" == "true" ]; then DEPS="${DEPS}cardserver-aiplayer "; fi
