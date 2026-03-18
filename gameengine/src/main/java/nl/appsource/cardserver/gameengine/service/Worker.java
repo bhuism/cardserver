@@ -9,6 +9,7 @@ import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
@@ -34,6 +35,7 @@ import reactor.util.retry.Retry;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -90,7 +92,6 @@ public class Worker {
         return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers())
             .mergeWith(Flux.just(game.getCreator(), game.getId())).distinct(), gameEvent).thenReturn(game);
     }
-
 
 
     @PostConstruct
@@ -200,7 +201,7 @@ public class Worker {
                     return switch (gameEvent.getEventType()) {
                         case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
                         case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
-                        case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(gameEvent.getCard()));
+                        case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard()).orElseThrow()));
                         case SAY -> gameEngineRw.say(gameEvent.getSay());
                         case CLAIM_ROEM -> gameEngineRw.claimRoem();
                         case CLAIM_VERZAKEN -> claimVerzaken(userId, entry.getKey().getId());
@@ -218,7 +219,7 @@ public class Worker {
                     } else {
                         return Mono.just(game);
                     }
-                })                .onErrorResume(error -> {
+                }).onErrorResume(error -> {
                     log.error("Error during update, attempting to unlock game: {}", entry.getKey().getId());
                     return gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue())
                         // Swallow unlock-specific errors so we don't mask the original error
@@ -233,6 +234,17 @@ public class Worker {
                     gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
                 })
             )
+            .map(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                if (gameEngine.isAiSay()) {
+                    final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
+                    redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY)).subscribe();
+                } else if (gameEngine.isAiTurn()) {
+                    final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+                    redisStreamService.publishToStream(aiCardPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.PLAY_CARD)).subscribe();
+                }
+                return Mono.just(game);
+            })
             .then()
             .onErrorResume(throwable -> {
 
