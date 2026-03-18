@@ -152,7 +152,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Flux<MyServerSentEvent> restFlux =
             Mono.delay(Duration.ofSeconds(1))
-                .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisPubSubService.listenTo(userId), redisPubSubService.listenTo(userId)));
+                .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier)));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
