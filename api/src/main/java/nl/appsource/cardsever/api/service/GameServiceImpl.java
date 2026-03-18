@@ -7,6 +7,7 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngine;
+import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
@@ -14,6 +15,8 @@ import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -54,6 +57,8 @@ public class GameServiceImpl implements GameService {
     private final RedisPubSubService redisPubSubService;
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final RedisStreamService redisStreamService;
 
     private Mono<Game> sendUpdateGame(final Game game) {
         final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
@@ -111,8 +116,16 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::save)
             .flatMap(this::sendUpdateGame)
             .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet())).then(Mono.just(game)))
-            .flatMap(game -> sseEventSender.newGame(game).then(Mono.just(game)));
-        //       .doOnNext(game -> scheduleNext(new GameEngineImpl(game)));
+            .flatMap(game -> sseEventSender.newGame(game).then(Mono.just(game)))
+            .flatMap(game -> {
+                final GameEngine gameEngine = new GameEngineImpl(game);
+                if (gameEngine.isAiSay()) {
+                    final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
+                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then(Mono.just(game));
+                } else {
+                    return Mono.just(game);
+                }
+            });
     }
 
     @Override
