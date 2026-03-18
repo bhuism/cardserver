@@ -105,12 +105,8 @@ public class BoomServiceImpl implements BoomService {
                                     return gameService.createGame(userId, boom.getPlayers(), boom.getGameVariant(), boom.getId(), dealer, boom.getAiRisc())
                                         .flatMap(game -> {
                                             boom.getGames().add(game.getId());
-                                            return boomRepository.save(boom).thenReturn(game);
+                                            return boomRepository.save(boom).flatMap(this::sendUpdateBoom).thenReturn(game);
                                         });
-                                })
-                                .flatMap(game -> {
-                                    sendUpdateBoom(boom).subscribe();
-                                    return Mono.just(game);
                                 });
                         } else {
                             return Mono.empty();
