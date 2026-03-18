@@ -238,10 +238,10 @@ public class Worker {
                 final GameEngine gameEngine = new GameEngineImpl(game);
                 if (gameEngine.isAiSay()) {
                     final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-                    redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY)).subscribe();
+                    redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY).userId(aiSayPlayer)).subscribe();
                 } else if (gameEngine.isAiTurn()) {
                     final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                    redisStreamService.publishToStream(aiCardPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.PLAY_CARD)).subscribe();
+                    redisStreamService.publishToStream(aiCardPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.PLAY_CARD).userId(aiCardPlayer)).subscribe();
                 }
                 return Mono.just(game);
             })

@@ -62,18 +62,34 @@ public class AiWorker {
                 .subscribe();
         }
 
-        redisPubSubService.listenToMessage(AI_USER_ID)
 
-            .doOnNext(myServerSentEventEntry -> {
+        AI_USER_ID.forEach(aiUserId -> {
+            redisStreamService.consumeFromStream(aiUserId, aiUserId + "-group", record -> {
+                final String userId = record.getStream();
 
-//                log.info("AiWorker received event: {}", myServerSentEvent.event());
-
-                if (myServerSentEventEntry.getValue().event().equals("updateGame")) {
-//                    log.info("updateGame to game={} class={}", myServerSentEvent.data(), myServerSentEvent.data().getClass());
-                    final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(myServerSentEventEntry.getValue().data(), nl.appsource.generated.openapi.model.Game.class);
-                    scheduleNext(game.getId(), myServerSentEventEntry.getKey()).subscribe();
+                if (!aiUserId.equals(userId)) {
+                    log.error("Received event for wrong user: {} {}", aiUserId, userId);
+                    return Mono.empty();
                 }
-            }).subscribe();
+
+                final GameEvent gameEvent = record.getValue();
+//                    log.info("AiWorker received event: {}", gameEvent);
+                final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(gameEvent, nl.appsource.generated.openapi.model.Game.class);
+                return scheduleNext(game.getId(), userId).then();
+            });
+        });
+
+
+//        redisPubSubService.listenToMessage(AI_USER_ID)
+//            .doOnNext(myServerSentEventEntry -> {
+////                log.info("AiWorker received event: {}", myServerSentEvent.event());
+//                if (myServerSentEventEntry.getValue().event().equals("updateGame")) {
+//                    final GameEvent gameEvent = myServerSentEventEntry.getValue().data();
+////                    log.info("updateGame to game={} class={}", myServerSentEvent.data(), myServerSentEvent.data().getClass());
+//                    final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(gameEvent, nl.appsource.generated.openapi.model.Game.class);
+//                    scheduleNext(game.getId(), myServerSentEventEntry.getKey()).subscribe();
+//                }
+//            }).subscribe();
 
     }
 

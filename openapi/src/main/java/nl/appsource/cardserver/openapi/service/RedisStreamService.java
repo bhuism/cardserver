@@ -38,20 +38,20 @@ public class RedisStreamService {
         HOSTNAME = host;
     }
 
-    public Disposable consumeFromStream(final String streamKey, final String groupName, final Function<ObjectRecord<String, GameEvent>, Mono<Void>> messageProcessor) {
+    public Disposable consumeFromStream(final String stream, final String groupName, final Function<ObjectRecord<String, GameEvent>, Mono<Void>> messageProcessor) {
 
         final ReactiveStreamOperations<String, String, GameEvent> streamOps = reactiveRedisTemplate.opsForStream();
 
         final String consumerName = "consumer-" + HOSTNAME;
 
         // 1. Initialize the Consumer Group
-        return streamOps.createGroup(streamKey, ReadOffset.latest(), groupName)
+        return streamOps.createGroup(stream, ReadOffset.latest(), groupName)
             .onErrorResume(e -> {
                 // Ignore BUSYGROUP error if the group already exists
                 if (e.getCause() != null && e.getCause().getMessage().contains("BUSYGROUP")) {
                     return Mono.empty();
                 } else {
-                    log.error("Failed to create consumer group for stream: {} with group name: {} message: {}", streamKey, groupName, e.getMessage(), e);
+                    log.error("Failed to create consumer group for stream: {} with group name: {} message: {}", stream, groupName, e.getMessage(), e);
                     return Mono.error(e);
                 }
             })
@@ -61,7 +61,7 @@ public class RedisStreamService {
                         GameEvent.class,
                         from(groupName, consumerName),
                         StreamReadOptions.empty().block(Duration.ofSeconds(5)),
-                        StreamOffset.create(streamKey, ReadOffset.lastConsumed())
+                        StreamOffset.create(stream, ReadOffset.lastConsumed())
                     )
                     .flatMap(record ->
                         // Execute the injected business logic
@@ -90,8 +90,8 @@ public class RedisStreamService {
     }
 
 
-    public Mono<RecordId> publishToStream(final String queueName, final GameEvent gameEvent) {
-        final ObjectRecord<String, GameEvent> record = ObjectRecord.create(queueName, gameEvent);
+    public Mono<RecordId> publishToStream(final String stream, final GameEvent gameEvent) {
+        final ObjectRecord<String, GameEvent> record = ObjectRecord.create(stream, gameEvent);
         return reactiveRedisTemplate.opsForStream().add(record)
 //            .doOnSuccess(recordId -> log.info("Published to stream with ID: {}", recordId))
             .doOnError(e -> System.err.println("Failed to publish: " + e.getMessage()));
