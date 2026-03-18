@@ -53,20 +53,53 @@ jobs:
           java-version: '25'
           cache: 'maven'
 
+      - name: Check for changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api: 'api/**'
+            couchbase2redis: 'couchbase2redis/**'
+            stream: 'stream/**'
+            gameengine: 'gameengine/**'
+            aiplayer: 'aiplayer/**'
+            admin: 'admin/**'
+            common:
+              - 'pom.xml'
+              - 'converters/**'
+              - 'couchbase/**'
+              - 'openapi/**'
+              - 'utils/**'
+
       - name: Build image
         run: |
-          mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image
+          PL_ARGS=""
+          if [ "${{ steps.changes.outputs.common }}" == "true" ]; then
+            PL_ARGS="api,couchbase2redis,stream,gameengine,aiplayer,admin"
+          else
+            for module in api couchbase2redis stream gameengine aiplayer admin; do
+              if [ "${{ steps.changes.outputs.$module }}" == "true" ]; then
+                if [ -n "$PL_ARGS" ]; then PL_ARGS="$PL_ARGS,"; fi
+                PL_ARGS="$PL_ARGS$module"
+              fi
+            done
+          fi
+          
+          if [ -n "$PL_ARGS" ]; then
+            mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image -pl $PL_ARGS -am
+          else
+            echo "No modules to build."
+          fi
 
       - name: Push
         id: push
         if: success() && github.event_name != 'pull_request'
         run: |
-          docker push ghcr.io/bhuism/stream:latest
-          docker push ghcr.io/bhuism/couchbase2redis:latest
-          docker push ghcr.io/bhuism/api:latest
-          docker push ghcr.io/bhuism/gameengine:latest
-          docker push ghcr.io/bhuism/aiplayer:latest
-          docker push ghcr.io/bhuism/admin:latest
+          for module in api couchbase2redis stream gameengine aiplayer admin; do
+            if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.$module }}" == "true" ]; then
+              docker push ghcr.io/bhuism/$module:latest
+            fi
+          done
 
   rollout-restart:
     name: Rollout Restart
@@ -79,4 +112,10 @@ jobs:
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
-          args: -n cardserver rollout restart deployment cardserver-api cardserver-couchbase2redis cardserver-stream cardserver-gameengine cardserver-aiplayer cardserver-admin
+          args: |
+            -n cardserver rollout restart deployment \
+            $(for module in api couchbase2redis stream gameengine aiplayer admin; do
+              if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.$module }}" == "true" ]; then
+                echo -n "cardserver-$module "
+              fi
+            done)
