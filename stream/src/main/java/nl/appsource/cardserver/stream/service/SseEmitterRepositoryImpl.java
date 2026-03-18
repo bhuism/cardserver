@@ -129,7 +129,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .collectList()
             .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return concat(me, friends, games, booms, onlineList);
+        return concat(just(MyServerSentEvent.startCache()), me, friends, games, booms, just(MyServerSentEvent.endCache()), onlineList);
 
     }
 
@@ -150,13 +150,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Sinks.Many<MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
 
-        final Flux<MyServerSentEvent> redisUserMessage = redisPubSubService.listenTo(userId);
-
-        final Flux<MyServerSentEvent> redisAooidentifierMessage = redisPubSubService.listenTo(appIdentifier);
-
         final Flux<MyServerSentEvent> restFlux =
             Mono.delay(Duration.ofSeconds(1))
-                .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisUserMessage, redisAooidentifierMessage));
+                .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisPubSubService.listenTo(userId), redisPubSubService.listenTo(userId)));
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)

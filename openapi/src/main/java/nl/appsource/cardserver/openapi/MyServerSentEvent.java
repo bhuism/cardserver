@@ -34,6 +34,14 @@ public record MyServerSentEvent(String event, Object data) implements Serializab
         return new MyServerSentEvent("messageEvent", messageEvent);
     }
 
+    public static MyServerSentEvent startCache() {
+        return new MyServerSentEvent("startCache");
+    }
+
+    public static MyServerSentEvent endCache() {
+        return new MyServerSentEvent("endCache");
+    }
+
 //    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
 //        return new MyServerSentEvent("newGame", newGameEvent);
 //    }
