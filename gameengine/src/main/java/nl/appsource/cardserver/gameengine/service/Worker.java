@@ -234,18 +234,17 @@ public class Worker {
                     gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
                 })
             )
-            .map(game -> {
+            .flatMap(game -> {
                 final GameEngine gameEngine = new GameEngineImpl(game);
                 if (gameEngine.isAiSay()) {
                     final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-                    redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY).userId(aiSayPlayer)).subscribe();
+                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then();
                 } else if (gameEngine.isAiTurn()) {
                     final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                    redisStreamService.publishToStream(aiCardPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.PLAY_CARD).userId(aiCardPlayer)).subscribe();
+                    return redisStreamService.publishToStream(aiCardPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.PLAY_CARD).gameId(game.getId()).userId(aiCardPlayer)).then();
                 }
-                return Mono.just(game);
+                return Mono.empty();
             })
-            .then()
             .onErrorResume(throwable -> {
 
                 log.error("executeSynchronious()", throwable);
