@@ -5,6 +5,7 @@ on:
     branches: [ "development" ]
   pull_request:
     branches: [ "development" ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,12 +16,12 @@ jobs:
   build:
     runs-on: ubuntu-22.04-arm
     outputs:
-      common: ${{ steps.changes.outputs.common }}
-      api: ${{ steps.changes.outputs.api }}
-      stream: ${{ steps.changes.outputs.stream }}
-      gameengine: ${{ steps.changes.outputs.gameengine }}
-      aiplayer: ${{ steps.changes.outputs.aiplayer }}
-      admin: ${{ steps.changes.outputs.admin }}
+      common: ${{ steps.flags.outputs.common }}
+      api: ${{ steps.flags.outputs.api }}
+      stream: ${{ steps.flags.outputs.stream }}
+      gameengine: ${{ steps.flags.outputs.gameengine }}
+      aiplayer: ${{ steps.flags.outputs.aiplayer }}
+      admin: ${{ steps.flags.outputs.admin }}
 
     permissions:
       contents: read
@@ -76,17 +77,36 @@ jobs:
               - 'openapi/**'
               - 'utils/**'
 
+      - name: Set flags
+        id: flags
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "common=true" >> $GITHUB_OUTPUT
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "stream=true" >> $GITHUB_OUTPUT
+            echo "gameengine=true" >> $GITHUB_OUTPUT
+            echo "aiplayer=true" >> $GITHUB_OUTPUT
+            echo "admin=true" >> $GITHUB_OUTPUT
+          else
+            echo "common=${{ steps.changes.outputs.common }}" >> $GITHUB_OUTPUT
+            echo "api=${{ steps.changes.outputs.api }}" >> $GITHUB_OUTPUT
+            echo "stream=${{ steps.changes.outputs.stream }}" >> $GITHUB_OUTPUT
+            echo "gameengine=${{ steps.changes.outputs.gameengine }}" >> $GITHUB_OUTPUT
+            echo "aiplayer=${{ steps.changes.outputs.aiplayer }}" >> $GITHUB_OUTPUT
+            echo "admin=${{ steps.changes.outputs.admin }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build image
         run: |
           PL_ARGS=""
-          if [ "${{ steps.changes.outputs.common }}" == "true" ]; then
+          if [ "${{ steps.flags.outputs.common }}" == "true" ]; then
             PL_ARGS="api,stream,gameengine,aiplayer,admin"
           else
-            if [ "${{ steps.changes.outputs.api }}" == "true" ]; then PL_ARGS="${PL_ARGS}api,"; fi
-            if [ "${{ steps.changes.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
-            if [ "${{ steps.changes.outputs.gameengine }}" == "true" ]; then PL_ARGS="${PL_ARGS}gameengine,"; fi
-            if [ "${{ steps.changes.outputs.aiplayer }}" == "true" ]; then PL_ARGS="${PL_ARGS}aiplayer,"; fi
-            if [ "${{ steps.changes.outputs.admin }}" == "true" ]; then PL_ARGS="${PL_ARGS}admin,"; fi
+            if [ "${{ steps.flags.outputs.api }}" == "true" ]; then PL_ARGS="${PL_ARGS}api,"; fi
+            if [ "${{ steps.flags.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
+            if [ "${{ steps.flags.outputs.gameengine }}" == "true" ]; then PL_ARGS="${PL_ARGS}gameengine,"; fi
+            if [ "${{ steps.flags.outputs.aiplayer }}" == "true" ]; then PL_ARGS="${PL_ARGS}aiplayer,"; fi
+            if [ "${{ steps.flags.outputs.admin }}" == "true" ]; then PL_ARGS="${PL_ARGS}admin,"; fi
             PL_ARGS="${PL_ARGS%,}"
           fi
           
@@ -100,11 +120,11 @@ jobs:
         id: push
         if: success() && github.event_name != 'pull_request'
         run: |
-          if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.api }}" == "true" ]; then docker push ghcr.io/bhuism/api:latest; fi
-          if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.stream }}" == "true" ]; then docker push ghcr.io/bhuism/stream:latest; fi
-          if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.gameengine }}" == "true" ]; then docker push ghcr.io/bhuism/gameengine:latest; fi
-          if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.aiplayer }}" == "true" ]; then docker push ghcr.io/bhuism/aiplayer:latest; fi
-          if [ "${{ steps.changes.outputs.common }}" == "true" ] || [ "${{ steps.changes.outputs.admin }}" == "true" ]; then docker push ghcr.io/bhuism/admin:latest; fi
+          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.api }}" == "true" ]; then docker push ghcr.io/bhuism/api:latest; fi
+          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.stream }}" == "true" ]; then docker push ghcr.io/bhuism/stream:latest; fi
+          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.gameengine }}" == "true" ]; then docker push ghcr.io/bhuism/gameengine:latest; fi
+          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.aiplayer }}" == "true" ]; then docker push ghcr.io/bhuism/aiplayer:latest; fi
+          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.admin }}" == "true" ]; then docker push ghcr.io/bhuism/admin:latest; fi
 
   rollout-restart:
     name: Rollout Restart
