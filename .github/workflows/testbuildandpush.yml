@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "development" ]
   workflow_dispatch:
+    inputs:
+      build_all:
+        description: 'Build everything'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -79,7 +85,7 @@ jobs:
       - name: Set flags
         id: flags
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_all }}" == "true" ]; then
             echo "common=true" >> $GITHUB_OUTPUT
             echo "api=true" >> $GITHUB_OUTPUT
             echo "stream=true" >> $GITHUB_OUTPUT
