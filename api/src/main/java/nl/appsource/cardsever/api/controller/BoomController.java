@@ -34,7 +34,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     @Override
     public Mono<ResponseEntity<Boom>> createBoom(final Mono<CreateBoom> createBoomMono, final ServerWebExchange exchange) {
-        log.info("{} createBoom()", exchange.getRequest().getRemoteAddress());
+//        log.info("{} createBoom()", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
             .flatMap(userId -> userRepository.findById(userId)
                 .flatMap(
@@ -48,7 +48,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     @Override
     public Mono<ResponseEntity<Boom>> getBoom(final String boomId, final ServerWebExchange exchange) {
-        log.info("{} getBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
+//        log.info("{} getBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
         return getUserId(exchange)
             .flatMap(userId -> boomService.getBoom(userId, boomId))
             .map(boomToOpenApiConverter::convert)
@@ -65,7 +65,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     @Override
     public Mono<ResponseEntity<GetBooms200Response>> getBooms(final ServerWebExchange exchange) {
-        log.info("{} getBooms()", exchange.getRequest().getRemoteAddress());
+//        log.info("{} getBooms()", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
             .flatMap(userId -> boomService.getBooms(userId)
                 .collectList()
@@ -79,7 +79,7 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final String boomId, final ServerWebExchange exchange) {
-        log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
+//        log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
         return getUserId(exchange)
             .flatMap(userId -> boomService.playBoom(userId, boomId))
             .mapNotNull(gameToOpenApiConverter::convert)
