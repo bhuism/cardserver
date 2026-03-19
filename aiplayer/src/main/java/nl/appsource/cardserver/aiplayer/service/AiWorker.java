@@ -139,13 +139,6 @@ public class AiWorker {
 
     private Mono<String> playCard(final String gameId, final String userId) {
 
-        log.info("playcard() for gameId={} userId={}", gameId, userId);
-
-        if (userId == null || gameId == null) {
-            log.error("playCard() for gameId={} userId={}", gameId, userId);
-            return Mono.empty();
-        }
-
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
             .flatMap(gameEngine -> {
