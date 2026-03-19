@@ -209,7 +209,7 @@ public class Worker {
                 })
                 .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
                 .flatMap(this::sendUpdateGame)
-                .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
+//                .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
                 .flatMap(game -> {
                     if (game.getBoomId() != null) {
                         return boomRepository.findById(game.getBoomId())
