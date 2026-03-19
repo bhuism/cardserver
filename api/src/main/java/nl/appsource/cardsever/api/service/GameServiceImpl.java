@@ -96,7 +96,7 @@ public class GameServiceImpl implements GameService {
             throw new IllegalArgumentException("creator needs to be a player");
         }
 
-        log.info("Creating a new game with players {}", players);
+//        log.info("Creating a new game with players {}", players);
 
         return Mono.just(new Game())
             .doOnNext((game) -> {
