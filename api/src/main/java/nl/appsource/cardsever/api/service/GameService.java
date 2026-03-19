@@ -20,17 +20,4 @@ public interface GameService {
 
     Mono<Boolean> deleteGame(String userId, String gameId);
 
-//    Mono<PlayCardResponse> playCard(UUID appIdentifier, String userId, String gameId, Card card);
-
-//    Mono<Void> say(UUID appIdentifier, String userId, String gameId, Boolean say);
-
-//    Mono<Game> executeSynchronious(ScheduledGameEvent eventToExecute);
-
-//    void scheduleGameEvent(ScheduledGameEvent scheduledGameEvent);
-
-//    Mono<Void> reload(String appIdentifier, String userId, String gameId);
-
-//    Mono<Void> claimRoem(CardServerAuthentication auth, String gameId);
-
-//    Mono<Void> claimVerzaken(String userId, String gameId);
 }

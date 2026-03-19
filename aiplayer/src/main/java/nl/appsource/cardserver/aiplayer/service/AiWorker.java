@@ -79,19 +79,6 @@ public class AiWorker {
 
             });
         });
-
-
-//        redisPubSubService.listenToMessage(AI_USER_ID)
-//            .doOnNext(myServerSentEventEntry -> {
-////                log.info("AiWorker received event: {}", myServerSentEvent.event());
-//                if (myServerSentEventEntry.getValue().event().equals("updateGame")) {
-//                    final GameEvent gameEvent = myServerSentEventEntry.getValue().data();
-////                    log.info("updateGame to game={} class={}", myServerSentEvent.data(), myServerSentEvent.data().getClass());
-//                    final nl.appsource.generated.openapi.model.Game game = jsonMapper.convertValue(gameEvent, nl.appsource.generated.openapi.model.Game.class);
-//                    scheduleNext(game.getId(), myServerSentEventEntry.getKey()).subscribe();
-//                }
-//            }).subscribe();
-
     }
 
     private Mono<String> say(final String gameId, final String userId) {
