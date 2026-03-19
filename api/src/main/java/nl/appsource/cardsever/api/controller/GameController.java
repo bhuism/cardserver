@@ -88,7 +88,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
                         gameEvent.setUserId(userId);
                         return redisStreamService.publishToStream("gameEvent", gameEvent);
                     }
-                ).then(Mono.<ResponseEntity<Void>>just(ResponseEntity.ok().build()))
+                )
+                .thenReturn(ResponseEntity.ok().<Void>build())
             )
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
