@@ -95,7 +95,7 @@ public class BoomServiceImpl implements BoomService {
     public Mono<Game> playBoom(final String userId, final String boomId) {
         return boomRepository.findById(boomId)
             .flatMap((boom) -> {
-                return Mono.justOrEmpty(boom.getGames().getLast())
+                return Mono.justOrEmpty(!boom.getGames().isEmpty() ? boom.getGames().getLast() : null)
                     .flatMap(gameRepository::findById)
                     .filter(game -> !new GameEngineImpl(game).isCompleted())
                     .switchIfEmpty(Mono.defer(() -> {
