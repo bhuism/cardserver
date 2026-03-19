@@ -322,13 +322,13 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
         };
     }
 
-    public static Suit convertSuit(final nl.appsource.generated.openapi.model.Suit suit) {
-        return switch (suit) {
-            case nl.appsource.generated.openapi.model.Suit.CLUBS -> Suit.Clubs;
-            case nl.appsource.generated.openapi.model.Suit.HEARTS -> Suit.Hearts;
-            case nl.appsource.generated.openapi.model.Suit.SPADES -> Suit.Spades;
-            case nl.appsource.generated.openapi.model.Suit.DIAMONDS -> Suit.Diamonds;
-        };
-    }
+//    public static Suit convertSuit(final nl.appsource.generated.openapi.model.Suit suit) {
+//        return switch (suit) {
+//            case nl.appsource.generated.openapi.model.Suit.CLUBS -> Suit.Clubs;
+//            case nl.appsource.generated.openapi.model.Suit.HEARTS -> Suit.Hearts;
+//            case nl.appsource.generated.openapi.model.Suit.SPADES -> Suit.Spades;
+//            case nl.appsource.generated.openapi.model.Suit.DIAMONDS -> Suit.Diamonds;
+//        };
+//    }
 
 }
