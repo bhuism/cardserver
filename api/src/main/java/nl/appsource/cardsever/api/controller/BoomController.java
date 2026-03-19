@@ -79,8 +79,9 @@ public class BoomController extends AbstractBaseController implements BoomApi, V
 
     @Override
     public Mono<ResponseEntity<Game>> playBoom(final String boomId, final ServerWebExchange exchange) {
-//        log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
+        log.info("{} playBoom() boomId={}", exchange.getRequest().getRemoteAddress(), boomId);
         return getUserId(exchange)
+            .doOnNext(userId -> log.info("{} playBoom() userId={} boomId={}", exchange.getRequest().getRemoteAddress(), userId, boomId))
             .flatMap(userId -> boomService.playBoom(userId, boomId))
             .mapNotNull(gameToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
