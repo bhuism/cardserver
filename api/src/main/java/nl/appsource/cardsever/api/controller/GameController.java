@@ -83,16 +83,11 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     public Mono<ResponseEntity<Void>> gameEvent(final String gameId, final Mono<GameEvent> gameEventMono, final ServerWebExchange exchange) {
         return getUserId(exchange)
             .flatMap(userId -> gameEventMono
-                .doOnNext(gameEvent -> log.info("{} gameEvent() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameEvent.getGameId()))
+//                .doOnNext(gameEvent -> log.info("{} gameEvent() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameEvent.getGameId()))
                 .flatMap(gameEvent -> {
                         gameEvent.setGameId(gameId);
                         gameEvent.setUserId(userId);
-                        return redisStreamService.publishToStream("gameEvent", gameEvent)
-                            .switchIfEmpty(Mono.defer(() -> {
-                                    log.warn("publishToStream returned null");
-                                    return Mono.empty();
-                                })
-                            );
+                        return redisStreamService.publishToStream("gameEvent", gameEvent);
                     }
                 )
                 .thenReturn(ResponseEntity.ok().<Void>build())
