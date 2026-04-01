@@ -13,16 +13,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Comparator.comparing;
 import static nl.appsource.cardserver.model.GameVariant.ROTTERDAMS;
+import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
 @Slf4j
 public record GameEngineImpl(Game game) implements GameEngine {
-
-    public static final Set<String> AI_USER_ID = Set.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9", "2ab5fd69a2796c4740380cd98eba");
 
     private static final Comparator<? super Card> TRUMP_SORTER = comparing((Card o) -> o.rank.trumpValue).thenComparing(o -> -o.rank.ordinal());
 
@@ -195,10 +193,6 @@ public record GameEngineImpl(Game game) implements GameEngine {
     @Override
     public Game getGame() {
         return game;
-    }
-
-    public static boolean isAiPlayer(final String userId) {
-        return AI_USER_ID.contains(userId);
     }
 
     @Override

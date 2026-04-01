@@ -20,7 +20,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
-import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.AI_USER_ID;
+import static nl.appsource.cardserver.utils.Utils.AI_USER_ID;
 
 @RequiredArgsConstructor
 @Slf4j

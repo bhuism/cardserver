@@ -16,6 +16,7 @@ import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -116,7 +117,7 @@ public class GameServiceImpl implements GameService {
             .flatMap(gameRepository::save)
             .flatMap(this::sendUpdateGame)
             .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet())).then(Mono.just(game)))
-            .flatMap(game -> sseEventSender.newGame(game).then(Mono.just(game)))
+            .flatMap(game -> sseEventSender.newGame(gameToOpenApiConverter.convert(game)).then(Mono.just(game)))
             .flatMap(game -> {
                 final GameEngine gameEngine = new GameEngineImpl(game);
                 if (gameEngine.isAiSay()) {

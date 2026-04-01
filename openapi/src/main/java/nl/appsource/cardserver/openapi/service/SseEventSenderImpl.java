@@ -1,10 +1,8 @@
-package nl.appsource.cardsever.api.service;
+package nl.appsource.cardserver.openapi.service;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.NewGameEvent;
 import nl.appsource.generated.openapi.model.OnlineListEvent;
@@ -15,9 +13,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Set;
 
-import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
+import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
 @Service
 @RequiredArgsConstructor
@@ -63,9 +61,15 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
-    public Mono<Void> sendOnlineListTo(final String userId, final Set<@NonNull String> onlineList) {
-        final OnlineListEvent onlineListEvent = new OnlineListEvent().onlineList(onlineList.stream().toList());
-        return redisPubSubService.broadCast(userId, onlineList(onlineListEvent)).then();
+    public Mono<Void> sendOnlineListTo(final String userId, final Flux<String> onlineListFlux) {
+//        final OnlineListEvent onlineListEvent = new OnlineListEvent().onlineList(onlineList.stream().toList());
+        return onlineListFlux.collectList().map(onlineList -> {
+            return new OnlineListEvent().onlineList(onlineList);
+        }).flatMap(onlineListEvent1 -> {
+            return redisPubSubService.broadCast(userId, onlineList(onlineListEvent1));
+        }).then();
+
+//        return redisPubSubService.broadCast(userId, onlineList(onlineListEvent)).then();
     }
 
     public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {

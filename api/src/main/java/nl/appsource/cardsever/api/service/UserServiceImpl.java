@@ -12,13 +12,13 @@ import nl.appsource.cardserver.model.Theme;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.UpdatePreferences;
 import nl.appsource.generated.openapi.model.UserMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -88,8 +88,8 @@ public class UserServiceImpl implements UserService {
             })
             .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(userRepository.getFriendIds(userId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))))
-            .then(userRepository.getFriendIds(friendId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))));
+            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(userId)))
+            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(friendId)));
     }
 
     @Override
@@ -102,8 +102,8 @@ public class UserServiceImpl implements UserService {
             })
             .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(userRepository.getFriendIds(userId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))))
-            .then(userRepository.getFriendIds(friendId).collectList().flatMap(friends -> sseEventSender.sendOnlineListTo(userId, new HashSet<>(friends))));
+            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(userId)))
+            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(friendId)));
     }
 
     @Override

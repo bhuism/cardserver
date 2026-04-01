@@ -8,6 +8,7 @@ import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -43,6 +44,9 @@ class ApiApplicationTests {
 
     @MockitoBean
     private RedisStreamService redisStreamService;
+
+    @MockitoBean
+    private SseEventSender sseEventSender;
 
     @Test
     void contextLoads() {

@@ -1,8 +1,9 @@
-package nl.appsource.cardsever.api.service;
+package nl.appsource.cardserver.openapi.service;
 
 import lombok.NonNull;
-import nl.appsource.cardserver.model.Game;
+import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.UserMessage;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Set;
@@ -21,6 +22,6 @@ public interface SseEventSender {
 
     Mono<Void> newGame(Game game);
 
-    Mono<Void> sendOnlineListTo(String userId, Set<@NonNull String> onlineList);
+    Mono<Void> sendOnlineListTo(String userId, Flux<@NonNull String> onlineList);
 
 }

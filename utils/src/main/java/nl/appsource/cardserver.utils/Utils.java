@@ -32,4 +32,11 @@ public final class Utils {
         return result.toString();
     }
 
+    public static final Set<String> AI_USER_ID = Set.of("2ab5fd69a2796c4740380cd98eb7", "2ab5fd69a2796c4740380cd98eb8", "2ab5fd69a2796c4740380cd98eb9", "2ab5fd69a2796c4740380cd98eba");
+
+    public static boolean isAiPlayer(final String userId) {
+        return AI_USER_ID.contains(userId);
+    }
+
+
 }

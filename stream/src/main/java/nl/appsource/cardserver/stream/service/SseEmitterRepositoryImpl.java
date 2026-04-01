@@ -13,6 +13,7 @@ import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
@@ -63,6 +64,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final BoomRepository boomRepository;
 
     private final SseSessionRepository sseSessionRepository;
+
+    private final SseEventSender sseEventSender;
 
     private final Sinks.Many<MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
 
@@ -163,7 +166,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
-                            //.then(sseEventSender.sendOnlineListToFriendsOf(userId))
+                            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getOnlineFriends(userId)))
                             .subscribe();
 
                         userSink.tryEmitComplete();

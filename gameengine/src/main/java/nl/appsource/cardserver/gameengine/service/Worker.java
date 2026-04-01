@@ -44,9 +44,9 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
-import static nl.appsource.cardserver.couchbase.utils.GameEngineImpl.isAiPlayer;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGame;
+import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
 @RequiredArgsConstructor
 @Slf4j
