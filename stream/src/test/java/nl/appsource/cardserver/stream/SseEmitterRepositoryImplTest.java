@@ -59,8 +59,6 @@ public class SseEmitterRepositoryImplTest {
 
     private SseEmitterRepository sseEmitterRepository;
 
-    private final JsonMapper jsonMapper = new JsonMapper();
-
     @MockitoBean
     private RedisPubSubService redisPubSubService;
 
@@ -78,8 +76,7 @@ public class SseEmitterRepositoryImplTest {
             gameRepository,
             boomRepository,
             sseSessionRepository,
-            sseEventSender,
-            jsonMapper
+            sseEventSender
         );
     }
 
