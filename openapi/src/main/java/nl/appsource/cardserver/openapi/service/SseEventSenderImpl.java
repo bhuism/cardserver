@@ -17,7 +17,6 @@ import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
 import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
-@Service
 @RequiredArgsConstructor
 public class SseEventSenderImpl implements SseEventSender {
 

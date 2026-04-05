@@ -3,6 +3,8 @@ package nl.appsource.cardsever.api.config;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
+import nl.appsource.cardserver.openapi.service.SseEventSenderImpl;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,5 +31,9 @@ public class RedisConfiguration {
         return new RedisStreamService(reactiveRedisTemplate);
     }
 
+    @Bean
+    public SseEventSender sseEventSender(final RedisPubSubService redisPubSubService) {
+        return new SseEventSenderImpl(redisPubSubService);
+    }
 
 }

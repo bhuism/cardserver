@@ -2,6 +2,8 @@ package nl.appsource.cardserver.stream.config;
 
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
+import nl.appsource.cardserver.openapi.service.SseEventSenderImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -20,6 +22,11 @@ public class RedisConfiguration {
                                                  final ReactiveRedisMessageListenerContainer container,
                                                  final JsonMapper jsonMapper) {
         return new RedisPubSubService(reactiveRedisTemplate, container, jsonMapper);
+    }
+
+    @Bean
+    public SseEventSender sseEventSender(final RedisPubSubService redisPubSubService) {
+        return new SseEventSenderImpl(redisPubSubService);
     }
 
 }

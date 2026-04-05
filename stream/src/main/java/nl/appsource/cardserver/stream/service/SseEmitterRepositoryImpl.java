@@ -69,8 +69,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final Sinks.Many<MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
 
-    private final JsonMapper jsonMapper;
-
     private static final String HOSTNAME;
 
     private Disposable heartbeat;
