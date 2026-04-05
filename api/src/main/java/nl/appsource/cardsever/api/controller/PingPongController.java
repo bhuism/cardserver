@@ -19,6 +19,7 @@ import reactor.util.retry.Retry;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
+import java.util.Map;
 
 
 @Slf4j
@@ -35,11 +36,10 @@ public class PingPongController extends AbstractBaseController implements V1Api,
 //        log.info("{} ping() ", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
             .flatMap(_ -> pingPongSchema)
-            .map(PingPongSchema::getAppIdentifier)
-            .flatMap(appIdentifier -> sseSessionRepository.pingReceived(appIdentifier)
+            .flatMap(pingPong -> sseSessionRepository.pingReceived(pingPong.getAppIdentifier())
                 .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
                 .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
-                .flatMap(_ -> redisPubSubService.broadCast(appIdentifier, PingPongController.pong()))
+                .flatMap(_ -> redisPubSubService.broadCast(pingPong.getAppIdentifier(), new MyServerSentEvent("pong", jsonMapper.writeValueAsString(Map.of("count", pingPong.getCount())))))
             )
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -58,8 +58,4 @@ public class PingPongController extends AbstractBaseController implements V1Api,
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-
-    public static MyServerSentEvent pong() {
-        return new MyServerSentEvent("pong", null);
-    }
 }
