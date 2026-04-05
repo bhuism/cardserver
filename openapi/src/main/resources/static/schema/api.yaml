@@ -556,8 +556,11 @@ components:
       properties:
         appIdentifier:
           type: string
+        count:
+          type: integer
       required:
         - appIdentifier
+        - count
     updatePreferences:
       type: object
       properties:
