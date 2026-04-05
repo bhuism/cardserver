@@ -7,7 +7,6 @@ import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.NewGameEvent;
 import nl.appsource.generated.openapi.model.OnlineListEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
-import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
