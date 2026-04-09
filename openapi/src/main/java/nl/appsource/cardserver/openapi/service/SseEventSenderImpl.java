@@ -60,14 +60,9 @@ public class SseEventSenderImpl implements SseEventSender {
 
     @Override
     public Mono<Void> sendOnlineListTo(final String userId, final Flux<String> onlineListFlux) {
-//        final OnlineListEvent onlineListEvent = new OnlineListEvent().onlineList(onlineList.stream().toList());
-        return onlineListFlux.collectList().map(onlineList -> {
-            return new OnlineListEvent().onlineList(onlineList);
-        }).flatMap(onlineListEvent1 -> {
-            return redisPubSubService.broadCast(userId, onlineList(onlineListEvent1));
-        }).then();
-
-//        return redisPubSubService.broadCast(userId, onlineList(onlineListEvent)).then();
+        return onlineListFlux.collectList().map(onlineList -> new OnlineListEvent().onlineList(onlineList))
+            .flatMap(onlineListEvent1 -> redisPubSubService.broadCast(userId, onlineList(onlineListEvent1)))
+            .then();
     }
 
     public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {

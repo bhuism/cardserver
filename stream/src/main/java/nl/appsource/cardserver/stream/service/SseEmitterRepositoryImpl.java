@@ -156,6 +156,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
+            .then(Mono.defer(() -> {
+                return sseEventSender.sendOnlineListTo(userId, userRepository.getOnlineFriends(userId)
+                    .flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)).then(Mono.just(friendId)))
+                );
+            }))
             .thenMany(
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), restFlux)
                     .doFinally(signalType -> {
@@ -163,7 +168,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
-                            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getOnlineFriends(userId)))
+                            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getOnlineFriends(userId)
+                                .flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)).then(Mono.just(friendId)))))
                             .subscribe();
 
                         userSink.tryEmitComplete();
