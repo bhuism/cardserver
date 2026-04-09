@@ -88,8 +88,8 @@ public class UserServiceImpl implements UserService {
             })
             .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(userId)))
-            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(friendId)));
+            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getOnlineFriends(userId)))
+            .then(sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
     }
 
     @Override
@@ -102,8 +102,8 @@ public class UserServiceImpl implements UserService {
             })
             .flatMap(userRepository::save)
             .flatMap(user -> sseEventSender.friendsChanged(Set.of(friendId, user.getId())))
-            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(userId)))
-            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getFriendIds(friendId)));
+            .then(sseEventSender.sendOnlineListTo(userId, userRepository.getOnlineFriends(userId)))
+            .then(sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
     }
 
     @Override
