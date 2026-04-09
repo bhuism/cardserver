@@ -160,8 +160,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(Mono.defer(() -> {
                     final ConnectableFlux<String> friends = userRepository.getOnlineFriends(userId).publish();
                     final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-                    final Flux<Void> secondFluex = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
-                    return Mono.when(firstMono, secondFluex);
+//                    final Flux<Void> secondFluex = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
+                    return Mono.when(firstMono);
                 }
             ))
             .thenMany(
@@ -174,10 +174,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                             .then(Mono.defer(() -> {
                                 final ConnectableFlux<String> friends = userRepository.getOnlineFriends(userId).publish();
                                 final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-                                final Flux<Void> secondFluex = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
-                                return Mono.when(firstMono, secondFluex);
-                            }
-                            )).subscribe();
+//                                final Flux<Void> secondFluex = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
+                                return Mono.when(firstMono);
+                            }))
+                            .subscribe();
 
                         userSink.tryEmitComplete();
 
