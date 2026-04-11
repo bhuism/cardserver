@@ -9,4 +9,4 @@ ${Ansi.BRIGHT_RED}88 8888            .8' `8. `88888.    8 8888`8b       8 8888  
 ${Ansi.BRIGHT_RED}`8 8888       .8' .8'   `8. `88888.   8 8888 `8b.     8 8888        ,88'           8b   `8.`8888. 8 8888         8 8888 `8b.          `8.`888'        8 8888         8 8888 `8b.
 ${Ansi.BRIGHT_RED}   8888     ,88' .888888888. `88888.  8 8888   `8b.   8 8888    ,o88P'             `8b.  ;8.`8888 8 8888         8 8888   `8b.         `8.`8'         8 8888         8 8888   `8b.
 ${Ansi.BRIGHT_RED}    `8888888P'  .8'       `8. `88888. 8 8888     `88. 8 888888888P'                 `Y8888P ,88P' 8 888888888888 8 8888     `88.        `8.`          8 888888888888 8 8888     `88.
-${Ansi.BRIGHT_GREEN} :: Spring Boot @spring-boot.formatted-version@ :: @git.commit.id.abbrev@ :: ${Ansi.DEFAULT}
+${Ansi.BRIGHT_GREEN} :: ${application.title} ${application.version} :: ${Ansi.DEFAULT}
