@@ -43,7 +43,7 @@ public class WebfluxSecurityConfig {
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.OPTIONS)))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
             .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
-                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://accounts.google.com")
+                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://auth.impl.nl/realms/klaversjassen")
                     .build());
                 customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter());
             }));

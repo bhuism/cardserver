@@ -332,7 +332,7 @@ components:
       type: openIdConnect
       scheme: bearer
       bearerFormat: JWT
-      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+      openIdConnectUrl: https://auth.impl.nl/realms/klaversjassen/.well-known/openid-configuration
   responses:
     GameResponse:
       description: a game
