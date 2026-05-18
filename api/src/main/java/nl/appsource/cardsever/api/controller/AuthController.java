@@ -32,5 +32,5 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
-    
+
 }
