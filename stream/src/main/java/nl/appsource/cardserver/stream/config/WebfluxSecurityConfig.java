@@ -7,13 +7,18 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
+import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -22,21 +27,28 @@ import java.util.List;
 @EnableWebFluxSecurity
 public class WebfluxSecurityConfig {
 
+    private ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter() {
+        final ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter = new ReactiveJwtAuthenticationConverter();
+        reactiveJwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(source -> Flux.just(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
+        return reactiveJwtAuthenticationConverter;
+    }
+
     @Bean
-    @Order(100)
-    public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) {
-        return http
-            .securityMatcher(ServerWebExchangeMatchers.pathMatchers("/api/v1/**"))
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .authorizeExchange(exchanges -> exchanges
-                .pathMatchers(HttpMethod.OPTIONS, "/api/v1/**").permitAll()
-                .anyExchange().authenticated()
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtSpec -> jwtSpec.jwtDecoder(ReactiveJwtDecoders.fromIssuerLocation("https://api.klaversjassen.nl"))))
+    @Order(2)
+    public SecurityWebFilterChain securityFilterChainApi(final ServerHttpSecurity http) {
+
+        // allowed with a valid KlaversJassen Jwt
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-            .build();
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
+            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**")))
+            .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
+            .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
+                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://auth.impl.nl/realms/klaversjassen").build());
+                customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter());
+            }));
+        return http.build();
     }
 
     @Bean

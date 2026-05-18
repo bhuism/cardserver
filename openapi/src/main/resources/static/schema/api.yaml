@@ -96,20 +96,6 @@ paths:
       responses:
         '200':
           description: ok
-  /login:
-    post:
-      tags:
-        - login
-      operationId: login
-      responses:
-        '200':
-          $ref: '#/components/responses/LoginResponse'
-  /rotateJwt:
-    post:
-      operationId: rotateJwt
-      responses:
-        '200':
-          $ref: '#/components/responses/LoginResponse'
   /loadUser:
     post:
       operationId: loadUser
@@ -382,12 +368,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/sseConnections'
-    LoginResponse:
-      description: login response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/loginResponse'
     LoadUserResponse:
       description: load user response
       content:
@@ -493,17 +473,6 @@ components:
         - connections
         - currentSubscriberCount
         - timeStamp
-    loginResponse:
-      type: object
-      properties:
-        jwt:
-          type: string
-          format: password
-        user:
-          $ref: '#/components/schemas/User'
-      required:
-        - jwt
-        - user
     createInviteResponse:
       type: object
       properties:

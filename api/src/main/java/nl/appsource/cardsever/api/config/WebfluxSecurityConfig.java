@@ -29,27 +29,6 @@ import java.util.List;
 @Slf4j
 public class WebfluxSecurityConfig {
 
-    private final CardServerJwtModem cardServerJwtModem;
-
-    @Bean
-    @Order(1)
-    public SecurityWebFilterChain securityFilterChainOauth(final ServerHttpSecurity http) {
-
-        // allowed with a valid Google Jwt
-        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
-            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
-            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.POST), new PathPatternParserServerWebExchangeMatcher("/login", HttpMethod.OPTIONS)))
-            .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
-            .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
-                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://auth.impl.nl/realms/klaversjassen")
-                    .build());
-                customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter());
-            }));
-        return http.build();
-    }
-
     private ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter() {
         final ReactiveJwtAuthenticationConverter reactiveJwtAuthenticationConverter = new ReactiveJwtAuthenticationConverter();
         reactiveJwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(source -> Flux.just(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
@@ -67,7 +46,10 @@ public class WebfluxSecurityConfig {
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**")))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.jwtDecoder(cardServerJwtModem)));
+            .oauth2ResourceServer(httpSecurityOAuth2ResourceServerConfigurer -> httpSecurityOAuth2ResourceServerConfigurer.jwt(customizer -> {
+                customizer.jwtDecoder(NimbusReactiveJwtDecoder.withIssuerLocation("https://auth.impl.nl/realms/klaversjassen").build());
+                customizer.jwtAuthenticationConverter(reactiveJwtAuthenticationConverter());
+            }));
         return http.build();
     }
 
@@ -81,7 +63,7 @@ public class WebfluxSecurityConfig {
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
-                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/ai/**", "/actuator/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/actuator/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
                     .permitAll()
             );
         return http.build();

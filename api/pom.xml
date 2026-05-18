@@ -63,11 +63,11 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.crypto.tink</groupId>
-            <artifactId>tink</artifactId>
-            <version>1.20.0</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.google.crypto.tink</groupId>-->
+<!--            <artifactId>tink</artifactId>-->
+<!--            <version>1.20.0</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.webjars</groupId>
