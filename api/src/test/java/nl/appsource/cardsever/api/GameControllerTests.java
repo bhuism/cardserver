@@ -123,11 +123,7 @@ public class GameControllerTests {
 
         webTestClient
             .mutateWith(mockJwt()
-                .jwt(jwt -> jwt
-                    .subject("user-abc")
-                    .claim("jti", "user-abc")
-                )
-                // If you need specific roles that are normally extracted by your JwtAuthenticationConverter
+                .jwt(jwt -> jwt.subject("user-abc"))
                 .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
             )
             .get()
@@ -143,10 +139,7 @@ public class GameControllerTests {
 
         webTestClient
             .mutateWith(mockJwt()
-                .jwt(jwt -> jwt
-                    .subject("user-abc")
-                    .claim("jti", "user-abc")
-                )
+                .jwt(jwt -> jwt.subject("user-abc"))
                 .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
             )
             .get()

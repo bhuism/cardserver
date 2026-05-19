@@ -30,7 +30,7 @@ public abstract class AbstractBaseController {
             .mapNotNull(Authentication::getPrincipal)
             .filter(jwt -> jwt instanceof Jwt)
             .cast(Jwt.class)
-            .flatMap(jwt -> userRepository.findById(jwt.getId())
+            .flatMap(jwt -> userRepository.findById(jwt.getSubject())
                 .switchIfEmpty(Mono.defer(() ->
                     Mono.just(jwt.getClaimAsString("email"))
                         .flatMap(userRepository::findByEmail)
