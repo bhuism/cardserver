@@ -3,6 +3,11 @@ spring:
     redis:
       host: 127.0.0.1
       port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.impl.nl/realms/klaversjassen
 cardserver:
   couchbase:
     connection-string: couchbase://192.168.1.86
@@ -14,3 +19,4 @@ logging:
   level:
     ROOT: info
     nl.appsource: debug
+    org.springframework.security: trace

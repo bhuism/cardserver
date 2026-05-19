@@ -1,4 +1,4 @@
-package nl.appsource.cardsever.api.controller;
+package nl.appsource.cardserver.stream.controller;
 
 import com.couchbase.client.core.error.CasMismatchException;
 import lombok.RequiredArgsConstructor;

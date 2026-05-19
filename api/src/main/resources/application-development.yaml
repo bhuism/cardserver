@@ -15,6 +15,11 @@ spring:
     error:
       whitelabel:
         enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.impl.nl/realms/klaversjassen
 
 cardserver:
   couchbase:
@@ -22,5 +27,3 @@ cardserver:
     username: root
     password: killer
     bucket-name: cardserver
-  auth:
-    jwt-es512-secret: '{"kty":"EC","d":"ALjr1TqvNbOR_HxHwJlBnJ5MybU1Dz8Gbu4arEoJIrJ76eVdpQTpBwAmAu7ODhW39Lu-iZqp2qFE_TER6Lb7ZyH6","crv":"P-521","kid":"es512-key-1","x":"ACtrVUN1XroGXBxVpnuQpKijmIrEIv0-i8ySfR_Kdj9mWzcz75ztTVmEC_llfZLXYavNcYoo4hzPLRV554oBclmk","y":"AU3GODl2efwvg5clz5Wen3Qrv6XHwcaVUgJaXrxmItVzBPjsEbJR4j8HC4ho2-8o1NRhh9x0zhqUjWyW5to5ydpf"}'
