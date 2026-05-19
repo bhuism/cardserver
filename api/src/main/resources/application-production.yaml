@@ -3,6 +3,11 @@ spring:
     redis:
       host: redis-stack.redis-stack.svc.cluster.local
       port: 6379
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.impl.nl/realms/klaversjassen
 server:
   port: 8080
 logging:

@@ -7,8 +7,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "https://api.klaversjassen.nl"
-cardserver:
+          issuer-uri: https://auth.impl.nl/realms/klaversjassen
   couchbase:
     connection-string: couchbase://couchbase.couchbase.svc.cluster.local
     username: root
