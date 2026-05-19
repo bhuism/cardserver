@@ -8,12 +8,16 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: https://auth.impl.nl/realms/klaversjassen
+
+logging:
+  level:
+    ROOT: info
+    nl.appsource: debug
+
+
+cardserver:
   couchbase:
     connection-string: couchbase://couchbase.couchbase.svc.cluster.local
     username: root
     password: killer
     bucket-name: cardserver
-logging:
-  level:
-    ROOT: info
-    nl.appsource: debug

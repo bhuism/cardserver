@@ -10,6 +10,7 @@ spring:
           issuer-uri: https://auth.impl.nl/realms/klaversjassen
 server:
   port: 8080
+
 logging:
   level:
     ROOT: info
