@@ -25,7 +25,7 @@ import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTest
 import org.springframework.context.annotation.Import;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -37,9 +37,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 @ActiveProfiles("citest")
-@SpringBootTest(properties = "spring.main.web-application-type=reactive", webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(properties = "spring.main.web-application-type=reactive", webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureWebTestClient
 @Import(ConvertersConfig.class)
 public class GameControllerTests {
@@ -83,8 +84,16 @@ public class GameControllerTests {
     @MockitoBean
     private RedisStreamService redisStreamService;
 
+    @Autowired
+    private org.springframework.context.ApplicationContext context;
+
     @BeforeEach
     void setUp() {
+        webTestClient = WebTestClient
+            .bindToApplicationContext(this.context)
+            .apply(org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity())
+            .configureClient()
+            .build();
         when(gameService.getGame("user-abc", "game-notfound")).thenReturn(Mono.empty());
 
         final Game mockGame = new Game();
@@ -110,10 +119,17 @@ public class GameControllerTests {
 
 
     @Test
-    @WithMockUser(username = "user-abc")
     void getGame_whenGameNotFound_shouldReturnNotFound() {
 
         webTestClient
+            .mutateWith(mockJwt()
+                .jwt(jwt -> jwt
+                    .subject("user-abc")
+                    .claim("jti", "user-abc")
+                )
+                // If you need specific roles that are normally extracted by your JwtAuthenticationConverter
+                .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
+            )
             .get()
             .uri("/api/v1/games/game-notfound")
             .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
@@ -123,12 +139,16 @@ public class GameControllerTests {
     }
 
     @Test
-    @WithMockUser(username = "user-abc")
     void getGame_whenGameFound_shouldReturnGame() {
 
         webTestClient
-            // Set up a mock authenticated user for the request
-//            .mutateWith(mockAuthentication(new UsernamePasswordAuthenticationToken("user-abc", "password", Collections.singletonList(new SimpleGrantedAuthority("USER")))))
+            .mutateWith(mockJwt()
+                .jwt(jwt -> jwt
+                    .subject("user-abc")
+                    .claim("jti", "user-abc")
+                )
+                .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
+            )
             .get()
             .uri("/api/v1/games/game-found")
             .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
