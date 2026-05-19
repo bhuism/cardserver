@@ -19,9 +19,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-import static nl.appsource.cardserver.utils.IDTYPE.USER;
-import static nl.appsource.cardserver.utils.Utils.idGen;
-
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -37,12 +34,13 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
             .flatMap(userRepository::findById)
             .doOnNext(user -> user.setLastLogin(Instant.now()))
             .flatMap(userRepository::save)
+            .switchIfEmpty(createUser(exchange))
             .map(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    public Mono<User> createUser(final ServerWebExchange exchange) {
+    public Mono<nl.appsource.cardserver.model.User> createUser(final ServerWebExchange exchange) {
 
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
@@ -59,25 +57,26 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
                 final Instant now = Instant.now();
 
                 return userService.findByEmail(email).map((user) -> {
-                        user.setLastLogin(now);
-                        return user;
-                    }).switchIfEmpty(Mono.defer(() -> {
+                    user.setLastLogin(now);
+                    return user;
+                }).switchIfEmpty(Mono.defer(() -> {
 
-                        log.info("{} Creating a new user {}", exchange.getRequest().getRemoteAddress(), email);
+                    final String subject = principal.getSubject();
 
-                        final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
+                    log.info("{} Creating a new user id={} email={}", exchange.getRequest().getRemoteAddress(), subject, email);
 
-                        user.setId(idGen(USER, 28));
-                        user.setEmail(email);
-                        user.setName(principal.getClaims().get("name").toString());
-                        user.setDisplayName(principal.getClaims().get("name").toString());
-                        user.setLastLogin(now);
-                        user.setPhotoURL(principal.getClaims().get("picture") != null ? principal.getClaims().get("picture").toString() : null);
-                        user.setProviderId("google");
+                    final nl.appsource.cardserver.model.User user = new nl.appsource.cardserver.model.User();
 
-                        return Mono.just(user);
-                    })).flatMap(userRepository::save)
-                    .mapNotNull(userToOpenApiConverter::convert);
+                    user.setId(subject);
+                    user.setEmail(email);
+                    user.setName(principal.getClaims().get("name").toString());
+                    user.setDisplayName(principal.getClaims().get("name").toString());
+                    user.setLastLogin(now);
+                    user.setPhotoURL(principal.getClaims().get("picture") != null ? principal.getClaims().get("picture").toString() : null);
+                    user.setProviderId("google");
+
+                    return Mono.just(user);
+                })).flatMap(userRepository::save);
 
 
             });
