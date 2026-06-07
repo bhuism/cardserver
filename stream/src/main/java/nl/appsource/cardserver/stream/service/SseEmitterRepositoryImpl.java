@@ -24,6 +24,7 @@ import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
+import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -125,11 +126,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flux();
 
         // online list
-        final Mono<MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
-            .collectList()
-            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
+//        final Mono<MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
+//            .collectList()
+//            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return concat(just(MyServerSentEvent.startCache()), me, friends, games, booms, just(MyServerSentEvent.endCache()), onlineList);
+        return concat(just(MyServerSentEvent.startCache()), me, friends, games, booms, just(MyServerSentEvent.endCache()));
 
     }
 
@@ -156,13 +157,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
-//            .then(Mono.defer(() -> {
-//                    final ConnectableFlux<String> friends = userRepository.getOnlineFriends(userId).publish();
-//                    final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-////                    final Flux<Void> secondFluex = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
-//                    return Mono.when(firstMono);
-//                }
-//            ))
+            .then(Mono.defer(() -> {
+                    final Flux<String> friends = userRepository.getOnlineFriends(userId);
+                    final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
+                    final Flux<Void> secondFlux = userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
+                    return Mono.when(firstMono, secondFlux);
+                }
+            ))
             .thenMany(
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), restFlux)
                     .doFinally(signalType -> {
@@ -170,12 +171,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
-//                            .then(Mono.defer(() -> {
-//                                final ConnectableFlux<String> friends = userRepository.getOnlineFriends(userId).publish();
-//                                final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-////                                final Flux<Void> secondFluex = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
-//                                return Mono.when(firstMono);
-//                            }))
+                            .then(Mono.defer(() -> {
+                                final Flux<String> friends = userRepository.getOnlineFriends(userId);
+                                final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
+                                final Flux<Void> secondFlux = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
+                                return Mono.when(firstMono, secondFlux);
+                            }))
                             .subscribe();
 
                         userSink.tryEmitComplete();
