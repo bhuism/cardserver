@@ -26,7 +26,6 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
 
     private final UserToOpenApiConverter userToOpenApiConverter;
     private final UserRepository userRepository;
-    private final UserService userService;
 
     @Override
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
