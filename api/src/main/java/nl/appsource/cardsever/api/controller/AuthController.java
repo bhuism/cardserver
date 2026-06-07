@@ -35,6 +35,9 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
             .doOnNext(user -> user.setLastLogin(Instant.now()))
             .flatMap(userRepository::save)
             .switchIfEmpty(createUser(exchange))
+            .doOnNext(user -> {
+                log.info("{} loadUser(), name={} email={}", exchange.getRequest().getRemoteAddress(), user.getDisplayName(), user.getEmail());
+            })
             .map(userToOpenApiConverter::convert)
             .map(ResponseEntity::ok)
             .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -52,7 +55,7 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
 
                 final String name = principal.getClaims().get("name").toString();
 
-                log.info("{} login(), name={} email={}", exchange.getRequest().getRemoteAddress(), name, email);
+                log.info("{} createUser(), name={} email={}", exchange.getRequest().getRemoteAddress(), name, email);
 
                 final Instant now = Instant.now();
 
