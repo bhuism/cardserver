@@ -42,6 +42,8 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
     @Query(value = ONLINE_FRIENDIDS, readonly = true)
     Flux<String> getOnlineFriends(String userId);
 
+    Mono<User> findBySubject(String subject);
+
 //    @Query("UPDATE #{#n1ql.bucket} SET lastLogin=NOW_MILLIS(), updated=NOW_MILLIS() WHERE meta(#{#n1ql.bucket}).id=$userId RETURNING #{#n1ql.bucket}.*")
 //    Mono<User> updateLastLogin(String userId);
 

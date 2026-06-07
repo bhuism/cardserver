@@ -24,6 +24,9 @@ import java.util.List;
 public class User extends BaseEntity {
 
     @Field
+    private String subject;
+
+    @Field
     @NotEmpty
     private String displayName;
 
