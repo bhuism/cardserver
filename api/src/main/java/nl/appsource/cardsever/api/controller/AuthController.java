@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardsever.api.service.UserService;
 import nl.appsource.generated.openapi.model.User;
 import org.openapitools.api.LoadUserApi;
 import org.springframework.http.ResponseEntity;
