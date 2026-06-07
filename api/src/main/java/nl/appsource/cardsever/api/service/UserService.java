@@ -10,10 +10,6 @@ import java.util.Set;
 
 public interface UserService {
 
-    Mono<User> findById(String userId);
-
-    Mono<User> findByEmail(String email);
-
     Mono<UserServiceImpl.InvitesResponse> getInvites(String userId);
 
     Flux<User> getUsers(Set<String> userIds);

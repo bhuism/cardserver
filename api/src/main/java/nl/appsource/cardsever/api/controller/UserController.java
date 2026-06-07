@@ -3,6 +3,7 @@ package nl.appsource.cardsever.api.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
+import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardsever.api.service.UserService;
 import nl.appsource.generated.openapi.model.CreateInvite;
 import nl.appsource.generated.openapi.model.CreateInviteResponse;
@@ -31,13 +32,16 @@ public class UserController extends AbstractBaseController implements UsersApi, 
 
     private final UserService userService;
 
+    private final UserRepository userRepository;
+
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
     public Mono<ResponseEntity<User>> getUser(final String userIdParam, final ServerWebExchange exchange) {
 //        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress(), userIdParam);
         return getUserId(exchange)
-            .flatMap(userId -> userService.findById(userIdParam)
+            .flatMap(userId -> userRepository.findById(userIdParam)
+                .switchIfEmpty(userRepository.findBySubject(userIdParam))
                 .mapNotNull(userToOpenApiConverter::convert)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build()))

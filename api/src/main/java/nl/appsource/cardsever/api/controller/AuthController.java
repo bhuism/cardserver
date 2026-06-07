@@ -59,7 +59,7 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
 
                 final Instant now = Instant.now();
 
-                return userService.findByEmail(email).map((user) -> {
+                return userRepository.findByEmail(email).map((user) -> {
                     user.setLastLogin(now);
                     return user;
                 }).switchIfEmpty(Mono.defer(() -> {

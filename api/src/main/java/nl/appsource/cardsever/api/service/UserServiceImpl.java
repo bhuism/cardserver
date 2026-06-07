@@ -39,18 +39,8 @@ public class UserServiceImpl implements UserService {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    public Mono<User> findById(final String userId) {
-        return userRepository.findById(userId);
-    }
-
-    @Override
     public Flux<User> getUsers(final Set<String> userIds) {
         return userRepository.findAllById(userIds);
-    }
-
-    @Override
-    public Mono<User> findByEmail(final String email) {
-        return userRepository.findByEmail(email);
     }
 
     public record InvitesResponse(Flux<String> incoming, Flux<String> outgoing, Flux<String> friends) {
