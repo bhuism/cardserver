@@ -24,6 +24,7 @@ public abstract class AbstractBaseController {
     private UserRepository userRepository;
 
     protected Mono<String> getUserId(final ServerWebExchange exchange) {
+
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
@@ -31,12 +32,9 @@ public abstract class AbstractBaseController {
             .filter(jwt -> jwt instanceof Jwt)
             .cast(Jwt.class)
             .flatMap(jwt -> userRepository.findById(jwt.getSubject())
-                .switchIfEmpty(Mono.defer(() ->
-                    Mono.just(jwt.getClaimAsString("email"))
-                        .flatMap(userRepository::findByEmail)
-                ))
-                .map(User::getId)
+                .switchIfEmpty(Mono.defer(() -> userRepository.findBySubject(jwt.getSubject())))
             )
+            .map(User::getId)
             .flatMap(userId -> userRepository.updateUpdated(userId)
                 .retryWhen(Retry.backoff(5, Duration.ofMillis(100)).filter(throwable -> throwable instanceof CasMismatchException))
                 .switchIfEmpty(Mono.defer(() -> {

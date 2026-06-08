@@ -36,10 +36,12 @@ public class SubscribeController extends AbstractBaseController  implements V1Ap
         exchange.getResponse().getHeaders().add("X-Accel-Buffering", "no");
 
         return getUserId(exchange)
-            .map(userId -> ResponseEntity.ok(sseEmitterRepository.subscribe(
-                userId, "" + exchange.getRequest().getRemoteAddress(),
-                userAgent
-            )))
+            .map(userId -> ResponseEntity.ok()
+                .contentType(MediaType.TEXT_EVENT_STREAM)
+                .body(sseEmitterRepository.subscribe(
+                    userId, "" + exchange.getRequest().getRemoteAddress(),
+                    userAgent
+                )))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Flux.empty()));
 
     }
