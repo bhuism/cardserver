@@ -2,6 +2,7 @@ package nl.appsource.cardserver.stream.config;
 
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.model.User;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -21,6 +22,7 @@ public class MyJwtAuthenticationConverter implements Converter<Jwt, Mono<Abstrac
             .flatMap(abstractAuthenticationToken ->
                 Mono.justOrEmpty(source.getSubject())
                     .flatMap(subject -> userRepository.findById(subject).switchIfEmpty(Mono.defer((() -> userRepository.findBySubject(subject)))))
+                    .map(User::getId)
                     .doOnNext(abstractAuthenticationToken::setDetails)
                     .then(Mono.just(abstractAuthenticationToken))
             );

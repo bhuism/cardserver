@@ -65,11 +65,11 @@ public class SubscribeControllerTest {
         ServerSentEvent<Object> event = ServerSentEvent.builder().event("hello").build();
         when(sseEmitterRepository.subscribe(anyString(), anyString(), anyString())).thenReturn(Flux.just(event));
 
-        when(userRepository.updateUpdated(anyString())).thenReturn(Mono.just("test-user"));
+        //when(userRepository.updateUpdated(anyString())).thenReturn(Mono.just("test-user"));
         User mockUser = new User();
         mockUser.setId("test-user");
-        when(userRepository.findById("test-user")).thenReturn(Mono.empty());
-        when(userRepository.findBySubject("test-user")).thenReturn(Mono.just(mockUser));
+        when(userRepository.findById("test-user")).thenReturn(Mono.just(mockUser));
+        //when(userRepository.findBySubject("test-user")).thenReturn(Mono.just(mockUser));
 
         final Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "none")
@@ -77,7 +77,7 @@ public class SubscribeControllerTest {
             .build();
 
         final JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
-        auth.setDetails(mockUser);
+        auth.setDetails("test-user");
 
         webTestClient
             .mutateWith(mockAuthentication(auth))

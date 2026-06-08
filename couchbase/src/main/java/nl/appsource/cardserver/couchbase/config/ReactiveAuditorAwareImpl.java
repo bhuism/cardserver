@@ -1,7 +1,6 @@
 package nl.appsource.cardserver.couchbase.config;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.model.User;
 import org.springframework.data.domain.ReactiveAuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -17,8 +16,7 @@ public class ReactiveAuditorAwareImpl implements ReactiveAuditorAware<String> {
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
             .map(Authentication::getDetails)
-            .cast(User.class)
-            .map(User::getId);
+            .cast(String.class);
     }
 }
 

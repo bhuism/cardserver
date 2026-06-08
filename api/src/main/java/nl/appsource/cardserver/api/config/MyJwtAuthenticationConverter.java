@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.api.config;
 
-import com.couchbase.client.core.error.CasMismatchException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
@@ -66,15 +65,13 @@ public class MyJwtAuthenticationConverter implements Converter<Jwt, Mono<Abstrac
                                                     .subscribe();
                                             }));
                                 })))))
+//                    .flatMap((user) -> userRepository.lock(user.getId(), Duration.ofMillis(500), User.class))
+//                    .flatMap(entry -> userRepository.updateUpdated(entry.getKey().getId())
+//                        .flatMap((a) -> userRepository.updateLocked(entry.getKey().getId(), entry.getKey(), entry.getValue()))
+//                        .doOnNext(mutationResult -> userRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()))
+//                    )
 //                    .flatMap(user -> userRepository.updateUpdated(user.getId())
-//                        .then(Mono.just(user))
-//                        .retryWhen(Retry.backoff(5, Duration.ofMillis(100))
-//                            .filter(throwable -> throwable instanceof CasMismatchException))
-//                        .switchIfEmpty(Mono.defer(() -> {
-//                                log.warn("User not found, userId={}", user.getId());
-//                                return Mono.empty();
-//                            })
-//                        ))
+                    .map(User::getId)
                     .doOnNext(abstractAuthenticationToken::setDetails)
                     .then(Mono.just(abstractAuthenticationToken))
             );

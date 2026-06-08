@@ -124,8 +124,8 @@ public class GameControllerTests {
     @Test
     void getGame_whenGameNotFound_shouldReturnNotFound() {
 
-        final User user = new User();
-        user.setId("user-abc");
+//        final User user = new User();
+//        user.setId("user-abc");
 
         final Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "none")
@@ -133,7 +133,7 @@ public class GameControllerTests {
             .build();
 
         final JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
-        auth.setDetails(user);
+        auth.setDetails("user-abc");
 
         webTestClient
             .mutateWith(mockAuthentication(auth))
@@ -148,8 +148,8 @@ public class GameControllerTests {
     @Test
     void getGame_whenGameFound_shouldReturnGame() {
 
-        final User user = new User();
-        user.setId("user-abc");
+//        final User user = new User();
+//        user.setId("user-abc");
 
         final Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "none")
@@ -157,7 +157,7 @@ public class GameControllerTests {
             .build();
 
         final JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
-        auth.setDetails(user);
+        auth.setDetails("user-abc");
 
         webTestClient
             .mutateWith(mockAuthentication(auth))
