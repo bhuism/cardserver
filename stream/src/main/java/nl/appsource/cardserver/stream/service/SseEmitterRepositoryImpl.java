@@ -156,9 +156,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
             .then(Mono.defer(() -> {
-                    final Flux<String> friends = userRepository.getOnlineFriends(userId);
+                    final Flux<String> friends = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Sending user {} friends: {}", userId, s));
                     final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-                    final Flux<Void> secondFlux = userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
+                    final Flux<Void> secondFlux = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s))));
                     return Mono.when(firstMono, secondFlux);
                 }
             ))
@@ -168,13 +168,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount());
 
                         sseSessionRepository.deleteById(appIdentifier)
-                            .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
                             .then(Mono.defer(() -> {
-                                final Flux<String> friends = userRepository.getOnlineFriends(userId);
+                                final Flux<String> friends = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Sending user {} friends: {}", userId, s));
                                 final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-                                final Flux<Void> secondFlux = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId)));
+                                final Flux<Void> secondFlux = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s))));
                                 return Mono.when(firstMono, secondFlux);
                             }))
+                            .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
                             .subscribe();
 
                         userSink.tryEmitComplete();
