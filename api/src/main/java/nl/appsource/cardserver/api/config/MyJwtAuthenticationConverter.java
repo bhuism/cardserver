@@ -29,8 +29,8 @@ public class MyJwtAuthenticationConverter implements Converter<Jwt, Mono<Abstrac
                 Mono.justOrEmpty(source)
                     .flatMap(jwt -> userRepository.findById(jwt.getSubject())
                         .switchIfEmpty(Mono.defer(() -> userRepository.findBySubject(jwt.getSubject())
-                            .switchIfEmpty(Mono.defer(() -> Mono.just(jwt.getClaimAsString("email"))
-                                .flatMap(userRepository::findByEmail)
+                            .switchIfEmpty(Mono.defer(() -> userRepository.findByEmail(jwt.getClaimAsString("email")))
+                                //.flatMap(userRepository::findByEmail)
                                 .flatMap(user -> {
 
                                     log.debug("User found by email: {}", user.getEmail());
@@ -66,17 +66,18 @@ public class MyJwtAuthenticationConverter implements Converter<Jwt, Mono<Abstrac
                                                     .subscribe();
                                             }));
                                 })))))
-                        .flatMap(user -> userRepository.updateUpdated(user.getId()).then(Mono.just(user))
-                            .retryWhen(Retry.backoff(5, Duration.ofMillis(100))
-                                .filter(throwable -> throwable instanceof CasMismatchException))
-                            .switchIfEmpty(Mono.defer(() -> {
-                                    log.warn("User not found, userId={}", user.getId());
-                                    return Mono.empty();
-                                })
-                            ))
-                        .doOnNext(abstractAuthenticationToken::setDetails)
-                        .then(Mono.just(abstractAuthenticationToken))
-                    ));
+                    .flatMap(user -> userRepository.updateUpdated(user.getId())
+                        .then(Mono.just(user))
+                        .retryWhen(Retry.backoff(5, Duration.ofMillis(100))
+                            .filter(throwable -> throwable instanceof CasMismatchException))
+                        .switchIfEmpty(Mono.defer(() -> {
+                                log.warn("User not found, userId={}", user.getId());
+                                return Mono.empty();
+                            })
+                        ))
+                    .doOnNext(abstractAuthenticationToken::setDetails)
+                    .then(Mono.just(abstractAuthenticationToken))
+            );
     }
 
 }
