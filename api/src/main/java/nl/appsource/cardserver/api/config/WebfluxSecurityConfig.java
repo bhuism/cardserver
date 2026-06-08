@@ -1,4 +1,4 @@
-package nl.appsource.cardserver.stream.config;
+package nl.appsource.cardserver.api.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +18,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
+import java.util.Collections;
 import java.util.List;
 
-@Slf4j
 @Configuration
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class WebfluxSecurityConfig {
 
     private final UserRepository userRepository;
@@ -42,7 +43,7 @@ public class WebfluxSecurityConfig {
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
             .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**")))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
@@ -52,11 +53,14 @@ public class WebfluxSecurityConfig {
     @Bean
     @Order(3)
     public SecurityWebFilterChain securityFilterChainPublic(final ServerHttpSecurity http) {
-        return http
-            .securityMatcher(ServerWebExchangeMatchers.pathMatchers("/actuator/**"))
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .authorizeExchange(exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/actuator/**").permitAll())
+
+        // allow from everywhere
+        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
+            .authorizeExchange(
+                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/actuator/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
+                    .permitAll()
+            )
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .build();
@@ -70,32 +74,25 @@ public class WebfluxSecurityConfig {
             .build();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource getPublicCorsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
+        configuration.setAllowedHeaders(Collections.singletonList("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-
-        final CorsConfiguration publicConfig = new CorsConfiguration();
-        publicConfig.setAllowedOriginPatterns(List.of("*"));
-        publicConfig.setAllowedMethods(List.of("GET"));
-
-        source.registerCorsConfiguration("/actuator/**", publicConfig);
-
-        final CorsConfiguration privateConfig = new CorsConfiguration();
-        privateConfig.setAllowCredentials(true);
-        privateConfig.setAllowedOriginPatterns(List.of(
-            "https://www.klaversjassen.nl",
-            "https://klaversjassen.nl",
-            "http://localhost:[*]",
-            "http://127.0.0.1:[*]",
-            "http://localhost",
-            "http://127.0.0.1"
-        ));
-        privateConfig.setAllowedHeaders(List.of("*"));
-        privateConfig.setAllowedMethods(List.of("POST"));
-        privateConfig.setMaxAge(3600L);
-
-        source.registerCorsConfiguration("/api/v1/**", privateConfig);
-
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
+    public CorsConfigurationSource getPrivateCorsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedOrigins(List.of("https://www.klaversjassen.nl", "https://klaversjassen.nl", "http://localhost:4280"));
+        configuration.setAllowedHeaders(Collections.singletonList("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
 }

@@ -12,15 +12,20 @@ import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTest
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 @ActiveProfiles("citest")
@@ -66,11 +71,16 @@ public class SubscribeControllerTest {
         when(userRepository.findById("test-user")).thenReturn(Mono.empty());
         when(userRepository.findBySubject("test-user")).thenReturn(Mono.just(mockUser));
 
+        final Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "none")
+            .claim("sub", "test-user")
+            .build();
+
+        final JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
+        auth.setDetails(mockUser);
+
         webTestClient
-            .mutateWith(mockJwt()
-                .jwt(jwt -> jwt.subject("test-user"))
-                .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
-            )
+            .mutateWith(mockAuthentication(auth))
             .post()
             .uri("/api/v1/subscribe")
             .header("User-Agent", "test-agent")
