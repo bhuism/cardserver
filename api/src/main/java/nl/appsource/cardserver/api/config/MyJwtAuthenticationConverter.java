@@ -66,15 +66,15 @@ public class MyJwtAuthenticationConverter implements Converter<Jwt, Mono<Abstrac
                                                     .subscribe();
                                             }));
                                 })))))
-                    .flatMap(user -> userRepository.updateUpdated(user.getId())
-                        .then(Mono.just(user))
-                        .retryWhen(Retry.backoff(5, Duration.ofMillis(100))
-                            .filter(throwable -> throwable instanceof CasMismatchException))
-                        .switchIfEmpty(Mono.defer(() -> {
-                                log.warn("User not found, userId={}", user.getId());
-                                return Mono.empty();
-                            })
-                        ))
+//                    .flatMap(user -> userRepository.updateUpdated(user.getId())
+//                        .then(Mono.just(user))
+//                        .retryWhen(Retry.backoff(5, Duration.ofMillis(100))
+//                            .filter(throwable -> throwable instanceof CasMismatchException))
+//                        .switchIfEmpty(Mono.defer(() -> {
+//                                log.warn("User not found, userId={}", user.getId());
+//                                return Mono.empty();
+//                            })
+//                        ))
                     .doOnNext(abstractAuthenticationToken::setDetails)
                     .then(Mono.just(abstractAuthenticationToken))
             );

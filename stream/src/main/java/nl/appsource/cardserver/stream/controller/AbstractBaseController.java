@@ -2,9 +2,7 @@ package nl.appsource.cardserver.stream.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -15,8 +13,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public abstract class AbstractBaseController {
 
-    @Autowired
-    private UserRepository userRepository;
+//    @Autowired
+//    private UserRepository userRepository;
 
     protected Mono<String> getUserId(final ServerWebExchange exchange) {
 
