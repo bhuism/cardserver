@@ -26,6 +26,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 @ActiveProfiles("citest")
@@ -121,11 +124,19 @@ public class GameControllerTests {
     @Test
     void getGame_whenGameNotFound_shouldReturnNotFound() {
 
+        final User user = new User();
+        user.setId("user-abc");
+
+        final Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "none")
+            .claim("sub", "user-abc")
+            .build();
+
+        final JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
+        auth.setDetails(user);
+
         webTestClient
-            .mutateWith(mockJwt()
-                .jwt(jwt -> jwt.subject("user-abc"))
-                .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
-            )
+            .mutateWith(mockAuthentication(auth))
             .get()
             .uri("/api/v1/games/game-notfound")
             .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
@@ -137,11 +148,19 @@ public class GameControllerTests {
     @Test
     void getGame_whenGameFound_shouldReturnGame() {
 
+        final User user = new User();
+        user.setId("user-abc");
+
+        final Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "none")
+            .claim("sub", "user-abc")
+            .build();
+
+        final JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER")));
+        auth.setDetails(user);
+
         webTestClient
-            .mutateWith(mockJwt()
-                .jwt(jwt -> jwt.subject("user-abc"))
-                .authorities(new SimpleGrantedAuthority("USER"), new SimpleGrantedAuthority("ROLE_USER"))
-            )
+            .mutateWith(mockAuthentication(auth))
             .get()
             .uri("/api/v1/games/game-found")
             .header("App-Identifier", "sess0ff9e5c0-da5e-48e1-a3ae-e5a93880ed90")
