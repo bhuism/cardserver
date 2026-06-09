@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.aiplayer.service;
 
-import io.micrometer.observation.annotation.Observed;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,8 +81,6 @@ public class AiWorker {
         });
     }
 
-
-    @Observed(name = "aiworker.say")
     private Mono<String> say(final String gameId, final String userId) {
 
         log.info("say() for gameId={} userId={}", gameId, userId);
@@ -127,7 +124,6 @@ public class AiWorker {
 
     }
 
-    @Observed(name = "aiworker.playcard")
     private Mono<String> playCard(final String gameId, final String userId) {
 
         return gameRepository.findById(gameId)

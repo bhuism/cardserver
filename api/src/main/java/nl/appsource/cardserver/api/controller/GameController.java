@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.api.controller;
 
-import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.api.service.GameService;
@@ -81,18 +80,17 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     }
 
     @Override
-    @Observed
     public Mono<ResponseEntity<Void>> gameEvent(final String gameId, final Mono<GameEvent> gameEventMono, final ServerWebExchange exchange) {
         return getUserId(exchange)
             .flatMap(userId -> gameEventMono
 //                .doOnNext(gameEvent -> log.info("{} gameEvent() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameEvent.getGameId()))
-                .flatMap(gameEvent -> {
-                        gameEvent.setGameId(gameId);
-                        gameEvent.setUserId(userId);
-                        return redisStreamService.publishToStream("gameEvent", gameEvent);
-                    }
-                )
-                .thenReturn(ResponseEntity.ok().<Void>build())
+                    .flatMap(gameEvent -> {
+                            gameEvent.setGameId(gameId);
+                            gameEvent.setUserId(userId);
+                            return redisStreamService.publishToStream("gameEvent", gameEvent);
+                        }
+                    )
+                    .thenReturn(ResponseEntity.ok().<Void>build())
             )
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }

@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.stream.controller;
 
-import io.micrometer.observation.annotation.Observed;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,13 +21,12 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class SubscribeController extends AbstractBaseController  implements V1Api {
+public class SubscribeController extends AbstractBaseController implements V1Api {
 
     private final SseEmitterRepository sseEmitterRepository;
 
     private final UserRepository userRepository;
 
-    @Observed(name = "stream.subscribe")
     @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(final ServerWebExchange exchange) {
 

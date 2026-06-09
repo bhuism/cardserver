@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.api.controller;
 
-import io.micrometer.observation.annotation.Observed;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,6 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
     private final UserRepository userRepository;
 
     @Override
-    @Observed(name = "api.loaduser")
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .map(SecurityContext::getAuthentication)

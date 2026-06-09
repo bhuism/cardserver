@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.gameengine.service;
 
-import io.micrometer.observation.annotation.Observed;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -169,8 +168,6 @@ public class Worker {
         }
     }
 
-
-    @Observed(name = "gameengine.executeSynchronious")
     public Mono<Void> executeSynchronious(final GameEvent gameEvent) {
 
         return Mono.just(gameEvent.getGameId())
@@ -179,63 +176,63 @@ public class Worker {
                 log.info("Retrying lock because of: " + retrySignal.toString());
             }))
             .flatMap(entry -> Mono.just(entry.getKey())
-                .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator().equals(gameEvent.getUserId()) || game.getPlayers().contains(gameEvent.getUserId()))
-                .map(game -> {
+                    .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator().equals(gameEvent.getUserId()) || game.getPlayers().contains(gameEvent.getUserId()))
+                    .map(game -> {
 
-                    final GameEngineRwImpl.UserMessenger userMessenger = new GameEngineRwImpl.UserMessenger() {
+                        final GameEngineRwImpl.UserMessenger userMessenger = new GameEngineRwImpl.UserMessenger() {
 
-                        @Override
-                        public Mono<Void> sendUserMessage(final String message) {
-                            return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
-                        }
+                            @Override
+                            public Mono<Void> sendUserMessage(final String message) {
+                                return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
+                            }
 
-                        @Override
-                        public Mono<Void> sendGameMessage(final String message) {
-                            return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers()), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
-                        }
-                    };
+                            @Override
+                            public Mono<Void> sendGameMessage(final String message) {
+                                return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers()), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
+                            }
+                        };
 
-                    return new GameEngineRwImpl(gameEvent.getUserId(), game, userMessenger);
-                })
-                .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
-                .map(gameEngineRw -> (GameEngineRw) gameEngineRw)
-                .flatMap(gameEngineRw -> {
-                    final String userId = gameEvent.getUserId();
-                    return switch (gameEvent.getEventType()) {
-                        case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
-                        case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
-                        case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard()).orElseThrow()));
-                        case SAY -> gameEngineRw.say(gameEvent.getSay());
-                        case CLAIM_ROEM -> gameEngineRw.claimRoem();
-                        case CLAIM_VERZAKEN -> claimVerzaken(userId, entry.getKey().getId());
-                    };
-                })
-                .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
-                .flatMap(this::sendUpdateGame)
+                        return new GameEngineRwImpl(gameEvent.getUserId(), game, userMessenger);
+                    })
+                    .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
+                    .map(gameEngineRw -> (GameEngineRw) gameEngineRw)
+                    .flatMap(gameEngineRw -> {
+                        final String userId = gameEvent.getUserId();
+                        return switch (gameEvent.getEventType()) {
+                            case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
+                            case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
+                            case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard()).orElseThrow()));
+                            case SAY -> gameEngineRw.say(gameEvent.getSay());
+                            case CLAIM_ROEM -> gameEngineRw.claimRoem();
+                            case CLAIM_VERZAKEN -> claimVerzaken(userId, entry.getKey().getId());
+                        };
+                    })
+                    .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
+                    .flatMap(this::sendUpdateGame)
 //                .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
-                .flatMap(game -> {
-                    if (game.getBoomId() != null) {
-                        return boomRepository.findById(game.getBoomId())
-                            .flatMap(boomRepository::save)
-                            .flatMap(this::sendUpdateBoom)
-                            .then(Mono.just(game));
-                    } else {
-                        return Mono.just(game);
-                    }
-                }).onErrorResume(error -> {
-                    log.error("Error during update, attempting to unlock game: {}", entry.getKey().getId());
-                    return gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue())
-                        // Swallow unlock-specific errors so we don't mask the original error
-                        .onErrorResume(unlockError -> {
-                            log.warn("Failed to cleanly unlock document: {}", entry.getKey().getId());
-                            return Mono.empty();
-                        })
-                        // Re-throw the original error to the subscriber
-                        .then(Mono.error(error));
-                })
-                .doFinally(signalType -> {
-                    gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
-                })
+                    .flatMap(game -> {
+                        if (game.getBoomId() != null) {
+                            return boomRepository.findById(game.getBoomId())
+                                .flatMap(boomRepository::save)
+                                .flatMap(this::sendUpdateBoom)
+                                .then(Mono.just(game));
+                        } else {
+                            return Mono.just(game);
+                        }
+                    }).onErrorResume(error -> {
+                        log.error("Error during update, attempting to unlock game: {}", entry.getKey().getId());
+                        return gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue())
+                            // Swallow unlock-specific errors so we don't mask the original error
+                            .onErrorResume(unlockError -> {
+                                log.warn("Failed to cleanly unlock document: {}", entry.getKey().getId());
+                                return Mono.empty();
+                            })
+                            // Re-throw the original error to the subscriber
+                            .then(Mono.error(error));
+                    })
+                    .doFinally(signalType -> {
+                        gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
+                    })
             )
             .flatMap(game -> {
                 final GameEngine gameEngine = new GameEngineImpl(game);

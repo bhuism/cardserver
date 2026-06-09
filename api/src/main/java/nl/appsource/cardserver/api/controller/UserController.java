@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.api.controller;
 
-import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.api.service.UserService;
@@ -38,7 +37,6 @@ public class UserController extends AbstractBaseController implements UsersApi, 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
-    @Observed(name = "api.getUser")
     public Mono<ResponseEntity<User>> getUser(final String userIdParam, final ServerWebExchange exchange) {
 //        log.info("{} getUser({})", exchange.getRequest().getRemoteAddress(), userIdParam);
         return getUserId(exchange)

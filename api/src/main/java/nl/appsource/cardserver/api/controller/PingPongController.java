@@ -2,7 +2,6 @@ package nl.appsource.cardserver.api.controller;
 
 import com.couchbase.client.core.error.CasMismatchException;
 import com.couchbase.client.core.error.DocumentNotFoundException;
-import io.micrometer.observation.annotation.Observed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
@@ -33,7 +32,6 @@ public class PingPongController extends AbstractBaseController implements V1Api,
     private final JsonMapper jsonMapper;
 
     @Override
-    @Observed(name = "api.ping")
     public Mono<ResponseEntity<Void>> ping(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
 //        log.info("{} ping() ", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
@@ -49,7 +47,6 @@ public class PingPongController extends AbstractBaseController implements V1Api,
     }
 
     @Override
-    @Observed(name = "api.pong")
     public Mono<ResponseEntity<Void>> pong(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
 //        log.info("{} pong()", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
