@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.gameengine.service;
 
+import io.micrometer.observation.annotation.Observed;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -168,6 +169,8 @@ public class Worker {
         }
     }
 
+
+    @Observed(name = "gameengine.executeSynchronious")
     public Mono<Void> executeSynchronious(final GameEvent gameEvent) {
 
         return Mono.just(gameEvent.getGameId())
