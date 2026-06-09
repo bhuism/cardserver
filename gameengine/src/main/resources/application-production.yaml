@@ -13,3 +13,7 @@ logging:
   level:
     ROOT: info
     nl.appsource: debug
+management:
+  otlp:
+    tracing:
+      endpoint: http://jaeger.jaeger:4318/v1/traces

@@ -21,3 +21,9 @@ cardserver:
     username: root
     password: killer
     bucket-name: cardserver
+
+
+management:
+  otlp:
+    tracing:
+      endpoint: http://jaeger.jaeger:4318/v1/traces

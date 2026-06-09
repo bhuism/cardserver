@@ -17,6 +17,11 @@ logging:
     com:
       couchbase: warn
 
+management:
+  otlp:
+    tracing:
+      endpoint: http://jaeger.jaeger:4318/v1/traces
+
 cardserver:
   couchbase:
     connection-string: couchbase://couchbase.couchbase.svc.cluster.local
