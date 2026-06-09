@@ -27,6 +27,8 @@ management:
   tracing:
     sampling:
       probability: 1
+    propagation:
+      type: W3C
   otlp:
     tracing:
-      endpoint: http://jaeger.jaeger:4318/v1/traces
+      endpoint: http://jaeger.jaeger:4318
