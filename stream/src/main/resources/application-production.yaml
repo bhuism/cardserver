@@ -24,11 +24,16 @@ cardserver:
 
 
 management:
-  tracing:
-    sampling:
-      probability: 1
-    propagation:
-      type: W3C
-  otlp:
+  opentelemetry:
     tracing:
-      endpoint: http://jaeger.jaeger:4318
+      export:
+        otlp:
+          endpoint: http://jaeger.jaeger:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://jaeger.jaeger:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://jaeger.jaeger:4318/v1/metrics

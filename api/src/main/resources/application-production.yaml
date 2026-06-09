@@ -17,16 +17,6 @@ logging:
     com:
       couchbase: warn
 
-management:
-  tracing:
-    sampling:
-      probability: 1
-    propagation:
-      type: W3C
-  otlp:
-    tracing:
-      endpoint: http://jaeger.jaeger:4318
-
 cardserver:
   couchbase:
     connection-string: couchbase://couchbase.couchbase.svc.cluster.local
@@ -34,3 +24,17 @@ cardserver:
     password: killer
     bucket-name: cardserver
 
+management:
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://jaeger.jaeger:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://jaeger.jaeger:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://jaeger.jaeger:4318/v1/metrics
