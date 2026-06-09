@@ -13,17 +13,3 @@ logging:
   level:
     ROOT: info
     nl.appsource: debug
-
-management:
-  opentelemetry:
-    tracing:
-      export:
-        otlp:
-          endpoint: http://jaeger.jaeger:4318/v1/traces
-  otlp:
-    metrics:
-      export:
-        enabled: false
-  logging:
-    export:
-      enabled: false
