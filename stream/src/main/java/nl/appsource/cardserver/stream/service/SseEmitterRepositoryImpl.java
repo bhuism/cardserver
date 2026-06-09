@@ -152,15 +152,14 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             Mono.delay(Duration.ofSeconds(1))
                 .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier)));
 
+
+        final Flux<String> friends2 = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
+        final Mono<Void> meMono = sseEventSender.sendOnlineListTo(userId, friends2);
+        final Mono<Void> friendMono = friends2.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
+
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
-            .then(Mono.defer(() -> {
-                    final Flux<String> friends = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
-                    final Mono<Void> firstMono = sseEventSender.sendOnlineListTo(userId, friends);
-                    final Flux<Void> secondFlux = friends.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s))));
-                    return Mono.when(firstMono, secondFlux);
-                }
-            ))
+            .then(Mono.when(meMono, friendMono))
             .thenMany(
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), restFlux)
                     .doFinally(signalType -> {
