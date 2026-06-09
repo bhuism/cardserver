@@ -24,6 +24,9 @@ cardserver:
 
 
 management:
+  tracing:
+    sampling:
+      probability: 1
   otlp:
     tracing:
       endpoint: http://jaeger.jaeger:4318/v1/traces
