@@ -17,6 +17,7 @@ import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
+import nl.appsource.generated.openapi.model.OnlineListEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.codec.ServerSentEvent;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
 import static reactor.core.publisher.Flux.concat;
 import static reactor.core.publisher.Flux.merge;
 import static reactor.core.publisher.Mono.just;
@@ -148,14 +150,16 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.pingSink.currentSubscriberCount());
 
         final Flux<String> friends2 = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
-        final Mono<Void> meMono = sseEventSender.sendOnlineListTo(userId, friends2);
-        final Mono<Void> friendMono = friends2.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
+
+        final Mono<MyServerSentEvent> onlineListSse = friends2.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
+
+        final Mono<Void> friendsMono = friends2.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
-            .then(Mono.when(meMono, friendMono))
+            .then(friendsMono)
             .thenMany(
-                concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
+                concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)), onlineListSse,
                     merge(redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.pingSink.currentSubscriberCount());
