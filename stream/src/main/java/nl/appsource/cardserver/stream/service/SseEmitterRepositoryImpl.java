@@ -149,11 +149,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.pingSink.currentSubscriberCount());
 
-        final Flux<String> friends2 = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
+        final Flux<String> friends1 = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
 
-        final Mono<MyServerSentEvent> onlineListSse = friends2.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
+        final Mono<MyServerSentEvent> onlineListSse = friends1.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
 
-        final Mono<Void> friendsMono = friends2.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
+        final Flux<String> friends3 = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
+
+        final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
         return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
             .flatMap(sseSessionRepository::save)
