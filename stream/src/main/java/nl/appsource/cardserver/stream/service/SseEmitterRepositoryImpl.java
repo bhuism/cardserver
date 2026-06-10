@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static reactor.core.publisher.Flux.concat;
+import static reactor.core.publisher.Flux.merge;
 import static reactor.core.publisher.Mono.just;
 
 /**
@@ -64,7 +65,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final SseEventSender sseEventSender;
 
-    private final Sinks.Many<MyServerSentEvent> mainSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<MyServerSentEvent> pingSink = Sinks.many().multicast().directBestEffort();
 
     private static final String HOSTNAME;
 
@@ -89,12 +90,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         }
 
         try {
-            final Sinks.EmitResult emitResult = this.mainSink.tryEmitComplete();
+            final Sinks.EmitResult emitResult = this.pingSink.tryEmitComplete();
             if (emitResult.isFailure()) {
-                log.error("mainSink.tryEmitComplete() failure: {}", emitResult);
+                log.error("pingSink.tryEmitComplete() failure: {}", emitResult);
             }
         } catch (final Throwable t) {
-            log.error("Error closing mainSink", t);
+            log.error("Error closing pingSink", t);
         }
 
     }
@@ -135,7 +136,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
             .map(SseEmitterRepositoryImpl::ping)
-            .subscribe(myServerSentEvent -> mainSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))));
+            .subscribe(myServerSentEvent -> pingSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))));
     }
 
     @Override
@@ -144,14 +145,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final String appIdentifier = Utils.idGen(IDTYPE.SESS, 8);
         final AtomicLong atomicLong = new AtomicLong(1);
 
-        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.mainSink.currentSubscriberCount());
-
-        final Sinks.Many<MyServerSentEvent> userSink = Sinks.many().unicast().onBackpressureBuffer();
-
-        final Flux<MyServerSentEvent> restFlux =
-            Mono.delay(Duration.ofSeconds(1))
-                .thenMany(Flux.merge(mainSink.asFlux(), userSink.asFlux(), just(ping(0)), initCache(userId), redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier)));
-
+        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.pingSink.currentSubscriberCount());
 
         final Flux<String> friends2 = userRepository.getOnlineFriends(userId).doOnNext(s -> log.debug("Found for user {} online friend: {}", userId, s));
         final Mono<Void> meMono = sseEventSender.sendOnlineListTo(userId, friends2);
@@ -161,16 +155,15 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(sseSessionRepository::save)
             .then(Mono.when(meMono, friendMono))
             .thenMany(
-                concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), restFlux)
+                concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
+                    merge(redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
-                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.mainSink.currentSubscriberCount());
+                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.pingSink.currentSubscriberCount());
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
 //                            .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
                             .subscribe();
-
-                        userSink.tryEmitComplete();
 
                     })
                     .map(myServerSentEvent -> {
