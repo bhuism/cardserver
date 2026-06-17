@@ -130,7 +130,7 @@ public class Worker {
     public void startListening() {
         streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
             final GameEvent gameEvent = record.getValue();
-//            log.info("Received gameEvent: {}", gameEvent);
+            log.info("Received gameEvent from redis: {}", gameEvent);
             scheduleGameEvent(gameEvent);
             return Mono.empty();
         });
@@ -159,6 +159,7 @@ public class Worker {
             final GameEvent eventToExecute = eventQueue.poll();
             if (eventToExecute != null) {
                 try {
+                    log.info("Executing gameEvent: {}", eventToExecute);
                     eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(eventToExecute.getGameId()));
                     executeSynchronious(eventToExecute).subscribe();
                 } catch (Throwable t) {
@@ -273,6 +274,7 @@ public class Worker {
             log.error("eventType = null , not scheduling ", new RuntimeException("not scheduling empty eventType"));
         }
 
+        log.info("Scheduling gameEvent: {}", gameEvent);
         eventQueue.add(gameEvent);
     }
 

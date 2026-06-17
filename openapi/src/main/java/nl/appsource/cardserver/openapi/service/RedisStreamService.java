@@ -46,6 +46,9 @@ public class RedisStreamService {
 
         // 1. Initialize the Consumer Group
         return streamOps.createGroup(stream, ReadOffset.latest(), groupName)
+            .doOnNext(s -> {
+                log.info("Created consumer group for stream: {} with group name: {} s: {}", stream, groupName, s);
+            })
             .onErrorResume(e -> {
                 // Ignore BUSYGROUP error if the group already exists
                 if (e.getCause() != null && e.getCause().getMessage().contains("BUSYGROUP")) {
