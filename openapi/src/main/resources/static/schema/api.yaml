@@ -658,6 +658,9 @@ components:
           default: 0
         say:
           type: boolean
+        uuid:
+          type: string
+          format: uuid
       required:
         - eventType
         - userId

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -122,7 +123,7 @@ public class GameServiceImpl implements GameService {
                 final GameEngine gameEngine = new GameEngineImpl(game);
                 if (gameEngine.isAiSay()) {
                     final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then(Mono.just(game));
+                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then(Mono.just(game));
                 } else {
                     return Mono.just(game);
                 }

@@ -38,6 +38,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -239,10 +240,10 @@ public class Worker {
                 final GameEngine gameEngine = new GameEngineImpl(game);
                 if (gameEngine.isAiSay()) {
                     final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then();
+                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then();
                 } else if (gameEngine.isAiTurn()) {
                     final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                    return redisStreamService.publishToStream(aiCardPlayer, new GameEvent().eventType(GameEvent.EventTypeEnum.PLAY_CARD).gameId(game.getId()).userId(aiCardPlayer)).then();
+                    return redisStreamService.publishToStream(aiCardPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).gameId(game.getId()).userId(aiCardPlayer)).then();
                 }
                 return Mono.empty();
             })

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
@@ -113,7 +114,7 @@ public class AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} says: {}", gameId, userId, say ? "make" : "pass");
 
-                    return redisStreamService.publishToStream("gameEvent", new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000)))
+                    return redisStreamService.publishToStream("gameEvent", new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000)))
                         .then(Mono.just(gameId));
 
                 } else {
@@ -149,7 +150,7 @@ public class AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} plays: {}", gameId, userId, card);
 
-                    return redisStreamService.publishToStream("gameEvent", new GameEvent().gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500)))
+                    return redisStreamService.publishToStream("gameEvent", new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500)))
                         .then(Mono.just(gameId));
 
                 } else {
