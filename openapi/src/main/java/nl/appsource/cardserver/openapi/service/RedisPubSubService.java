@@ -26,7 +26,7 @@ public class RedisPubSubService {
     private final JsonMapper jsonMapper;
 
     public Mono<Long> broadCast(final String topic, final MyServerSentEvent myServerSentEvent) {
-        log.info("Publishing message to topic {}: {}", topic, myServerSentEvent);
+        log.info("Publishing message to topic {} {} {}", topic, myServerSentEvent.event(), myServerSentEvent.uuid());
         return reactiveRedisTemplate.convertAndSend(topic, myServerSentEvent)
             .doOnError(e -> log.error("Error publishing message", e));
     }
@@ -51,17 +51,17 @@ public class RedisPubSubService {
             });
     }
 
-    public Flux<Map.Entry<String, MyServerSentEvent>> listenToMessage(final Set<String> topicName) {
-        return container.receive(topicName.stream().map(ChannelTopic::of).toArray(ChannelTopic[]::new))
-            .flatMap(message -> {
-                try {
-                    return Mono.just(Map.entry(message.getChannel(), jsonMapper.readValue(message.getMessage(), MyServerSentEvent.class)));
-                } catch (final JacksonException e) {
-                    log.error("Could not deserialize message on topic: {}", topicName, e);
-                    return Mono.empty();
-                }
-            });
-    }
+//    public Flux<Map.Entry<String, MyServerSentEvent>> listenToMessage(final Set<String> topicName) {
+//        return container.receive(topicName.stream().map(ChannelTopic::of).toArray(ChannelTopic[]::new))
+//            .flatMap(message -> {
+//                try {
+//                    return Mono.just(Map.entry(message.getChannel(), jsonMapper.readValue(message.getMessage(), MyServerSentEvent.class)));
+//                } catch (final JacksonException e) {
+//                    log.error("Could not deserialize message on topic: {}", topicName, e);
+//                    return Mono.empty();
+//                }
+//            });
+//    }
 
 
 }
