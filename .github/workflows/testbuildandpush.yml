@@ -26,8 +26,6 @@ jobs:
       stream: ${{ steps.flags.outputs.stream }}
       gameengine: ${{ steps.flags.outputs.gameengine }}
       aiplayer: ${{ steps.flags.outputs.aiplayer }}
-      admin: ${{ steps.flags.outputs.admin }}
-
     permissions:
       contents: read
       packages: write
@@ -98,7 +96,6 @@ jobs:
             echo "stream=${{ steps.changes.outputs.stream }}" >> $GITHUB_OUTPUT
             echo "gameengine=${{ steps.changes.outputs.gameengine }}" >> $GITHUB_OUTPUT
             echo "aiplayer=${{ steps.changes.outputs.aiplayer }}" >> $GITHUB_OUTPUT
-            echo "admin=${{ steps.changes.outputs.admin }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build image
@@ -111,7 +108,6 @@ jobs:
             if [ "${{ steps.flags.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
             if [ "${{ steps.flags.outputs.gameengine }}" == "true" ]; then PL_ARGS="${PL_ARGS}gameengine,"; fi
             if [ "${{ steps.flags.outputs.aiplayer }}" == "true" ]; then PL_ARGS="${PL_ARGS}aiplayer,"; fi
-            if [ "${{ steps.flags.outputs.admin }}" == "true" ]; then PL_ARGS="${PL_ARGS}admin,"; fi
             PL_ARGS="${PL_ARGS%,}"
           fi
           
@@ -129,8 +125,6 @@ jobs:
           if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.stream }}" == "true" ]; then docker push ghcr.io/bhuism/stream:latest; fi
           if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.gameengine }}" == "true" ]; then docker push ghcr.io/bhuism/gameengine:latest; fi
           if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.aiplayer }}" == "true" ]; then docker push ghcr.io/bhuism/aiplayer:latest; fi
-          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.admin }}" == "true" ]; then docker push ghcr.io/bhuism/admin:latest; fi
-
   rollout-restart:
     name: Rollout Restart
     needs: build
@@ -145,7 +139,6 @@ jobs:
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.stream }}" == "true" ]; then DEPS="${DEPS}cardserver-stream "; fi
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.gameengine }}" == "true" ]; then DEPS="${DEPS}cardserver-gameengine "; fi
           if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.aiplayer }}" == "true" ]; then DEPS="${DEPS}cardserver-aiplayer "; fi
-          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.admin }}" == "true" ]; then DEPS="${DEPS}cardserver-admin "; fi
           DEPS=$(echo "$DEPS" | xargs)
           echo "deployments=${DEPS}" >> $GITHUB_OUTPUT
 
