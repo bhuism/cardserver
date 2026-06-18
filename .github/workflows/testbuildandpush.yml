@@ -54,8 +54,6 @@ jobs:
             ghcr.io/bhuism/stream
             ghcr.io/bhuism/gameengine
             ghcr.io/bhuism/aiplayer
-            ghcr.io/bhuism/admin
-
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
@@ -72,7 +70,6 @@ jobs:
             stream: 'stream/**'
             gameengine: 'gameengine/**'
             aiplayer: 'aiplayer/**'
-            admin: 'admin/**'
             common:
               - 'pom.xml'
               - 'converters/**'
@@ -89,7 +86,6 @@ jobs:
             echo "stream=true" >> $GITHUB_OUTPUT
             echo "gameengine=true" >> $GITHUB_OUTPUT
             echo "aiplayer=true" >> $GITHUB_OUTPUT
-            echo "admin=true" >> $GITHUB_OUTPUT
           else
             echo "common=${{ steps.changes.outputs.common }}" >> $GITHUB_OUTPUT
             echo "api=${{ steps.changes.outputs.api }}" >> $GITHUB_OUTPUT
@@ -102,7 +98,7 @@ jobs:
         run: |
           PL_ARGS=""
           if [ "${{ steps.flags.outputs.common }}" == "true" ]; then
-            PL_ARGS="api,stream,gameengine,aiplayer,admin"
+            PL_ARGS="api,stream,gameengine,aiplayer"
           else
             if [ "${{ steps.flags.outputs.api }}" == "true" ]; then PL_ARGS="${PL_ARGS}api,"; fi
             if [ "${{ steps.flags.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
