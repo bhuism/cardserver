@@ -127,21 +127,9 @@ jobs:
     if: success() && github.event_name != 'pull_request'
     runs-on: ubuntu-22.04-arm
     steps:
-      - name: Determine Deployments
-        id: deps
-        run: |
-          DEPS=""
-          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.api }}" == "true" ]; then DEPS="${DEPS}cardserver-api "; fi
-          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.stream }}" == "true" ]; then DEPS="${DEPS}cardserver-stream "; fi
-          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.gameengine }}" == "true" ]; then DEPS="${DEPS}cardserver-gameengine "; fi
-          if [ "${{ needs.build.outputs.common }}" == "true" ] || [ "${{ needs.build.outputs.aiplayer }}" == "true" ]; then DEPS="${DEPS}cardserver-aiplayer "; fi
-          DEPS=$(echo "$DEPS" | xargs)
-          echo "deployments=${DEPS}" >> $GITHUB_OUTPUT
-
       - name: Rollout Restart Deployments
-        if: steps.deps.outputs.deployments != ''
         uses: actions-hub/kubectl@master
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
         with:
-          args: -n cardserver rollout restart deployment ${{ steps.deps.outputs.deployments }}
+          args: -n cardserver rollout restart deployment cardserver-api cardserver-aiplayer cardserver-gameengine cardserver-stream
