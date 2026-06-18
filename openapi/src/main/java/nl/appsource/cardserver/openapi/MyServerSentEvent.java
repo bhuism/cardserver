@@ -7,8 +7,13 @@ import nl.appsource.generated.openapi.model.OnlineListEvent;
 import nl.appsource.generated.openapi.model.User;
 
 import java.io.Serializable;
+import java.util.UUID;
 
-public record MyServerSentEvent(String event, Object data) implements Serializable {
+public record MyServerSentEvent(String event, Object data, UUID uuid) implements Serializable {
+
+    public MyServerSentEvent(final String event, final Object data) {
+        this(event, data, UUID.randomUUID());
+    }
 
     public MyServerSentEvent(final String event) {
         this(event, "{}");
