@@ -471,7 +471,6 @@ components:
           format: date-time
       required:
         - connections
-        - currentSubscriberCount
         - timeStamp
     createInviteResponse:
       type: object

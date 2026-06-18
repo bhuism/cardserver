@@ -147,7 +147,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final String appIdentifier = Utils.idGen(IDTYPE.SESS, 8);
         final AtomicLong atomicLong = new AtomicLong(1);
 
-        log.info("{} subscribe() appIdentifier={} userId={}, subscriberCount={}", remoteAddress, appIdentifier, userId, this.pingSink.currentSubscriberCount());
+        log.info("{} subscribe() appIdentifier={} userId={}", remoteAddress, appIdentifier, userId);
 
         final Flux<String> friends1 = userRepository.getOnlineFriends(userId);
 
@@ -164,7 +164,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
                     merge(onlineListSse, redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
-                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}, subscriberCount={}", remoteAddress, signalType, appIdentifier, userId, this.pingSink.currentSubscriberCount());
+                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
