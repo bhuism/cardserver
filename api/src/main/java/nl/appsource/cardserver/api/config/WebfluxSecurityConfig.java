@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
-import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.cors.CorsConfiguration;
@@ -39,12 +38,11 @@ public class WebfluxSecurityConfig {
     public SecurityWebFilterChain securityFilterChainPrivate(final ServerHttpSecurity http) {
 
         return http
-            .securityMatcher(ServerWebExchangeMatchers.pathMatchers("/api/v1/**"))
+            .securityMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**"))
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPrivateCorsConfigurationSource()))
-            .securityMatcher(new OrServerWebExchangeMatcher(new PathPatternParserServerWebExchangeMatcher("/api/v1/**")))
             .authorizeExchange((exchanges) -> exchanges.anyExchange().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
             .build();
@@ -55,11 +53,12 @@ public class WebfluxSecurityConfig {
     public SecurityWebFilterChain securityFilterChainPublic(final ServerHttpSecurity http) {
 
         // allow from everywhere
-        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+        return http
+            .securityMatcher(ServerWebExchangeMatchers.pathMatchers(HttpMethod.GET, "/", "/actuator/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**"))
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(getPublicCorsConfigurationSource()))
             .authorizeExchange(
-                exchanges -> exchanges.pathMatchers(HttpMethod.GET, "/", "/actuator/**", "/index.html", "/logo192.png", "/schema/**", "/error/**", "/favicon.ico", "/.well-known/jwks.json", "/.well-known/openid-configuration", "/version.json", "/webjars/**", "/public/**")
-                    .permitAll()
+                exchanges -> exchanges.anyExchange().permitAll()
             )
             .requestCache(ServerHttpSecurity.RequestCacheSpec::disable)
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
@@ -71,6 +70,7 @@ public class WebfluxSecurityConfig {
     public SecurityWebFilterChain securityFilterChainDenyAll(final ServerHttpSecurity http) {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges.anyExchange().denyAll())
+            .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
             .build();
     }
 
