@@ -149,11 +149,6 @@ public class Worker {
         }
     }
 
-    @FunctionalInterface
-    public interface GameEngineExecutor {
-        Mono<GameEngineRwImpl> run();
-    }
-
     private void processDueEvents() {
         long currentTime = System.currentTimeMillis();
         while (!eventQueue.isEmpty() && eventQueue.peek().getExecutionTime() <= currentTime) {
