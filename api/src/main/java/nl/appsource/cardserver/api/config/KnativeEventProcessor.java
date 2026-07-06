@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -20,8 +21,8 @@ public class KnativeEventProcessor {
         return incomingEvent -> {
 
             // 1. Extract data and attributes from the incoming Knative event
-            String eventType = incomingEvent.getType();
-            byte[] rawData = incomingEvent.getData().toBytes();
+            final String eventType = incomingEvent.getType();
+            //byte[] rawData = incomingEvent.getData().toBytes();
 
             log.info("Processing incoming Knative event: {}", eventType);
 
@@ -32,7 +33,7 @@ public class KnativeEventProcessor {
                 .withId(UUID.randomUUID().toString())
                 .withSource(URI.create("https://spring-boot.my-cluster.local"))
                 .withType("order.processed")
-                .withData("application/json", "{\"status\": \"success\"}".getBytes())
+                .withData("application/json", "{\"status\": \"success\"}".getBytes(StandardCharsets.UTF_8))
                 .build();
         };
     }
