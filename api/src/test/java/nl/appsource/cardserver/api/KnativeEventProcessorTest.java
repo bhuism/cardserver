@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.api;
 
-import nl.appsource.cardserver.api.config.KnativeEventProcessor;
 import nl.appsource.cardserver.api.service.GameService;
 import nl.appsource.cardserver.api.service.UserService;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
@@ -16,13 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockUser;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
 @ActiveProfiles("citest")
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -59,29 +56,15 @@ public class KnativeEventProcessorTest {
     private org.springframework.context.ApplicationContext context;
 
     @Test
-    void testBeanExists() {
-        assert context.containsBean("processOrder");
-    }
-
-    @Test
     void testProcessOrderExposed() {
         webTestClient
             .post()
             .uri("/processOrder")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue("{}")
+            .bodyValue("{\"type\":\"test\"}")
             .exchange()
-            .expectStatus().isOk();
-    }
-
-    @Test
-    void testRootExposed() {
-        webTestClient
-            .post()
-            .uri("/")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue("{}")
-            .exchange()
-            .expectStatus().isOk();
+            .expectStatus().isOk()
+            .expectBody()
+            .jsonPath("$.type").isEqualTo("order.processed");
     }
 }

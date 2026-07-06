@@ -27,12 +27,12 @@ import java.util.List;
 public class WebfluxSecurityConfig {
 
     private final UserRepository userRepository;
-    
+
     @Bean
     @Order(1)
     public SecurityWebFilterChain securityFilterChainKnative(final ServerHttpSecurity http) {
         return http
-            .securityMatcher(ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/", "/processOrder"))
+            .securityMatcher(ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/processOrder"))
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(exchanges -> exchanges.anyExchange().permitAll())
             .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())
