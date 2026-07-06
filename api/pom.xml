@@ -110,6 +110,11 @@
             <artifactId>spring-integration-cloudevents</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-function-webflux</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

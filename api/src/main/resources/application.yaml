@@ -9,6 +9,9 @@ logging:
     ROOT: info
     nl.appsource: info
 spring:
+  cloud:
+    function:
+      definition: processOrder
   lifecycle:
     timeout-per-shutdown-phase: 2s
   main:

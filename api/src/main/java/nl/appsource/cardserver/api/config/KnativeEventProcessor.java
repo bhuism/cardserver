@@ -18,6 +18,8 @@ public class KnativeEventProcessor {
     @Bean
     public Function<CloudEvent, CloudEvent> processOrder() {
 
+        log.info("processOrder bean created");
+
         return incomingEvent -> {
 
             // 1. Extract data and attributes from the incoming Knative event
