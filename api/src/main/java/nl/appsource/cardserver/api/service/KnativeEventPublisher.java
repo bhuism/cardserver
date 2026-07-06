@@ -1,8 +1,9 @@
-package nl.appsource.cardserver.api.config;
+package nl.appsource.cardserver.api.service;
 
 import io.cloudevents.CloudEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -10,12 +11,13 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
-public class EventPublisher {
+@Profile({"production", "development"})
+public class KnativeEventPublisher {
 
     private final WebClient webClient;
     private final String brokerUrl;
 
-    public EventPublisher(final WebClient.Builder webClientBuilder, @Value("${K_SINK}") String brokerUrl) {
+    public KnativeEventPublisher(final WebClient.Builder webClientBuilder, @Value("${K_SINK:http://kourier.impl.nl}") String brokerUrl) {
         this.webClient = webClientBuilder.build();
         this.brokerUrl = brokerUrl;
     }

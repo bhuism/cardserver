@@ -17,12 +17,13 @@ public class KnativeEventProcessor {
     @Bean
     public Function<CloudEvent, CloudEvent> processOrder() {
 
-        log.info("Processing incoming Knative event");
-
         return incomingEvent -> {
+
             // 1. Extract data and attributes from the incoming Knative event
             String eventType = incomingEvent.getType();
             byte[] rawData = incomingEvent.getData().toBytes();
+
+            log.info("Processing incoming Knative event: {}", eventType);
 
             // 2. Process business logic...
 
