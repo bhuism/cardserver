@@ -17,7 +17,7 @@ public class KnativeEventPublisher {
     private final WebClient webClient;
     private final String brokerUrl;
 
-    public KnativeEventPublisher(final WebClient.Builder webClientBuilder, @Value("${K_SINK:http://kourier.impl.nl}") String brokerUrl) {
+    public KnativeEventPublisher(final WebClient.Builder webClientBuilder, final @Value("${K_SINK:http://kourier.impl.nl}") String brokerUrl) {
         this.webClient = webClientBuilder.build();
         this.brokerUrl = brokerUrl;
     }
