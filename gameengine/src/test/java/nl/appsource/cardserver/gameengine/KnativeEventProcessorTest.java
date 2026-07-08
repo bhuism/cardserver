@@ -1,7 +1,5 @@
-package nl.appsource.cardserver.api;
+package nl.appsource.cardserver.gameengine;
 
-import nl.appsource.cardserver.api.service.GameService;
-import nl.appsource.cardserver.api.service.UserService;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
@@ -10,6 +8,7 @@ import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
+import nl.appsource.generated.openapi.model.GameEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,8 +31,6 @@ public class KnativeEventProcessorTest {
     @MockitoBean
     private UserRepository userRepository;
     @MockitoBean
-    private GameService gameService;
-    @MockitoBean
     private GameRepository gameRepository;
     @MockitoBean
     private FeedbackRepository feedbackRepository;
@@ -43,8 +40,6 @@ public class KnativeEventProcessorTest {
     private BoomRepository boomRepository;
     @MockitoBean
     private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
-    @MockitoBean
-    private UserService userService;
     @MockitoBean
     private RedisPubSubService redisPubSubService;
     @MockitoBean
@@ -57,15 +52,18 @@ public class KnativeEventProcessorTest {
 
     @Test
     void testProcessOrderExposed() {
+
+        final GameEvent gameEvent = new GameEvent(GameEvent.EventTypeEnum.PLAY_CARD, "1234", "gameId", 0L);
+
         webTestClient
             .post()
-            .uri("/processOrder")
+            .uri("/gameEvent")
             .header("ce-id", "1234")
             .header("ce-specversion", "1.0")
             .header("ce-source", "http://my-source")
             .header("ce-type", "test")
             .contentType(MediaType.APPLICATION_JSON)
-//            .bodyValue("{\"status\":\"success\"}")
+            .bodyValue(gameEvent)
             .exchange()
             .expectStatus().isOk();
 //            .expectHeader().valueEquals("ce-type", "order.processed")
