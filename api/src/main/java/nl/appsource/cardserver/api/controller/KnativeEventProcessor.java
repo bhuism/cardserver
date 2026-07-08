@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -25,42 +26,44 @@ import java.util.UUID;
 public class KnativeEventProcessor {
 
     @PostMapping(value = "/processOrder")
-    public ResponseEntity<byte[]> processOrder(
+    public Mono<ResponseEntity<byte[]>> processOrder(
         final @RequestHeader MultiValueMap<String, String> headers,
         final @RequestBody(required = false) byte[] body) {
 
-        final byte[] payload = body == null ? new byte[0] : body;
+        return Mono.fromCallable(() -> {
+            final byte[] payload = body == null ? new byte[0] : body;
 
-        final Map<String, List<String>> headersMap = new HashMap<>();
+            final Map<String, List<String>> headersMap = new HashMap<>();
 
-        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-            headersMap.put(entry.getKey(), entry.getValue());
-        }
+            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                headersMap.put(entry.getKey(), entry.getValue());
+            }
 
-        final MessageReader reader = HttpMessageFactory.createReaderFromMultimap(headersMap, payload);
-        final CloudEvent incomingEvent = reader.toEvent();
+            final MessageReader reader = HttpMessageFactory.createReaderFromMultimap(headersMap, payload);
+            final CloudEvent incomingEvent = reader.toEvent();
 
-        log.info("processOrder bean created");
-        log.info("Processing incoming Knative event type: {}", incomingEvent.getType());
+            log.info("processOrder bean created");
+            log.info("Processing incoming Knative event type: {}", incomingEvent.getType());
 
-        final CloudEvent outgoingEvent = CloudEventBuilder.v1()
-            .withId(UUID.randomUUID().toString())
-            .withSource(URI.create("https://spring-boot.my-cluster.local"))
-            .withType("order.processed")
-            .withDataContentType("application/json")
-            .withData("{\"status\":\"success\"}".getBytes(StandardCharsets.UTF_8))
-            .build();
+            final CloudEvent outgoingEvent = CloudEventBuilder.v1()
+                .withId(UUID.randomUUID().toString())
+                .withSource(URI.create("https://spring-boot.my-cluster.local"))
+                .withType("order.processed")
+                .withDataContentType("application/json")
+                .withData("{\"status\":\"success\"}".getBytes(StandardCharsets.UTF_8))
+                .build();
 
-        final ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok();
-        final byte[][] responseBody = new byte[1][1];
+            final ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok();
+            final byte[][] responseBody = new byte[1][1];
 
-        final MessageWriter<?, ?> writer = HttpMessageFactory.createWriter(
-            (k, v) -> responseBuilder.header(k, v),
-            b -> responseBody[0] = b
-        );
+            final MessageWriter<?, ?> writer = HttpMessageFactory.createWriter(
+                (k, v) -> responseBuilder.header(k, v),
+                b -> responseBody[0] = b
+            );
 
-        writer.writeBinary(outgoingEvent);
+            writer.writeBinary(outgoingEvent);
 
-        return responseBuilder.body(responseBody[0]);
+            return responseBuilder.body(responseBody[0]);
+        });
     }
 }
