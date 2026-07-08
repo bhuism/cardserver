@@ -60,11 +60,15 @@ public class KnativeEventProcessorTest {
         webTestClient
             .post()
             .uri("/processOrder")
+            .header("ce-id", "1234")
+            .header("ce-specversion", "1.0")
+            .header("ce-source", "http://my-source")
+            .header("ce-type", "test")
             .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue("{\"type\":\"test\"}")
+            .bodyValue("{\"status\":\"success\"}")
             .exchange()
             .expectStatus().isOk()
-            .expectBody()
-            .jsonPath("$.type").isEqualTo("order.processed");
+            .expectHeader().valueEquals("ce-type", "order.processed")
+            .expectHeader().valueEquals("ce-source", "https://spring-boot.my-cluster.local");
     }
 }
