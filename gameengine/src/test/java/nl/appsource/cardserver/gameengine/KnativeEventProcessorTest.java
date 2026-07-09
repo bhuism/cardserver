@@ -47,9 +47,6 @@ public class KnativeEventProcessorTest {
     @MockitoBean
     private SseEventSender sseEventSender;
 
-    @Autowired
-    private org.springframework.context.ApplicationContext context;
-
     @Test
     void testProcessOrderExposed() {
 
@@ -66,7 +63,5 @@ public class KnativeEventProcessorTest {
             .bodyValue(gameEvent)
             .exchange()
             .expectStatus().isOk();
-//            .expectHeader().valueEquals("ce-type", "order.processed")
-//            .expectHeader().valueEquals("ce-source", "https://spring-boot.my-cluster.local");
     }
 }

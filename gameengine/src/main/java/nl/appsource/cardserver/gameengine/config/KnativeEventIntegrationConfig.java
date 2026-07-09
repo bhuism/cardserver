@@ -7,45 +7,32 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.http.support.DefaultHttpHeaderMapper;
 import org.springframework.integration.webflux.dsl.WebFlux;
-import org.springframework.messaging.Message;
-import reactor.core.publisher.Mono;
-
-import java.util.UUID;
 
 @Configuration
-@Slf4j
 @EnableIntegration
+@Slf4j
 public class KnativeEventIntegrationConfig {
 
     @Bean
     public IntegrationFlow processOrderFlow() {
-        return IntegrationFlow.from(WebFlux.inboundGateway("/gameEvent")
+
+        DefaultHttpHeaderMapper headerMapper = DefaultHttpHeaderMapper.inboundMapper();
+        // Ensure Knative CloudEvent binary headers are mapped into Spring Integration MessageHeaders
+        headerMapper.setInboundHeaderNames("ce-*", "HTTP_REQUEST_HEADERS");
+
+        return IntegrationFlow.from(WebFlux.inboundChannelAdapter("/gameEvent")
                 .requestMapping(m -> m.methods(HttpMethod.POST))
-                // Let WebFlux automatically deserialize the JSON body into your POJO
                 .requestPayloadType(GameEvent.class)
-                .mappedResponseHeaders("ce-*", "Content-Type"))
-
-            .handle(Message.class, (message, headers) -> {
-                // The payload is now your strongly-typed business class
-                final GameEvent gameEvent = (GameEvent) message.getPayload();
-//                String eventType = (String) headers.get("ce-type");
-
-                log.info("Received event: {} id: {}", gameEvent.getEventType(), headers.entrySet());
-
-                return processReactively(gameEvent)
-                    .map(resultPojo -> MessageBuilder.withPayload(resultPojo)
-                        .setHeader("ce-id", UUID.randomUUID().toString())
-                        // ... other headers
-                        .build());
-
+                .headerMapper(headerMapper)
+            )
+//            .handle(gameEventProcessor, "processGameEvent")
+            .handle(GameEvent.class, (gameEvent, headers) -> {
+                log.info("Got game event: {}", gameEvent.getEventType());
+                return null;
             })
             .get();
-    }
 
-    private Mono<Object> processReactively(final GameEvent orderEvent) {
-        return Mono.just(new Object());
     }
-
 }
