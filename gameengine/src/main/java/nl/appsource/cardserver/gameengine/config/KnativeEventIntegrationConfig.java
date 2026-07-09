@@ -32,7 +32,7 @@ public class KnativeEventIntegrationConfig {
                 final GameEvent gameEvent = (GameEvent) message.getPayload();
 //                String eventType = (String) headers.get("ce-type");
 
-                log.info("Received event: {} id: {}", gameEvent.getEventType(), headers.get("Ce-Id"));
+                log.info("Received event: {} id: {}", gameEvent.getEventType(), headers.entrySet());
 
                 return processReactively(gameEvent)
                     .map(resultPojo -> MessageBuilder.withPayload(resultPojo)
