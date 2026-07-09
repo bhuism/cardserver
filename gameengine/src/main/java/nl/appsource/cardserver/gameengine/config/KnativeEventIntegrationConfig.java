@@ -29,12 +29,12 @@ public class KnativeEventIntegrationConfig {
 
             .handle(Message.class, (message, headers) -> {
                 // The payload is now your strongly-typed business class
-                final GameEvent orderEvent = (GameEvent) message.getPayload();
+                final GameEvent gameEvent = (GameEvent) message.getPayload();
 //                String eventType = (String) headers.get("ce-type");
 
-                log.info("Received event: {}", orderEvent.getEventType());
+                log.info("Received event: {} id: {}", gameEvent.getEventType(), headers.get("Ce-Id"));
 
-                return processReactively(orderEvent)
+                return processReactively(gameEvent)
                     .map(resultPojo -> MessageBuilder.withPayload(resultPojo)
                         .setHeader("ce-id", UUID.randomUUID().toString())
                         // ... other headers
