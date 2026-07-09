@@ -129,6 +129,7 @@ public class Worker {
 
     @EventListener(ApplicationReadyEvent.class)
     public void startListening() {
+        log.info("Starting listening for game events...");
         streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
             final GameEvent gameEvent = record.getValue();
             log.info("Received gameEvent from redis: {}", gameEvent);
