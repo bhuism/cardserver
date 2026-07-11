@@ -1,6 +1,8 @@
 package nl.appsource.cardserver.gameengine.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.gameengine.service.Worker;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +15,10 @@ import org.springframework.integration.webflux.dsl.WebFlux;
 @Configuration
 @EnableIntegration
 @Slf4j
+@RequiredArgsConstructor
 public class KnativeEventIntegrationConfig {
+
+    private final Worker worker;
 
     @Bean
     public IntegrationFlow processOrderFlow() {
@@ -30,6 +35,7 @@ public class KnativeEventIntegrationConfig {
 //            .handle(gameEventProcessor, "processGameEvent")
             .handle(GameEvent.class, (gameEvent, headers) -> {
                 log.info("Got game event: {}", gameEvent.getEventType());
+                worker.scheduleGameEvent(gameEvent);
                 return null;
             })
             .get();

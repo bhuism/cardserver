@@ -5,6 +5,7 @@ import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.gameengine.service.Worker;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
@@ -27,7 +28,6 @@ public class KnativeEventProcessorTest {
 
     @Autowired
     private WebTestClient webTestClient;
-
     @MockitoBean
     private UserRepository userRepository;
     @MockitoBean
@@ -46,6 +46,8 @@ public class KnativeEventProcessorTest {
     private RedisStreamService redisStreamService;
     @MockitoBean
     private SseEventSender sseEventSender;
+    @MockitoBean
+    private Worker worker;
 
     @Test
     void testProcessOrderExposed() {
