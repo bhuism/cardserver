@@ -38,7 +38,7 @@ jobs:
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: bhuism
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker meta
@@ -46,10 +46,10 @@ jobs:
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: |
-            ghcr.io/bhuism/api
-            ghcr.io/bhuism/stream
-            ghcr.io/bhuism/gameengine
-            ghcr.io/bhuism/aiplayer
+            ghcr.io/${{ github.repository }}/api
+            ghcr.io/${{ github.repository }}/stream
+            ghcr.io/${{ github.repository }}/gameengine
+            ghcr.io/${{ github.repository }}/aiplayer
       - name: Setup Java
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
@@ -59,15 +59,15 @@ jobs:
 
       - name: Build image
         run: |
-          mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image -pl api,stream,gameengine,aiplayer -am '-Dspring-boot.build-image.imageName=ghcr.io/bhuism/${project.artifactId}:latest-${{ matrix.arch }}'
+          mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image -pl api,stream,gameengine,aiplayer -am '-Dspring-boot.build-image.imageName=ghcr.io/${{ github.repository }}/${project.artifactId}:latest-${{ matrix.arch }}'
 
       - name: Push
         if: success() && github.event_name != 'pull_request'
         run: |
-          docker push ghcr.io/bhuism/api:latest-${{ matrix.arch }}
-          docker push ghcr.io/bhuism/stream:latest-${{ matrix.arch }}
-          docker push ghcr.io/bhuism/gameengine:latest-${{ matrix.arch }}
-          docker push ghcr.io/bhuism/aiplayer:latest-${{ matrix.arch }}
+          docker push ghcr.io/${{ github.repository }}/api:latest-${{ matrix.arch }}
+          docker push ghcr.io/${{ github.repository }}/stream:latest-${{ matrix.arch }}
+          docker push ghcr.io/${{ github.repository }}/gameengine:latest-${{ matrix.arch }}
+          docker push ghcr.io/${{ github.repository }}/aiplayer:latest-${{ matrix.arch }}
   manifest:
     name: Push Multi-Arch Manifest
     needs: build
@@ -83,16 +83,16 @@ jobs:
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: bhuism
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Push Multi-Arch Manifests
         run: |
           for module in api stream gameengine aiplayer; do
-            docker buildx imagetools create -t ghcr.io/bhuism/$module:latest \
-              ghcr.io/bhuism/$module:latest-amd64 \
-              ghcr.io/bhuism/$module:latest-arm64
+            docker buildx imagetools create -t ghcr.io/${{ github.repository }}/$module:latest \
+              ghcr.io/${{ github.repository }}/$module:latest-amd64 \
+              ghcr.io/${{ github.repository }}/$module:latest-arm64
           done
 
   rollout-restart:

@@ -22,7 +22,7 @@
         <checkstyle.version>3.6.0</checkstyle.version>
         <openapi-generator-maven-plugin.version>7.20.0</openapi-generator-maven-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.build-image.imageName>ghcr.io/bhuism/${project.artifactId}:latest</spring-boot.build-image.imageName>
+        <spring-boot.build-image.imageName>ghcr.io/bhuism/cardserver/${project.artifactId}:latest</spring-boot.build-image.imageName>
     </properties>
 
     <modules>
