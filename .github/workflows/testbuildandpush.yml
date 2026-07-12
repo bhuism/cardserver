@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [ "development" ]
   workflow_dispatch:
-    inputs:
-      build_all:
-        description: 'Build everything'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,12 +14,6 @@ jobs:
 
   build:
     runs-on: ubuntu-22.04-arm
-    outputs:
-      common: ${{ steps.flags.outputs.common }}
-      api: ${{ steps.flags.outputs.api }}
-      stream: ${{ steps.flags.outputs.stream }}
-      gameengine: ${{ steps.flags.outputs.gameengine }}
-      aiplayer: ${{ steps.flags.outputs.aiplayer }}
     permissions:
       contents: read
       packages: write
@@ -61,66 +49,17 @@ jobs:
           java-version: '25'
           cache: 'maven'
 
-      - name: Check for changes
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            api: 'api/**'
-            stream: 'stream/**'
-            gameengine: 'gameengine/**'
-            aiplayer: 'aiplayer/**'
-            common:
-              - 'pom.xml'
-              - 'converters/**'
-              - 'couchbase/**'
-              - 'openapi/**'
-              - 'utils/**'
-
-      - name: Set flags
-        id: flags
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.build_all }}" == "true" ]; then
-            echo "common=true" >> $GITHUB_OUTPUT
-            echo "api=true" >> $GITHUB_OUTPUT
-            echo "stream=true" >> $GITHUB_OUTPUT
-            echo "gameengine=true" >> $GITHUB_OUTPUT
-            echo "aiplayer=true" >> $GITHUB_OUTPUT
-          else
-            echo "common=${{ steps.changes.outputs.common }}" >> $GITHUB_OUTPUT
-            echo "api=${{ steps.changes.outputs.api }}" >> $GITHUB_OUTPUT
-            echo "stream=${{ steps.changes.outputs.stream }}" >> $GITHUB_OUTPUT
-            echo "gameengine=${{ steps.changes.outputs.gameengine }}" >> $GITHUB_OUTPUT
-            echo "aiplayer=${{ steps.changes.outputs.aiplayer }}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Build image
         run: |
-          PL_ARGS=""
-          if [ "${{ steps.flags.outputs.common }}" == "true" ]; then
-            PL_ARGS="api,stream,gameengine,aiplayer"
-          else
-            if [ "${{ steps.flags.outputs.api }}" == "true" ]; then PL_ARGS="${PL_ARGS}api,"; fi
-            if [ "${{ steps.flags.outputs.stream }}" == "true" ]; then PL_ARGS="${PL_ARGS}stream,"; fi
-            if [ "${{ steps.flags.outputs.gameengine }}" == "true" ]; then PL_ARGS="${PL_ARGS}gameengine,"; fi
-            if [ "${{ steps.flags.outputs.aiplayer }}" == "true" ]; then PL_ARGS="${PL_ARGS}aiplayer,"; fi
-            PL_ARGS="${PL_ARGS%,}"
-          fi
-          
-          if [ -n "$PL_ARGS" ]; then
-            mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image -pl $PL_ARGS -am
-          else
-            echo "No modules to build."
-          fi
+          mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image -pl api,stream,gameengine,aiplayer -am
 
       - name: Push
-        id: push
         if: success() && github.event_name != 'pull_request'
         run: |
-          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.api }}" == "true" ]; then docker push ghcr.io/bhuism/api:latest; fi
-          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.stream }}" == "true" ]; then docker push ghcr.io/bhuism/stream:latest; fi
-          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.gameengine }}" == "true" ]; then docker push ghcr.io/bhuism/gameengine:latest; fi
-          if [ "${{ steps.flags.outputs.common }}" == "true" ] || [ "${{ steps.flags.outputs.aiplayer }}" == "true" ]; then docker push ghcr.io/bhuism/aiplayer:latest; fi
+          docker push ghcr.io/bhuism/api:latest
+          docker push ghcr.io/bhuism/stream:latest
+          docker push ghcr.io/bhuism/gameengine:latest
+          docker push ghcr.io/bhuism/aiplayer:latest
   rollout-restart:
     name: Rollout Restart
     needs: build
