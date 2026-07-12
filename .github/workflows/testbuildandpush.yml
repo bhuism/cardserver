@@ -73,6 +73,11 @@ jobs:
     needs: build
     if: success() && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     steps:
       - name: Login to GHCR
         uses: docker/login-action@v4
