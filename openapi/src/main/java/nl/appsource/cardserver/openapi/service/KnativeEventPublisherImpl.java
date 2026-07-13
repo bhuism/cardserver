@@ -50,9 +50,7 @@ public class KnativeEventPublisherImpl implements KnativeEventPublisher {
 
     @Override
     public Mono<ResponseEntity<Void>> publish(final GameEvent gameEvent) {
-
         log.info("Publishing gameEvent {} to Knative eventing: {}", gameEvent.getEventType(), gameEvent.getGameId());
-
         return publish("gameEvent", gameEvent.getGameId(), gameEvent.getUuid(), gameEvent);
     }
 

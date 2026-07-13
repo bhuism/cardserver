@@ -21,9 +21,7 @@ import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -32,12 +30,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.PriorityQueue;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,8 +58,6 @@ public class WorkerImpl implements Worker {
     private final GameRepository gameRepository;
 
     private final Environment environment;
-
-    private static final Random RAND = new SecureRandom();
 
     private final PriorityQueue<GameEvent> eventQueue = new PriorityQueue<>(Comparator.comparingLong(GameEvent::getExecutionTime));
 
@@ -127,16 +121,16 @@ public class WorkerImpl implements Worker {
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void startListening() {
-        log.info("Starting listening for game events...");
-        streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
-            final GameEvent gameEvent = record.getValue();
-            log.info("Received gameEvent from redis: {}", gameEvent);
-            scheduleGameEvent(gameEvent);
-            return Mono.empty();
-        });
-    }
+//    @EventListener(ApplicationReadyEvent.class)
+//    public void startListening() {
+//        log.info("Starting listening for game events...");
+//        streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
+//            final GameEvent gameEvent = record.getValue();
+//            log.info("Received gameEvent from redis: {}", gameEvent);
+//            scheduleGameEvent(gameEvent);
+//            return Mono.empty();
+//        });
+//    }
 
     @PreDestroy
     public void destroy() {

@@ -8,6 +8,7 @@ import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
@@ -15,7 +16,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -31,11 +31,11 @@ public class AiWorker {
 
     private final RedisStreamService redisStreamService;
 
+    private final KnativeEventPublisher knativeEventPublisher;
+
     private final GameRepository gameRepository;
 
     private final Environment environment;
-
-    private final JsonMapper jsonMapper;
 
     @PostConstruct
     public void init() {
@@ -114,7 +114,7 @@ public class AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} says: {}", gameId, userId, say ? "make" : "pass");
 
-                    return redisStreamService.publishToStream("gameEvent", new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000)))
+                    return knativeEventPublisher.publish(new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000)))
                         .then(Mono.just(gameId));
 
                 } else {
@@ -150,7 +150,7 @@ public class AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} plays: {}", gameId, userId, card);
 
-                    return redisStreamService.publishToStream("gameEvent", new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500)))
+                    return knativeEventPublisher.publish(new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500)))
                         .then(Mono.just(gameId));
 
                 } else {
