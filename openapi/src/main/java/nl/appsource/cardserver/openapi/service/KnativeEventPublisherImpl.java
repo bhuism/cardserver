@@ -55,7 +55,7 @@ public class KnativeEventPublisherImpl implements KnativeEventPublisher {
     private CloudEvent createCloudEvent(final GameEvent gameEvent) {
         return CloudEventBuilder.v1()
             .withId(gameEvent.getUuid() != null ? gameEvent.getUuid().toString() : UUID.randomUUID().toString())
-            .withType(gameEvent.getEventType().getValue())
+            .withType("gameEvent")
             .withSource(URI.create(source.trim()))
             .withSubject(gameEvent.getGameId())
             .withData("application/json", PojoCloudEventData.wrap(gameEvent, data -> {
