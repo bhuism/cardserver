@@ -16,6 +16,6 @@ public class KnativeProperties {
     /**
      * The source of the events.
      */
-    @Value("${spring.application.name:cardserver-api}")
+    @Value("${spring.application.name}")
     private String source;
 }
