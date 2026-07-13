@@ -10,4 +10,3 @@
 / /   | |_     .'     '.            '---'/ /   | |_   / /        `''-...... -'   | |
 \ \._,\ '/   '-----------'               \ \._,\ '/`-' /                         |_|
  `--'  `"                                 `--'  `" '..'
-${application.title} ${application.version} ${git.commit.id.abbrev}
