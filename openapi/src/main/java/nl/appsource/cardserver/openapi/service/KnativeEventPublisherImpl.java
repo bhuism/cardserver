@@ -3,6 +3,7 @@ package nl.appsource.cardserver.openapi.service;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.core.data.PojoCloudEventData;
+import io.cloudevents.spring.http.CloudEventHttpUtils;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.openapi.config.KnativeProperties;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -36,7 +37,13 @@ public class KnativeEventPublisherImpl implements KnativeEventPublisher {
 
         return webClient.post()
             .uri(knativeProperties.getSink())
-            .bodyValue(event)
+            .headers(headers -> {
+                headers.addAll(CloudEventHttpUtils.toHttp(event));
+                if (event.getDataContentType() != null) {
+                    headers.set("Content-Type", event.getDataContentType());
+                }
+            })
+            .bodyValue(event.getData() != null ? event.getData().toBytes() : new byte[0])
             .retrieve()
             .toBodilessEntity();
     }

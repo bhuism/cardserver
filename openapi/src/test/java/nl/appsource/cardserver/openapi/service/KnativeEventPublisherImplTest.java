@@ -93,5 +93,9 @@ public class KnativeEventPublisherImplTest {
 
         assertThat(requestCaptor.getValue().url()).hasToString("http://localhost:8080");
         assertThat(requestCaptor.getValue().method().name()).isEqualTo("POST");
+        assertThat(requestCaptor.getValue().headers().getFirst("ce-type")).isEqualTo("gameEvent");
+        assertThat(requestCaptor.getValue().headers().getFirst("ce-source")).isEqualTo("test-source");
+        assertThat(requestCaptor.getValue().headers().getFirst("ce-specversion")).isEqualTo("1.0");
+        assertThat(requestCaptor.getValue().headers().getContentType().toString()).isEqualTo("application/json");
     }
 }
