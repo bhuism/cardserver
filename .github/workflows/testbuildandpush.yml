@@ -59,7 +59,12 @@ jobs:
 
       - name: Build image
         run: |
-          mvn -B -ntp -T 1C clean install org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check spring-boot:build-image -pl api,stream,gameengine,aiplayer -am '-Dspring-boot.build-image.imageName=ghcr.io/${{ github.repository }}/${project.artifactId}:latest-${{ matrix.arch }}'
+          mvn -B -ntp -T 1C clean install spring-boot:build-image -pl api,stream,gameengine,aiplayer -am '-Dspring-boot.build-image.imageName=ghcr.io/${{ github.repository }}/${project.artifactId}:latest-${{ matrix.arch }}'
+
+      - name: Code quality
+        if: matrix.arch == 'amd64'
+        run: |
+          mvn -B -ntp -T 1C org.apache.maven.plugins:maven-checkstyle-plugin:check com.github.spotbugs:spotbugs-maven-plugin:check -pl api,stream,gameengine,aiplayer -am
 
       - name: Push
         if: success() && github.event_name != 'pull_request'
