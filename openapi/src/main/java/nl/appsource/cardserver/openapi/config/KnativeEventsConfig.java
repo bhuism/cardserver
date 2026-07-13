@@ -11,6 +11,11 @@ import tools.jackson.databind.json.JsonMapper;
 public class KnativeEventsConfig {
 
     @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+
+    @Bean
     public KnativeEventPublisher knativeEventPublisher(
         final WebClient.Builder webClientBuilder,
         final JsonMapper jsonMapper,
