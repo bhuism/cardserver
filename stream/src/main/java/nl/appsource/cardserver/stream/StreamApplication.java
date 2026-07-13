@@ -8,21 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class StreamApplication {
 
-    public StreamApplication() {
-        log.info("Hi!");
-        Runtime.getRuntime()
-            .addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    super.run();
-                    log.info("Bye!");
-                }
-            });
-    }
-
     public static void main(final String[] args) {
         SpringApplication.run(StreamApplication.class, args);
     }
-
 
 }
