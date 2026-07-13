@@ -53,7 +53,7 @@ public class KnativeEventPublisherImpl implements KnativeEventPublisher {
         return publish(createCloudEvent(type, subject, uuid, data));
     }
 
-    private <T> CloudEvent createCloudEvent(final String type, final String subject, final UUID uuid, final T data) {
+    <T> CloudEvent createCloudEvent(final String type, final String subject, final UUID uuid, final T data) {
         return CloudEventBuilder.v1()
             .withId(uuid != null ? uuid.toString() : UUID.randomUUID().toString())
             .withType(type)
