@@ -23,7 +23,7 @@ public class KnativeEventIntegrationConfig {
     @Bean
     public IntegrationFlow processOrderFlow() {
 
-        DefaultHttpHeaderMapper headerMapper = DefaultHttpHeaderMapper.inboundMapper();
+        final DefaultHttpHeaderMapper headerMapper = DefaultHttpHeaderMapper.inboundMapper();
         // Ensure Knative CloudEvent binary headers are mapped into Spring Integration MessageHeaders
         headerMapper.setInboundHeaderNames("ce-*", "HTTP_REQUEST_HEADERS");
 
