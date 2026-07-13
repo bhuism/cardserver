@@ -16,6 +16,6 @@ public class KnativeProperties {
     /**
      * The source of the events.
      */
-    @Value("${spring.application.name}")
+    @Value("#{'${spring.application.name}'.replace(' ', '_')}")
     private String source;
 }
