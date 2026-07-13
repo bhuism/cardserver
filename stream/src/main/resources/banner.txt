@@ -5,4 +5,4 @@
 .----)   |      |  |     |  |\  \----.|  |____ /  _____  \  |  |  |  |
 |_______/       |__|     | _| `._____||_______/__/     \__\ |__|  |__|
 
-${application.title} ${application.version}
+${application.title} ${application.version} ${git.commit.id.abbrev}

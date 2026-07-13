@@ -4,4 +4,4 @@ _  / __ _  __ `/_  __ `__ \  _ \     __  __/  __  __ \_  __ `/_  /__  __ \  _ \
 / /_/ / / /_/ /_  / / / / /  __/     _  /___  _  / / /  /_/ /_  / _  / / /  __/
 \____/  \__,_/ /_/ /_/ /_/\___/      /_____/  /_/ /_/_\__, / /_/  /_/ /_/\___/
                                                      /____/
-${application.title} ${application.version}
+${application.title} ${application.version} ${git.commit.id.abbrev}
