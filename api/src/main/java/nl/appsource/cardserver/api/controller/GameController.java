@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.api.service.GameService;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.CreateGame;
 import nl.appsource.generated.openapi.model.Game;
@@ -26,6 +27,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
     private final RedisStreamService redisStreamService;
+    private final KnativeEventPublisher knativeEventPublisher;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
@@ -87,7 +89,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
                     .flatMap(gameEvent -> {
                             gameEvent.setGameId(gameId);
                             gameEvent.setUserId(userId);
-                            return redisStreamService.publishToStream("gameEvent", gameEvent);
+                            return Mono.when(redisStreamService.publishToStream("gameEvent", gameEvent), knativeEventPublisher.publish(gameEvent));
                         }
                     )
                     .thenReturn(ResponseEntity.ok().<Void>build())

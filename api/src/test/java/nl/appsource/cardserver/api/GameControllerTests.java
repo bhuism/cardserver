@@ -15,6 +15,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
+import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,6 @@ import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockAuthentication;
-import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 @ActiveProfiles("citest")
 @SpringBootTest(properties = "spring.main.web-application-type=reactive", webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -89,6 +89,9 @@ public class GameControllerTests {
 
     @Autowired
     private org.springframework.context.ApplicationContext context;
+
+    @MockitoBean
+    private KnativeEventPublisher knativeEventPublisher;
 
     @BeforeEach
     void setUp() {
