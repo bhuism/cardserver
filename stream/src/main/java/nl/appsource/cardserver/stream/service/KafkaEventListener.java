@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class KafkaEventListener {
 
     @KafkaListener(topics = "couchbase-cardserver-events", groupId = "cardserver-stream")
-    public void listen(@Header(KafkaHeaders.RECEIVED_KEY) String documentId, @Payload String documentPayload) {
+    public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload String documentPayload) {
         log.info("Received Kafka key: {}, documentPayload: {}", documentId, documentPayload);
     }
 
