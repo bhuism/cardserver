@@ -3,6 +3,9 @@ package nl.appsource.cardserver.stream.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -10,9 +13,9 @@ import org.springframework.stereotype.Service;
 @Profile("production")
 public class KafkaEventListener {
 
-    @KafkaListener(topics = "couchbase-cardserver-events")
-    public void listen(final String event) {
-        log.info("Received Kafka event: {}", event);
+    @KafkaListener(topics = "couchbase-cardserver-events", groupId = "cardserver-stream")
+    public void listen(@Header(KafkaHeaders.RECEIVED_KEY) String documentId, @Payload String documentPayload) {
+        log.info("Received Kafka key: {}, documentPayload: {}", documentId, documentPayload);
     }
 
 }
