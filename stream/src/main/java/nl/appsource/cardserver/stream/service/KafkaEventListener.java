@@ -15,7 +15,7 @@ public class KafkaEventListener {
 
     @KafkaListener(topics = "couchbase-cardserver-events", groupId = "cardserver-stream")
     public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload(required = false) String documentPayload) {
-        log.info("Received Kafka key: {}, documentPayload: {}", documentId, documentPayload);
+        log.info("Received Kafka key: {}, documentPayload: {}  class: {}", documentId, documentPayload, documentPayload != null ? documentPayload.getClass() : "");
     }
 
 }
