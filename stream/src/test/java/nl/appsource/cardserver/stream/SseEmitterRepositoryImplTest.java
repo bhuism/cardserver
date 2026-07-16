@@ -20,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -59,13 +58,13 @@ public class SseEmitterRepositoryImplTest {
 
     private SseEmitterRepository sseEmitterRepository;
 
-    @MockitoBean
+    @Mock
     private RedisPubSubService redisPubSubService;
 
-    @MockitoBean
+    @Mock
     private SseEventSender sseEventSender;
 
-    @MockitoBean
+    @Mock
     private KafkaEventListener kafkaEventListener;
 
     @BeforeEach
@@ -93,7 +92,7 @@ public class SseEmitterRepositoryImplTest {
         when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
         when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
         when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
-        when(kafkaEventListener.gamesChanged()).thenReturn(Mono.empty());
+        when(kafkaEventListener.gamesChanged("userId")).thenReturn(Mono.empty());
 //        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
 
         Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");

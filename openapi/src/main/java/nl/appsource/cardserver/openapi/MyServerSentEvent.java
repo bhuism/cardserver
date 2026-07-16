@@ -9,42 +9,42 @@ import nl.appsource.generated.openapi.model.User;
 import java.io.Serializable;
 import java.util.UUID;
 
-public record MyServerSentEvent(String event, Object data, UUID uuid) implements Serializable {
+public record MyServerSentEvent<T>(String event, T data, UUID uuid) implements Serializable {
 
     public MyServerSentEvent(final String event, final Object data) {
-        this(event, data, UUID.randomUUID());
+        this(event, (T) data, UUID.randomUUID());
     }
 
     public MyServerSentEvent(final String event) {
-        this(event, "{}");
+        this(event, (T) "{}");
     }
 
-    public static MyServerSentEvent updateUser(final User user) {
-        return new MyServerSentEvent("updateUser", user);
+    public static MyServerSentEvent<User> updateUser(final User user) {
+        return new MyServerSentEvent<>("updateUser", user);
     }
 
-    public static MyServerSentEvent updateGame(final Game game) {
-        return new MyServerSentEvent("updateGame", game);
+    public static MyServerSentEvent<Game> updateGame(final Game game) {
+        return new MyServerSentEvent<>("updateGame", game);
     }
 
-    public static MyServerSentEvent updateBoom(final Boom boom) {
-        return new MyServerSentEvent("updateBoom", boom);
+    public static MyServerSentEvent<Boom> updateBoom(final Boom boom) {
+        return new MyServerSentEvent<>("updateBoom", boom);
     }
 
-    public static MyServerSentEvent onlineList(final OnlineListEvent onlineListEvent) {
-        return new MyServerSentEvent("onlineList", onlineListEvent);
+    public static MyServerSentEvent<OnlineListEvent> onlineList(final OnlineListEvent onlineListEvent) {
+        return new MyServerSentEvent<>("onlineList", onlineListEvent);
     }
 
-    public static MyServerSentEvent messageEvent(final MessageEvent messageEvent) {
-        return new MyServerSentEvent("messageEvent", messageEvent);
+    public static MyServerSentEvent<MessageEvent> messageEvent(final MessageEvent messageEvent) {
+        return new MyServerSentEvent<>("messageEvent", messageEvent);
     }
 
-    public static MyServerSentEvent startCache() {
-        return new MyServerSentEvent("startCache");
+    public static MyServerSentEvent<Void> startCache() {
+        return new MyServerSentEvent<>("startCache");
     }
 
-    public static MyServerSentEvent endCache() {
-        return new MyServerSentEvent("endCache");
+    public static MyServerSentEvent<Void> endCache() {
+        return new MyServerSentEvent<>("endCache");
     }
 
 //    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {

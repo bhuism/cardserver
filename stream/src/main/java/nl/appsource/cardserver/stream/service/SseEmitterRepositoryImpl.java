@@ -67,7 +67,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final SseEventSender sseEventSender;
 
-    private final Sinks.Many<MyServerSentEvent> pingSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<MyServerSentEvent<?>> pingSink = Sinks.many().multicast().directBestEffort();
 
     private static final String HOSTNAME;
 
@@ -104,31 +104,35 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    private Flux<MyServerSentEvent> initCache(final String userId) {
+    private Flux<MyServerSentEvent<?>> initCache(final String userId) {
 
         // users
-        final Flux<MyServerSentEvent> friends = userRepository.getFriends(userId)
-            .map(userToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateUser);
-
-        // games
-        final Flux<MyServerSentEvent> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
-            .map(gameToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateGame);
-
-        // forest
-        final Flux<MyServerSentEvent> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
-            .map(boomToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateBoom);
-
-        // me
-        final Flux<MyServerSentEvent> me = userRepository.findById(userId)
+        final Flux<MyServerSentEvent<?>> friends = userRepository.getFriends(userId)
             .map(userToOpenApiConverter::convert)
             .map(MyServerSentEvent::updateUser)
+            .<MyServerSentEvent<?>>map(it -> it);
+
+        // games
+        final Flux<MyServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
+            .map(gameToOpenApiConverter::convert)
+            .map(MyServerSentEvent::updateGame)
+            .<MyServerSentEvent<?>>map(it -> it);
+
+        // forest
+        final Flux<MyServerSentEvent<?>> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
+            .map(boomToOpenApiConverter::convert)
+            .map(MyServerSentEvent::updateBoom)
+            .<MyServerSentEvent<?>>map(it -> it);
+
+        // me
+        final Flux<MyServerSentEvent<?>> me = userRepository.findById(userId)
+            .map(userToOpenApiConverter::convert)
+            .map(MyServerSentEvent::updateUser)
+            .<MyServerSentEvent<?>>map(it -> it)
             .flux();
 
         // online list
-//        final Mono<MyServerSentEvent> onlineList = userRepository.getOnlineFriends(userId)
+//        final Mono<MyServerSentEvent<?>> onlineList = userRepository.getOnlineFriends(userId)
 //            .collectList()
 //            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
@@ -153,7 +157,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Flux<String> friends1 = userRepository.getOnlineFriends(userId);
 
-        final Mono<MyServerSentEvent> onlineListSse = friends1.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
+        final Mono<MyServerSentEvent<?>> onlineListSse = friends1.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
 
         final Flux<String> friends3 = userRepository.getOnlineFriends(userId);
 
@@ -164,7 +168,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(friendsMono)
             .thenMany(
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
-                    merge(onlineListSse, redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier), kafkaEventListener.gamesChanged(), pingSink.asFlux(), initCache(userId)))
+                    merge(onlineListSse, redisPubSubService.listenTo(appIdentifier), kafkaEventListener.gamesChanged(userId), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 
@@ -183,12 +187,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             );
     }
 
-    public static MyServerSentEvent hello(final HelloEvent helloEvent) {
-        return new MyServerSentEvent("hello", helloEvent);
+    public static MyServerSentEvent<?> hello(final HelloEvent helloEvent) {
+        return new MyServerSentEvent<>("hello", helloEvent);
     }
 
-    public static MyServerSentEvent ping(final long count) {
-        return new MyServerSentEvent("ping", Map.of("count", count));
+    public static MyServerSentEvent<?> ping(final long count) {
+        return new MyServerSentEvent<>("ping", Map.of("count", count));
     }
 
 }
