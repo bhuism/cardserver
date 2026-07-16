@@ -25,7 +25,7 @@ public class RedisPubSubService {
     private final JsonMapper jsonMapper;
 
     public Mono<Long> broadCast(final String topic, final MyServerSentEvent myServerSentEvent) {
-        log.info("Publishing message to topic {} {} {}", topic, myServerSentEvent.event(), myServerSentEvent.uuid());
+//        log.info("Publishing message to topic {} {} {}", topic, myServerSentEvent.event(), myServerSentEvent.uuid());
         return reactiveRedisTemplate.convertAndSend(topic, myServerSentEvent)
             .doOnError(e -> log.error("Error publishing message", e));
     }

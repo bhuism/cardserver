@@ -33,7 +33,7 @@ public class KnativeEventPublisherImpl implements KnativeEventPublisher {
 
     private Mono<ResponseEntity<Void>> publish(final CloudEvent event) {
 
-        log.info("Publishing event to Knative eventing: {}", event.getType());
+//        log.info("Publishing event to Knative eventing: {}", event.getType());
 
         return webClient.post()
             .uri(knativeProperties.getSink())
@@ -50,7 +50,7 @@ public class KnativeEventPublisherImpl implements KnativeEventPublisher {
 
     @Override
     public Mono<ResponseEntity<Void>> publish(final GameEvent gameEvent) {
-        log.info("Publishing gameEvent {} to Knative eventing: {}", gameEvent.getEventType(), gameEvent.getGameId());
+//        log.info("Publishing gameEvent {} to Knative eventing: {}", gameEvent.getEventType(), gameEvent.getGameId());
         return publish("gameEvent", gameEvent.getGameId(), gameEvent.getUuid(), gameEvent);
     }
 
