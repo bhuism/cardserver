@@ -36,7 +36,7 @@ class KafkaEventListenerImplTest {
 
     @BeforeEach
     void setUp() {
-        kafkaEventListener = new KafkaEventListenerImpl(jsonMapper, gameToOpenApiConverter, sseEventSender);
+        kafkaEventListener = new KafkaEventListenerImpl(jsonMapper, gameToOpenApiConverter);
     }
 
     @Test
