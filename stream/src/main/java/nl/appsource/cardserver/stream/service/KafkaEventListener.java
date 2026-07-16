@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@Profile("production")
+@Profile({"development", "production"})
 public class KafkaEventListener {
 
     @KafkaListener(topics = "couchbase-cardserver-events", groupId = "cardserver-stream")
