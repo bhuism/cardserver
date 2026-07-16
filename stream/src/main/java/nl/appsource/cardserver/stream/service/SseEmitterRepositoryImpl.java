@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
 import static reactor.core.publisher.Flux.concat;
-import static reactor.core.publisher.Flux.merge;
 import static reactor.core.publisher.Mono.just;
 
 /**
@@ -168,7 +167,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(friendsMono)
             .thenMany(
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
-                    merge(onlineListSse, redisPubSubService.listenTo(appIdentifier), kafkaEventListener.gamesChanged(userId), pingSink.asFlux(), initCache(userId)))
+                    merge(onlineListSse, redisPubSubService.listenTo(appIdentifier), kafkaEventListener.couchbaseSubscribe(userId), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 

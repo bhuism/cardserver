@@ -6,8 +6,6 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.gameengine.service.Worker;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.junit.jupiter.api.Test;
@@ -40,10 +38,6 @@ public class KnativeEventProcessorTest {
     private BoomRepository boomRepository;
     @MockitoBean
     private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
-    @MockitoBean
-    private RedisPubSubService redisPubSubService;
-    @MockitoBean
-    private RedisStreamService redisStreamService;
     @MockitoBean
     private SseEventSender sseEventSender;
     @MockitoBean

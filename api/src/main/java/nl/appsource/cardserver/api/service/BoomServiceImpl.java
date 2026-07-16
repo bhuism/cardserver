@@ -10,8 +10,6 @@ import nl.appsource.cardserver.model.AiRisc;
 import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
-import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -42,16 +40,7 @@ public class BoomServiceImpl implements BoomService {
 
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
-    private final RedisPubSubService redisPubSubService;
-
     private static final Random RAND = new SecureRandom();
-
-    private Mono<Boom> sendUpdateBoom(final Boom boom) {
-        return redisPubSubService.broadCast(Flux.fromIterable(boom.getPlayers())
-                .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
-                .distinct(), MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)))
-            .thenReturn(boom);
-    }
 
     @Override
     public Mono<Boom> getBoom(final String userId, final String boomId) {

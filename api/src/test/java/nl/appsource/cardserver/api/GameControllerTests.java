@@ -16,8 +16,6 @@ import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,12 +78,6 @@ public class GameControllerTests {
 
     @MockitoBean
     private UserService userService;
-
-    @MockitoBean
-    private RedisPubSubService redisPubSubService;
-
-    @MockitoBean
-    private RedisStreamService redisStreamService;
 
     @Autowired
     private org.springframework.context.ApplicationContext context;

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.generated.openapi.model.PingPongSchema;
 import org.openapitools.api.PingApi;
 import org.openapitools.api.PongApi;
@@ -28,7 +27,6 @@ import java.util.Map;
 public class PingPongController extends AbstractBaseController implements V1Api, PingApi, PongApi {
 
     private final SseSessionRepository sseSessionRepository;
-    private final RedisPubSubService redisPubSubService;
     private final JsonMapper jsonMapper;
 
     @Override

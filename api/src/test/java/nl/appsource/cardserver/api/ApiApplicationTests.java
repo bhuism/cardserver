@@ -7,8 +7,6 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,13 +36,7 @@ class ApiApplicationTests {
     private SseSessionRepository sseSessionRepository;
 
     @MockitoBean
-    private RedisPubSubService redisPubSubService;
-
-    @MockitoBean
     private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
-
-    @MockitoBean
-    private RedisStreamService redisStreamService;
 
     @MockitoBean
     private SseEventSender sseEventSender;

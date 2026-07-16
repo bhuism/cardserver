@@ -54,7 +54,7 @@ class KafkaEventListenerImplTest {
         when(gameToOpenApiConverter.convert(game)).thenReturn(openApiGame);
 //        when(sseEventSender.gamesChanged(any())).thenReturn(Mono.empty());
 
-        StepVerifier.create(kafkaEventListener.gamesChanged("user1"))
+        StepVerifier.create(kafkaEventListener.couchbaseSubscribe("user1"))
             .then(() -> kafkaEventListener.listen("id", documentPayload))
             .expectNextMatches(event -> "updateGame".equals(event.event()) && openApiGame.equals(event.data()))
             .thenCancel()

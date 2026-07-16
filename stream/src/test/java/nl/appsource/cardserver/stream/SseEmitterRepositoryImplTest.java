@@ -92,7 +92,7 @@ public class SseEmitterRepositoryImplTest {
         when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
         when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
         when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
-        when(kafkaEventListener.gamesChanged("userId")).thenReturn(Mono.empty());
+        when(kafkaEventListener.couchbaseSubscribe("userId")).thenReturn(Mono.empty());
 //        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
 
         Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");

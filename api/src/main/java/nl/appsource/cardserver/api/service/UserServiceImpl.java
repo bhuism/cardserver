@@ -11,7 +11,6 @@ import nl.appsource.cardserver.model.ScreenOrientation;
 import nl.appsource.cardserver.model.Theme;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.UpdatePreferences;
 import nl.appsource.generated.openapi.model.UserMessage;
