@@ -10,6 +10,7 @@ import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.User;
 import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
+import nl.appsource.cardserver.stream.service.KafkaEventListener;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +24,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 
@@ -65,6 +65,9 @@ public class SseEmitterRepositoryImplTest {
     @MockitoBean
     private SseEventSender sseEventSender;
 
+    @MockitoBean
+    private KafkaEventListener kafkaEventListener;
+
     @BeforeEach
     void setUp() {
         sseEmitterRepository = new SseEmitterRepositoryImpl(
@@ -76,7 +79,8 @@ public class SseEmitterRepositoryImplTest {
             gameRepository,
             boomRepository,
             sseSessionRepository,
-            sseEventSender
+            sseEventSender,
+            kafkaEventListener
         );
     }
 
@@ -89,6 +93,7 @@ public class SseEmitterRepositoryImplTest {
         when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
         when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
         when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
+        when(kafkaEventListener.gamesChanged()).thenReturn(Mono.empty());
 //        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
 
         Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");

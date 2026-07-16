@@ -71,6 +71,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private static final String HOSTNAME;
 
+    private final KafkaEventListener kafkaEventListener;
+
     private Disposable heartbeat;
 
     static {
@@ -162,7 +164,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .then(friendsMono)
             .thenMany(
                 concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
-                    merge(onlineListSse, redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier), pingSink.asFlux(), initCache(userId)))
+                    merge(onlineListSse, redisPubSubService.listenTo(userId), redisPubSubService.listenTo(appIdentifier), kafkaEventListener.gamesChanged(), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 
