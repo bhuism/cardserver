@@ -265,7 +265,6 @@ public class WorkerImpl implements Worker {
             log.error("eventType = null , not scheduling ", new RuntimeException("not scheduling empty eventType"));
         }
 
-        log.info("Scheduling gameEvent: {}", gameEvent);
         eventQueue.add(gameEvent);
     }
 
