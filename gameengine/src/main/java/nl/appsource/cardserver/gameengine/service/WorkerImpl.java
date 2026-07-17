@@ -150,7 +150,6 @@ public class WorkerImpl implements Worker {
             final GameEvent eventToExecute = eventQueue.poll();
             if (eventToExecute != null) {
                 try {
-                    log.info("Executing gameEvent: {}", eventToExecute);
                     eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(eventToExecute.getGameId()));
                     executeSynchronious(eventToExecute).subscribe();
                 } catch (Throwable t) {

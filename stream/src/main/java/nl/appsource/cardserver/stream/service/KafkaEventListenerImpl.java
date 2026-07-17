@@ -43,7 +43,6 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
             if (classNode != null && "nl.appsource.cardserver.model.Game".equals(classNode.asString())) {
                 final Game game = jsonMapper.convertValue(document, Game.class);
                 game.setId(documentId);
-                log.info("Received game: {}", game);
 
                 gamesChangedSink.emitNext(game, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
             }

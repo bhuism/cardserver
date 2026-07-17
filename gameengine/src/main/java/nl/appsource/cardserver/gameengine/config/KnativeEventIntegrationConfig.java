@@ -34,7 +34,6 @@ public class KnativeEventIntegrationConfig {
             )
 //            .handle(gameEventProcessor, "processGameEvent")
             .handle(GameEvent.class, (gameEvent, headers) -> {
-                log.info("Got game event: {}", gameEvent.getEventType());
                 worker.scheduleGameEvent(gameEvent);
                 return null;
             })
