@@ -30,7 +30,7 @@ public class KnativeEventIntegrationConfig {
             )
 //            .handle(gameEventProcessor, "processGameEvent")
             .handle((event, headers) -> {
-                log.info("Got data event: {} {} ", event != null ? event.getClass() : "", event);
+                log.info("Got data event: {} {} {}", event != null ? event.getClass() : "", event, headers);
                 return null;
             })
             .get();
