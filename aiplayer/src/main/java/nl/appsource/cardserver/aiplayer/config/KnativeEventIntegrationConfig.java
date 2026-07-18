@@ -17,23 +17,30 @@ import org.springframework.integration.webflux.dsl.WebFlux;
 public class KnativeEventIntegrationConfig {
 
     @Bean
-    public IntegrationFlow processOrderFlow() {
+    public IntegrationFlow processCouchbaseEventsFlow() {
 
         final DefaultHttpHeaderMapper headerMapper = DefaultHttpHeaderMapper.inboundMapper();
         // Ensure Knative CloudEvent binary headers are mapped into Spring Integration MessageHeaders
-        headerMapper.setInboundHeaderNames("ce-*", "HTTP_REQUEST_HEADERS");
+        headerMapper.setInboundHeaderNames("*");
 
         return IntegrationFlow.from(WebFlux.inboundChannelAdapter("/couchbaseCardserverEvents")
                 .requestMapping(m -> m.methods(HttpMethod.POST))
-                //.requestPayloadType(GameEvent.class)
                 .headerMapper(headerMapper)
+                .errorChannel("couchbaseEventsErrorChannel")
             )
-//            .handle(gameEventProcessor, "processGameEvent")
             .handle((event, headers) -> {
-                log.info("Got data event: {} {} {}", event != null ? event.getClass() : "", event, headers);
+                log.info("Received couchbase event: {} (ce-id: {}, ce-type: {})",
+                    event, headers.get("ce-id"), headers.get("ce-type"));
                 return null;
             })
             .get();
 
+    }
+
+    @Bean
+    public IntegrationFlow couchbaseEventsErrorFlow() {
+        return IntegrationFlow.from("couchbaseEventsErrorChannel")
+            .handle(m -> log.error("Error receiving couchbase event: {}", m.getPayload()))
+            .get();
     }
 }

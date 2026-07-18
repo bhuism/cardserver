@@ -21,24 +21,32 @@ public class KnativeEventIntegrationConfig {
     private final Worker worker;
 
     @Bean
-    public IntegrationFlow processOrderFlow() {
+    public IntegrationFlow processGameEventFlow() {
 
         final DefaultHttpHeaderMapper headerMapper = DefaultHttpHeaderMapper.inboundMapper();
         // Ensure Knative CloudEvent binary headers are mapped into Spring Integration MessageHeaders
-        headerMapper.setInboundHeaderNames("ce-*", "HTTP_REQUEST_HEADERS");
+        headerMapper.setInboundHeaderNames("*");
 
         return IntegrationFlow.from(WebFlux.inboundChannelAdapter("/gameEvent")
                 .requestMapping(m -> m.methods(HttpMethod.POST))
                 .requestPayloadType(GameEvent.class)
                 .headerMapper(headerMapper)
+                .errorChannel("gameEventErrorChannel")
             )
-//            .handle(gameEventProcessor, "processGameEvent")
             .handle(GameEvent.class, (gameEvent, headers) -> {
-                log.info("Received game event: {} header: {}", gameEvent, headers.entrySet());
+                log.info("Received game event: {} (ce-id: {}, ce-type: {})",
+                    gameEvent, headers.get("ce-id"), headers.get("ce-type"));
                 worker.scheduleGameEvent(gameEvent);
                 return null;
             })
             .get();
 
+    }
+
+    @Bean
+    public IntegrationFlow gameEventErrorFlow() {
+        return IntegrationFlow.from("gameEventErrorChannel")
+            .handle(m -> log.error("Error receiving game event: {}", m.getPayload()))
+            .get();
     }
 }
