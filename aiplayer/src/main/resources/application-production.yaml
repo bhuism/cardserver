@@ -11,5 +11,5 @@ cardserver:
     bucket-name: cardserver
 logging:
   level:
-    ROOT: info
+    ROOT: warn
     nl.appsource: debug

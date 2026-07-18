@@ -13,9 +13,8 @@ server:
 
 logging:
   level:
-    ROOT: info
-    com:
-      couchbase: warn
+    ROOT: warn
+    nl.appsource: debug
 
 cardserver:
   couchbase:

@@ -19,7 +19,7 @@ spring:
         spring.json.trusted.packages: "nl.appsource.cardserver.model"
 logging:
   level:
-    ROOT: info
+    ROOT: warn
     nl.appsource: debug
 
 
