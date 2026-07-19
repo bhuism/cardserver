@@ -27,7 +27,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final UserRepository userRepository;
     private final KafkaTemplate<String, GameEvent> kafkaTemplate;
 
-    private static final String topic = "gameevents";
+    private static final String GAME_EVENTS_TOPIC = "gameevents";
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
@@ -90,14 +90,14 @@ public class GameController extends AbstractBaseController implements GamesApi, 
                             gameEvent.setGameId(gameId);
                             gameEvent.setUserId(userId);
 
-                            kafkaTemplate.send(topic, gameEvent).whenComplete((result, exception) -> {
+                            kafkaTemplate.send(GAME_EVENTS_TOPIC, gameEvent).whenComplete((result, exception) -> {
                                     if (exception == null) {
                                         log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
                                             result.getRecordMetadata().topic(),
                                             result.getRecordMetadata().partition(),
                                             result.getRecordMetadata().offset());
                                     } else {
-                                        log.error("Failed to send message to topic: {}", topic, exception);
+                                        log.error("Failed to send message to topic: {}", GAME_EVENTS_TOPIC, exception);
                                     }
                         });
                     })

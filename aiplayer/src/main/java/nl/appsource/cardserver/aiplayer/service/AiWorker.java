@@ -37,7 +37,7 @@ public class AiWorker {
 
     private final KafkaTemplate<String, GameEvent> kafkaTemplate;
 
-    private final static String topic = "gameevent";
+    private final static String GAME_EVENT_TOPIC = "gameevent";
 
     @PostConstruct
     public void init() {
@@ -118,14 +118,14 @@ public class AiWorker {
 
                     final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000));
 
-                    kafkaTemplate.send(topic, gameEvent).whenComplete((result, exception) -> {
+                    kafkaTemplate.send(GAME_EVENT_TOPIC, gameEvent).whenComplete((result, exception) -> {
                         if (exception == null) {
                             log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
                                 result.getRecordMetadata().topic(),
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());
                         } else {
-                            log.error("Failed to send message to topic: {}", topic, exception);
+                            log.error("Failed to send message to topic: {}", GAME_EVENT_TOPIC, exception);
                         }
                     });
 
@@ -165,14 +165,14 @@ public class AiWorker {
 
                     final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500));
 
-                    kafkaTemplate.send(topic, gameEvent).whenComplete((result, exception) -> {
+                    kafkaTemplate.send(GAME_EVENT_TOPIC, gameEvent).whenComplete((result, exception) -> {
                         if (exception == null) {
                             log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
                                 result.getRecordMetadata().topic(),
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());
                         } else {
-                            log.error("Failed to send message to topic: {}", topic, exception);
+                            log.error("Failed to send message to topic: {}", GAME_EVENT_TOPIC, exception);
                         }
                     });
 
