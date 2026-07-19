@@ -30,7 +30,7 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
 
     private final Sinks.Many<Game> gamesChangedSink = Sinks.many().multicast().directBestEffort();
 
-    @KafkaListener(topics = "couchbase-cardserver-events", groupId = "cardserver-local-stream")
+    @KafkaListener(topics = "couchbase-cardserver-events", groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
     public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload(required = false) String documentPayload) {
         if (documentId == null || documentPayload == null) {
             return;
