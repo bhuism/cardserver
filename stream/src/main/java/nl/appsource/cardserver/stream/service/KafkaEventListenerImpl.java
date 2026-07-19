@@ -40,6 +40,8 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
             final JsonNode document = jsonMapper.readTree(documentPayload);
             final JsonNode classNode = document.get("_class");
 
+            log.info("Got Kafka event: documentId={} _class={}", documentId, classNode);
+
             if (classNode != null && "nl.appsource.cardserver.model.Game".equals(classNode.asString())) {
                 final Game game = jsonMapper.convertValue(document, Game.class);
                 game.setId(documentId);
