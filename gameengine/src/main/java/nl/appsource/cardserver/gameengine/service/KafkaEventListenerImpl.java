@@ -1,0 +1,43 @@
+package nl.appsource.cardserver.gameengine.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
+import nl.appsource.generated.openapi.model.GameEvent;
+import org.springframework.context.annotation.Profile;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Service;
+import tools.jackson.databind.json.JsonMapper;
+
+@Slf4j
+@Service
+@Profile({"development", "production"})
+@RequiredArgsConstructor
+public class KafkaEventListenerImpl {
+
+    private final JsonMapper jsonMapper;
+
+    private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final Worker worker;
+
+    @KafkaListener(topics = "gameevents", groupId = "gameEngine-worker")
+    public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload(required = false) String documentPayload) {
+
+        if (documentId == null || documentPayload == null) {
+            return;
+        }
+
+        try {
+            final GameEvent gameEvent = jsonMapper.readValue(documentPayload, GameEvent.class);
+            worker.scheduleGameEvent(gameEvent);
+        } catch (final Exception e) {
+            log.error("Error processing Kafka event: documentId={}", documentId, e);
+        }
+
+    }
+
+}

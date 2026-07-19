@@ -13,6 +13,7 @@ import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -33,6 +34,10 @@ public class AiWorker {
     private final GameRepository gameRepository;
 
     private final Environment environment;
+
+    private final KafkaTemplate<String, GameEvent> kafkaTemplate;
+
+    private final String topic = "gameevent";
 
     @PostConstruct
     public void init() {
@@ -70,8 +75,8 @@ public class AiWorker {
                 final GameEvent gameEvent = record.getValue();
 
                 return switch (gameEvent.getEventType()) {
-                    case SAY -> say(gameEvent.getGameId(), gameEvent.getUserId()).then();
-                    case PLAY_CARD -> playCard(gameEvent.getGameId(), gameEvent.getUserId()).then();
+                    case SAY -> say(gameEvent.getGameId(), gameEvent.getUserId());
+                    case PLAY_CARD -> playCard(gameEvent.getGameId(), gameEvent.getUserId());
                     default -> Mono.empty();
                 };
 
@@ -79,7 +84,7 @@ public class AiWorker {
         });
     }
 
-    private Mono<String> say(final String gameId, final String userId) {
+    private Mono<Void> say(final String gameId, final String userId) {
 
         log.info("say() for gameId={} userId={}", gameId, userId);
 
@@ -111,9 +116,20 @@ public class AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} says: {}", gameId, userId, say ? "make" : "pass");
 
-                    return knativeEventPublisher.publish(new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000)))
-                        .then(Mono.just(gameId));
+                    final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000));
 
+                    kafkaTemplate.send(topic, gameEvent).whenComplete((result, exception) -> {
+                        if (exception == null) {
+                            log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                        } else {
+                            log.error("Failed to send message to topic: {}", topic, exception);
+                        }
+                    });
+
+                    return Mono.empty();
                 } else {
                     return Mono.empty();
                 }
@@ -122,7 +138,7 @@ public class AiWorker {
 
     }
 
-    private Mono<String> playCard(final String gameId, final String userId) {
+    private Mono<Void> playCard(final String gameId, final String userId) {
 
         return gameRepository.findById(gameId)
             .map(GameEngineImpl::new)
@@ -147,8 +163,20 @@ public class AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} plays: {}", gameId, userId, card);
 
-                    return knativeEventPublisher.publish(new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500)))
-                        .then(Mono.just(gameId));
+                    final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500));
+
+                    kafkaTemplate.send(topic, gameEvent).whenComplete((result, exception) -> {
+                        if (exception == null) {
+                            log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
+                                result.getRecordMetadata().topic(),
+                                result.getRecordMetadata().partition(),
+                                result.getRecordMetadata().offset());
+                        } else {
+                            log.error("Failed to send message to topic: {}", topic, exception);
+                        }
+                    });
+
+                    return Mono.empty();
 
                 } else {
                     return Mono.empty();
