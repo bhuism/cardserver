@@ -37,7 +37,7 @@ public class AiWorker {
 
     private final KafkaTemplate<String, GameEvent> kafkaTemplate;
 
-    private final String topic = "gameevent";
+    private final static String topic = "gameevent";
 
     @PostConstruct
     public void init() {
