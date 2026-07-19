@@ -8,7 +8,6 @@ import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
@@ -30,8 +29,6 @@ import static nl.appsource.cardserver.utils.Utils.AI_USER_ID;
 public class AiWorker {
 
     private final RedisStreamService redisStreamService;
-
-    private final KnativeEventPublisher knativeEventPublisher;
 
     private final GameRepository gameRepository;
 

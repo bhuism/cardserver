@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.api.service.GameService;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.service.KnativeEventPublisher;
 import nl.appsource.generated.openapi.model.CreateGame;
 import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -25,7 +24,6 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
-    private final KnativeEventPublisher knativeEventPublisher;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {

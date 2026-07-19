@@ -49,9 +49,6 @@ class ApiApplicationTests {
     @MockitoBean
     private SseEventSender sseEventSender;
 
-    @MockitoBean
-    private KnativeEventPublisher knativeEventPublisher;
-
     @Test
     void contextLoads() {
     }

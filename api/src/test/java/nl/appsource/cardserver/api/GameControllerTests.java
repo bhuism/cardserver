@@ -90,9 +90,6 @@ public class GameControllerTests {
     @Autowired
     private org.springframework.context.ApplicationContext context;
 
-    @MockitoBean
-    private KnativeEventPublisher knativeEventPublisher;
-
     @BeforeEach
     void setUp() {
         webTestClient = WebTestClient

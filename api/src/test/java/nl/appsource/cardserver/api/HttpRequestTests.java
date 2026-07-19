@@ -62,9 +62,6 @@ public class HttpRequestTests {
     @MockitoBean
     private SseEventSender sseEventSender;
 
-    @MockitoBean
-    private KnativeEventPublisher knativeEventPublisher;
-
     @Test
     void greetingShouldReturnDefaultMessage() {
         assertThat(this.webTestClient.get().uri("http://localhost:" + port + "/", String.class).exchange().expectStatus().isOk().expectBody(String.class).returnResult().getResponseBody())
