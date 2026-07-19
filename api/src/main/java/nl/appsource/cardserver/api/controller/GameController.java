@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import static nl.appsource.cardserver.openapi.config.KafkaTopics.GAME_EVENTS_TOPIC;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -26,8 +28,6 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
     private final KafkaTemplate<String, GameEvent> kafkaTemplate;
-
-    private static final String GAME_EVENTS_TOPIC = "gameevents";
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {

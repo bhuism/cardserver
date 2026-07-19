@@ -12,6 +12,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
+import static nl.appsource.cardserver.openapi.config.KafkaTopics.GAME_EVENTS_TOPIC;
+
 @Slf4j
 @Service
 @Profile({"development", "production"})
@@ -24,7 +26,7 @@ public class KafkaEventListenerImpl {
 
     private final Worker worker;
 
-    @KafkaListener(topics = "gameevents", groupId = "gameEngine-worker")
+    @KafkaListener(topics = GAME_EVENTS_TOPIC, groupId = "gameEngine-worker")
     public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload(required = false) String documentPayload) {
 
         if (documentId == null || documentPayload == null) {

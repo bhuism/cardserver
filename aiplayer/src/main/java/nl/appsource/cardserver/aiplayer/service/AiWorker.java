@@ -8,6 +8,7 @@ import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.openapi.config.KafkaTopics;
 import nl.appsource.cardserver.openapi.service.RedisStreamService;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static nl.appsource.cardserver.converters.service.GameToOpenApiConverter.convertCard;
+import static nl.appsource.cardserver.openapi.config.KafkaTopics.GAME_EVENTS_TOPIC;
 import static nl.appsource.cardserver.utils.Utils.AI_USER_ID;
 
 @RequiredArgsConstructor
@@ -36,8 +38,6 @@ public class AiWorker {
     private final Environment environment;
 
     private final KafkaTemplate<String, GameEvent> kafkaTemplate;
-
-    private final static String GAME_EVENT_TOPIC = "gameevent";
 
     @PostConstruct
     public void init() {
@@ -118,14 +118,14 @@ public class AiWorker {
 
                     final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.SAY).say(say).executionTime(System.currentTimeMillis() + 2000 + ThreadLocalRandom.current().nextLong(1000));
 
-                    kafkaTemplate.send(GAME_EVENT_TOPIC, gameEvent).whenComplete((result, exception) -> {
+                    kafkaTemplate.send(GAME_EVENTS_TOPIC, gameEvent).whenComplete((result, exception) -> {
                         if (exception == null) {
                             log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
                                 result.getRecordMetadata().topic(),
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());
                         } else {
-                            log.error("Failed to send message to topic: {}", GAME_EVENT_TOPIC, exception);
+                            log.error("Failed to send message to topic: {}", GAME_EVENTS_TOPIC, exception);
                         }
                     });
 

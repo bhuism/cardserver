@@ -47,11 +47,4 @@ public record MyServerSentEvent<T>(String event, T data, UUID uuid) implements S
         return new MyServerSentEvent<>("endCache");
     }
 
-//    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
-//        return new MyServerSentEvent("newGame", newGameEvent);
-//    }
-
-//    public static MyServerSentEvent gameEvent(final GameEvent gameEvent) {
-//        return new MyServerSentEvent("gameEvent", gameEvent);
-//    }
 }
