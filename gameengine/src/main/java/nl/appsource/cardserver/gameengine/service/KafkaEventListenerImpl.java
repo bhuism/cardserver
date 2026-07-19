@@ -22,8 +22,6 @@ public class KafkaEventListenerImpl {
 
     private final JsonMapper jsonMapper;
 
-    private final GameToOpenApiConverter gameToOpenApiConverter;
-
     private final Worker worker;
 
     @KafkaListener(topics = GAME_EVENTS_TOPIC, groupId = "gameEngine-worker")

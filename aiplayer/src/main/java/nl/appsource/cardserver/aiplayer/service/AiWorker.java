@@ -165,14 +165,14 @@ public class AiWorker {
 
                     final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500));
 
-                    kafkaTemplate.send(GAME_EVENT_TOPIC, gameEvent).whenComplete((result, exception) -> {
+                    kafkaTemplate.send(GAME_EVENTS_TOPIC, gameEvent).whenComplete((result, exception) -> {
                         if (exception == null) {
                             log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
                                 result.getRecordMetadata().topic(),
                                 result.getRecordMetadata().partition(),
                                 result.getRecordMetadata().offset());
                         } else {
-                            log.error("Failed to send message to topic: {}", GAME_EVENT_TOPIC, exception);
+                            log.error("Failed to send message to topic: {}", GAME_EVENTS_TOPIC, exception);
                         }
                     });
 
