@@ -2,7 +2,6 @@ package nl.appsource.cardserver.gameengine.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
