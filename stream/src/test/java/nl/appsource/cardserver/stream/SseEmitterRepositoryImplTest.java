@@ -8,7 +8,6 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.stream.service.KafkaEventListener;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
@@ -59,9 +58,6 @@ public class SseEmitterRepositoryImplTest {
     private SseEmitterRepository sseEmitterRepository;
 
     @Mock
-    private RedisPubSubService redisPubSubService;
-
-    @Mock
     private SseEventSender sseEventSender;
 
     @Mock
@@ -70,7 +66,6 @@ public class SseEmitterRepositoryImplTest {
     @BeforeEach
     void setUp() {
         sseEmitterRepository = new SseEmitterRepositoryImpl(
-            redisPubSubService,
             userRepository,
             gameToOpenApiConverter,
             userToOpenApiConverter,
@@ -92,7 +87,7 @@ public class SseEmitterRepositoryImplTest {
         when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
         when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
         when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
-        when(kafkaEventListener.gamesChanged("userId")).thenReturn(Mono.empty());
+        when(kafkaEventListener.kafkaStreams()).thenReturn(Mono.empty());
 //        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
 
         Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");

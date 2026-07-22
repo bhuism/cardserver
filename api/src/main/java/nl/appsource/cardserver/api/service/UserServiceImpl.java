@@ -10,8 +10,6 @@ import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.ScreenOrientation;
 import nl.appsource.cardserver.model.Theme;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.UpdatePreferences;
 import nl.appsource.generated.openapi.model.UserMessage;
@@ -23,7 +21,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singleton;
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateUser;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +31,6 @@ public class UserServiceImpl implements UserService {
 
     private final SseEventSender sseEventSender;
 
-    private final RedisPubSubService redisPubSubService;
-
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     @Override
@@ -44,11 +39,6 @@ public class UserServiceImpl implements UserService {
     }
 
     public record InvitesResponse(Flux<String> incoming, Flux<String> outgoing, Flux<String> friends) {
-    }
-
-    private Mono<User> sendUpdateUser(final User user) {
-        final MyServerSentEvent updateUser = updateUser(userToOpenApiConverter.convert(user));
-        return redisPubSubService.broadCast(userRepository.getFriendIds(user.getId()).mergeWith(Flux.just(user.getId())), updateUser).thenReturn(user);
     }
 
     @Override
@@ -109,7 +99,6 @@ public class UserServiceImpl implements UserService {
                     }
                     user.getInvites().addAll(newFriendIds);
                     return userRepository.save(user)
-                        .flatMap(this::sendUpdateUser)
                         .flatMap(savedUser -> {
                             return Flux.fromIterable(newFriendIds)
 //                                .flatMap(sseEventSender::sendOnlineListTo)
@@ -135,7 +124,7 @@ public class UserServiceImpl implements UserService {
                     user.setTheme(Theme.valueOf(updatePreferences.getTheme().name()));
                     user.setAiRisc(AiRisc.valueOf(updatePreferences.getAiRisc().name()));
                     user.setAutoKnock(updatePreferences.getAutoKnock());
-                    return userRepository.save(user).flatMap(this::sendUpdateUser);
+                    return userRepository.save(user);
                 }));
     }
 

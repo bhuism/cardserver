@@ -15,8 +15,7 @@ import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
 import nl.appsource.cardserver.model.User;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.KafkaSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,6 @@ import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTest
 import org.springframework.context.annotation.Import;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.MediaType;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -81,17 +79,11 @@ public class GameControllerTests {
     @MockitoBean
     private UserService userService;
 
-    @MockitoBean
-    private RedisPubSubService redisPubSubService;
-
-    @MockitoBean
-    private RedisStreamService redisStreamService;
-
     @Autowired
     private org.springframework.context.ApplicationContext context;
 
     @MockitoBean
-    private KafkaTemplate kafkaTemplate;
+    private KafkaSender kafkaSender;
 
     @BeforeEach
     void setUp() {

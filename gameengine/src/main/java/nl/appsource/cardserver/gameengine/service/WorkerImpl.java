@@ -13,11 +13,8 @@ import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
-import nl.appsource.cardserver.model.Boom;
 import nl.appsource.cardserver.model.Game;
-import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
@@ -32,9 +29,10 @@ import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.PriorityQueue;
-import java.util.UUID;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +40,6 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.updateGame;
 import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
 @RequiredArgsConstructor
@@ -50,10 +47,6 @@ import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 @Service
 @Profile("!citest")
 public class WorkerImpl implements Worker {
-
-    private final RedisStreamService redisStreamService;
-
-    private final RedisPubSubService redisPubSubService;
 
     private final GameRepository gameRepository;
 
@@ -71,23 +64,11 @@ public class WorkerImpl implements Worker {
 
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
+    private final KafkaSender kafkaSender;
+
     boolean stop = false;
 
     private Disposable streamSubscription;
-
-    private Mono<Boom> sendUpdateBoom(final Boom boom) {
-        return redisPubSubService.broadCast(Flux.fromIterable(boom.getPlayers())
-                .mergeWith(Flux.just(boom.getCreator(), boom.getId()))
-                .distinct(), MyServerSentEvent.updateBoom(boomToOpenApiConverter.convert(boom)))
-            .thenReturn(boom);
-    }
-
-    private Mono<Game> sendUpdateGame(final Game game) {
-        final MyServerSentEvent gameEvent = updateGame(gameToOpenApiConverter.convert(game));
-        return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers())
-            .mergeWith(Flux.just(game.getCreator(), game.getId())).distinct(), gameEvent).thenReturn(game);
-    }
-
 
     @PostConstruct
     public void init() {
@@ -114,23 +95,11 @@ public class WorkerImpl implements Worker {
                 .map(game -> new GameEngineRwImpl(null, game, noOpuserMessenger))
                 .flatMap(GameEngineRwImpl::rotateTrump)
                 .flatMap(gameRepository::save)
-                .flatMap(this::sendUpdateGame)
                 .subscribe();
         }
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
     }
-
-//    @EventListener(ApplicationReadyEvent.class)
-//    public void startListening() {
-//        log.info("Starting listening for game events...");
-//        streamSubscription = redisStreamService.consumeFromStream("gameEvent", "groupGameEvent", record -> {
-//            final GameEvent gameEvent = record.getValue();
-//            log.info("Received gameEvent from redis: {}", gameEvent);
-//            scheduleGameEvent(gameEvent);
-//            return Mono.empty();
-//        });
-//    }
 
     @PreDestroy
     public void destroy() {
@@ -174,12 +143,14 @@ public class WorkerImpl implements Worker {
 
                             @Override
                             public Mono<Void> sendUserMessage(final String message) {
-                                return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
+                                kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)), Set.of(gameEvent.getUserId())));
+                                return Mono.empty();
                             }
 
                             @Override
                             public Mono<Void> sendGameMessage(final String message) {
-                                return redisPubSubService.broadCast(Flux.fromIterable(game.getPlayers()), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)))).then();
+                                kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)), new HashSet(game.getPlayers())));
+                                return Mono.empty();
                             }
                         };
 
@@ -199,13 +170,11 @@ public class WorkerImpl implements Worker {
                         };
                     })
                     .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
-                    .flatMap(this::sendUpdateGame)
 //                .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
                     .flatMap(game -> {
                         if (game.getBoomId() != null) {
                             return boomRepository.findById(game.getBoomId())
                                 .flatMap(boomRepository::save)
-                                .flatMap(this::sendUpdateBoom)
                                 .then(Mono.just(game));
                         } else {
                             return Mono.just(game);
@@ -227,14 +196,14 @@ public class WorkerImpl implements Worker {
             )
             .flatMap(game -> {
                 final GameEngine gameEngine = new GameEngineImpl(game);
-                if (gameEngine.isAiSay()) {
-                    final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then();
-                } else if (gameEngine.isAiTurn()) {
-                    final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                    return redisStreamService.publishToStream(aiCardPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).gameId(game.getId()).userId(aiCardPlayer)).then();
-                }
-                return Mono.empty();
+//                if (gameEngine.isAiSay()) {
+//                    final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
+//                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then();
+//                } else if (gameEngine.isAiTurn()) {
+//                    final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+//                    return redisStreamService.publishToStream(aiCardPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).gameId(game.getId()).userId(aiCardPlayer)).then();
+//                }
+                return Mono.<Void>empty();
             })
             .onErrorResume(throwable -> {
 
@@ -242,11 +211,9 @@ public class WorkerImpl implements Worker {
 
                 if (gameEvent.getUserId() != null) {
                     final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
-                    return redisPubSubService.broadCast(gameEvent.getUserId(), messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)))).then();
-                } else {
-                    return Mono.empty();
+                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)), Set.of(gameEvent.getUserId())));
                 }
-
+                return Mono.<Void>empty();
             });
     }
 
@@ -283,11 +250,15 @@ public class WorkerImpl implements Worker {
                     .collectList()
                     .flatMap(verzaakteSpelers -> {
                         if (verzaakteSpelers.isEmpty()) {
-                            return redisPubSubService.broadCast(userId, messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO))));
+                            kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is niet verzaakt in slag " + laatsteCompleteSlag).variant(UserMessage.VariantEnum.INFO)), Set.of(userId)));
+                            return Mono.empty();
                         } else {
                             return Flux.fromIterable(verzaakteSpelers)
                                 .flatMap(playerNr -> userRepository.findById(gameEngine.getGame().getPlayers().get(playerNr))
-                                    .flatMap(player -> redisPubSubService.broadCast(userId, messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)))))
+                                    .flatMap(player -> {
+                                        kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(userId).message("Er is verzaakt in slag " + laatsteCompleteSlag + " door " + player.getDisplayName()).variant(UserMessage.VariantEnum.ERROR)), Set.of(userId)));
+                                        return Mono.empty();
+                                    })
                                 ).then();
                         }
                     });

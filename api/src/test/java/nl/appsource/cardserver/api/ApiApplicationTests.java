@@ -6,15 +6,12 @@ import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
-import nl.appsource.generated.openapi.model.GameEvent;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -39,19 +36,13 @@ class ApiApplicationTests {
     private SseSessionRepository sseSessionRepository;
 
     @MockitoBean
-    private RedisPubSubService redisPubSubService;
-
-    @MockitoBean
     private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
-
-    @MockitoBean
-    private RedisStreamService redisStreamService;
 
     @MockitoBean
     private SseEventSender sseEventSender;
 
     @MockitoBean
-    private KafkaTemplate kafkaTemplate;
+    private KafkaSender kafkaSender;
 
     @Test
     void contextLoads() {

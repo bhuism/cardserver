@@ -6,8 +6,7 @@ import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
-import nl.appsource.cardserver.openapi.service.RedisStreamService;
+import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +15,6 @@ import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -54,16 +52,10 @@ public class HttpRequestTests {
     private SseSessionRepository sseSessionRepository;
 
     @MockitoBean
-    private RedisPubSubService redisPubSubService;
-
-    @MockitoBean
-    private RedisStreamService redisStreamService;
-
-    @MockitoBean
     private SseEventSender sseEventSender;
 
     @MockitoBean
-    private KafkaTemplate kafkaTemplate;
+    private KafkaSender kafkaSender;
 
     @Test
     void greetingShouldReturnDefaultMessage() {

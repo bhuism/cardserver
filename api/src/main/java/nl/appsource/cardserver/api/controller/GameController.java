@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.api.service.GameService;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.generated.openapi.model.CreateGame;
 import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -12,10 +13,10 @@ import nl.appsource.generated.openapi.model.GetGames200Response;
 import org.openapitools.api.GamesApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import static nl.appsource.cardserver.openapi.config.KafkaTopics.GAME_EVENTS_TOPIC;
 
@@ -27,7 +28,8 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final GameService gameService;
     private final GameToOpenApiConverter gameToOpenApiConverter;
     private final UserRepository userRepository;
-    private final KafkaTemplate<String, GameEvent> kafkaTemplate;
+    private final KafkaSender kafkaSender;
+    private final JsonMapper jsonMapper;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
@@ -86,20 +88,11 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         return getUserId(exchange)
             .flatMap(userId -> gameEventMono
 //                .doOnNext(gameEvent -> log.info("{} gameEvent() userId={} gameId={}", exchange.getRequest().getRemoteAddress(), userId, gameEvent.getGameId()))
-                .doOnNext(gameEvent -> {
-                            gameEvent.setGameId(gameId);
-                            gameEvent.setUserId(userId);
+                    .doOnNext(gameEvent -> {
+                        gameEvent.setGameId(gameId);
+                        gameEvent.setUserId(userId);
 
-                            kafkaTemplate.send(GAME_EVENTS_TOPIC, gameEvent).whenComplete((result, exception) -> {
-                                    if (exception == null) {
-                                        log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
-                                            result.getRecordMetadata().topic(),
-                                            result.getRecordMetadata().partition(),
-                                            result.getRecordMetadata().offset());
-                                    } else {
-                                        log.error("Failed to send message to topic: {}", GAME_EVENTS_TOPIC, exception);
-                                    }
-                        });
+                        kafkaSender.send(GAME_EVENTS_TOPIC, jsonMapper.writeValueAsString(gameEvent));
                     })
                     .thenReturn(ResponseEntity.ok().<Void>build())
             )

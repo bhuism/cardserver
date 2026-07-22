@@ -5,7 +5,6 @@ import nl.appsource.cardserver.couchbase.repository.FeedbackRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.stream.service.KafkaEventListener;
 import org.junit.jupiter.api.Test;
@@ -48,9 +47,6 @@ public class HttpRequestTests {
 
     @MockitoBean
     private SseSessionRepository sseSessionRepository;
-
-    @MockitoBean
-    public RedisPubSubService redisPubSubService;
 
     @MockitoBean
     public SseEventSender sseEventSender;

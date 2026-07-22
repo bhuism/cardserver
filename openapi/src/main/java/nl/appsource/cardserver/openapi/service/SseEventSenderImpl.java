@@ -9,76 +9,84 @@ import nl.appsource.generated.openapi.model.OnlineListEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
-import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
 @RequiredArgsConstructor
 public class SseEventSenderImpl implements SseEventSender {
 
-    private final RedisPubSubService redisPubSubService;
+    private final JsonMapper jsonMapper;
+
+    private final KafkaSender kafkaSender;
 
     @Override
     public Mono<Void> sendUserIdMessage(final String to, final String from, final String message, final UserMessage.VariantEnum variant) {
         final MessageEvent messageEvent = new MessageEvent().message(new UserMessage().userId(from).message(message).variant(variant));
-        return redisPubSubService.broadCast(to, messageEvent(messageEvent)).then();
+        kafkaSender.sendSse(messageEvent(messageEvent, Set.of(to)));
+        return Mono.empty();
     }
 
     @Override
     public Mono<Void> sendUserIdsMessage(final Set<String> to, final String from, final String message, final UserMessage.VariantEnum variant) {
         final MessageEvent messageEvent = new MessageEvent().message(new UserMessage().userId(from).message(message).variant(variant));
-        return redisPubSubService.broadCast(Flux.fromIterable(to), messageEvent(messageEvent));
+        kafkaSender.sendSse(messageEvent(messageEvent, to));
+        return Mono.empty();
     }
 
     @Override
-    public Mono<Void> boomsChanged(final Set<String> userIdWithAi) {
-        return redisPubSubService.broadCast(Flux.fromIterable(userIdWithAi).filter(userId -> !isAiPlayer(userId)), updateBooms());
+    public Mono<Void> boomsChanged(final Set<String> userId) {
+        kafkaSender.sendSse(updateBooms(userId));
+        return Mono.empty();
     }
 
     @Override
     public Mono<Void> gamesChanged(final Set<String> userIds) {
-        return redisPubSubService.broadCast(Flux.fromIterable(userIds), updateGames());
+        kafkaSender.sendSse(updateGames(userIds));
+        return Mono.empty();
     }
 
     @Override
     public Mono<Void> friendsChanged(final Set<String> userIds) {
-        return redisPubSubService.broadCast(Flux.fromIterable(userIds), updateFriends());
+        kafkaSender.sendSse(updateFriends(userIds));
+        return Mono.empty();
     }
 
     @Override
     public Mono<Void> newGame(final Game game) {
 
-        final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));
+//        final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));
         final NewGameEvent newGameEvent = new NewGameEvent().creator(game.getCreator()).gameId(game.getId());
 
-        return redisPubSubService.broadCast(topics, newGame(newGameEvent));
-
+        kafkaSender.sendSse(newGame(newGameEvent, new HashSet<>(game.getPlayers())));
+        return Mono.empty();
     }
 
     @Override
     public Mono<Void> sendOnlineListTo(final String userId, final Flux<String> onlineListFlux) {
         return onlineListFlux.collectList().map(onlineList -> new OnlineListEvent().onlineList(onlineList))
-            .flatMap(onlineListEvent1 -> redisPubSubService.broadCast(userId, onlineList(onlineListEvent1)))
+            .doOnNext(onlineListEvent1 -> kafkaSender.sendSse(onlineList(onlineListEvent1, Set.of(userId))))
             .then();
     }
 
-    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
-        return new MyServerSentEvent("newGame", newGameEvent);
+    public static MyServerSentEvent<Void> newGame(final NewGameEvent newGameEvent, final Set<String> userIds) {
+        return new MyServerSentEvent<>("newGame", userIds);
     }
 
-    public static MyServerSentEvent updateBooms() {
-        return new MyServerSentEvent("updateBooms");
+    public static MyServerSentEvent<Void> updateBooms(final Set<String> userIds) {
+        return new MyServerSentEvent<>("updateBooms", userIds);
     }
 
-    public static MyServerSentEvent updateGames() {
-        return new MyServerSentEvent("updateGames");
+    public static MyServerSentEvent<Void> updateGames(final Set<String> userIds) {
+        return new MyServerSentEvent<>("updateGames", userIds);
     }
 
-    public static MyServerSentEvent updateFriends() {
-        return new MyServerSentEvent("updateFriends");
+    public static MyServerSentEvent<Void> updateFriends(final Set<String> userIds) {
+        return new MyServerSentEvent<>("updateFriends", userIds);
     }
 
 }

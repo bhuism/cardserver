@@ -12,12 +12,10 @@ import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.RedisPubSubService;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
-import nl.appsource.generated.openapi.model.OnlineListEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.codec.ServerSentEvent;
@@ -34,9 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
+import static java.util.Collections.emptySet;
 import static reactor.core.publisher.Flux.concat;
-import static reactor.core.publisher.Flux.merge;
 import static reactor.core.publisher.Mono.just;
 
 /**
@@ -48,8 +45,6 @@ import static reactor.core.publisher.Mono.just;
 @Slf4j
 @RequiredArgsConstructor
 public class SseEmitterRepositoryImpl implements SseEmitterRepository {
-
-    private final RedisPubSubService redisPubSubService;
 
     private final UserRepository userRepository;
 
@@ -107,10 +102,10 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private Flux<MyServerSentEvent<?>> initCache(final String userId) {
 
         // users
-        final Flux<MyServerSentEvent<?>> friends = userRepository.getFriends(userId)
-            .map(userToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateUser)
-            .<MyServerSentEvent<?>>map(it -> it);
+//        final Flux<MyServerSentEvent<?>> friends = userRepository.getFriends(userId)
+//            .map(userToOpenApiConverter::convert)
+//            .map(MyServerSentEvent::updateUser)
+//            .<MyServerSentEvent<?>>map(it -> it);
 
         // games
         final Flux<MyServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
@@ -125,18 +120,18 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .<MyServerSentEvent<?>>map(it -> it);
 
         // me
-        final Flux<MyServerSentEvent<?>> me = userRepository.findById(userId)
-            .map(userToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateUser)
-            .<MyServerSentEvent<?>>map(it -> it)
-            .flux();
+//        final Flux<MyServerSentEvent<?>> me = userRepository.findById(userId)
+//            .map(userToOpenApiConverter::convert)
+//            .map(MyServerSentEvent::updateUser)
+//            .<MyServerSentEvent<?>>map(it -> it)
+//            .flux();
 
         // online list
 //        final Mono<MyServerSentEvent<?>> onlineList = userRepository.getOnlineFriends(userId)
 //            .collectList()
 //            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return concat(just(MyServerSentEvent.startCache()), me, friends, games, booms, just(MyServerSentEvent.endCache()));
+        return concat(just(MyServerSentEvent.startCache()), games, booms, just(MyServerSentEvent.endCache()));
 
     }
 
@@ -155,9 +150,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         log.info("{} subscribe() appIdentifier={} userId={}", remoteAddress, appIdentifier, userId);
 
-        final Flux<String> friends1 = userRepository.getOnlineFriends(userId);
+//        final Flux<String> friends1 = userRepository.getOnlineFriends(userId);
 
-        final Mono<MyServerSentEvent<?>> onlineListSse = friends1.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
+        // final Mono<MyServerSentEvent<?>> onlineListSse = friends1.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
 
         final Flux<String> friends3 = userRepository.getOnlineFriends(userId);
 
@@ -167,8 +162,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .flatMap(sseSessionRepository::save)
             .then(friendsMono)
             .thenMany(
-                concat(just(hello(new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier))), just(ping(0)),
-                    merge(onlineListSse, redisPubSubService.listenTo(appIdentifier), kafkaEventListener.gamesChanged(userId), pingSink.asFlux(), initCache(userId)))
+                concat(just(hello(appIdentifier)), just(ping(0)),
+                    Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 
@@ -178,6 +173,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
                             .subscribe();
 
                     })
+                    .filter(myServerSentEvent -> myServerSentEvent.userIds().contains(userId) || myServerSentEvent.userIds().isEmpty())
                     .map(myServerSentEvent -> {
                         final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
                             .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
@@ -187,12 +183,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             );
     }
 
-    public static MyServerSentEvent<?> hello(final HelloEvent helloEvent) {
-        return new MyServerSentEvent<>("hello", helloEvent);
+    public static MyServerSentEvent<?> hello(final String appIdentifier) {
+        return new MyServerSentEvent<>("hello", new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier), emptySet());
     }
 
     public static MyServerSentEvent<?> ping(final long count) {
-        return new MyServerSentEvent<>("ping", Map.of("count", count));
+        return new MyServerSentEvent<>("ping", Map.of("count", count), emptySet());
     }
 
 }
