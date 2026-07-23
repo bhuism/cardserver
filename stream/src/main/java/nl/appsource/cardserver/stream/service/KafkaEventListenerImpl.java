@@ -17,6 +17,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import tools.jackson.databind.JsonNode;
@@ -27,6 +28,7 @@ import java.time.Duration;
 import java.util.Set;
 
 import static nl.appsource.cardserver.openapi.config.KafkaTopics.COUCHBASE_CARDSERVER_EVENTS;
+import static nl.appsource.cardserver.openapi.config.KafkaTopics.SSE_TOPIC;
 
 @Slf4j
 @Service
@@ -42,7 +44,9 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
-    private final Sinks.Many<ObjectNode> gamesChangedSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<ObjectNode> entityChanges = Sinks.many().multicast().directBestEffort();
+
+    private final Sinks.Many<MyServerSentEvent<?>> sseChannel = Sinks.many().multicast().directBestEffort();
 
     @KafkaListener(topics = COUCHBASE_CARDSERVER_EVENTS, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
     public void listen(final @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String documentId, final @Payload(required = false) String documentPayload) {
@@ -55,17 +59,27 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
             final ObjectNode document = (ObjectNode) jsonMapper.readTree(documentPayload);
             document.put("id", documentId);
             log.info("Got Kafka event: documentId={}", documentId);
-            gamesChangedSink.emitNext(document, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
+            entityChanges.emitNext(document, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
         } catch (final Exception e) {
             log.error("Error processing Kafka event: documentId={}", documentId, e);
         }
     }
 
-    private static final Set<Class> CLASSES = Set.of(Game.class, Boom.class, User.class);
+    @KafkaListener(topics = SSE_TOPIC, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
+    public void listen(final String documentPayload) {
+
+        try {
+            final MyServerSentEvent<?> myServerSentEvent = jsonMapper.readValue(documentPayload, MyServerSentEvent.class);
+            sseChannel.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
+        } catch (final Exception e) {
+            log.error("Error processing Kafka event: document={}", documentPayload, e);
+        }
+
+    }
 
     @Override
     public Publisher<MyServerSentEvent<?>> kafkaStreams() {
-        return gamesChangedSink.asFlux()
+        return Flux.merge(sseChannel.asFlux(), entityChanges.asFlux()
             .flatMap(document -> {
                 final JsonNode classNode = document.get("_class");
 
@@ -96,7 +110,8 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
 
                 return Mono.empty();
 
-            });
+            })
+        );
     }
 
 }
