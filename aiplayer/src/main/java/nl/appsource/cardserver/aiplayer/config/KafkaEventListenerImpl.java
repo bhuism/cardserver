@@ -27,7 +27,7 @@ public class KafkaEventListenerImpl {
     private final AiWorkerImpl aiWorker;
 
     @KafkaListener(topics = COUCHBASE_CARDSERVER_EVENTS, groupId = "aiWorker-aiWorker")
-    public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload(required = false) String documentPayload) {
+    public void listen(final @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String documentId, final @Payload(required = false) String documentPayload) {
 
         if (documentId == null || documentPayload == null) {
             return;

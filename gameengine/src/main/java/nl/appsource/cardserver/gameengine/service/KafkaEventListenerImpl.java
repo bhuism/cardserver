@@ -24,7 +24,7 @@ public class KafkaEventListenerImpl {
     private final Worker worker;
 
     @KafkaListener(topics = GAME_EVENTS_TOPIC, groupId = "gameEngine-worker")
-    public void listen(final @Header(KafkaHeaders.RECEIVED_KEY) String documentId, final @Payload(required = false) String documentPayload) {
+    public void listen(final @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String documentId, final @Payload(required = false) String documentPayload) {
 
         if (documentId == null || documentPayload == null) {
             return;
