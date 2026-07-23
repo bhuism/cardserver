@@ -39,21 +39,21 @@ public class KafkaEventListenerImpl {
             log.info("Got Kafka event: documentId={}", documentId);
 
             if (Game.class.getName().equals(document.get("_class").asString())) {
+
                 log.info("Got Kafka event: documentId={}, document={}", documentId, document);
+
+                final Game game = jsonMapper.convertValue(document, Game.class);
+
+                final GameEngineImpl gameEngine = new GameEngineImpl(game);
+
+                if (gameEngine.isAiSay()) {
+                    final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
+                    aiWorker.say(game.getId(), aiSayPlayer).block();
+                } else if (gameEngine.isAiTurn()) {
+                    final String aiPlayPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
+                    aiWorker.playCard(game.getId(), aiPlayPlayer).block();
+                }
             }
-
-            final Game game = jsonMapper.convertValue(document, Game.class);
-
-            final GameEngineImpl gameEngine = new GameEngineImpl(game);
-
-            if (gameEngine.isAiSay()) {
-                final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-                aiWorker.say(game.getId(), aiSayPlayer).block();
-            } else if (gameEngine.isAiTurn()) {
-                final String aiPlayPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-                aiWorker.playCard(game.getId(), aiPlayPlayer).block();
-            }
-
 
         } catch (final Exception e) {
             log.error("Error processing Kafka event: documentId={}", documentId, e);
