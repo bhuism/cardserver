@@ -18,7 +18,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    public SseEventSender sseEventSender(final KafkaTemplate kafkaTemplate) {
-        return new SseEventSenderImpl(kafkaTemplate);
+    public SseEventSender sseEventSender(final KafkaSender kafkaSender) {
+        return new SseEventSenderImpl(kafkaSender);
     }
 }
