@@ -9,7 +9,6 @@ import nl.appsource.generated.openapi.model.OnlineListEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,8 +18,6 @@ import static nl.appsource.cardserver.openapi.MyServerSentEvent.onlineList;
 
 @RequiredArgsConstructor
 public class SseEventSenderImpl implements SseEventSender {
-
-    private final JsonMapper jsonMapper;
 
     private final KafkaSender kafkaSender;
 
