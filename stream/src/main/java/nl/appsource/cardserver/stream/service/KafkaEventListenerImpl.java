@@ -66,7 +66,7 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
     }
 
     @KafkaListener(topics = SSE_TOPIC, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
-    public void listen(final String documentPayload) {
+    public void listen(final @Payload String documentPayload) {
 
         try {
             final MyServerSentEvent<?> myServerSentEvent = jsonMapper.readValue(documentPayload, MyServerSentEvent.class);
