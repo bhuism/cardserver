@@ -58,7 +58,7 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
         try {
             final ObjectNode document = (ObjectNode) jsonMapper.readTree(documentPayload);
             document.put("id", documentId);
-            log.info("Got Kafka event: documentId={}", documentId);
+//            log.info("Got Kafka event: documentId={}", documentId);
             entityChanges.emitNext(document, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
         } catch (final Exception e) {
             log.error("Error processing Kafka event: documentId={}", documentId, e);
