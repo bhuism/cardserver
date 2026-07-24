@@ -21,14 +21,12 @@ public class KafkaSenderImpl implements KafkaSender {
     public void send(final String topic, final String message) {
 
         kafkaTemplate.send(topic, message).whenComplete((result, exception) -> {
-            if (exception == null) {
-                log.info("Message sent successfully. Topic: {}, Partition: {}, Offset: {}",
-                    result.getRecordMetadata().topic(),
-                    result.getRecordMetadata().partition(),
-                    result.getRecordMetadata().offset());
-            } else {
+            if (exception != null) {
                 log.error("Failed to send message to topic: {}", GAME_EVENTS_TOPIC, exception);
-            }
+            } /* else {
+                log.debug("Message sent successfully. Topic: {}",
+                    result.getRecordMetadata().topic());
+            } */
         });
     }
 
