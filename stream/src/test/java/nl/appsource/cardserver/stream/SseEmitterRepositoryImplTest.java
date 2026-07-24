@@ -68,7 +68,6 @@ public class SseEmitterRepositoryImplTest {
         sseEmitterRepository = new SseEmitterRepositoryImpl(
             userRepository,
             gameToOpenApiConverter,
-            userToOpenApiConverter,
             boomToOpenApiConverter,
             gameRepository,
             boomRepository,
