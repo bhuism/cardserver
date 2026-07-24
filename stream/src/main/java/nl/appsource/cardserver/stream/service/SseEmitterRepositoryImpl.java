@@ -5,12 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
-import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
-import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
-import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.utils.IDTYPE;
@@ -50,15 +47,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
 
-    private final UserToOpenApiConverter userToOpenApiConverter;
-
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
     private final GameRepository gameRepository;
 
     private final BoomRepository boomRepository;
-
-    private final SseSessionRepository sseSessionRepository;
 
     private final SseEventSender sseEventSender;
 
@@ -158,19 +151,19 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, Flux.merge(userRepository.getOnlineFriends(friendId), just(userId)).distinct().doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
-        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
-            .flatMap(sseSessionRepository::save)
-            .then(friendsMono)
+//        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
+//            .flatMap(sseSessionRepository::save)
+        return friendsMono
             .thenMany(
                 concat(just(hello(appIdentifier)), just(ping(0)),
                     Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux(), initCache(userId)))
                     .doFinally(signalType -> {
                         log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
-
-                        sseSessionRepository.deleteById(appIdentifier)
-                            .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
-                            .onErrorComplete(_ -> true)
-                            .subscribe();
+//
+//                        sseSessionRepository.deleteById(appIdentifier)
+//                            .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
+//                            .onErrorComplete(_ -> true)
+//                            .subscribe();
 
                     })
                     .filter(myServerSentEvent -> myServerSentEvent.userIds().contains(userId) || myServerSentEvent.userIds().isEmpty())
