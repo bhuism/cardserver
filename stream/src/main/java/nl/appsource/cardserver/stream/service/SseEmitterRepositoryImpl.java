@@ -169,7 +169,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
                         sseSessionRepository.deleteById(appIdentifier)
                             .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
-//                            .onErrorComplete(throwable -> throwable instanceof DataRetrievalFailureException)
+                            .onErrorComplete(_ -> true)
                             .subscribe();
 
                     })
