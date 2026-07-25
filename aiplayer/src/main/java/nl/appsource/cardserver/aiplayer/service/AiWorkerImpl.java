@@ -154,7 +154,13 @@ public class AiWorkerImpl implements AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} plays: {}", gameId, userId, card);
 
-                    final GameEvent gameEvent = new GameEvent().uuid(UUID.randomUUID()).gameId(gameEngine.getGame().getId()).userId(userId).eventType(GameEvent.EventTypeEnum.PLAY_CARD).card(convertCard(card)).executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 4000 : 2000) + ThreadLocalRandom.current().nextLong(500));
+                    final GameEvent gameEvent = new GameEvent()
+                        .uuid(UUID.randomUUID())
+                        .gameId(gameEngine.getGame().getId())
+                        .userId(userId)
+                        .eventType(GameEvent.EventTypeEnum.PLAY_CARD)
+                        .card(convertCard(card))
+                        .executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 3000 : 1000) + ThreadLocalRandom.current().nextLong(500));
 
                     kafkaSender.send(GAME_EVENTS_TOPIC, jsonMapper.writeValueAsString(gameEvent));
 
