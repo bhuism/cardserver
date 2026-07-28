@@ -13,7 +13,6 @@ import nl.appsource.cardserver.stream.service.KafkaEventListener;
 import nl.appsource.cardserver.stream.service.SseEmitterRepository;
 import nl.appsource.cardserver.stream.service.SseEmitterRepositoryImpl;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,7 +29,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@Disabled
+//@Disabled
 @ExtendWith(MockitoExtension.class)
 public class SseEmitterRepositoryImplTest {
 
@@ -106,6 +105,7 @@ public class SseEmitterRepositoryImplTest {
         when(userRepository.getOnlineFriends(anyString())).thenReturn(Flux.empty());
         when(sseSessionRepository.save(any())).thenReturn(Mono.empty());
         when(sseSessionRepository.deleteById(anyString())).thenReturn(Mono.empty());
+        when(kafkaEventListener.kafkaStreams()).thenReturn(Flux.empty());
         //when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
 
         // Mock some data in initCache
@@ -121,8 +121,8 @@ public class SseEmitterRepositoryImplTest {
         StepVerifier.create(result)
             .expectNextMatches(sse -> sse.event().equals("hello"))
             .expectNextMatches(sse -> sse.event().equals("ping"))
-            // after 1s delay
-            .expectNextMatches(sse -> sse.event().equals("updateUser"))
+            .expectNextMatches(sse -> sse.event().equals("startCache"))
+            .expectNextMatches(sse -> sse.event().equals("endCache"))
             .thenCancel()
             .verify(Duration.ofSeconds(5));
     }

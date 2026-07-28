@@ -123,7 +123,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .collectList()
 //            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return concat(just(MyServerSentEvent.startCache()), just(MyServerSentEvent.endCache()));
+        return concat(just(MyServerSentEvent.startCache(userId)), just(MyServerSentEvent.endCache(userId)));
 
     }
 
@@ -154,8 +154,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .flatMap(sseSessionRepository::save)
         return //friendsMono
 //            .thenMany(
-            concat(just(hello(appIdentifier)), just(ping(0)),
-                Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux(), initCache(userId)))
+            concat(just(hello(appIdentifier)), just(ping(0)), initCache(userId),
+                Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux()))
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 //

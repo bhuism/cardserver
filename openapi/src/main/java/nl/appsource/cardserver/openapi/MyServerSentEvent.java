@@ -11,8 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import static java.util.Collections.emptySet;
-
 public record MyServerSentEvent<T>(String event, T data, Set<String> userIds, UUID uuid) implements Serializable {
 
     public MyServerSentEvent(final String event, final Object data, final Set<String> userIds) {
@@ -43,12 +41,12 @@ public record MyServerSentEvent<T>(String event, T data, Set<String> userIds, UU
         return new MyServerSentEvent<>("messageEvent", messageEvent, userIds);
     }
 
-    public static MyServerSentEvent<Void> startCache() {
-        return new MyServerSentEvent<>("startCache", emptySet());
+    public static MyServerSentEvent<Void> startCache(final String userId) {
+        return new MyServerSentEvent<>("startCache", Set.of(userId));
     }
 
-    public static MyServerSentEvent<Void> endCache() {
-        return new MyServerSentEvent<>("endCache", emptySet());
+    public static MyServerSentEvent<Void> endCache(final String userId) {
+        return new MyServerSentEvent<>("endCache", Set.of(userId));
     }
 
 //    public static MyServerSentEvent newGame(final NewGameEvent newGameEvent) {
