@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.TestingAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -53,8 +53,10 @@ public class AuthControllerTest {
         existingUser.setEmail("existing@example.com");
 
         Jwt jwt = mock(Jwt.class);
-        TestingAuthenticationToken authentication = new TestingAuthenticationToken(jwt, "pass");
-        authentication.setDetails(userId);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(jwt);
+        when(authentication.getName()).thenReturn(userId);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
         when(repository.findById(userId)).thenReturn(Mono.just(existingUser));
         when(repository.save(any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
@@ -83,8 +85,10 @@ public class AuthControllerTest {
         when(jwt.getClaims()).thenReturn(Map.of("email", email, "name", name));
         when(jwt.getSubject()).thenReturn(userId);
 
-        TestingAuthenticationToken authentication = new TestingAuthenticationToken(jwt, "pass");
-        authentication.setDetails(userId);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(jwt);
+        when(authentication.getName()).thenReturn(userId);
+        when(authentication.isAuthenticated()).thenReturn(true);
 
         // Scenario: findById returns empty, findByEmail returns empty (truly new user)
         when(repository.findById(userId)).thenReturn(Mono.empty());
