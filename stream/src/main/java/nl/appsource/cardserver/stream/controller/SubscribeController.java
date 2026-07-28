@@ -28,7 +28,7 @@ public class SubscribeController extends AbstractBaseController implements V1Api
     private final UserRepository userRepository;
 
     @PostMapping(path = "/subscribe", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<@NonNull Object>>>> subscribe(final ServerWebExchange exchange) {
+    public Mono<ResponseEntity<Flux<@NonNull ServerSentEvent<?>>>> subscribe(final ServerWebExchange exchange) {
 
         final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
         final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;

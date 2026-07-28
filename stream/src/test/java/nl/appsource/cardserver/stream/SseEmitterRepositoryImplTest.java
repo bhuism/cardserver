@@ -88,7 +88,7 @@ public class SseEmitterRepositoryImplTest {
         when(kafkaEventListener.kafkaStreams()).thenReturn(Mono.empty());
 //        when(sseEventSender.sendOnlineListToFriendsOf(anyString())).thenReturn(Mono.empty());
 
-        Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
+        Flux<ServerSentEvent<?>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
 
         StepVerifier.create(result)
             .expectNextMatches(sse -> sse.event().equals("hello"))
@@ -116,7 +116,7 @@ public class SseEmitterRepositoryImplTest {
         nl.appsource.generated.openapi.model.User openApiUser = new nl.appsource.generated.openapi.model.User().id("userId");
         when(userToOpenApiConverter.convert(user)).thenReturn(openApiUser);
 
-        Flux<ServerSentEvent<Object>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
+        Flux<ServerSentEvent<?>> result = sseEmitterRepository.subscribe("userId", "127.0.0.1", "userAgent");
 
         StepVerifier.create(result)
             .expectNextMatches(sse -> sse.event().equals("hello"))
