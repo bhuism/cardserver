@@ -99,17 +99,17 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .map(MyServerSentEvent::updateUser)
 //            .<MyServerSentEvent<?>>map(it -> it);
 
-        // games
-        final Flux<MyServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
-            .map(gameToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateGame)
-            .<MyServerSentEvent<?>>map(it -> it);
-
-        // forest
-        final Flux<MyServerSentEvent<?>> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
-            .map(boomToOpenApiConverter::convert)
-            .map(MyServerSentEvent::updateBoom)
-            .<MyServerSentEvent<?>>map(it -> it);
+//        // games
+//        final Flux<MyServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
+//            .map(gameToOpenApiConverter::convert)
+//            .map(MyServerSentEvent::updateGame)
+//            .<MyServerSentEvent<?>>map(it -> it);
+//
+//        // forest
+//        final Flux<MyServerSentEvent<?>> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
+//            .map(boomToOpenApiConverter::convert)
+//            .map(MyServerSentEvent::updateBoom)
+//            .<MyServerSentEvent<?>>map(it -> it);
 
         // me
 //        final Flux<MyServerSentEvent<?>> me = userRepository.findById(userId)
@@ -123,7 +123,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .collectList()
 //            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return concat(just(MyServerSentEvent.startCache()), games, booms, just(MyServerSentEvent.endCache()));
+        return concat(just(MyServerSentEvent.startCache()), just(MyServerSentEvent.endCache()));
 
     }
 
@@ -155,7 +155,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return //friendsMono
 //            .thenMany(
             concat(just(hello(appIdentifier)), just(ping(0)),
-                Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux() /* , initCache(userId) */))
+                Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux(), initCache(userId)))
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 //
