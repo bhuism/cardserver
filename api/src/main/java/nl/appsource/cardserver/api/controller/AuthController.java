@@ -33,9 +33,9 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
             .map(Authentication::getDetails)
             .cast(String.class)
             .flatMap(userRepository::findById)
+            .switchIfEmpty(createUser(exchange))
             .doOnNext(user -> user.setLastLogin(Instant.now()))
             .flatMap(userRepository::save)
-            .switchIfEmpty(createUser(exchange))
             .doOnNext(user -> {
                 log.info("{} loadUser(), name={} email={}", exchange.getRequest().getRemoteAddress(), user.getDisplayName(), user.getEmail());
             })
@@ -80,8 +80,7 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
                     user.setProviderId("google");
 
                     return Mono.just(user);
-                })).flatMap(userRepository::save);
-
+                }));
 
             });
 
