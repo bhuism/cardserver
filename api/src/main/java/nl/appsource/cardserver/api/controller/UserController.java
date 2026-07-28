@@ -50,7 +50,7 @@ public class UserController extends AbstractBaseController implements UsersApi, 
 
     @Override
     public Mono<ResponseEntity<InvitesResponse>> getInvites(final ServerWebExchange exchange) {
-        log.info("{} getInvites()", exchange.getRequest().getRemoteAddress());
+//        log.info("{} getInvites()", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
             .doOnNext(userId -> log.info("userId: {}", userId))
             .flatMap(userId -> userService.getInvites(userId).flatMap(invites -> {
