@@ -19,7 +19,6 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.net.InetAddress;
@@ -136,7 +135,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     @Override
-    public Flux<ServerSentEvent<Object>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
+    public Flux<ServerSentEvent<?>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
 
         final String appIdentifier = Utils.idGen(IDTYPE.SESS, 8);
         final AtomicLong atomicLong = new AtomicLong(1);
@@ -147,33 +146,33 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         // final Mono<MyServerSentEvent<?>> onlineListSse = friends1.collectList().map(friends -> onlineList(new OnlineListEvent().onlineList(friends)));
 
-        final Flux<String> friends3 = userRepository.getOnlineFriends(userId);
+//        final Flux<String> friends3 = userRepository.getOnlineFriends(userId);
 
-        final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, Flux.merge(userRepository.getOnlineFriends(friendId), just(userId)).distinct().doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
+//        final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, Flux.merge(userRepository.getOnlineFriends(friendId), just(userId)).distinct().doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
 //        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
 //            .flatMap(sseSessionRepository::save)
-        return friendsMono
-            .thenMany(
-                concat(just(hello(appIdentifier)), just(ping(0)),
-                    Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux(), initCache(userId)))
-                    .doFinally(signalType -> {
-                        log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
+        return //friendsMono
+//            .thenMany(
+            concat(just(hello(appIdentifier)), just(ping(0)),
+                Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux() /* , initCache(userId) */))
+                .doFinally(signalType -> {
+                    log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 //
 //                        sseSessionRepository.deleteById(appIdentifier)
 //                            .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
 //                            .onErrorComplete(_ -> true)
 //                            .subscribe();
 
-                    })
-                    .filter(myServerSentEvent -> myServerSentEvent.userIds().contains(userId) || myServerSentEvent.userIds().isEmpty())
-                    .map(myServerSentEvent -> {
-                        final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
-                            .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
-                        builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
-                        return builder.build();
-                    })
-            );
+                })
+                .filter(myServerSentEvent -> myServerSentEvent.userIds().contains(userId) || myServerSentEvent.userIds().isEmpty())
+                .map(myServerSentEvent -> {
+                    final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
+                        .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
+                    builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
+                    return builder.build();
+                });
+        //          );
     }
 
     public static MyServerSentEvent<?> hello(final String appIdentifier) {

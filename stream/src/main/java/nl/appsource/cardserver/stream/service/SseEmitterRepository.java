@@ -6,6 +6,6 @@ import reactor.core.publisher.Flux;
 
 public interface SseEmitterRepository {
 
-    Flux<@NonNull ServerSentEvent<Object>> subscribe(String userId, String remoteAddress, String userAgent);
+    Flux<@NonNull ServerSentEvent<?>> subscribe(String userId, String remoteAddress, String userAgent);
 
 }
