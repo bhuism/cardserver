@@ -15,7 +15,7 @@ public class ReactiveAuditorAwareImpl implements ReactiveAuditorAware<String> {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
-            .map(Authentication::getDetails)
+            .mapNotNull(Authentication::getDetails)
             .cast(String.class);
     }
 }
