@@ -55,7 +55,7 @@ public class AuthControllerTest {
         Jwt jwt = mock(Jwt.class);
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(jwt);
-        when(authentication.getName()).thenReturn(userId);
+        when(authentication.getDetails()).thenReturn(userId);
         when(authentication.isAuthenticated()).thenReturn(true);
 
         when(repository.findById(userId)).thenReturn(Mono.just(existingUser));
@@ -87,7 +87,7 @@ public class AuthControllerTest {
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(jwt);
-        when(authentication.getName()).thenReturn(userId);
+        when(authentication.getDetails()).thenReturn(userId);
         when(authentication.isAuthenticated()).thenReturn(true);
 
         // Scenario: findById returns empty, findByEmail returns empty (truly new user)

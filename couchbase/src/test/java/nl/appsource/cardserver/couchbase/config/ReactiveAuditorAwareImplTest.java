@@ -46,7 +46,7 @@ class ReactiveAuditorAwareImplTest {
     void shouldReturnEmptyWhenNameIsNull() {
         Authentication authentication = mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn(null);
+        when(authentication.getDetails()).thenReturn(null);
         SecurityContext context = new SecurityContextImpl(authentication);
 
         StepVerifier.create(auditorAware.getCurrentAuditor()
@@ -58,7 +58,7 @@ class ReactiveAuditorAwareImplTest {
     void shouldReturnAuditorWhenNameIsSet() {
         Authentication authentication = mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn("user1");
+        when(authentication.getDetails()).thenReturn("user1");
         SecurityContext context = new SecurityContextImpl(authentication);
 
         StepVerifier.create(auditorAware.getCurrentAuditor()
@@ -66,5 +66,5 @@ class ReactiveAuditorAwareImplTest {
             .expectNext("user1")
             .verifyComplete();
     }
-    
+
 }
