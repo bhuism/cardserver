@@ -30,8 +30,7 @@ public class AuthController extends AbstractBaseController implements LoadUserAp
     public Mono<@NonNull ResponseEntity<@NonNull User>> loadUser(final ServerWebExchange exchange) {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
-            .mapNotNull(Authentication::getDetails)
-            .cast(String.class)
+            .flatMap(authentication -> Mono.justOrEmpty(authentication.getName()))
             .flatMap(userRepository::findById)
             .switchIfEmpty(createUser(exchange))
             .doOnNext(user -> user.setLastLogin(Instant.now()))

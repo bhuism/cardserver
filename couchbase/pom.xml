@@ -32,6 +32,11 @@
             <groupId>nl.appsource.cardserver</groupId>
             <artifactId>utils</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

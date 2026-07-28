@@ -17,8 +17,7 @@ public abstract class AbstractBaseController {
         return ReactiveSecurityContextHolder.getContext()
             .mapNotNull(SecurityContext::getAuthentication)
             .filter(Authentication::isAuthenticated)
-            .mapNotNull(Authentication::getDetails)
-            .cast(String.class)
+            .flatMap(authentication -> Mono.justOrEmpty(authentication.getName()))
             .filter(StringUtils::hasText);
     }
 
