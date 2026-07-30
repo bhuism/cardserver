@@ -122,6 +122,7 @@ public class SseEmitterRepositoryImplTest {
             .expectNextMatches(sse -> sse.event().equals("hello"))
             .expectNextMatches(sse -> sse.event().equals("ping"))
             .expectNextMatches(sse -> sse.event().equals("startCache"))
+            .expectNextMatches(sse -> sse.event().equals("updateUser"))
             .expectNextMatches(sse -> sse.event().equals("endCache"))
             .thenCancel()
             .verify(Duration.ofSeconds(5));
