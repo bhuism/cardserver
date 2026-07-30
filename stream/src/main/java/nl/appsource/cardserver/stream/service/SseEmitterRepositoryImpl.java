@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
+import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
@@ -13,6 +14,7 @@ import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
+import nl.appsource.generated.openapi.model.User;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.codec.ServerSentEvent;
@@ -24,8 +26,10 @@ import reactor.core.publisher.Sinks;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.Collections.emptySet;
@@ -52,8 +56,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final BoomRepository boomRepository;
 
-    private final SseEventSender sseEventSender;
-
     private final Sinks.Many<MyServerSentEvent<?>> pingSink = Sinks.many().multicast().directBestEffort();
 
     private static final String HOSTNAME;
@@ -61,6 +63,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final KafkaEventListener kafkaEventListener;
 
     private Disposable heartbeat;
+
+    private final UserToOpenApiConverter userToOpenApiConverter;
 
     static {
         String host;
@@ -94,36 +98,36 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private Flux<MyServerSentEvent<?>> initCache(final String userId) {
 
         // users
-//        final Flux<MyServerSentEvent<?>> friends = userRepository.getFriends(userId)
-//            .map(userToOpenApiConverter::convert)
-//            .map(MyServerSentEvent::updateUser)
-//            .<MyServerSentEvent<?>>map(it -> it);
+        final Flux<MyServerSentEvent<?>> friends = userRepository.getFriends(userId)
+            .map(userToOpenApiConverter::convert)
+            .map((User user) -> MyServerSentEvent.updateUser(user, Set.of(userId)))
+            .<MyServerSentEvent<?>>map(it -> it);
 
-//        // games
-//        final Flux<MyServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
-//            .map(gameToOpenApiConverter::convert)
-//            .map(MyServerSentEvent::updateGame)
-//            .<MyServerSentEvent<?>>map(it -> it);
-//
-//        // forest
-//        final Flux<MyServerSentEvent<?>> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
-//            .map(boomToOpenApiConverter::convert)
-//            .map(MyServerSentEvent::updateBoom)
-//            .<MyServerSentEvent<?>>map(it -> it);
+        // games
+        final Flux<MyServerSentEvent<?>> games = gameRepository.findGamesByUserId(userId, Integer.MAX_VALUE)
+            .map(gameToOpenApiConverter::convert)
+            .map(MyServerSentEvent::updateGame)
+            .<MyServerSentEvent<?>>map(it -> it);
 
-        // me
-//        final Flux<MyServerSentEvent<?>> me = userRepository.findById(userId)
-//            .map(userToOpenApiConverter::convert)
-//            .map(MyServerSentEvent::updateUser)
-//            .<MyServerSentEvent<?>>map(it -> it)
-//            .flux();
+        // forest
+        final Flux<MyServerSentEvent<?>> booms = boomRepository.findBoomsByUserId(userId, Integer.MAX_VALUE)
+            .map(boomToOpenApiConverter::convert)
+            .map(MyServerSentEvent::updateBoom)
+            .<MyServerSentEvent<?>>map(it -> it);
+
+
+        final Flux<MyServerSentEvent<?>> me = userRepository.findById(userId)
+            .map(userToOpenApiConverter::convert)
+            .map((User user) -> MyServerSentEvent.updateUser(user, Set.of(userId)))
+            .<MyServerSentEvent<?>>map(it -> it)
+            .flux();
 
         // online list
 //        final Mono<MyServerSentEvent<?>> onlineList = userRepository.getOnlineFriends(userId)
 //            .collectList()
 //            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
 
-        return concat(just(MyServerSentEvent.startCache(userId)), just(MyServerSentEvent.endCache(userId)));
+        return concat(just(MyServerSentEvent.startCache(userId)), friends, games, booms, me, just(MyServerSentEvent.endCache(userId)));
 
     }
 
@@ -154,8 +158,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .flatMap(sseSessionRepository::save)
         return //friendsMono
 //            .thenMany(
-            concat(just(hello(appIdentifier)), just(ping(0)), initCache(userId),
-                Flux.merge(kafkaEventListener.kafkaStreams(), pingSink.asFlux()))
+            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(kafkaEventListener.kafkaStreams(), initCache(userId), pingSink.asFlux()))
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 //
