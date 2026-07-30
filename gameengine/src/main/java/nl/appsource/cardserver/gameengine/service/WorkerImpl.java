@@ -194,17 +194,6 @@ public class WorkerImpl implements Worker {
                         gameRepository.unLockNoSave(entry.getKey().getId(), entry.getValue()).onErrorResume((e) -> Mono.empty()).subscribe();
                     })
             )
-            .flatMap(game -> {
-                final GameEngine gameEngine = new GameEngineImpl(game);
-//                if (gameEngine.isAiSay()) {
-//                    final String aiSayPlayer = game.getPlayers().get(gameEngine.calcWhoSay());
-//                    return redisStreamService.publishToStream(aiSayPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.SAY).gameId(game.getId()).userId(aiSayPlayer)).then();
-//                } else if (gameEngine.isAiTurn()) {
-//                    final String aiCardPlayer = game.getPlayers().get(gameEngine.calcWhoHasTurn());
-//                    return redisStreamService.publishToStream(aiCardPlayer, new GameEvent().uuid(UUID.randomUUID()).eventType(GameEvent.EventTypeEnum.PLAY_CARD).gameId(game.getId()).userId(aiCardPlayer)).then();
-//                }
-                return Mono.<Void>empty();
-            })
             .onErrorResume(throwable -> {
 
                 log.error("executeSynchronious()", throwable);
@@ -213,8 +202,9 @@ public class WorkerImpl implements Worker {
                     final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
                     kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)), Set.of(gameEvent.getUserId())));
                 }
-                return Mono.<Void>empty();
-            });
+                return Mono.empty();
+            })
+            .then();
     }
 
     @Override

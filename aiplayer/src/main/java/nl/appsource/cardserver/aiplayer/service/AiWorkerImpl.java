@@ -60,26 +60,6 @@ public class AiWorkerImpl implements AiWorker {
                 .subscribe();
         }
 
-
-//        AI_USER_ID.forEach(aiUserId -> {
-//            redisStreamService.consumeFromStream(aiUserId, aiUserId + "-group", record -> {
-//                final String userId = record.getStream();
-//
-//                if (!aiUserId.equals(userId)) {
-//                    log.error("Received event for wrong user: {} {}", aiUserId, userId);
-//                    return Mono.empty();
-//                }
-//
-//                final GameEvent gameEvent = record.getValue();
-//
-//                return switch (gameEvent.getEventType()) {
-//                    case SAY -> say(gameEvent.getGameId(), gameEvent.getUserId());
-//                    case PLAY_CARD -> playCard(gameEvent.getGameId(), gameEvent.getUserId());
-//                    default -> Mono.empty();
-//                };
-//
-//            });
-//        });
     }
 
     @Override
