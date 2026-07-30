@@ -70,8 +70,8 @@ public class SseEmitterRepositoryImplTest {
             boomToOpenApiConverter,
             gameRepository,
             boomRepository,
-            sseEventSender,
-            kafkaEventListener
+            kafkaEventListener,
+            userToOpenApiConverter
         );
     }
 
