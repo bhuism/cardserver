@@ -10,7 +10,6 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
-import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
@@ -26,7 +25,6 @@ import reactor.core.publisher.Sinks;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -56,7 +54,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final BoomRepository boomRepository;
 
-    private final Sinks.Many<MyServerSentEvent<?>> pingSink = Sinks.many().multicast().directBestEffort();
+    private final Sinks.Many<MyServerSentEvent<?>> pingSink = Sinks.many()
+        .multicast()
+        .directBestEffort();
 
     private static final String HOSTNAME;
 
@@ -69,7 +69,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     static {
         String host;
         try {
-            host = InetAddress.getLocalHost().getHostName();
+            host = InetAddress.getLocalHost()
+                .getHostName();
         } catch (UnknownHostException e) {
             host = "unknown";
         }
@@ -168,10 +169,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //                            .subscribe();
 
                 })
-                .filter(myServerSentEvent -> myServerSentEvent.userIds().contains(userId) || myServerSentEvent.userIds().isEmpty())
+                .filter(myServerSentEvent -> myServerSentEvent.userIds()
+                    .contains(userId) || myServerSentEvent.userIds()
+                    .isEmpty())
                 .map(myServerSentEvent -> {
                     final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
-                        .event(myServerSentEvent.event()).id("id:" + atomicLong.getAndIncrement());
+                        .event(myServerSentEvent.event())
+                        .id("id:" + atomicLong.getAndIncrement());
                     builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
                     return builder.build();
                 });
@@ -179,7 +183,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     }
 
     public static MyServerSentEvent<?> hello(final String appIdentifier) {
-        return new MyServerSentEvent<>("hello", new HelloEvent().hostName(HOSTNAME).appIdentifier(appIdentifier), emptySet());
+        return new MyServerSentEvent<>("hello", new HelloEvent().hostName(HOSTNAME)
+            .appIdentifier(appIdentifier), emptySet());
     }
 
     public static MyServerSentEvent<?> ping(final long count) {
