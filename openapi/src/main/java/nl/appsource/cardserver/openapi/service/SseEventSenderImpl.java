@@ -54,6 +54,12 @@ public class SseEventSenderImpl implements SseEventSender {
     }
 
     @Override
+    public Mono<Void> updateGame(final Game game) {
+        kafkaSender.sendSse(MyServerSentEvent.updateGame(game));
+        return Mono.empty();
+    }
+
+    @Override
     public Mono<Void> newGame(final Game game) {
 
 //        final Flux<String> topics = Flux.fromIterable(game.getPlayers()).filter(userId -> !isAiPlayer(userId) && !userId.equals(game.getCreator()));

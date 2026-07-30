@@ -20,6 +20,8 @@ public interface SseEventSender {
 
     Mono<Void> boomsChanged(Set<String> userIds);
 
+    Mono<Void> updateGame(Game game);
+
     Mono<Void> newGame(Game game);
 
     Mono<Void> sendOnlineListTo(String userId, Flux<@NonNull String> onlineList);
