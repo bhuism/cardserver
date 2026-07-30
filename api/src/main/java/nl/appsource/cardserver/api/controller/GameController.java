@@ -6,7 +6,6 @@ import nl.appsource.cardserver.api.service.GameService;
 import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.openapi.service.KafkaSender;
-import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.CreateGame;
 import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -31,7 +30,6 @@ public class GameController extends AbstractBaseController implements GamesApi, 
     private final UserRepository userRepository;
     private final KafkaSender kafkaSender;
     private final JsonMapper jsonMapper;
-    private final SseEventSender sseEventSender;
 
     @Override
     public Mono<ResponseEntity<Game>> getGame(final String gameId, final ServerWebExchange exchange) {
@@ -39,7 +37,7 @@ public class GameController extends AbstractBaseController implements GamesApi, 
         return getUserId(exchange)
             .flatMap(userId -> gameService.getGame(userId, gameId)
                 .mapNotNull(gameToOpenApiConverter::convert)
-                .flatMap(game -> sseEventSender.updateGame(game).thenReturn(game))
+//                .flatMap(game -> sseEventSender.updateGame(game).thenReturn(game))
                 .map(ResponseEntity::ok)
                 .switchIfEmpty(Mono.defer(() -> {
                     log.warn("{} getGame({}), game not found", exchange.getRequest()
