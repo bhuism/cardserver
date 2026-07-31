@@ -14,6 +14,7 @@ import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.openapi.service.KafkaSender;
+import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
@@ -64,6 +65,8 @@ public class WorkerImpl implements Worker {
     private final BoomToOpenApiConverter boomToOpenApiConverter;
 
     private final KafkaSender kafkaSender;
+
+    private final SseEventSender sseEventSender;
 
     boolean stop = false;
 
@@ -169,7 +172,7 @@ public class WorkerImpl implements Worker {
                         };
                     })
                     .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
-//                .doOnNext(_ -> log.info("executeSynchronious() executed gameEventType:{}, userId={}, gameId={}, card={}", gameEvent.getEventType(), gameEvent.getUserId(), gameEvent.getGameId(), gameEvent.getCard()))
+                    .delayUntil(game -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
                     .flatMap(game -> {
                         if (game.getBoomId() != null) {
                             return boomRepository.findById(game.getBoomId())
