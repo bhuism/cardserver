@@ -111,8 +111,7 @@ public class GameServiceImpl implements GameService {
                     .stream(), Stream.of(game.getCreator())).collect(toSet()))
                 .then(Mono.just(game)))
             .delayUntil(game -> sseEventSender.newGame(gameToOpenApiConverter.convert(game)))
-            .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
-            ;
+            .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)));
 
     }
 
