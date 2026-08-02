@@ -12,8 +12,6 @@ import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import org.reactivestreams.Publisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -27,7 +25,6 @@ import tools.jackson.databind.node.ObjectNode;
 import java.time.Duration;
 import java.util.Set;
 
-import static nl.appsource.cardserver.openapi.config.KafkaTopics.COUCHBASE_CARDSERVER_EVENTS;
 import static nl.appsource.cardserver.openapi.config.KafkaTopics.SSE_TOPIC;
 
 @Slf4j
@@ -48,22 +45,22 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
 
     private final Sinks.Many<MyServerSentEvent<?>> sseChannel = Sinks.many().multicast().directBestEffort();
 
-    @KafkaListener(topics = COUCHBASE_CARDSERVER_EVENTS, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
-    public void listen(final @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String documentId, final @Payload(required = false) String documentPayload) {
-
-        if (documentId == null || documentPayload == null) {
-            return;
-        }
-
-        try {
-            final ObjectNode document = (ObjectNode) jsonMapper.readTree(documentPayload);
-            document.put("id", documentId);
-//            log.info("Got Kafka event: documentId={}", documentId);
-            entityChanges.emitNext(document, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
-        } catch (final Exception e) {
-            log.error("Error processing Kafka event: documentId={}", documentId, e);
-        }
-    }
+//    @KafkaListener(topics = COUCHBASE_CARDSERVER_EVENTS, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
+//    public void listen(final @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String documentId, final @Payload(required = false) String documentPayload) {
+//
+//        if (documentId == null || documentPayload == null) {
+//            return;
+//        }
+//
+//        try {
+//            final ObjectNode document = (ObjectNode) jsonMapper.readTree(documentPayload);
+//            document.put("id", documentId);
+////            log.info("Got Kafka event: documentId={}", documentId);
+//            entityChanges.emitNext(document, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
+//        } catch (final Exception e) {
+//            log.error("Error processing Kafka event: documentId={}", documentId, e);
+//        }
+//    }
 
     @KafkaListener(topics = SSE_TOPIC, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
     public void listen(final @Payload String documentPayload) {

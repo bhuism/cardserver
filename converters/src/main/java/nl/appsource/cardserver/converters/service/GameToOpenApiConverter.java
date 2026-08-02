@@ -298,11 +298,11 @@ public class GameToOpenApiConverter implements Converter<@NonNull Game, nl.appso
             .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public static List<nl.appsource.cardserver.model.Card> convertToModel(final List<Card> source) {
-        return source.stream()
-            .map(GameToOpenApiConverter::convertCard)
-            .collect(Collectors.toCollection(ArrayList::new));
-    }
+//    public static List<nl.appsource.cardserver.model.Card> convertToModel(final List<Card> source) {
+//        return source.stream()
+//            .map(GameToOpenApiConverter::convertCard)
+//            .collect(Collectors.toCollection(ArrayList::new));
+//    }
 
     public static nl.appsource.generated.openapi.model.Card convertCard(final nl.appsource.cardserver.model.Card source) {
         return nl.appsource.generated.openapi.model.Card.fromValue(source.name());

@@ -13,6 +13,7 @@ import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
 import nl.appsource.cardserver.model.Game;
+import nl.appsource.cardserver.openapi.config.KafkaTopics;
 import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.GameEvent;
@@ -26,6 +27,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.Comparator;
@@ -68,6 +70,8 @@ public class WorkerImpl implements Worker {
 
     private final SseEventSender sseEventSender;
 
+    private final JsonMapper jsonMapper;
+
     boolean stop = false;
 
     private Disposable streamSubscription;
@@ -98,6 +102,7 @@ public class WorkerImpl implements Worker {
                 .flatMap(GameEngineRwImpl::rotateTrump)
                 .flatMap(gameRepository::save)
                 .flatMap((game) -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
+                .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
                 .subscribe();
         }
 
@@ -174,6 +179,7 @@ public class WorkerImpl implements Worker {
                     })
                     .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue()).then(Mono.just(game)))
                     .delayUntil(game -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
+                    .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
                     .flatMap(game -> {
                         if (game.getBoomId() != null) {
                             return boomRepository.findById(game.getBoomId())

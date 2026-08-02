@@ -4,6 +4,6 @@ public final class KafkaTopics {
 
     public static final String GAME_EVENTS_TOPIC = "gameevents";
     public static final String SSE_TOPIC = "ssetopic";
-    public static final String COUCHBASE_CARDSERVER_EVENTS = "couchbase-cardserver-events";
+    public static final String GAME_CHANGES = "gamechanges";
 
 }

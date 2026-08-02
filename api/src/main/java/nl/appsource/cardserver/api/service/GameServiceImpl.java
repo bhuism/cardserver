@@ -11,12 +11,15 @@ import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.model.GameVariant;
 import nl.appsource.cardserver.model.Suit;
+import nl.appsource.cardserver.openapi.config.KafkaTopics;
+import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.cardserver.openapi.service.SseEventSender;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +52,10 @@ public class GameServiceImpl implements GameService {
     private final BoomRepository boomRepository;
 
     private final GameToOpenApiConverter gameToOpenApiConverter;
+
+    private final KafkaSender kafkaSender;
+
+    private final JsonMapper jsonMapper;
 
     @Override
     public Mono<Game> getGame(final String userId, final String gameId) {
@@ -86,11 +93,13 @@ public class GameServiceImpl implements GameService {
             .doOnNext((game) -> {
                 game.setId(idGen(GAME, 20));
                 game.setPlayers(new ArrayList<>(players));
-                game.setDealer(dealer == null ? Integer.valueOf(ThreadLocalRandom.current().nextInt(4)) : dealer);
+                game.setDealer(dealer == null ? Integer.valueOf(ThreadLocalRandom.current()
+                    .nextInt(4)) : dealer);
                 game.setSay(new HashMap<>());
                 game.setTurns(new ArrayList<>());
                 game.setPlayerCard(randomCards());
-                game.setTrump(Suit.values()[ThreadLocalRandom.current().nextInt(Suit.values().length)]);
+                game.setTrump(Suit.values()[ThreadLocalRandom.current()
+                    .nextInt(Suit.values().length)]);
                 game.setLastTrickOpen(false);
                 game.setGameVariant(gameVariant);
                 game.setDealCounter(0);
@@ -98,17 +107,24 @@ public class GameServiceImpl implements GameService {
                 game.setAiRisc(aiRisc);
             })
             .flatMap(gameRepository::save)
-            .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet())).then(Mono.just(game)))
-            .flatMap(game -> sseEventSender.newGame(gameToOpenApiConverter.convert(game)).then(Mono.just(game)));
+            .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers()
+                    .stream(), Stream.of(game.getCreator())).collect(toSet()))
+                .then(Mono.just(game)))
+            .delayUntil(game -> sseEventSender.newGame(gameToOpenApiConverter.convert(game)))
+            .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
+            ;
 
     }
 
     @Override
     public Mono<Boolean> deleteGame(final String userId, final String gameId) {
         return gameRepository.findById(gameId)
-            .filter(game -> game.getCreator().equals(userId))
+            .filter(game -> game.getCreator()
+                .equals(userId))
             .filter(game -> game.getBoomId() == null)
-            .flatMap(game -> gameRepository.delete(game).then(sseEventSender.gamesChanged(concat(game.getPlayers().stream(), Stream.of(game.getCreator())).collect(toSet()))))
+            .flatMap(game -> gameRepository.delete(game)
+                .then(sseEventSender.gamesChanged(concat(game.getPlayers()
+                    .stream(), Stream.of(game.getCreator())).collect(toSet()))))
             .thenReturn(true);
     }
 
