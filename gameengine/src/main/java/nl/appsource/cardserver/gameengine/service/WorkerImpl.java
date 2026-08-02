@@ -97,6 +97,7 @@ public class WorkerImpl implements Worker {
                 .map(game -> new GameEngineRwImpl(null, game, noOpuserMessenger))
                 .flatMap(GameEngineRwImpl::rotateTrump)
                 .flatMap(gameRepository::save)
+                .flatMap((game) -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
                 .subscribe();
         }
 
@@ -177,6 +178,7 @@ public class WorkerImpl implements Worker {
                         if (game.getBoomId() != null) {
                             return boomRepository.findById(game.getBoomId())
                                 .flatMap(boomRepository::save)
+                                .flatMap((boom) -> sseEventSender.updateBoom(boomToOpenApiConverter.convert(boom)))
                                 .then(Mono.just(game));
                         } else {
                             return Mono.just(game);

@@ -2,6 +2,7 @@ package nl.appsource.cardserver.openapi.service;
 
 import lombok.RequiredArgsConstructor;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
+import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.NewGameEvent;
@@ -56,6 +57,12 @@ public class SseEventSenderImpl implements SseEventSender {
     @Override
     public Mono<Void> updateGame(final Game game) {
         kafkaSender.sendSse(MyServerSentEvent.updateGame(game));
+        return Mono.empty();
+    }
+
+    @Override
+    public Mono<Void> updateBoom(final Boom boom) {
+        kafkaSender.sendSse(MyServerSentEvent.updateBoom(boom));
         return Mono.empty();
     }
 

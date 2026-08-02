@@ -1,6 +1,7 @@
 package nl.appsource.cardserver.openapi.service;
 
 import lombok.NonNull;
+import nl.appsource.generated.openapi.model.Boom;
 import nl.appsource.generated.openapi.model.Game;
 import nl.appsource.generated.openapi.model.UserMessage;
 import reactor.core.publisher.Flux;
@@ -21,6 +22,8 @@ public interface SseEventSender {
     Mono<Void> boomsChanged(Set<String> userIds);
 
     Mono<Void> updateGame(Game game);
+
+    Mono<Void> updateBoom(Boom boom);
 
     Mono<Void> newGame(Game game);
 
