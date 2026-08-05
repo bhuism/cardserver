@@ -1,15 +1,24 @@
 package nl.appsource.cardserver.aiplayer.config;
 
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.appsource.cardserver.aiplayer.service.AiWorkerImpl;
+import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Game;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.time.Duration;
 
 import static nl.appsource.cardserver.openapi.config.KafkaTopics.GAME_CHANGES;
 
@@ -17,31 +26,49 @@ import static nl.appsource.cardserver.openapi.config.KafkaTopics.GAME_CHANGES;
 @Service
 @Profile({"development", "production"})
 @RequiredArgsConstructor
-public class KafkaEventListenerImpl {
+public class KafkaEventListenerImpl implements KafkaEventListener {
 
     private final JsonMapper jsonMapper;
 
-    private final AiWorkerImpl aiWorker;
+    private final Environment environment;
+
+    private final GameRepository gameRepository;
+
+    @Getter
+    private final Sinks.Many<GameEngine> queue = Sinks.many()
+        .multicast()
+        .directBestEffort();
 
     @KafkaListener(topics = GAME_CHANGES, groupId = "aiWorker-aiWorker")
     public void listen(final @Payload String string) {
-
         final Game game = jsonMapper.readValue(string, Game.class);
-
         final GameEngineImpl gameEngine = new GameEngineImpl(game);
-
-        if (gameEngine.isAiSay()) {
-            final String aiSayPlayer = game.getPlayers()
-                .get(gameEngine.calcWhoSay());
-            aiWorker.say(game.getId(), aiSayPlayer)
-                .block();
-        } else if (gameEngine.isAiTurn()) {
-            final String aiPlayPlayer = game.getPlayers()
-                .get(gameEngine.calcWhoHasTurn());
-            aiWorker.playCard(game.getId(), aiPlayPlayer)
-                .block();
+        if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
+            queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
         }
+    }
 
+    @Override
+    public Flux<GameEngine> listen() {
+        return queue.asFlux();
+    }
+
+    @PostConstruct
+    public void init() {
+        log.info("init()");
+        if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
+            gameRepository.findAll()
+                .filter((game) -> game.getTurns()
+                    .size() != 32)
+                .filter((game) -> !game.getLastTrickOpen())
+                .doOnNext((game) -> log.info("AiWorker startup for game: {}", game.getId()))
+                .subscribe((Game game) -> {
+                    final GameEngine gameEngine = new GameEngineImpl(game);
+                    if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
+                        queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
+                    }
+                });
+        }
     }
 
 }

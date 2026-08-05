@@ -3,16 +3,13 @@ package nl.appsource.cardserver.aiplayer.service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nl.appsource.cardserver.aiplayer.config.KafkaEventListener;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
-import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
-import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.generated.openapi.model.GameEvent;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
@@ -31,34 +28,31 @@ public class AiWorkerImpl implements AiWorker {
 
     private final GameRepository gameRepository;
 
-    private final Environment environment;
-
     private final KafkaSender kafkaSender;
 
     private final JsonMapper jsonMapper;
 
+    private final KafkaEventListener kafkaEventListener;
+
     @PostConstruct
     public void init() {
+
         log.info("init()");
-        if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
-            gameRepository.findAll()
-                .filter((game) -> game.getTurns().size() != 32)
-                .filter((game) -> !game.getLastTrickOpen())
-                .doOnNext((game) -> log.info("AiWorker startup for game: {}", game.getId()))
-                .flatMap((Game game) -> {
-                    final GameEngine gameEngine = new GameEngineImpl(game);
-                    if (gameEngine.isAiSay()) {
-                        final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
-                        return say(game.getId(), userId);
-                    } else if (gameEngine.isAiTurn()) {
-                        final String userId = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
-                        return playCard(game.getId(), userId);
-                    } else {
-                        return Mono.empty();
-                    }
-                })
-                .subscribe();
-        }
+
+        kafkaEventListener.listen()
+            .doOnNext((message) -> log.info("Kafka message received: {}", message))
+            .flatMap(gameEngine -> {
+                if (gameEngine.isAiSay()) {
+                    final String aiSayPlayer = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());
+                    return say(gameEngine.getGame().getId(), aiSayPlayer);
+                } else if (gameEngine.isAiTurn()) {
+                    final String aiPlayPlayer = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
+                    return playCard(gameEngine.getGame().getId(), aiPlayPlayer);
+                } else {
+                    return Mono.empty();
+                }
+            })
+            .subscribe();
 
     }
 
