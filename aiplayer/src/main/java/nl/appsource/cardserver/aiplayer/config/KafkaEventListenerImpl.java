@@ -24,7 +24,9 @@ public class KafkaEventListenerImpl {
     private final AiWorkerImpl aiWorker;
 
     @KafkaListener(topics = GAME_CHANGES, groupId = "aiWorker-aiWorker")
-    public void listen(final @Payload Game game) {
+    public void listen(final @Payload String string) {
+
+        final Game game = jsonMapper.readValue(string, Game.class);
 
         final GameEngineImpl gameEngine = new GameEngineImpl(game);
 

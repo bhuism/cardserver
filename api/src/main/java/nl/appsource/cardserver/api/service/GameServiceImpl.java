@@ -110,8 +110,8 @@ public class GameServiceImpl implements GameService {
             .flatMap((game) -> sseEventSender.gamesChanged(concat(game.getPlayers()
                     .stream(), Stream.of(game.getCreator())).collect(toSet()))
                 .then(Mono.just(game)))
-            .delayUntil(game -> sseEventSender.newGame(gameToOpenApiConverter.convert(game)))
-            .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)));
+            .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
+            .delayUntil(game -> sseEventSender.newGame(gameToOpenApiConverter.convert(game)));
 
     }
 
