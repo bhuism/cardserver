@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Role;
 import org.springframework.data.couchbase.core.convert.translation.JacksonTranslationService;
@@ -17,6 +18,7 @@ import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRA
 @EnableReactiveCouchbaseRepositories(basePackages = "nl.appsource.cardserver.couchbase.repository")
 @EnableReactiveCouchbaseAuditing(auditorAwareRef = "reactiveAuditorAware")
 @Role(ROLE_INFRASTRUCTURE)
+@Configuration
 public class CouchbaseConfiguration {
 
     @Bean
