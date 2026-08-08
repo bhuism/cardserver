@@ -40,7 +40,7 @@ public class AiWorkerImpl implements AiWorker {
         log.info("init()");
 
         kafkaEventListener.listen()
-            .doOnNext((message) -> log.info("Kafka message received: {}", message))
+//            .doOnNext((message) -> log.info("Kafka message received: {}", message))
             .flatMap(gameEngine -> {
                 if (gameEngine.isAiSay()) {
                     final String aiSayPlayer = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoSay());

@@ -37,7 +37,7 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
     @Getter
     private final Sinks.Many<GameEngine> queue = Sinks.many()
         .multicast()
-        .directBestEffort();
+        .onBackpressureBuffer();
 
     @KafkaListener(topics = GAME_CHANGES, groupId = "aiWorker-aiWorker")
     public void listen(final @Payload String string) {
