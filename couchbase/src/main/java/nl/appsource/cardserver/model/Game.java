@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 @Document
+@CompositeQueryIndex(fields = {"creator", "updated DESC"})
+@CompositeQueryIndex(fields = {"boomId", "updated DESC"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -67,6 +70,7 @@ public class Game extends BaseEntity {
     private Set<Integer> roemGeklopt = new HashSet<>();
 
     @Field
+    @QueryIndexed
     private String boomId;
 
     @Field

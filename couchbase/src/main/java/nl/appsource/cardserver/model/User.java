@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.couchbase.core.index.CompositeQueryIndex;
 import org.springframework.data.couchbase.core.index.QueryIndexed;
 import org.springframework.data.couchbase.core.mapping.Document;
 import org.springframework.data.couchbase.core.mapping.Field;
@@ -16,6 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Document
+@CompositeQueryIndex(fields = {"email", "updated DESC"})
+@CompositeQueryIndex(fields = {"name", "updated DESC"})
+@CompositeQueryIndex(fields = {"displayName", "updated DESC"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,10 +28,12 @@ import java.util.List;
 public class User extends BaseEntity {
 
     @Field
+    @QueryIndexed
     private String subject;
 
     @Field
     @NotEmpty
+    @QueryIndexed
     private String displayName;
 
     @Field
@@ -42,6 +48,7 @@ public class User extends BaseEntity {
 
     @Field
     @NotEmpty
+    @QueryIndexed
     private String name;
 
     @Field
