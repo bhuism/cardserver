@@ -1,27 +1,15 @@
 package nl.appsource.cardserver.couchbase.config;
 
-import com.couchbase.client.java.Cluster;
-import com.couchbase.client.java.env.ClusterEnvironment;
 import com.couchbase.client.java.query.QueryScanConsistency;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Role;
-import org.springframework.data.convert.CustomConversions;
-import org.springframework.data.couchbase.CouchbaseClientFactory;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
-import org.springframework.data.couchbase.config.BeanNames;
-import org.springframework.data.couchbase.core.mapping.CouchbaseMappingContext;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
 import org.springframework.data.couchbase.repository.config.EnableReactiveCouchbaseRepositories;
-import org.springframework.data.couchbase.transaction.CouchbaseCallbackTransactionManager;
 import org.springframework.data.domain.ReactiveAuditorAware;
-
-import java.time.Duration;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 
@@ -55,7 +43,7 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
     @Override
     public QueryScanConsistency getDefaultConsistency() {
-        return QueryScanConsistency.NOT_BOUNDED;
+        return QueryScanConsistency.REQUEST_PLUS;
     }
 
     @Override
@@ -69,44 +57,6 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
     }
 
     @Override
-    protected void configureEnvironment(final ClusterEnvironment.Builder builder2) {
-
-        // Configure Threshold Logging
-        builder2.thresholdLoggingTracerConfig(builder -> builder
-            .emitInterval(Duration.ofSeconds(10)) // Log slow ops every 10 seconds
-            .sampleSize(10)                       // Log top 10 slowest queries per interval
-            .kvThreshold(Duration.ofMillis(500))  // Threshold for Key-Value ops (get/upsert)
-            .queryThreshold(Duration.ofSeconds(1)) // Threshold for N1QL queries
-            .searchThreshold(Duration.ofSeconds(1)) // Threshold for FTS
-            .analyticsThreshold(Duration.ofSeconds(1))
-        );
-
-        // Optional: Configure Orphan Reporter (logs requests that failed due to timeout)
-        // This helps detect queries that were so slow they never completed.
-        builder2.orphanReporterConfig(builder ->
-            builder
-                .emitInterval(Duration.ofSeconds(10))
-                .sampleSize(10)
-        );
-
-        builder2.timeoutConfig(builder -> builder
-            .kvTimeout(Duration.ofSeconds(10))
-            .queryTimeout(Duration.ofSeconds(120))
-            .connectTimeout(Duration.ofSeconds(20))
-            .disconnectTimeout(Duration.ofSeconds(20))
-            .managementTimeout(Duration.ofSeconds(20))
-        );
-
-        builder2.ioConfig(builder -> builder
-            .maxHttpConnections(100)
-            .idleHttpConnectionTimeout(Duration.ofSeconds(3))
-            .numKvConnections(2)
-            .enableTcpKeepAlives(true)
-            .tcpKeepAliveTime(Duration.ofSeconds(60))
-        );
-    }
-
-    @Override
     protected ObjectMapper couchbaseObjectMapper() {
         final ObjectMapper objectMapper = super.couchbaseObjectMapper();
 
@@ -117,50 +67,6 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
         return objectMapper;
     }
-
-    @Override
-    @Bean(name = BeanNames.COUCHBASE_MAPPING_CONTEXT)
-    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public CouchbaseMappingContext couchbaseMappingContext(@Qualifier(BeanNames.COUCHBASE_CUSTOM_CONVERSIONS) final CustomConversions customConversions) throws Exception {
-        return super.couchbaseMappingContext(customConversions);
-    }
-
-    @Override
-    @Bean(name = "couchbaseClusterEnvironment")
-    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public ClusterEnvironment couchbaseClusterEnvironment() {
-        return super.couchbaseClusterEnvironment();
-    }
-
-    @Override
-    @Bean(name = "couchbaseCluster")
-    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public Cluster couchbaseCluster(final ClusterEnvironment couchbaseClusterEnvironment) {
-        return super.couchbaseCluster(couchbaseClusterEnvironment);
-    }
-
-    @Override
-    @Bean(name = BeanNames.COUCHBASE_CLIENT_FACTORY)
-    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public CouchbaseClientFactory couchbaseClientFactory(final Cluster couchbaseCluster) {
-        return super.couchbaseClientFactory(couchbaseCluster);
-    }
-
-    @Bean(name = BeanNames.COUCHBASE_TRANSACTION_MANAGER)
-    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public CouchbaseCallbackTransactionManager couchbaseTransactionManager(final CouchbaseClientFactory clientFactory) {
-        return new CouchbaseCallbackTransactionManager(clientFactory);
-    }
-
-    //    @Bean
-//    public ClusterEnvironmentBuilderCustomizer couchbaseEnvironmentCustomizer(JsonMapper jsonMapper) {
-//        log.info("Customizing Couchbase environment with JacksonJsonSerializer");
-//        return builder -> builder.jsonSerializer(biJacksonJsonSerializer.create(jsonMapper));
-//    }
-//    @Override
-//    public CouchbaseTransactionalOperator couchbaseTransactionalOperator(final CouchbaseCallbackTransactionManager couchbaseCallbackTransactionManager) {
-//        return super.couchbaseTransactionalOperator(couchbaseCallbackTransactionManager);
-//    }
 
 }
 
