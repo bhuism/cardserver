@@ -126,7 +126,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return concat(
             just(MyServerSentEvent.startCache(userId)),
-            Flux.merge(friends, games, booms, me),
+            friends, games, booms, me,
             just(MyServerSentEvent.endCache(userId))
         );
 

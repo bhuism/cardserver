@@ -3,12 +3,9 @@ package nl.appsource.cardserver.couchbase.repository;
 import nl.appsource.cardserver.model.Game;
 import org.springframework.data.couchbase.repository.Query;
 import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository;
-import org.springframework.data.couchbase.repository.ScanConsistency;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
 
 @Repository
 public interface GameRepository extends ReactiveCouchbaseRepository<Game, String>, ReactiveBaseEntityRepository<Game> {
@@ -35,7 +32,8 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
     @Query(value = "SELECT meta(#{#n1ql.bucket}).id "
         + "FROM #{#n1ql.bucket} "
         + "WHERE #{#n1ql.filter} "
-        + "AND ARRAY_LENGTH(turns) != 32", readonly = true)
+        + "AND ARRAY_LENGTH(turns) != 32 "
+        + "ORDER BY updated DESC", readonly = true)
     Flux<String> findUnfinishedGames();
 
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC LIMIT $limit", readonly = true)
@@ -44,8 +42,8 @@ public interface GameRepository extends ReactiveCouchbaseRepository<Game, String
     @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId AND ( creator=$userId OR ANY p IN players SATISFIES p=$userId END ) ORDER BY updated DESC", readonly = true)
     Mono<Game> findByUserIdAndGameId(String userId, String gameId);
 
-    @ScanConsistency(query = REQUEST_PLUS)
-    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId", readonly = true)
-    Mono<Game> findByIdPessimistic(String gameId);
+//    @ScanConsistency(query = REQUEST_PLUS)
+//    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND META().id=$gameId", readonly = true)
+//    Mono<Game> findByIdPessimistic(String gameId);
 
 }
