@@ -37,14 +37,18 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
     @Getter
     private final Sinks.Many<GameEngine> queue = Sinks.many()
         .multicast()
-        .onBackpressureBuffer();
+        .directBestEffort();
 
     @KafkaListener(topics = GAME_CHANGES, groupId = "aiWorker-aiWorker")
     public void listen(final @Payload String string) {
-        final Game game = jsonMapper.readValue(string, Game.class);
-        final GameEngineImpl gameEngine = new GameEngineImpl(game);
-        if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
-            queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
+        try {
+            final Game game = jsonMapper.readValue(string, Game.class);
+            final GameEngineImpl gameEngine = new GameEngineImpl(game);
+            if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
+                queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
+            }
+        } catch (final Exception e) {
+            log.error("Error processing Kafka event: payload={}", string, e);
         }
     }
 
@@ -62,12 +66,15 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
                     .size() != 32)
                 .filter((game) -> !game.getLastTrickOpen())
                 .doOnNext((game) -> log.info("AiWorker startup for game: {}", game.getId()))
-                .subscribe((Game game) -> {
-                    final GameEngine gameEngine = new GameEngineImpl(game);
-                    if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
-                        queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
-                    }
-                });
+                .subscribe(
+                    (Game game) -> {
+                        final GameEngine gameEngine = new GameEngineImpl(game);
+                        if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
+                            queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
+                        }
+                    },
+                    error -> log.error("Error during initial game engine scan", error)
+                );
         }
     }
 
