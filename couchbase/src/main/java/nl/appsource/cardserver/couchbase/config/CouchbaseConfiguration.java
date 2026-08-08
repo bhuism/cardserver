@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.couchbase.config;
 
+import com.couchbase.client.java.Cluster;
 import com.couchbase.client.java.env.ClusterEnvironment;
 import com.couchbase.client.java.query.QueryScanConsistency;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,13 +8,17 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Role;
 import org.springframework.data.convert.CustomConversions;
+import org.springframework.data.couchbase.CouchbaseClientFactory;
 import org.springframework.data.couchbase.config.AbstractCouchbaseConfiguration;
 import org.springframework.data.couchbase.config.BeanNames;
 import org.springframework.data.couchbase.core.mapping.CouchbaseMappingContext;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
 import org.springframework.data.couchbase.repository.config.EnableReactiveCouchbaseRepositories;
+import org.springframework.data.couchbase.transaction.CouchbaseCallbackTransactionManager;
 import org.springframework.data.domain.ReactiveAuditorAware;
 
 import java.time.Duration;
@@ -113,8 +118,36 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
 
     @Override
     @Bean(name = BeanNames.COUCHBASE_MAPPING_CONTEXT)
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public CouchbaseMappingContext couchbaseMappingContext(@Qualifier(BeanNames.COUCHBASE_CUSTOM_CONVERSIONS) final CustomConversions customConversions) throws Exception {
         return super.couchbaseMappingContext(customConversions);
+    }
+
+    @Override
+    @Bean(name = "couchbaseClusterEnvironment")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public ClusterEnvironment couchbaseClusterEnvironment() {
+        return super.couchbaseClusterEnvironment();
+    }
+
+    @Override
+    @Bean(name = "couchbaseCluster")
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public Cluster couchbaseCluster(final ClusterEnvironment couchbaseClusterEnvironment) {
+        return super.couchbaseCluster(couchbaseClusterEnvironment);
+    }
+
+    @Override
+    @Bean(name = BeanNames.COUCHBASE_CLIENT_FACTORY)
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public CouchbaseClientFactory couchbaseClientFactory(final Cluster couchbaseCluster) {
+        return super.couchbaseClientFactory(couchbaseCluster);
+    }
+
+    @Bean(name = BeanNames.COUCHBASE_TRANSACTION_MANAGER)
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public CouchbaseCallbackTransactionManager couchbaseTransactionManager(final CouchbaseClientFactory clientFactory) {
+        return new CouchbaseCallbackTransactionManager(clientFactory);
     }
 
     //    @Bean
