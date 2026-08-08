@@ -10,7 +10,6 @@ import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
-import nl.appsource.cardserver.gameengine.GameEngineRw;
 import nl.appsource.cardserver.gameengine.GameEngineRwImpl;
 import nl.appsource.cardserver.model.Game;
 import nl.appsource.cardserver.openapi.config.KafkaTopics;
@@ -157,36 +156,45 @@ public class WorkerImpl implements Worker {
                     final Game game = e.getKey();
                     final long cas = e.getValue();
                     return Mono.just(game)
-                        .filter(g -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || g.getCreator().equals(gameEvent.getUserId()) || g.getPlayers().contains(gameEvent.getUserId()))
+                        .filter(g -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || g.getCreator()
+                            .equals(gameEvent.getUserId()) || g.getPlayers()
+                            .contains(gameEvent.getUserId()))
                         .map(g -> {
                             final GameEngineRwImpl.UserMessenger userMessenger = new GameEngineRwImpl.UserMessenger() {
                                 @Override
                                 public Mono<Void> sendUserMessage(final String message) {
-                                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)), Set.of(gameEvent.getUserId())));
+                                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId())
+                                        .message(message)
+                                        .variant(UserMessage.VariantEnum.INFO)), Set.of(gameEvent.getUserId())));
                                     return Mono.empty();
                                 }
 
                                 @Override
                                 public Mono<Void> sendGameMessage(final String message) {
-                                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)), new HashSet<>(game.getPlayers())));
+                                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId())
+                                        .message(message)
+                                        .variant(UserMessage.VariantEnum.INFO)), new HashSet<>(game.getPlayers())));
                                     return Mono.empty();
                                 }
                             };
                             return new GameEngineRwImpl(gameEvent.getUserId(), game, userMessenger);
                         })
-                        .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
+                        .filter(gameEngine -> !gameEngine.gameEngine()
+                            .isCompleted())
                         .flatMap(gameEngineRw -> {
                             final String userId = gameEvent.getUserId();
                             return switch (gameEvent.getEventType()) {
                                 case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
                                 case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
-                                case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard()).orElseThrow()));
+                                case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard())
+                                    .orElseThrow()));
                                 case SAY -> gameEngineRw.say(gameEvent.getSay());
                                 case CLAIM_ROEM -> gameEngineRw.claimRoem();
                                 case CLAIM_VERZAKEN -> claimVerzaken(userId, game.getId());
                             };
                         })
-                        .flatMap(updatedGame -> gameRepository.updateLocked(updatedGame.getId(), updatedGame, cas).then(Mono.just(updatedGame)))
+                        .flatMap(updatedGame -> gameRepository.updateLocked(updatedGame.getId(), updatedGame, cas)
+                            .then(Mono.just(updatedGame)))
                         .doOnNext(updatedGame -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(updatedGame)))
                         .delayUntil(updatedGame -> sseEventSender.updateGame(gameToOpenApiConverter.convert(updatedGame)))
                         .flatMap(updatedGame -> {
@@ -201,25 +209,32 @@ public class WorkerImpl implements Worker {
                 },
                 e -> Mono.empty(), // Success cleanup is handled by updateLocked or by asyncCleanup if skipped
                 (e, err) -> {
-                    log.error("Error during update, attempting to unlock game: {}", e.getKey().getId());
-                    return gameRepository.unLockNoSave(e.getKey().getId(), e.getValue())
+                    log.error("Error during update, attempting to unlock game: {}", e.getKey()
+                        .getId());
+                    return gameRepository.unLockNoSave(e.getKey()
+                            .getId(), e.getValue())
                         .onErrorResume(unlockError -> {
-                            log.warn("Failed to cleanly unlock document: {}", e.getKey().getId());
+                            log.warn("Failed to cleanly unlock document: {}", e.getKey()
+                                .getId());
                             return Mono.empty();
                         });
                 },
                 e -> {
                     // This handles cases where the chain returned Mono.empty() (e.g. filters)
                     // We attempt to unlock. If updateLocked was already called, this will fail but be swallowed.
-                    return gameRepository.unLockNoSave(e.getKey().getId(), e.getValue())
+                    return gameRepository.unLockNoSave(e.getKey()
+                            .getId(), e.getValue())
                         .onErrorResume(unlockError -> Mono.empty());
                 }
             ))
             .onErrorResume(throwable -> {
                 log.error("executeSynchronious()", throwable);
                 if (gameEvent.getUserId() != null) {
-                    final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
-                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)), Set.of(gameEvent.getUserId())));
+                    final String message = throwable.getClass()
+                        .getName() + ":" + throwable.getMessage();
+                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId())
+                        .message(message)
+                        .variant(UserMessage.VariantEnum.ERROR)), Set.of(gameEvent.getUserId())));
                 }
                 return Mono.empty();
             })
