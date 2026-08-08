@@ -52,7 +52,10 @@ public class AiWorkerImpl implements AiWorker {
                     return Mono.empty();
                 }
             })
-            .subscribe();
+            .subscribe(
+                null,
+                error -> log.error("Error in AI worker main loop", error)
+            );
 
     }
 
