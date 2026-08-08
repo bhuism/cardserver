@@ -39,31 +39,22 @@ public class MyJwtAuthenticationConverter implements Converter<Jwt, Mono<Abstrac
                                             .doAfterRetry(retrySignal -> {
                                                 log.info("Retrying lock because of: " + retrySignal.toString());
                                             }))
-                                        .flatMap(entry -> Mono.just(entry.getKey())
-                                            .doOnNext(u -> u.setSubject(jwt.getSubject()))
-                                            .doOnNext(u -> log.debug("Updating user subject with id: {}", u.getId()))
-                                            .flatMap((a) -> userRepository.updateLocked(entry.getKey()
-                                                    .getId(), entry.getKey(), entry.getValue())
-                                                .then(Mono.just(a)))
-                                            .onErrorResume(error -> {
-                                                log.error("Error during update, attempting to unlock user: {}", entry.getKey()
-                                                    .getId());
-                                                return userRepository.unLockNoSave(entry.getKey()
-                                                        .getId(), entry.getValue())
-                                                    // Swallow unlock-specific errors so we don't mask the original error
-                                                    .onErrorResume(unlockError -> {
-                                                        log.warn("Failed to cleanly unlock document: {}", entry.getKey()
-                                                            .getId());
-                                                        return Mono.empty();
-                                                    })
-                                                    .then(Mono.error(error));
-                                            })
-                                            .doFinally(signalType -> {
-                                                userRepository.unLockNoSave(entry.getKey()
-                                                        .getId(), entry.getValue())
-                                                    .onErrorResume((e) -> Mono.empty())
-                                                    .subscribe();
-                                            }));
+                                        .flatMap(entry -> {
+                                            final User u = entry.getKey();
+                                            u.setSubject(jwt.getSubject());
+                                            log.debug("Updating user subject with id: {}", u.getId());
+                                            return userRepository.updateLocked(u.getId(), u, entry.getValue())
+                                                .thenReturn(u)
+                                                .onErrorResume(error -> {
+                                                    log.error("Error during update, attempting to unlock user: {}", u.getId(), error);
+                                                    return userRepository.unLockNoSave(u.getId(), entry.getValue())
+                                                        .onErrorResume(unlockError -> {
+                                                            log.warn("Failed to cleanly unlock document: {}", u.getId());
+                                                            return Mono.empty();
+                                                        })
+                                                        .then(Mono.error(error));
+                                                });
+                                        });
                                 })))))
 //                    .flatMap((user) -> userRepository.lock(user.getId(), Duration.ofMillis(500), User.class))
 //                    .flatMap(entry -> userRepository.updateUpdated(entry.getKey().getId())
