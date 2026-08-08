@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.aiplayer.config;
 
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +7,9 @@ import nl.appsource.cardserver.couchbase.repository.GameRepository;
 import nl.appsource.cardserver.couchbase.utils.GameEngine;
 import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Game;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -57,7 +58,7 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
         return queue.asFlux();
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         log.info("init()");
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {

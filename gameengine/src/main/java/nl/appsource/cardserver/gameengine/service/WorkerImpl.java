@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.gameengine.service;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,9 @@ import nl.appsource.cardserver.openapi.service.SseEventSender;
 import nl.appsource.generated.openapi.model.GameEvent;
 import nl.appsource.generated.openapi.model.MessageEvent;
 import nl.appsource.generated.openapi.model.UserMessage;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
@@ -75,7 +76,7 @@ public class WorkerImpl implements Worker {
 
     private Disposable streamSubscription;
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         log.info("init()");
 

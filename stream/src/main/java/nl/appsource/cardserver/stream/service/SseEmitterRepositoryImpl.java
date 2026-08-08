@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.stream.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.converters.service.BoomToOpenApiConverter;
@@ -14,6 +13,7 @@ import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
 import nl.appsource.generated.openapi.model.User;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.codec.ServerSentEvent;
@@ -132,7 +132,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
             .map(SseEmitterRepositoryImpl::ping)

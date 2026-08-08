@@ -1,6 +1,5 @@
 package nl.appsource.cardserver.aiplayer.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.appsource.cardserver.aiplayer.config.KafkaEventListener;
@@ -9,7 +8,9 @@ import nl.appsource.cardserver.couchbase.utils.GameEngineImpl;
 import nl.appsource.cardserver.model.Card;
 import nl.appsource.cardserver.openapi.service.KafkaSender;
 import nl.appsource.generated.openapi.model.GameEvent;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
@@ -34,7 +35,7 @@ public class AiWorkerImpl implements AiWorker {
 
     private final KafkaEventListener kafkaEventListener;
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
 
         log.info("init()");
