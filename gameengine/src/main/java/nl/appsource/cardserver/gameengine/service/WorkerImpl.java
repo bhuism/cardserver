@@ -93,14 +93,15 @@ public class WorkerImpl implements Worker {
         };
 
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
-            gameRepository.findAll()
-                .filter((game) -> game.getTurns()
-                    .size() != 32)
+            gameRepository.findUnfinishedGames()
+                .flatMap(gameRepository::findById)
                 .map(game -> new GameEngineRwImpl(null, game, noOpuserMessenger))
                 .flatMap(GameEngineRwImpl::rotateTrump)
                 .flatMap(gameRepository::save)
                 .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
                 .delayUntil((game) -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
+                .retryWhen(reactor.util.retry.Retry.backoff(10, Duration.ofSeconds(2))
+                    .doBeforeRetry(retrySignal -> log.warn("Retrying initial game rotation due to error: {}", retrySignal.failure().getMessage())))
                 .subscribe(
                     game -> log.debug("Initial game rotation successful: {}", game.getId()),
                     error -> log.error("Error during initial game rotation", error)

@@ -61,11 +61,12 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
     public void init() {
         log.info("init()");
         if (environment.acceptsProfiles(Profiles.of("production", "development"))) {
-            gameRepository.findAll()
-                .filter((game) -> game.getTurns()
-                    .size() != 32)
+            gameRepository.findUnfinishedGames()
+                .flatMap(gameRepository::findById)
                 .filter((game) -> !game.getLastTrickOpen())
                 .doOnNext((game) -> log.info("AiWorker startup for game: {}", game.getId()))
+                .retryWhen(reactor.util.retry.Retry.backoff(10, Duration.ofSeconds(2))
+                    .doBeforeRetry(retrySignal -> log.warn("Retrying initial game scan due to error: {}", retrySignal.failure().getMessage())))
                 .subscribe(
                     (Game game) -> {
                         final GameEngine gameEngine = new GameEngineImpl(game);

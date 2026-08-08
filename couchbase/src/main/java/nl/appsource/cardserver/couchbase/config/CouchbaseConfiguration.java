@@ -83,6 +83,20 @@ public class CouchbaseConfiguration extends AbstractCouchbaseConfiguration {
                 .emitInterval(Duration.ofSeconds(10))
                 .sampleSize(10)
         );
+
+        builder2.timeoutConfig(builder -> builder
+            .kvTimeout(Duration.ofSeconds(10))
+            .queryTimeout(Duration.ofSeconds(60))
+            .connectTimeout(Duration.ofSeconds(20))
+            .disconnectTimeout(Duration.ofSeconds(20))
+            .managementTimeout(Duration.ofSeconds(20))
+        );
+
+        builder2.ioConfig(builder -> builder
+            .maxHttpConnections(100)
+            .idleHttpConnectionTimeout(Duration.ofSeconds(30))
+            .numKvConnections(2)
+        );
     }
 
     @Override
