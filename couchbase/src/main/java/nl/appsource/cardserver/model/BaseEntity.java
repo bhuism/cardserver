@@ -24,6 +24,7 @@ public abstract class BaseEntity {
     private Instant created;
 
     @LastModifiedDate
+    @QueryIndexed
     private Instant updated;
 
     @QueryIndexed
