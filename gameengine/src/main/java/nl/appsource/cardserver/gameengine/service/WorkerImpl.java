@@ -97,14 +97,15 @@ public class WorkerImpl implements Worker {
             gameRepository.findAll()
                 .filter((game) -> game.getTurns()
                     .size() != 32)
-                .map(Game::getId)
-                .flatMap(gameRepository::findById)
                 .map(game -> new GameEngineRwImpl(null, game, noOpuserMessenger))
                 .flatMap(GameEngineRwImpl::rotateTrump)
                 .flatMap(gameRepository::save)
                 .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
-                .flatMap((game) -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
-                .subscribe();
+                .delayUntil((game) -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
+                .subscribe(
+                    game -> log.debug("Initial game rotation successful: {}", game.getId()),
+                    error -> log.error("Error during initial game rotation", error)
+                );
         }
 
         scheduler.scheduleWithFixedDelay(this::processDueEvents, 5000, 500, TimeUnit.MILLISECONDS);
@@ -131,7 +132,11 @@ public class WorkerImpl implements Worker {
                 try {
                     eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId()
                         .equals(eventToExecute.getGameId()));
-                    executeSynchronious(eventToExecute).subscribe();
+                    executeSynchronious(eventToExecute)
+                        .subscribe(
+                            null,
+                            t -> log.error("Error executing scheduled event", t)
+                        );
                 } catch (Throwable t) {
                     log.error("Dont exception in a worker thread", t);
                 }
@@ -140,101 +145,81 @@ public class WorkerImpl implements Worker {
     }
 
     public Mono<Void> executeSynchronious(final GameEvent gameEvent) {
-
         return Mono.just(gameEvent.getGameId())
             .flatMap(id -> gameRepository.lock(id, Duration.ofMillis(500), Game.class))
             .retryWhen(Retry.backoff(5, Duration.ofMillis(100))
                 .doAfterRetry(retrySignal -> {
                     log.info("Retrying lock because of: " + retrySignal.toString());
                 }))
-            .flatMap(entry -> Mono.just(entry.getKey())
-                .filter(game -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || game.getCreator()
-                    .equals(gameEvent.getUserId()) || game.getPlayers()
-                    .contains(gameEvent.getUserId()))
-                .map(game -> {
+            .flatMap(entry -> Mono.usingWhen(
+                Mono.just(entry),
+                e -> {
+                    final Game game = e.getKey();
+                    final long cas = e.getValue();
+                    return Mono.just(game)
+                        .filter(g -> gameEvent.getUserId() == null || isAiPlayer(gameEvent.getUserId()) || g.getCreator().equals(gameEvent.getUserId()) || g.getPlayers().contains(gameEvent.getUserId()))
+                        .map(g -> {
+                            final GameEngineRwImpl.UserMessenger userMessenger = new GameEngineRwImpl.UserMessenger() {
+                                @Override
+                                public Mono<Void> sendUserMessage(final String message) {
+                                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)), Set.of(gameEvent.getUserId())));
+                                    return Mono.empty();
+                                }
 
-                    final GameEngineRwImpl.UserMessenger userMessenger = new GameEngineRwImpl.UserMessenger() {
-
-                        @Override
-                        public Mono<Void> sendUserMessage(final String message) {
-                            kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId())
-                                .message(message)
-                                .variant(UserMessage.VariantEnum.INFO)), Set.of(gameEvent.getUserId())));
-                            return Mono.empty();
-                        }
-
-                        @Override
-                        public Mono<Void> sendGameMessage(final String message) {
-                            kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId())
-                                .message(message)
-                                .variant(UserMessage.VariantEnum.INFO)), new HashSet(game.getPlayers())));
-                            return Mono.empty();
-                        }
-                    };
-
-                    return new GameEngineRwImpl(gameEvent.getUserId(), game, userMessenger);
-                })
-                .filter(gameEngine -> !gameEngine.gameEngine()
-                    .isCompleted())
-                .map(gameEngineRw -> (GameEngineRw) gameEngineRw)
-                .flatMap(gameEngineRw -> {
-                    final String userId = gameEvent.getUserId();
-                    return switch (gameEvent.getEventType()) {
-                        case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
-                        case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
-                        case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard())
-                            .orElseThrow()));
-                        case SAY -> gameEngineRw.say(gameEvent.getSay());
-                        case CLAIM_ROEM -> gameEngineRw.claimRoem();
-                        case CLAIM_VERZAKEN -> claimVerzaken(userId, entry.getKey()
-                            .getId());
-                    };
-                })
-                .flatMap(game -> gameRepository.updateLocked(game.getId(), game, entry.getValue())
-                    .then(Mono.just(game)))
-                .doOnNext((game) -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(game)))
-                .delayUntil(game -> sseEventSender.updateGame(gameToOpenApiConverter.convert(game)))
-                .flatMap(game -> {
-                    if (game.getBoomId() != null) {
-                        return boomRepository.findById(game.getBoomId())
-                            .flatMap(boomRepository::save)
-                            .flatMap((boom) -> sseEventSender.updateBoom(boomToOpenApiConverter.convert(boom)))
-                            .then(Mono.just(game));
-                    } else {
-                        return Mono.just(game);
-                    }
-                })
-                .onErrorResume(error -> {
-                    log.error("Error during update, attempting to unlock game: {}", entry.getKey()
-                        .getId());
-                    return gameRepository.unLockNoSave(entry.getKey()
-                            .getId(), entry.getValue())
-                        // Swallow unlock-specific errors so we don't mask the original error
-                        .onErrorResume(unlockError -> {
-                            log.warn("Failed to cleanly unlock document: {}", entry.getKey()
-                                .getId());
-                            return Mono.empty();
+                                @Override
+                                public Mono<Void> sendGameMessage(final String message) {
+                                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.INFO)), new HashSet<>(game.getPlayers())));
+                                    return Mono.empty();
+                                }
+                            };
+                            return new GameEngineRwImpl(gameEvent.getUserId(), game, userMessenger);
                         })
-                        // Re-throw the original error to the subscriber
-                        .then(Mono.error(error));
-                })
-                .doFinally(signalType -> {
-                    gameRepository.unLockNoSave(entry.getKey()
-                            .getId(), entry.getValue())
-                        .onErrorResume((e) -> Mono.empty())
-                        .subscribe();
-                })
-            )
+                        .filter(gameEngine -> !gameEngine.gameEngine().isCompleted())
+                        .flatMap(gameEngineRw -> {
+                            final String userId = gameEvent.getUserId();
+                            return switch (gameEvent.getEventType()) {
+                                case OPEN_LAST_TRICK -> gameEngineRw.openLastTrick();
+                                case CLOSE_LAST_TRICK -> gameEngineRw.closeLastTrick();
+                                case PLAY_CARD -> gameEngineRw.playCard(GameToOpenApiConverter.convertCard(Optional.ofNullable(gameEvent.getCard()).orElseThrow()));
+                                case SAY -> gameEngineRw.say(gameEvent.getSay());
+                                case CLAIM_ROEM -> gameEngineRw.claimRoem();
+                                case CLAIM_VERZAKEN -> claimVerzaken(userId, game.getId());
+                            };
+                        })
+                        .flatMap(updatedGame -> gameRepository.updateLocked(updatedGame.getId(), updatedGame, cas).then(Mono.just(updatedGame)))
+                        .doOnNext(updatedGame -> kafkaSender.send(KafkaTopics.GAME_CHANGES, jsonMapper.writeValueAsString(updatedGame)))
+                        .delayUntil(updatedGame -> sseEventSender.updateGame(gameToOpenApiConverter.convert(updatedGame)))
+                        .flatMap(updatedGame -> {
+                            if (updatedGame.getBoomId() != null) {
+                                return boomRepository.findById(updatedGame.getBoomId())
+                                    .flatMap(boomRepository::save)
+                                    .flatMap(boom -> sseEventSender.updateBoom(boomToOpenApiConverter.convert(boom)))
+                                    .then(Mono.just(updatedGame));
+                            }
+                            return Mono.just(updatedGame);
+                        });
+                },
+                e -> Mono.empty(), // Success cleanup is handled by updateLocked or by asyncCleanup if skipped
+                (e, err) -> {
+                    log.error("Error during update, attempting to unlock game: {}", e.getKey().getId());
+                    return gameRepository.unLockNoSave(e.getKey().getId(), e.getValue())
+                        .onErrorResume(unlockError -> {
+                            log.warn("Failed to cleanly unlock document: {}", e.getKey().getId());
+                            return Mono.empty();
+                        });
+                },
+                e -> {
+                    // This handles cases where the chain returned Mono.empty() (e.g. filters)
+                    // We attempt to unlock. If updateLocked was already called, this will fail but be swallowed.
+                    return gameRepository.unLockNoSave(e.getKey().getId(), e.getValue())
+                        .onErrorResume(unlockError -> Mono.empty());
+                }
+            ))
             .onErrorResume(throwable -> {
-
                 log.error("executeSynchronious()", throwable);
-
                 if (gameEvent.getUserId() != null) {
-                    final String message = throwable.getClass()
-                        .getName() + ":" + throwable.getMessage();
-                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId())
-                        .message(message)
-                        .variant(UserMessage.VariantEnum.ERROR)), Set.of(gameEvent.getUserId())));
+                    final String message = throwable.getClass().getName() + ":" + throwable.getMessage();
+                    kafkaSender.sendSse(messageEvent(new MessageEvent().message(new UserMessage().userId(gameEvent.getUserId()).message(message).variant(UserMessage.VariantEnum.ERROR)), Set.of(gameEvent.getUserId())));
                 }
                 return Mono.empty();
             })
