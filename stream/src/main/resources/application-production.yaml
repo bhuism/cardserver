@@ -11,7 +11,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   couchbase:
-    connection-string: couchbase://couchbase-0.couchbase-main.couchbase.svc.cluster.local.,couchbase://couchbase-1.couchbase-main.couchbase.svc.cluster.local.,couchbase://couchbase-2.couchbase-main.couchbase.svc.cluster.local.
+    connection-string: couchbase://couchbase-0.couchbase-main.couchbase.svc.cluster.local.,couchbase-1.couchbase-main.couchbase.svc.cluster.local.,couchbase-2.couchbase-main.couchbase.svc.cluster.local.
     username: root
     password: killer
   data:
