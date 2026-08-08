@@ -24,8 +24,14 @@ public class KafkaEventListenerImpl {
     @KafkaListener(topics = GAME_EVENTS_TOPIC, groupId = "gameEngine-worker")
     public void listen(final @Payload String documentPayload) {
 
+        try {
+
         final GameEvent gameEvent = jsonMapper.readValue(documentPayload, GameEvent.class);
         worker.scheduleGameEvent(gameEvent);
+
+        } catch (final Exception e) {
+            log.error("Error processing Kafka event: document={}", documentPayload, e);
+        }
 
     }
 
