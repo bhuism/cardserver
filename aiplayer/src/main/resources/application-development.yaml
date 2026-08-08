@@ -8,13 +8,14 @@ spring:
       auto-offset-reset: latest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
-cardserver:
   couchbase:
-    connection-string: couchbase://192.168.1.86
+    connection-string: couchbase://couchbase-0.couchbase-main.couchbase.svc.cluster.local.,couchbase://couchbase-1.couchbase-main.couchbase.svc.cluster.local.,couchbase://couchbase-2.couchbase-main.couchbase.svc.cluster.local.
     username: root
     password: killer
-    bucket-name: cardserver
+  data:
+    couchbase:
+      bucket-name: cardserver
+
 
 logging:
   level:
