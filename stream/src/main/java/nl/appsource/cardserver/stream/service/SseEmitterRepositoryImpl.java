@@ -19,6 +19,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.Disposable;
+import reactor.core.publisher.BufferOverflowStrategy;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -123,12 +124,11 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .<MyServerSentEvent<?>>map(it -> it)
             .flux();
 
-        // online list
-//        final Mono<MyServerSentEvent<?>> onlineList = userRepository.getOnlineFriends(userId)
-//            .collectList()
-//            .map(onlineFriends -> MyServerSentEvent.onlineList(new OnlineListEvent().onlineList(onlineFriends)));
-
-        return concat(just(MyServerSentEvent.startCache(userId)), friends, games, booms, me, just(MyServerSentEvent.endCache(userId)));
+        return concat(
+            just(MyServerSentEvent.startCache(userId)),
+            Flux.merge(friends, games, booms, me),
+            just(MyServerSentEvent.endCache(userId))
+        );
 
     }
 
@@ -136,7 +136,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     public void postConstruct() {
         heartbeat = Flux.interval(Duration.ofSeconds(5))
             .map(SseEmitterRepositoryImpl::ping)
-            .subscribe(myServerSentEvent -> pingSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))));
+            .doOnNext(myServerSentEvent -> pingSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))))
+            .onErrorResume(e -> e instanceof Sinks.EmissionException, e -> Flux.empty())
+            .subscribe();
     }
 
     @Override
@@ -160,6 +162,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         return //friendsMono
 //            .thenMany(
             concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(kafkaEventListener.kafkaStreams(), initCache(userId), pingSink.asFlux()))
+                .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
 //

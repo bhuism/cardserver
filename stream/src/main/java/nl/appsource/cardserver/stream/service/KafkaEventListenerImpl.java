@@ -25,7 +25,7 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
 
     private final Sinks.Many<MyServerSentEvent<?>> sseChannel = Sinks.many()
         .multicast()
-        .onBackpressureBuffer();
+        .directBestEffort();
 
     @KafkaListener(topics = SSE_TOPIC, groupId = "stream-KafkaEventListenerImpl-${HOSTNAME:local-dev}")
     public void listen(final @Payload String documentPayload) {
