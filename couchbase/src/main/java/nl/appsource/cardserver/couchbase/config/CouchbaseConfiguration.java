@@ -11,6 +11,7 @@ import org.springframework.data.couchbase.core.convert.translation.JacksonTransl
 import org.springframework.data.couchbase.core.convert.translation.TranslationService;
 import org.springframework.data.couchbase.repository.auditing.EnableReactiveCouchbaseAuditing;
 import org.springframework.data.couchbase.repository.config.EnableReactiveCouchbaseRepositories;
+import org.springframework.data.domain.ReactiveAuditorAware;
 
 import static org.springframework.beans.factory.config.BeanDefinition.ROLE_INFRASTRUCTURE;
 
@@ -36,6 +37,11 @@ public class CouchbaseConfiguration {
         translationService.afterPropertiesSet();
 
         return translationService;
+    }
+
+    @Bean
+    public ReactiveAuditorAware<String> reactiveAuditorAware() {
+        return new ReactiveAuditorAwareImpl();
     }
 
 }
