@@ -13,15 +13,10 @@ import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
 import nl.appsource.generated.openapi.model.User;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import reactor.core.Disposable;
 import reactor.core.publisher.BufferOverflowStrategy;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 import java.net.InetAddress;
@@ -128,7 +123,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 //            .flatMap(sseSessionRepository::save)
 
 
-        final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5)).map(SseEmitterRepositoryImpl::ping);
+        final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5))
+            .map(SseEmitterRepositoryImpl::ping);
 
         final Flux<MyServerSentEvent<?>> asyncCache = Flux.defer(() -> initCache(userId))
             .subscribeOn(Schedulers.boundedElastic());
