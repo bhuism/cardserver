@@ -7,7 +7,9 @@ import nl.appsource.cardserver.converters.service.GameToOpenApiConverter;
 import nl.appsource.cardserver.converters.service.UserToOpenApiConverter;
 import nl.appsource.cardserver.couchbase.repository.BoomRepository;
 import nl.appsource.cardserver.couchbase.repository.GameRepository;
+import nl.appsource.cardserver.couchbase.repository.SseSessionRepository;
 import nl.appsource.cardserver.couchbase.repository.UserRepository;
+import nl.appsource.cardserver.model.SseSession;
 import nl.appsource.cardserver.openapi.MyServerSentEvent;
 import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
@@ -56,6 +58,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final KafkaEventListener kafkaEventListener;
 
     private final UserToOpenApiConverter userToOpenApiConverter;
+
+    private final SseSessionRepository sseSessionRepository;
 
     static {
         String host;
@@ -119,39 +123,35 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 //        final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, Flux.merge(userRepository.getOnlineFriends(friendId), just(userId)).distinct().doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
-//        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
-//            .flatMap(sseSessionRepository::save)
-
+        just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
+            .flatMap(sseSessionRepository::save)
+            .subscribe();
 
         final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5))
             .map(count -> ping(count + 1));
 
-        final Flux<MyServerSentEvent<?>> asyncCache = Flux.defer(() -> initCache(userId)).subscribeOn(Schedulers.boundedElastic());
+        final Flux<MyServerSentEvent<?>> asyncCache = Flux.defer(() -> initCache(userId))
+            .subscribeOn(Schedulers.boundedElastic());
 
-        return //friendsMono
-//            .thenMany(
-            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(pingSink, asyncCache, kafkaEventListener.kafkaStreams()))
-                .delayElements(Duration.ofMillis(500))
-                .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
-                .doFinally(signalType -> {
-                    log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
-//
-//                        sseSessionRepository.deleteById(appIdentifier)
-//                            .then(Mono.defer(() -> Mono.when(userRepository.getOnlineFriends(userId).flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, userRepository.getOnlineFriends(friendId).doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))))))
-//                            .onErrorComplete(_ -> true)
-//                            .subscribe();
-
-                })
-                .filter(myServerSentEvent -> myServerSentEvent.userIds()
-                    .contains(userId) || myServerSentEvent.userIds()
-                    .isEmpty())
-                .map(myServerSentEvent -> {
-                    final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
-                        .event(myServerSentEvent.event())
-                        .id("id:" + atomicLong.getAndIncrement());
-                    builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
-                    return builder.build();
-                });
+        return concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(pingSink, asyncCache, kafkaEventListener.kafkaStreams()))
+            .delayElements(Duration.ofMillis(500))
+            .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
+            .doFinally(signalType -> {
+                log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
+                sseSessionRepository.deleteById(appIdentifier)
+                    .onErrorComplete(_ -> true)
+                    .subscribe();
+            })
+            .filter(myServerSentEvent -> myServerSentEvent.userIds()
+                .contains(userId) || myServerSentEvent.userIds()
+                .isEmpty())
+            .map(myServerSentEvent -> {
+                final ServerSentEvent.Builder<Object> builder = ServerSentEvent.builder()
+                    .event(myServerSentEvent.event())
+                    .id("id:" + atomicLong.getAndIncrement());
+                builder.data(Objects.requireNonNullElse(myServerSentEvent.data(), "{}"));
+                return builder.build();
+            });
         //          );
     }
 

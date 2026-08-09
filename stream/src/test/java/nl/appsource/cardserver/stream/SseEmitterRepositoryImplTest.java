@@ -71,7 +71,8 @@ public class SseEmitterRepositoryImplTest {
             gameRepository,
             boomRepository,
             kafkaEventListener,
-            userToOpenApiConverter
+            userToOpenApiConverter,
+            sseSessionRepository
         );
     }
 
