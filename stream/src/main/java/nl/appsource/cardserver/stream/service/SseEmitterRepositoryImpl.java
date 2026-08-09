@@ -123,7 +123,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 //        final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, Flux.merge(userRepository.getOnlineFriends(friendId), just(userId)).distinct().doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
-        just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
+        just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .flatMap(sseSessionRepository::save)
             .subscribe();
 
