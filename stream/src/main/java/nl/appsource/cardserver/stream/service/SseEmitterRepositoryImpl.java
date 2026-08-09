@@ -134,7 +134,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             .subscribeOn(Schedulers.boundedElastic());
 
         return concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(pingSink, asyncCache, kafkaEventListener.kafkaStreams()))
-            .delayElements(Duration.ofMillis(500))
+            .delaySubscription(Duration.ofMillis(250))
             .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
             .doFinally(signalType -> {
                 log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
