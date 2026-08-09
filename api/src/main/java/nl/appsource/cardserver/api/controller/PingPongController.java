@@ -1,5 +1,6 @@
 package nl.appsource.cardserver.api.controller;
 
+import com.couchbase.client.core.error.CasMismatchException;
 import com.couchbase.client.core.error.DocumentNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
             .doOnNext(userId -> kafkaSender.sendSse(new MyServerSentEvent<Void>("pong", Set.of(userId))))
             .flatMap(_ -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
             .flatMap(sseSessionRepository::pingReceived)
+            .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -46,6 +48,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
         return getUserId(exchange)
             .flatMap(_ -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
             .flatMap(sseSessionRepository::pongReceived)
+            .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .map(_ -> ResponseEntity.ok().<Void>build())
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
