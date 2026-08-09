@@ -126,12 +126,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
         final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5))
             .map(count -> ping(count + 1));
 
-        final Flux<MyServerSentEvent<?>> asyncCache = Flux.defer(() -> initCache(userId))
-            .subscribeOn(Schedulers.boundedElastic());
+        final Flux<MyServerSentEvent<?>> asyncCache = Flux.defer(() -> initCache(userId)).subscribeOn(Schedulers.boundedElastic());
 
         return //friendsMono
 //            .thenMany(
             concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(pingSink, asyncCache, kafkaEventListener.kafkaStreams()))
+                .delayElements(Duration.ofMillis(500))
                 .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
