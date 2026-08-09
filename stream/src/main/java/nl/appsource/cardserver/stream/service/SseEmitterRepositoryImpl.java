@@ -131,7 +131,7 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         return //friendsMono
 //            .thenMany(
-            concat(just(hello(appIdentifier)), just(ping(0)), pingSink, asyncCache, kafkaEventListener.kafkaStreams())
+            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(pingSink, asyncCache, kafkaEventListener.kafkaStreams()))
                 .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
