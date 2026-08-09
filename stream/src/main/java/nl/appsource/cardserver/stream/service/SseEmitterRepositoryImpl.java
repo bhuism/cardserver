@@ -22,6 +22,7 @@ import reactor.core.Disposable;
 import reactor.core.publisher.BufferOverflowStrategy;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -129,9 +130,12 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
         final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5)).map(SseEmitterRepositoryImpl::ping);
 
+        final Flux<MyServerSentEvent<?>> asyncCache = Flux.defer(() -> initCache(userId))
+            .subscribeOn(Schedulers.boundedElastic());
+
         return //friendsMono
 //            .thenMany(
-            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(kafkaEventListener.kafkaStreams(), initCache(userId), pingSink))
+            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(kafkaEventListener.kafkaStreams(), asyncCache, pingSink))
                 .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
