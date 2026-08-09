@@ -55,15 +55,9 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     private final BoomRepository boomRepository;
 
-    private final Sinks.Many<MyServerSentEvent<?>> pingSink = Sinks.many()
-        .multicast()
-        .directBestEffort();
-
     private static final String HOSTNAME;
 
     private final KafkaEventListener kafkaEventListener;
-
-    private Disposable heartbeat;
 
     private final UserToOpenApiConverter userToOpenApiConverter;
 
@@ -76,25 +70,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
             host = "unknown";
         }
         HOSTNAME = host;
-    }
-
-    @EventListener(ContextClosedEvent.class)
-    public void close() {
-        log.info("Closing all SSE sinks");
-
-        if (heartbeat != null) {
-            heartbeat.dispose();
-        }
-
-        try {
-            final Sinks.EmitResult emitResult = this.pingSink.tryEmitComplete();
-            if (emitResult.isFailure()) {
-                log.error("pingSink.tryEmitComplete() failure: {}", emitResult);
-            }
-        } catch (final Throwable t) {
-            log.error("Error closing pingSink", t);
-        }
-
     }
 
     private Flux<MyServerSentEvent<?>> initCache(final String userId) {
@@ -132,15 +107,6 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void postConstruct() {
-        heartbeat = Flux.interval(Duration.ofSeconds(5))
-            .map(SseEmitterRepositoryImpl::ping)
-            .doOnNext(myServerSentEvent -> pingSink.emitNext(myServerSentEvent, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500))))
-            .onErrorResume(e -> e instanceof Sinks.EmissionException, e -> Flux.empty())
-            .subscribe();
-    }
-
     @Override
     public Flux<ServerSentEvent<?>> subscribe(final String userId, final String remoteAddress, final String userAgent) {
 
@@ -159,9 +125,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 //        return just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME))
 //            .flatMap(sseSessionRepository::save)
+
+
+        final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5)).map(SseEmitterRepositoryImpl::ping);
+
         return //friendsMono
 //            .thenMany(
-            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(kafkaEventListener.kafkaStreams(), initCache(userId), pingSink.asFlux()))
+            concat(just(hello(appIdentifier)), just(ping(0)), Flux.merge(kafkaEventListener.kafkaStreams(), initCache(userId), pingSink))
                 .onBackpressureBuffer(1024, BufferOverflowStrategy.DROP_OLDEST)
                 .doFinally(signalType -> {
                     log.info("{} doFinally() signalType={} appIdentifier={} userId={}", remoteAddress, signalType, appIdentifier, userId);
