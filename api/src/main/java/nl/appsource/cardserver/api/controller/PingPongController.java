@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import static java.lang.System.currentTimeMillis;
+
 
 @Slf4j
 @RestController
@@ -76,7 +78,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                         .reactive()
                         .mutateIn(appIdentifier, Arrays.asList(
                                 MutateInSpec.increment("pingReceivedCount", 1),
-                                MutateInSpec.replace("pingReceived", Instant.now())
+                                MutateInSpec.replace("pingReceived", currentTimeMillis())
                             )
                         )
                         .then(Mono.just(ResponseEntity.ok()
@@ -113,7 +115,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                         .reactive()
                         .mutateIn(appIdentifier, Arrays.asList(
                                 MutateInSpec.increment("pongReceivedCount", 1),
-                                MutateInSpec.replace("pongReceived", Instant.now())
+                                MutateInSpec.replace("pongReceived", currentTimeMillis())
                             )
                         )
                     ))
