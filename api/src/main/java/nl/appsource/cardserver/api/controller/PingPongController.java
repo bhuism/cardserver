@@ -53,10 +53,6 @@ public class PingPongController extends AbstractBaseController implements V1Api,
             .doOnNext(userId -> kafkaSender.sendSse(new MyServerSentEvent<Void>("pong", Set.of(userId))))
             .flatMap(userId -> pingPongSchema.map(PingPongSchema::getAppIdentifier)
                 .delayUntil(appIdentifier -> sseSessionRepository.findById(appIdentifier)
-                    .doOnNext(sseSession -> {
-                        sseSession.setPingReceivedCount(sseSession.getPingReceivedCount() + 1);
-                        sseSession.setPingReceived(Instant.now());
-                    })
                     .or(Mono.defer(() -> {
                         final List<String> userAgentList = exchange.getRequest()
                             .getHeaders()
@@ -66,6 +62,10 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                             .getRemoteAddress();
                         return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
                     }))
+                    .doOnNext(sseSession -> {
+                        sseSession.setPingReceivedCount(sseSession.getPingReceivedCount() + 1);
+                        sseSession.setPingReceived(Instant.now());
+                    })
                     .map(sseSessionRepository::save))
             )
             .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
@@ -82,10 +82,6 @@ public class PingPongController extends AbstractBaseController implements V1Api,
         return getUserId(exchange)
             .flatMap(userId -> pingPongSchema.map(PingPongSchema::getAppIdentifier)
                 .delayUntil(appIdentifier -> sseSessionRepository.findById(appIdentifier)
-                    .doOnNext(sseSession -> {
-                        sseSession.setPongReceivedCount(sseSession.getPingReceivedCount() + 1);
-                        sseSession.setPongReceived(Instant.now());
-                    })
                     .or(Mono.defer(() -> {
                         final List<String> userAgentList = exchange.getRequest()
                             .getHeaders()
@@ -95,6 +91,10 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                             .getRemoteAddress();
                         return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
                     }))
+                    .doOnNext(sseSession -> {
+                        sseSession.setPongReceivedCount(sseSession.getPingReceivedCount() + 1);
+                        sseSession.setPongReceived(Instant.now());
+                    })
                     .map(sseSessionRepository::save))
             )
             .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
