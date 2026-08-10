@@ -92,7 +92,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                         return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
                     }))
                     .doOnNext(sseSession -> {
-                        sseSession.setPongReceivedCount(sseSession.getPingReceivedCount() + 1);
+                        sseSession.setPongReceivedCount(sseSession.getPongReceivedCount() + 1);
                         sseSession.setPongReceived(Instant.now());
                     })
                     .flatMap(sseSessionRepository::save))
