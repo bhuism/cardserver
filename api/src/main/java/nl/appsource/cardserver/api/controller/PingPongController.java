@@ -34,7 +34,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
         return getUserId(exchange)
             .doOnNext(userId -> kafkaSender.sendSse(new MyServerSentEvent<Void>("pong", Set.of(userId))))
             .flatMap(_ -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
-            .flatMap(sseSessionRepository::pingReceived)
+            .delayUntil(sseSessionRepository::pingReceived)
             .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .map(_ -> ResponseEntity.ok().<Void>build())
@@ -47,7 +47,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
 //        log.info("{} pong()", exchange.getRequest().getRemoteAddress());
         return getUserId(exchange)
             .flatMap(_ -> pingPongSchema.map(PingPongSchema::getAppIdentifier))
-            .flatMap(sseSessionRepository::pongReceived)
+            .delayUntil(sseSessionRepository::pongReceived)
             .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
             .map(_ -> ResponseEntity.ok().<Void>build())
