@@ -1,10 +1,8 @@
 package nl.appsource.cardserver.couchbase.repository;
 
 import nl.appsource.cardserver.model.SseSession;
-import org.springframework.data.couchbase.repository.Query;
 import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 @Repository
 public interface SseSessionRepository extends ReactiveCouchbaseRepository<SseSession, String>, ReactiveBaseEntityRepository<SseSession> {
@@ -15,10 +13,10 @@ public interface SseSessionRepository extends ReactiveCouchbaseRepository<SseSes
 //    @ScanConsistency(query = REQUEST_PLUS)
 //    Mono<Boolean> existsByIdAndCreator(String id, String creator);
 
-    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET updated=NOW_MILLIS(), pingReceived=NOW_MILLIS(), pingReceivedCount=pingReceivedCount+1 RETURNING meta().id")
-    Mono<String> pingReceived(String id);
-
-    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET updated=NOW_MILLIS(), pongReceived=NOW_MILLIS(), pongReceivedCount=pongReceivedCount+1 RETURNING meta().id")
-    Mono<String> pongReceived(String id);
+//    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET updated=NOW_MILLIS(), pingReceived=NOW_MILLIS(), pingReceivedCount=pingReceivedCount+1 RETURNING meta().id")
+//    Mono<String> pingReceived(String id);
+//
+//    @Query("UPDATE #{#n1ql.bucket} USE KEYS $id SET updated=NOW_MILLIS(), pongReceived=NOW_MILLIS(), pongReceivedCount=pongReceivedCount+1 RETURNING meta().id")
+//    Mono<String> pongReceived(String id);
 
 }
