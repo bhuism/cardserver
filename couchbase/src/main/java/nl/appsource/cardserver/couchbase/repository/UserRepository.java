@@ -13,11 +13,11 @@ public interface UserRepository extends ReactiveCouchbaseRepository<User, String
 
     Mono<User> findByEmail(String email);
 
-    @Query(value = "SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND ANY inv IN invites SATISFIES inv = $id END ORDER BY updated DESC", readonly = true)
-    Flux<String> findIncomingInvites(@Param("id") String id);
+    @Query(value = "SELECT meta(#{#n1ql.bucket}).id FROM #{#n1ql.bucket} WHERE #{#n1ql.filter} AND meta(#{#n1ql.bucket}).id) != $userId AND ANY inv IN invites SATISFIES inv = $userId END ORDER BY updated DESC", readonly = true)
+    Flux<String> findIncomingInvites(@Param("id") String userId);
 
-    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND (LOWER(email)=LOWER($searchString) OR LOWER(name)=LOWER($searchString) OR LOWER(displayName)=LOWER($searchString)) OR META().id=$searchString ORDER BY updated DESC", readonly = true)
-    Flux<User> searchInvitees(@Param("searchString") String searchString);
+    @Query(value = "#{#n1ql.selectEntity} WHERE #{#n1ql.filter} AND meta(#{#n1ql.bucket}).id) != $userId AND (LOWER(email)=LOWER($searchString) OR LOWER(name)=LOWER($searchString) OR LOWER(displayName)=LOWER($searchString)) OR META().id=$searchString ORDER BY updated DESC", readonly = true)
+    Flux<User> searchInvitees(@Param("id") String userId, @Param("searchString") String searchString);
 
     Mono<Boolean> existsByDisplayNameAndIdNot(String displayName, String id);
 

@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<Integer> createInvite(final String userId, final String searchString) {
         return userRepository.findById(userId)
-            .flatMap(user -> userRepository.searchInvitees(searchString)
+            .flatMap(user -> userRepository.searchInvitees(userId, searchString)
                 .map(User::getId)
                 .filter(inviteeId -> !user.getInvites().contains(inviteeId))
                 .collect(Collectors.toSet())
