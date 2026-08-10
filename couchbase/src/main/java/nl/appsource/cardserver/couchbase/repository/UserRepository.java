@@ -3,11 +3,15 @@ package nl.appsource.cardserver.couchbase.repository;
 import nl.appsource.cardserver.model.User;
 import org.springframework.data.couchbase.repository.Query;
 import org.springframework.data.couchbase.repository.ReactiveCouchbaseRepository;
+import org.springframework.data.couchbase.repository.ScanConsistency;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static com.couchbase.client.java.query.QueryScanConsistency.REQUEST_PLUS;
+
 @Repository
+@ScanConsistency(query = REQUEST_PLUS)
 public interface UserRepository extends ReactiveCouchbaseRepository<User, String>, ReactiveBaseEntityRepository<User> {
 
     Mono<User> findByEmail(String email);
