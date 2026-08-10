@@ -66,11 +66,9 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                             final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
                             final String remoteAddress = "" + exchange.getRequest()
                                 .getRemoteAddress();
-                            return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
-                                .flatMap(sseSessionRepository::save)
-                                .then();
+                            return sseSessionRepository.save(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
                         } else {
-                            return Mono.empty();
+                            return Mono.just(true);
                         }
                     })
                     .then(Mono.defer(() -> reactiveCouchbaseTemplate.getCouchbaseClientFactory()
@@ -81,13 +79,12 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                                 MutateInSpec.replace("pingReceived", Instant.now())
                             )
                         )
-                        .then()
+                        .then(Mono.just(ResponseEntity.ok()
+                            .<Void>build()))
                     ))
                 ))
             .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
-            .then(Mono.just(ResponseEntity.ok()
-                .<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .build());
     }
@@ -106,11 +103,9 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                             final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
                             final String remoteAddress = "" + exchange.getRequest()
                                 .getRemoteAddress();
-                            return Mono.just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
-                                .flatMap(sseSessionRepository::save)
-                                .then();
+                            return sseSessionRepository.save(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
                         } else {
-                            return Mono.empty();
+                            return Mono.just(true);
                         }
                     })
                     .then(Mono.defer(() -> reactiveCouchbaseTemplate.getCouchbaseClientFactory()
@@ -121,13 +116,12 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                                 MutateInSpec.replace("pongReceived", Instant.now())
                             )
                         )
-                        .then()
                     ))
+                    .then(Mono.just(ResponseEntity.ok()
+                        .<Void>build()))
                 ))
             .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
             .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
-            .then(Mono.just(ResponseEntity.ok()
-                .<Void>build()))
             .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .build());
     }
