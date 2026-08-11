@@ -46,8 +46,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
     static {
         String host;
         try {
-            host = InetAddress.getLocalHost()
-                .getHostName();
+            host = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             host = "unknown";
         }
@@ -57,78 +56,31 @@ public class PingPongController extends AbstractBaseController implements V1Api,
     @Override
     public Mono<ResponseEntity<Void>> ping(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
 //        log.info("{} ping() ", exchange.getRequest().getRemoteAddress());
-        return getUserId(exchange)
-            .doOnNext(userId -> kafkaSender.sendSse(new MyServerSentEvent<Void>("pong", Set.of(userId))))
-            .flatMap(userId -> pingPongSchema.map(PingPongSchema::getAppIdentifier)
-                .flatMap(appIdentifier -> sseSessionRepository.existsById(appIdentifier)
-                    .flatMap(exists -> {
-                        if (!exists) {
-                            final List<String> userAgentList = exchange.getRequest()
-                                .getHeaders()
-                                .get("User-Agent");
-                            final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
-                            final String remoteAddress = "" + exchange.getRequest()
-                                .getRemoteAddress();
-                            return sseSessionRepository.save(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
-                        } else {
-                            return Mono.just(true);
-                        }
-                    })
-                    .then(Mono.defer(() -> reactiveCouchbaseTemplate.getCouchbaseClientFactory()
-                        .getDefaultCollection()
-                        .reactive()
-                        .mutateIn(appIdentifier, Arrays.asList(
-                                MutateInSpec.increment("pingReceivedCount", 1),
-                                MutateInSpec.upsert("pingReceived", currentTimeMillis())
-                            )
-                            , MutateInOptions.mutateInOptions().expiry(Duration.ofSeconds(15))
-                        )
-                        .then(Mono.just(ResponseEntity.ok()
-                            .<Void>build()))
-                    ))
-                ))
-            .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
-            .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .build());
+        return getUserId(exchange).doOnNext(userId -> kafkaSender.sendSse(new MyServerSentEvent<Void>("pong", Set.of(userId)))).flatMap(userId -> pingPongSchema.map(PingPongSchema::getAppIdentifier).flatMap(appIdentifier -> sseSessionRepository.existsById(appIdentifier).flatMap(exists -> {
+            if (!exists) {
+                final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
+                final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
+                final String remoteAddress = "" + exchange.getRequest().getRemoteAddress();
+                return sseSessionRepository.save(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
+            } else {
+                return Mono.just(true);
+            }
+        }).then(Mono.defer(() -> reactiveCouchbaseTemplate.getCouchbaseClientFactory().getDefaultCollection().reactive().mutateIn(appIdentifier, Arrays.asList(MutateInSpec.increment("pingReceivedCount", 1), MutateInSpec.upsert("pingReceived", currentTimeMillis())), MutateInOptions.mutateInOptions().expiry(Duration.ofSeconds(15))).then(Mono.just(ResponseEntity.ok().<Void>build())))))).onErrorResume(CasMismatchException.class, ex -> Mono.empty()).onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty()).defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @Override
     public Mono<ResponseEntity<Void>> pong(final Mono<PingPongSchema> pingPongSchema, final ServerWebExchange exchange) {
 //        log.info("{} pong()", exchange.getRequest().getRemoteAddress());
-        return getUserId(exchange)
-            .flatMap(userId -> pingPongSchema.map(PingPongSchema::getAppIdentifier)
-                .flatMap(appIdentifier -> sseSessionRepository.existsById(appIdentifier)
-                    .flatMap(exists -> {
-                        if (!exists) {
-                            final List<String> userAgentList = exchange.getRequest()
-                                .getHeaders()
-                                .get("User-Agent");
-                            final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
-                            final String remoteAddress = "" + exchange.getRequest()
-                                .getRemoteAddress();
-                            return sseSessionRepository.save(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
-                        } else {
-                            return Mono.just(true);
-                        }
-                    })
-                    .then(Mono.defer(() -> reactiveCouchbaseTemplate.getCouchbaseClientFactory()
-                        .getDefaultCollection()
-                        .reactive()
-                        .mutateIn(appIdentifier, Arrays.asList(
-                                MutateInSpec.increment("pongReceivedCount", 1),
-                                MutateInSpec.upsert("pongReceived", currentTimeMillis())
-                            )
-                            , MutateInOptions.mutateInOptions().expiry(Duration.ofSeconds(15))
-                        )
-                    ))
-                    .then(Mono.just(ResponseEntity.ok()
-                        .<Void>build()))
-                ))
-            .onErrorResume(CasMismatchException.class, ex -> Mono.empty())
-            .onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty())
-            .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .build());
+        return getUserId(exchange).flatMap(userId -> pingPongSchema.map(PingPongSchema::getAppIdentifier).flatMap(appIdentifier -> sseSessionRepository.existsById(appIdentifier).flatMap(exists -> {
+            if (!exists) {
+                final List<String> userAgentList = exchange.getRequest().getHeaders().get("User-Agent");
+                final String userAgent = userAgentList != null && !userAgentList.isEmpty() ? userAgentList.getFirst() : null;
+                final String remoteAddress = "" + exchange.getRequest().getRemoteAddress();
+                return sseSessionRepository.save(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId));
+            } else {
+                return Mono.just(true);
+            }
+        }).then(Mono.defer(() -> reactiveCouchbaseTemplate.getCouchbaseClientFactory().getDefaultCollection().reactive().mutateIn(appIdentifier, Arrays.asList(MutateInSpec.increment("pongReceivedCount", 1), MutateInSpec.upsert("pongReceived", currentTimeMillis())), MutateInOptions.mutateInOptions().expiry(Duration.ofSeconds(15))))).then(Mono.just(ResponseEntity.ok().<Void>build())))).onErrorResume(CasMismatchException.class, ex -> Mono.empty()).onErrorResume(DocumentNotFoundException.class, ex -> Mono.empty()).defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
 }
