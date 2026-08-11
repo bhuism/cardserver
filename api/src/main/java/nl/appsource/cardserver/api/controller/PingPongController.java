@@ -2,6 +2,7 @@ package nl.appsource.cardserver.api.controller;
 
 import com.couchbase.client.core.error.CasMismatchException;
 import com.couchbase.client.core.error.DocumentNotFoundException;
+import com.couchbase.client.java.kv.MutateInOptions;
 import com.couchbase.client.java.kv.MutateInSpec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -79,6 +81,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                                 MutateInSpec.increment("pingReceivedCount", 1),
                                 MutateInSpec.upsert("pingReceived", currentTimeMillis())
                             )
+                            , MutateInOptions.mutateInOptions().expiry(Duration.ofSeconds(15))
                         )
                         .then(Mono.just(ResponseEntity.ok()
                             .<Void>build()))
@@ -116,6 +119,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                                 MutateInSpec.increment("pongReceivedCount", 1),
                                 MutateInSpec.upsert("pongReceived", currentTimeMillis())
                             )
+                            , MutateInOptions.mutateInOptions().expiry(Duration.ofSeconds(15))
                         )
                     ))
                     .then(Mono.just(ResponseEntity.ok()
