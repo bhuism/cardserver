@@ -66,8 +66,15 @@ public class SseEmitterRepositoryImplTest {
     @Mock
     private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
+    @Mock(lenient = true)
+    private ReactiveCouchbaseTemplate.ReactiveInsertById reactiveInsertById;
+
     @BeforeEach
     void setUp() {
+        when(reactiveCouchbaseTemplate.insertById(any(Class.class))).thenReturn(reactiveInsertById);
+        when(reactiveInsertById.withExpiry(any())).thenReturn(reactiveInsertById);
+        when(reactiveInsertById.one(any())).thenReturn(Mono.empty());
+
         sseEmitterRepository = new SseEmitterRepositoryImpl(
             userRepository,
             gameToOpenApiConverter,

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalManagementPort;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -53,6 +54,9 @@ public class HttpRequestTests {
 
     @MockitoBean
     public KafkaEventListener kafkaEventListener;
+
+    @MockitoBean
+    public ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
 //    @Test
 //    void greetingShouldReturnDefaultMessage() {
