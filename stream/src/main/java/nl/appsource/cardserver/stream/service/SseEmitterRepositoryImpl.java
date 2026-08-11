@@ -15,6 +15,7 @@ import nl.appsource.cardserver.utils.IDTYPE;
 import nl.appsource.cardserver.utils.Utils;
 import nl.appsource.generated.openapi.model.HelloEvent;
 import nl.appsource.generated.openapi.model.User;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.BufferOverflowStrategy;
@@ -60,6 +61,8 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
     private final UserToOpenApiConverter userToOpenApiConverter;
 
     private final SseSessionRepository sseSessionRepository;
+
+    private final ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
 
     static {
         String host;
@@ -123,8 +126,13 @@ public class SseEmitterRepositoryImpl implements SseEmitterRepository {
 
 //        final Mono<Void> friendsMono = friends3.flatMap(friendId -> sseEventSender.sendOnlineListTo(friendId, Flux.merge(userRepository.getOnlineFriends(friendId), just(userId)).distinct().doOnNext(s -> log.debug("Sending friend {} friends: {}", friendId, s)))).then();
 
-        just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
-            .flatMap(sseSessionRepository::save)
+//        just(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
+//            .flatMap(sseSessionRepository::save)
+//            .subscribe();
+//
+        reactiveCouchbaseTemplate.insertById(SseSession.class)
+            .withExpiry(Duration.ofSeconds(15))
+            .one(new SseSession(appIdentifier, remoteAddress, userAgent, HOSTNAME, userId))
             .subscribe();
 
         final Flux<MyServerSentEvent<?>> pingSink = Flux.interval(Duration.ofSeconds(5))
