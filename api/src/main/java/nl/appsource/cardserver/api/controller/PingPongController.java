@@ -77,7 +77,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                         .reactive()
                         .mutateIn(appIdentifier, Arrays.asList(
                                 MutateInSpec.increment("pingReceivedCount", 1),
-                                MutateInSpec.replace("pingReceived", currentTimeMillis())
+                                MutateInSpec.upsert("pingReceived", currentTimeMillis())
                             )
                         )
                         .then(Mono.just(ResponseEntity.ok()
@@ -114,7 +114,7 @@ public class PingPongController extends AbstractBaseController implements V1Api,
                         .reactive()
                         .mutateIn(appIdentifier, Arrays.asList(
                                 MutateInSpec.increment("pongReceivedCount", 1),
-                                MutateInSpec.replace("pongReceived", currentTimeMillis())
+                                MutateInSpec.upsert("pongReceived", currentTimeMillis())
                             )
                         )
                     ))
