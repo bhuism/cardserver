@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.couchbase.core.ReactiveCouchbaseTemplate;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -62,6 +63,9 @@ public class SseEmitterRepositoryImplTest {
     @Mock
     private KafkaEventListener kafkaEventListener;
 
+    @Mock
+    private ReactiveCouchbaseTemplate reactiveCouchbaseTemplate;
+
     @BeforeEach
     void setUp() {
         sseEmitterRepository = new SseEmitterRepositoryImpl(
@@ -72,7 +76,8 @@ public class SseEmitterRepositoryImplTest {
             boomRepository,
             kafkaEventListener,
             userToOpenApiConverter,
-            sseSessionRepository
+            sseSessionRepository,
+            reactiveCouchbaseTemplate
         );
     }
 
