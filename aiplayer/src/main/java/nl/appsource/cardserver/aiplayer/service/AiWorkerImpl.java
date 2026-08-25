@@ -63,10 +63,8 @@ public class AiWorkerImpl implements AiWorker {
     @Override
     public Mono<Void> say(final String gameId, final String userId) {
 
-        log.info("say() for gameId={} userId={}", gameId, userId);
-
         if (userId == null || gameId == null) {
-            log.error("say() for gameId={} userId={}", gameId, userId);
+            log.error("say() invalid arguments for gameId={} userId={}", gameId, userId);
             return Mono.empty();
         }
 
