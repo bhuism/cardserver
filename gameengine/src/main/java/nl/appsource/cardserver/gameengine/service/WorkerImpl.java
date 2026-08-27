@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
 import static java.lang.Runtime.getRuntime;
+import static java.lang.System.currentTimeMillis;
 import static nl.appsource.cardserver.openapi.MyServerSentEvent.messageEvent;
 import static nl.appsource.cardserver.utils.Utils.isAiPlayer;
 
@@ -125,19 +126,16 @@ public class WorkerImpl implements Worker {
     }
 
     private void processDueEvents() {
-        long currentTime = System.currentTimeMillis();
-        while (!eventQueue.isEmpty() && eventQueue.peek()
-            .getExecutionTime() <= currentTime) {
-            final GameEvent eventToExecute = eventQueue.poll();
-            if (eventToExecute != null) {
+        final GameEvent eventToExecute = eventQueue.peek();
+        if (eventToExecute != null && eventToExecute.getExecutionTime() <= currentTimeMillis()) {
+            if (eventQueue.remove(eventToExecute)) {
                 try {
-                    eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId()
-                        .equals(eventToExecute.getGameId()));
+//                    eventQueue.removeIf(scheduledGameEvent -> scheduledGameEvent.getGameId().equals(eventToExecute.getGameId()));
                     executeSynchronious(eventToExecute)
-                        .subscribe(
-                            null,
-                            t -> log.error("Error executing scheduled event", t)
-                        );
+                        .onErrorComplete(t -> {
+                            log.error("Error executing scheduled event", t);
+                            return false;
+                        }).subscribe();
                 } catch (Throwable t) {
                     log.error("Dont exception in a worker thread", t);
                 }
