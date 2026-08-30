@@ -137,13 +137,17 @@ public class AiWorkerImpl implements AiWorker {
 
 //                    log.info("In Game {}, AiPLayer {} plays: {}", gameId, userId, card);
 
+                    final int firstCardOfTheGameExtraTime = gameEngine.getTurnCount() == 0 ? 2000 : 0;
+
+                    final int lastCardInTrickExtraTime = gameEngine.isFullTrick() ? 2000 : 0;
+
                     final GameEvent gameEvent = new GameEvent()
                         .uuid(UUID.randomUUID())
                         .gameId(gameEngine.getGame().getId())
                         .userId(userId)
                         .eventType(GameEvent.EventTypeEnum.PLAY_CARD)
                         .card(convertCard(card))
-                        .executionTime(System.currentTimeMillis() + (gameEngine.isFullTrick() ? 3000 : 1000) + ThreadLocalRandom.current().nextLong(500));
+                        .executionTime(System.currentTimeMillis() + firstCardOfTheGameExtraTime + lastCardInTrickExtraTime + 1000 + ThreadLocalRandom.current().nextLong(1000));
 
                     kafkaSender.send(GAME_EVENTS_TOPIC, jsonMapper.writeValueAsString(gameEvent));
 
