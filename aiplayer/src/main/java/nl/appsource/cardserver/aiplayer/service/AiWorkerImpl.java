@@ -40,7 +40,7 @@ public class AiWorkerImpl implements AiWorker {
 
         log.info("init()");
 
-        kafkaEventListener.listen()
+        kafkaEventListener.getQueue().asFlux()
 //            .doOnNext((message) -> log.info("Kafka message received: {}", message))
             .flatMap(gameEngine -> {
                 if (gameEngine.isAiSay()) {
@@ -50,6 +50,7 @@ public class AiWorkerImpl implements AiWorker {
                     final String aiPlayPlayer = gameEngine.getGame().getPlayers().get(gameEngine.calcWhoHasTurn());
                     return playCard(gameEngine.getGame().getId(), aiPlayPlayer);
                 } else {
+                    log.warn("Nothing to do for game {}", gameEngine.getGame().getId());
                     return Mono.empty();
                 }
             })

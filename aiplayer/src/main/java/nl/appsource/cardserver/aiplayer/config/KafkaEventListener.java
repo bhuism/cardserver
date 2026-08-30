@@ -1,10 +1,10 @@
 package nl.appsource.cardserver.aiplayer.config;
 
 import nl.appsource.cardserver.couchbase.utils.GameEngine;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 public interface KafkaEventListener {
 
-    Flux<GameEngine> listen();
+    Sinks.Many<GameEngine> getQueue();
 
 }

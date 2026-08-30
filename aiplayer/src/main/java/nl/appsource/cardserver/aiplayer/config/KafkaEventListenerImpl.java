@@ -15,7 +15,6 @@ import org.springframework.core.env.Profiles;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -37,8 +36,8 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
 
     @Getter
     private final Sinks.Many<GameEngine> queue = Sinks.many()
-        .multicast()
-        .directBestEffort();
+        .unicast()
+        .onBackpressureBuffer();
 
     @KafkaListener(topics = GAME_CHANGES, groupId = "aiWorker-aiWorker")
     public void listen(final @Payload String string) {
@@ -46,16 +45,14 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
             final Game game = jsonMapper.readValue(string, Game.class);
             final GameEngineImpl gameEngine = new GameEngineImpl(game);
             if (gameEngine.isAiSay() || gameEngine.isAiTurn()) {
-                queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(1500)));
+                log.info("Processing Kafka event for game={}", game.getId());
+                queue.emitNext(gameEngine, Sinks.EmitFailureHandler.busyLooping(Duration.ofMillis(500)));
+            } else {
+                log.info("Ignoring Kafka event for game={}", game.getId());
             }
         } catch (final Exception e) {
             log.error("Error processing Kafka event: payload={}", string, e);
         }
-    }
-
-    @Override
-    public Flux<GameEngine> listen() {
-        return queue.asFlux();
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -67,7 +64,8 @@ public class KafkaEventListenerImpl implements KafkaEventListener {
                 .filter((game) -> !game.getLastTrickOpen())
                 .doOnNext((game) -> log.info("AiWorker startup for game: {}", game.getId()))
                 .retryWhen(reactor.util.retry.Retry.backoff(10, Duration.ofSeconds(2))
-                    .doBeforeRetry(retrySignal -> log.warn("Retrying initial game scan due to error: {}", retrySignal.failure().getMessage())))
+                    .doBeforeRetry(retrySignal -> log.warn("Retrying initial game scan due to error: {}", retrySignal.failure()
+                        .getMessage())))
                 .subscribe(
                     (Game game) -> {
                         final GameEngine gameEngine = new GameEngineImpl(game);
